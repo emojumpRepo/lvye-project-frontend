@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "Figma": {
+      "url": "http://127.0.0.1:3845/mcp"
+    },
+    "Ant Design Components": {
+      "command": "npx",
+      "args": ["@jzone-mcp/antd-components-mcp"]
+    }
+  }
+}

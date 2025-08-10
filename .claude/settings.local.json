@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Figma__get_image",
+      "mcp__Figma__get_code"
+    ],
+    "deny": []
+  }
+}

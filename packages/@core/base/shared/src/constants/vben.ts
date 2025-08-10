@@ -15,7 +15,7 @@ export const VBEN_DOC_URL = 'https://doc.iocoder.cn/';
  * @zh_CN Vben Logo
  */
 export const VBEN_LOGO_URL =
-  'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp';
+  'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/static/logo/lvye_logo.png';
 
 /**
  * @zh_CN Vben Admin 首页地址

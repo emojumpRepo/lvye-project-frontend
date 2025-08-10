@@ -42,6 +42,9 @@ const style = computed((): CSSProperties => {
     contentCompact === 'compact'
       ? { margin: '0 auto', width: `${props.contentCompactWidth}px` }
       : {};
+
+  const bgImage =
+    'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
   return {
     ...compactStyle,
     flex: 1,
@@ -50,6 +53,10 @@ const style = computed((): CSSProperties => {
     paddingLeft: `${paddingLeft}px`,
     paddingRight: `${paddingRight}px`,
     paddingTop: `${paddingTop}px`,
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   };
 });
 </script>

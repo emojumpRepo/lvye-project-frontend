@@ -63,7 +63,8 @@ const defaultPreferences: Preferences = {
   logo: {
     enable: true,
     fit: 'contain',
-    source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
+    source:
+      'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/static/logo/lvye_logo.png',
   },
   navigation: {
     accordion: true,
