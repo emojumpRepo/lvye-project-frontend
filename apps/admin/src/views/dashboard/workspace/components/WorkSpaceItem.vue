@@ -43,7 +43,7 @@ const props = withDefaults(
 );
 
 const containerClasses = computed(() => {
-  const base = 'relative rounded-lg p-5';
+  const base = 'rounded-lg p-5';
   switch (props.severity) {
     case 'danger': {
       return `${base} bg-[rgba(250,75,75,0.06)] border-l-4 border-[#FA4B4B]`;
@@ -57,16 +57,7 @@ const containerClasses = computed(() => {
   }
 });
 
-const actionClasses = computed(() => {
-  if (!props.rightAction) return '';
-  const common =
-    'absolute right-3 top-1/2 -translate-y-1/2 text-xs flex items-center';
-  switch (props.rightAction.color) {
-    default: {
-      return common;
-    }
-  }
-});
+// removed absolute-positioned action classes; use inline responsive layout instead
 
 const rightActionType = computed(() => {
   if (!props.rightAction) return 'primary';
@@ -121,28 +112,29 @@ const secondaryBadgeClasses = computed(() => {
 
 <template>
   <div :class="containerClasses">
-    <div v-if="rightAction" :class="actionClasses">
-      <LyButton
-        size="middle"
-        ghost
-        :type="rightActionType as any"
-        class="h-8 rounded-md border px-2.5"
-      >
-        {{ rightAction!.text }}
-      </LyButton>
-    </div>
-
-    <div class="flex items-center gap-1.5 pr-24">
-      <div class="text-[14px] font-semibold text-black">{{ name }}</div>
-      <div class="size-0.5 overflow-hidden rounded-full">
-        <span class="block size-0.5 bg-[#D9D9D9]"></span>
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <div class="text-[14px] font-semibold text-black">{{ name }}</div>
+        <div class="size-0.5 overflow-hidden rounded-full">
+          <span class="block size-0.5 bg-[#D9D9D9]"></span>
+        </div>
+        <div class="text-[14px] font-semibold text-black">{{ className }}</div>
+        <div v-if="statusBadge" :class="statusBadgeClasses">
+          {{ statusBadge!.text }}
+        </div>
+        <div v-if="secondaryBadge" :class="secondaryBadgeClasses">
+          {{ secondaryBadge!.text }}
+        </div>
       </div>
-      <div class="text-[14px] font-semibold text-black">{{ className }}</div>
-      <div v-if="statusBadge" :class="statusBadgeClasses">
-        {{ statusBadge!.text }}
-      </div>
-      <div v-if="secondaryBadge" :class="secondaryBadgeClasses">
-        {{ secondaryBadge!.text }}
+      <div v-if="rightAction" class="sm:ml-auto">
+        <LyButton
+          size="middle"
+          ghost
+          :type="rightActionType as any"
+          class="h-8 rounded-md border px-2.5 text-xs"
+        >
+          {{ rightAction!.text }}
+        </LyButton>
       </div>
     </div>
 
