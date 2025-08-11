@@ -47,6 +47,7 @@ const style = computed((): CSSProperties => {
   const right = !show || !fullWidth ? undefined : 0;
 
   return {
+    backdropFilter: `blur(4px)`,
     height: `${height}px`,
     marginTop: show ? 0 : `-${height}px`,
     right,

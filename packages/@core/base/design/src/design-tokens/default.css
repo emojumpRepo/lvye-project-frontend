@@ -102,7 +102,7 @@
   --menu: var(--sidebar);
 
   /* header */
-  --header: 0 0% 100%;
+  --header: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
 
   accent-color: var(--primary);
   color-scheme: light;

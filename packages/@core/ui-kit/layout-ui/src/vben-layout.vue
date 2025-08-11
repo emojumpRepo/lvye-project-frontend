@@ -300,7 +300,7 @@ const contentStyle = computed((): CSSProperties => {
 
   const { footerEnable, footerFixed, footerHeight } = props;
   return {
-    marginTop:
+    paddingTop:
       fixed &&
       !isFullContent.value &&
       !headerIsHidden.value &&
