@@ -49,13 +49,16 @@ const props = withDefaults(defineProps<Props>(), {
   headerVisible: true,
   isMobile: false,
   layout: 'sidebar-nav',
+  sidebarBottomCustomHeight: 0,
   sidebarCollapsedButton: true,
   sidebarCollapseShowTitle: false,
   sidebarExtraCollapsedWidth: 60,
   sidebarFixedButton: true,
   sidebarHidden: false,
+  sidebarMiddleCustomHeight: 0,
   sidebarMixedWidth: 80,
   sidebarTheme: 'dark',
+  sidebarTopCustomHeight: 0,
   sidebarWidth: 180,
   sideCollapseWidth: 60,
   tabbarEnable: true,
@@ -489,8 +492,7 @@ const idMainContent = ELEMENT_ID_MAIN_CONTENT;
       v-model:expand-on-hovering="sidebarExpandOnHovering"
       v-model:extra-collapse="sidebarExtraCollapse"
       v-model:extra-visible="sidebarExtraVisible"
-      :show-collapse-button="sidebarCollapsedButton"
-      :show-fixed-button="sidebarFixedButton"
+      :bottom-custom-height="sidebarBottomCustomHeight"
       :collapse-width="getSideCollapseWidth"
       :dom-visible="!isMobile"
       :extra-width="sidebarExtraWidth"
@@ -498,9 +500,13 @@ const idMainContent = ELEMENT_ID_MAIN_CONTENT;
       :header-height="isMixedNav ? 0 : headerHeight"
       :is-sidebar-mixed="isSidebarMixedNav || isHeaderMixedNav"
       :margin-top="sidebarMarginTop"
+      :middle-custom-height="sidebarMiddleCustomHeight"
       :mixed-width="sidebarMixedWidth"
       :show="showSidebar"
+      :show-collapse-button="sidebarCollapsedButton"
+      :show-fixed-button="sidebarFixedButton"
       :theme="sidebarTheme"
+      :top-custom-height="sidebarTopCustomHeight"
       :width="getSidebarWidth"
       :z-index="sidebarZIndex"
       @leave="() => emit('sideMouseLeave')"
@@ -509,11 +515,23 @@ const idMainContent = ELEMENT_ID_MAIN_CONTENT;
         <slot name="logo"></slot>
       </template>
 
+      <template #top-custom>
+        <slot name="sidebar-top-custom"></slot>
+      </template>
+
       <template v-if="isSidebarMixedNav || isHeaderMixedNav">
         <slot name="mixed-menu"></slot>
       </template>
       <template v-else>
         <slot name="menu"></slot>
+      </template>
+
+      <template #middle-custom>
+        <slot name="sidebar-middle-custom"></slot>
+      </template>
+
+      <template #bottom-custom>
+        <slot name="sidebar-bottom-custom"></slot>
       </template>
 
       <template #extra>

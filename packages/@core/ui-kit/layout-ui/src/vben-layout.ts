@@ -142,6 +142,21 @@ interface VbenLayoutProps {
    */
   sidebarMixedWidth?: number;
   /**
+   * 侧边栏底部自定义区域高度
+   * @default 0
+   */
+  sidebarBottomCustomHeight?: number;
+  /**
+   * 侧边栏中部自定义区域高度
+   * @default 0
+   */
+  sidebarMiddleCustomHeight?: number;
+  /**
+   * 侧边栏顶部自定义区域高度
+   * @default 0
+   */
+  sidebarTopCustomHeight?: number;
+  /**
    * 侧边栏
    * @default dark
    */

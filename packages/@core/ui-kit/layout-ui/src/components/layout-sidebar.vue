@@ -11,6 +11,11 @@ import { SidebarCollapseButton, SidebarFixedButton } from './widgets';
 
 interface Props {
   /**
+   * 底部自定义区域高度（除了折叠按钮）
+   * @default 0
+   */
+  bottomCustomHeight?: number;
+  /**
    * 折叠区域高度
    * @default 42
    */
@@ -49,6 +54,11 @@ interface Props {
    */
   marginTop?: number;
   /**
+   * 中部自定义区域高度
+   * @default 0
+   */
+  middleCustomHeight?: number;
+  /**
    * 混合菜单宽度
    * @default 80
    */
@@ -77,7 +87,11 @@ interface Props {
    * 主题
    */
   theme: string;
-
+  /**
+   * 顶部自定义区域高度
+   * @default 0
+   */
+  topCustomHeight?: number;
   /**
    * 宽度
    */
@@ -101,6 +115,9 @@ const props = withDefaults(defineProps<Props>(), {
   show: true,
   showCollapseButton: true,
   showFixedButton: true,
+  bottomCustomHeight: 0,
+  middleCustomHeight: 0,
+  topCustomHeight: 0,
   zIndex: 0,
 });
 
@@ -159,10 +176,20 @@ const contentWidthStyle = computed((): CSSProperties => {
 });
 
 const contentStyle = computed((): CSSProperties => {
-  const { collapseHeight, headerHeight } = props;
+  const {
+    collapseHeight,
+    headerHeight,
+    topCustomHeight,
+    middleCustomHeight,
+    bottomCustomHeight,
+  } = props;
+
+  const totalCustomHeight =
+    topCustomHeight + middleCustomHeight + bottomCustomHeight;
+  const totalReservedHeight = headerHeight + collapseHeight + totalCustomHeight;
 
   return {
-    height: `calc(100% - ${headerHeight + collapseHeight}px)`,
+    height: `calc(100% - ${totalReservedHeight}px)`,
     paddingTop: '8px',
     ...contentWidthStyle.value,
   };
@@ -188,6 +215,27 @@ const extraContentStyle = computed((): CSSProperties => {
 const collapseStyle = computed((): CSSProperties => {
   return {
     height: `${props.collapseHeight}px`,
+  };
+});
+
+const topCustomStyle = computed((): CSSProperties => {
+  return {
+    height: `${props.topCustomHeight}px`,
+    ...contentWidthStyle.value,
+  };
+});
+
+const middleCustomStyle = computed((): CSSProperties => {
+  return {
+    height: `${props.middleCustomHeight}px`,
+    ...contentWidthStyle.value,
+  };
+});
+
+const bottomCustomStyle = computed((): CSSProperties => {
+  return {
+    height: `${props.bottomCustomHeight}px`,
+    ...contentWidthStyle.value,
   };
 });
 
@@ -279,10 +327,33 @@ function handleMouseleave() {
     <div v-if="slots.logo" :style="headerStyle">
       <slot name="logo"></slot>
     </div>
+
+    <!-- 顶部自定义区域 -->
+    <div
+      v-if="slots['top-custom'] && topCustomHeight > 0"
+      :style="topCustomStyle"
+    >
+      <slot name="top-custom"></slot>
+    </div>
+
     <VbenScrollbar :style="contentStyle" shadow shadow-border>
       <slot></slot>
     </VbenScrollbar>
 
+    <!-- 中部自定义区域 -->
+    <div
+      v-if="slots['middle-custom'] && middleCustomHeight > 0"
+      :style="middleCustomStyle"
+    >
+      <slot name="middle-custom"></slot>
+    </div>
+    <!-- 底部自定义区域 -->
+    <div
+      v-if="slots['bottom-custom'] && bottomCustomHeight > 0"
+      :style="bottomCustomStyle"
+    >
+      <slot name="bottom-custom"></slot>
+    </div>
     <div :style="collapseStyle"></div>
     <SidebarCollapseButton
       v-if="showCollapseButton && !isSidebarMixed"

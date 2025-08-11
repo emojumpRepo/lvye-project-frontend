@@ -197,6 +197,7 @@ const headerSlots = computed(() => {
     :header-visible="preferences.header.enable"
     :is-mobile="preferences.app.isMobile"
     :layout="layout"
+    :sidebar-bottom-custom-height="preferences.sidebar.bottomCustomHeight || 0"
     :sidebar-collapse="preferences.sidebar.collapsed"
     :sidebar-collapse-show-title="preferences.sidebar.collapsedShowTitle"
     :sidebar-enable="sidebarVisible"
@@ -206,8 +207,10 @@ const headerSlots = computed(() => {
     :sidebar-extra-collapse="preferences.sidebar.extraCollapse"
     :sidebar-extra-collapsed-width="preferences.sidebar.extraCollapsedWidth"
     :sidebar-hidden="preferences.sidebar.hidden"
+    :sidebar-middle-custom-height="preferences.sidebar.middleCustomHeight || 0"
     :sidebar-mixed-width="preferences.sidebar.mixedWidth"
     :sidebar-theme="sidebarTheme"
+    :sidebar-top-custom-height="preferences.sidebar.topCustomHeight || 0"
     :sidebar-width="preferences.sidebar.width"
     :side-collapse-width="preferences.sidebar.collapseWidth"
     :tabbar-enable="preferences.tabbar.enable"
@@ -360,6 +363,19 @@ const headerSlots = computed(() => {
           v-bind="preferences.copyright"
         />
       </LayoutFooter>
+    </template>
+
+    <!-- 侧边栏自定义区域插槽 -->
+    <template #sidebar-top-custom>
+      <slot name="sidebar-top-custom"></slot>
+    </template>
+
+    <template #sidebar-middle-custom>
+      <slot name="sidebar-middle-custom"></slot>
+    </template>
+
+    <template #sidebar-bottom-custom>
+      <slot name="sidebar-bottom-custom"></slot>
     </template>
 
     <template #extra>

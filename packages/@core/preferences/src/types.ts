@@ -152,6 +152,8 @@ interface NavigationPreferences {
 interface SidebarPreferences {
   /** 点击目录时自动激活子菜单   */
   autoActivateChild: boolean;
+  /** 侧边栏底部自定义区域高度 */
+  bottomCustomHeight?: number;
   /** 侧边栏是否折叠 */
   collapsed: boolean;
   /** 侧边栏折叠按钮是否可见 */
@@ -172,8 +174,12 @@ interface SidebarPreferences {
   fixedButton: boolean;
   /** 侧边栏是否隐藏 - css */
   hidden: boolean;
+  /** 侧边栏中部自定义区域高度 */
+  middleCustomHeight?: number;
   /** 混合侧边栏宽度 */
   mixedWidth: number;
+  /** 侧边栏顶部自定义区域高度 */
+  topCustomHeight?: number;
   /** 侧边栏宽度 */
   width: number;
 }

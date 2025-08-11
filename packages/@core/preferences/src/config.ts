@@ -80,6 +80,7 @@ const defaultPreferences: Preferences = {
   },
   sidebar: {
     autoActivateChild: false,
+    bottomCustomHeight: 0,
     collapsed: false,
     collapsedButton: true,
     collapsedShowTitle: false,
@@ -90,7 +91,9 @@ const defaultPreferences: Preferences = {
     extraCollapsedWidth: 60,
     fixedButton: true,
     hidden: false,
+    middleCustomHeight: 0,
     mixedWidth: 80,
+    topCustomHeight: 0,
     width: 224,
   },
   tabbar: {
