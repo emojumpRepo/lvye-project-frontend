@@ -6,7 +6,7 @@ import { Modal as AModal } from 'ant-design-vue';
 import { CommonDialogHeader } from '#/components/Dialog/CommonDialog';
 import LyButton from '#/components/LyButton/index.vue';
 
-import CreateAssessmentDialogContent from './CreateAssessmentDialogContent.vue';
+import PsychologicalConsultDialogContent from './PsychologicalConsultDialogContent.vue';
 
 const open = defineModel<boolean>('open', { default: false });
 
@@ -49,20 +49,21 @@ function onPublished() {
     @cancel="openCancelModal = true"
   >
     <CommonDialogHeader
-      title="创建测评任务"
+      title="心理咨询评估表单"
+      description="为学生咨询记录填写专业评估"
       :steps="[
-        { label: '基本信息' },
-        { label: '选择量表' },
-        { label: '选择对象' },
-        { label: '确认发布' },
+        { label: '信息确认', description: '确认学生和咨询信息' },
+        { label: '核心评估结论', description: '风险等级和问题识别' },
+        { label: '详细评估内容', description: '填写详细记录或上传模板' },
       ]"
       :current-step="step"
+      step-wrapper-class="px-8 py-6"
       @change="(v: number) => (step = v)"
       @back="hasPublished ? handleClose() : (openCancelModal = true)"
     />
 
     <div class="mt-6">
-      <CreateAssessmentDialogContent
+      <PsychologicalConsultDialogContent
         :key="resetKey"
         :step="step"
         @next="onNext"
@@ -78,7 +79,7 @@ function onPublished() {
     centered
     :closable="false"
   >
-    <div>确定要放弃创建测评任务吗？已填写的信息将丢失</div>
+    <div>确定要放弃填写心理咨询评估吗？已填写的信息将丢失</div>
     <template #footer>
       <div>
         <LyButton
