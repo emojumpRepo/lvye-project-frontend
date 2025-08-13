@@ -95,7 +95,7 @@ defineExpose({
   <div
     :class="
       cn(
-        'col-span-full w-full text-right',
+        'form-actions col-span-full w-full text-right',
         rootProps.compact ? 'pb-2' : 'pb-6',
         rootProps.actionWrapperClass,
       )

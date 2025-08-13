@@ -300,7 +300,7 @@ onUnmounted(() => {
         'pb-6': !compact,
         'pb-2': compact,
       }"
-      class="relative flex"
+      class="form-item relative flex"
       v-bind="$attrs"
     >
       <FormLabel
@@ -325,7 +325,7 @@ onUnmounted(() => {
           <VbenRenderContent :content="label" />
         </template>
       </FormLabel>
-      <div class="flex-auto overflow-hidden p-[1px]">
+      <div class="custom-input-wrapper flex-auto overflow-hidden p-[1px]">
         <div :class="cn('relative flex w-full items-center', wrapperClass)">
           <FormControl :class="cn(controlClass)">
             <slot
