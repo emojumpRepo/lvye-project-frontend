@@ -8,27 +8,22 @@ import LyButton from '#/components/LyButton/index.vue';
 import CreateAssessmentDialogContent from './CreateAssessmentDialogContent.vue';
 import CreateAssessmentDialogHeader from './CreateAssessmentDialogHeader.vue';
 
-type BasicModel = {
-  description: string;
-  receiveType: string;
-  timeRange: [null | string, null | string];
-};
-
-// v-model for open state
 const open = defineModel<boolean>('open', { default: false });
 
-const step = ref(1);
-const basic = ref<BasicModel>({
-  receiveType: '',
-  timeRange: [null, null],
-  description: '',
-});
+const openCancelModal = ref(false);
+const hasPublished = ref(false);
 
+const step = ref(1);
 function handleClose() {
   open.value = false;
-  // 可选：关闭时重置为第一步
   step.value = 1;
+  openCancelModal.value = false;
+  resetKey.value++;
+  hasPublished.value = false;
 }
+
+// 通过重建内容组件实例，达到清空内部所有子状态的目的
+const resetKey = ref(0);
 
 function onNext() {
   if (step.value < 4) step.value += 1;
@@ -37,6 +32,10 @@ function onNext() {
 function onPrev() {
   if (step.value > 1) step.value -= 1;
 }
+
+function onPublished() {
+  hasPublished.value = true;
+}
 </script>
 
 <template>
@@ -44,157 +43,86 @@ function onPrev() {
     v-model:open="open"
     :footer="false"
     :title="null"
+    :closable="false"
     width="100%"
     wrap-class-name="full-modal"
-    @cancel="handleClose"
+    @cancel="openCancelModal = true"
   >
-    <div class="p-6">
-      <CreateAssessmentDialogHeader :current-step="step" />
-
-      <div class="mt-6">
-        <!-- Step 1: 基本信息设置 -->
-        <CreateAssessmentDialogContent
-          v-if="step === 1"
-          v-model="basic"
-          @next="onNext"
-        />
-
-        <!-- Step 2: 选择测评量表（占位实现，按 Figma 结构） -->
-        <div
-          v-else-if="step === 2"
-          class="mx-auto max-w-[1049px] rounded-xl bg-white p-8"
-        >
-          <div class="text-[20px] font-bold">选择测评量表</div>
-          <div class="mt-8 grid grid-cols-1 gap-9 md:grid-cols-3">
-            <div
-              class="rounded-2xl border-2 border-[#14E77E] bg-[rgba(20,231,126,0.06)] p-6"
-            >
-              <div class="text-[20px] font-semibold">初测动态测评问卷</div>
-              <div class="mt-2 flex gap-2">
-                <span
-                  class="rounded border border-[#00EC76] bg-[#F2FFF6] px-1.5 py-1 text-[10px] text-[#01BE5F]"
-                >
-                  15-30分钟
-                </span>
-                <span
-                  class="rounded border border-[#0060FF] bg-[rgba(0,96,255,0.05)] px-1.5 py-1 text-[10px] text-[#0060FF]"
-                >
-                  45题
-                </span>
-              </div>
-              <div class="mt-3 text-[14px] text-[#979899]">
-                适用于新生入学、转班学生的首次心理健康筛查……
-              </div>
-              <div class="mt-1 text-[14px] text-[#0060FF] underline">
-                查看详情
-              </div>
-            </div>
-            <div class="rounded-2xl bg-[#F7F8FA] p-6">
-              <div class="text-[20px] font-semibold">复测动态测评问卷</div>
-              <div class="mt-2 flex gap-2">
-                <span
-                  class="rounded border border-[#00EC76] bg-[#F2FFF6] px-1.5 py-1 text-[10px] text-[#01BE5F]"
-                >
-                  15-30分钟
-                </span>
-                <span
-                  class="rounded border border-[#0060FF] bg-[rgba(0,96,255,0.05)] px-1.5 py-1 text-[10px] text-[#0060FF]"
-                >
-                  45题
-                </span>
-              </div>
-              <div class="mt-3 text-[14px] text-[#979899]">
-                适用于新生入学、转班学生的首次心理健康筛查……
-              </div>
-              <div class="mt-1 text-[14px] text-[#0060FF] underline">
-                查看详情
-              </div>
-            </div>
-            <div class="rounded-2xl bg-[#F7F8FA] p-6">
-              <div class="text-[20px] font-semibold">主题动态测评问卷</div>
-              <div class="mt-2 flex gap-2">
-                <span
-                  class="rounded border border-[#00EC76] bg-[#F2FFF6] px-1.5 py-1 text-[10px] text-[#01BE5F]"
-                >
-                  15-30分钟
-                </span>
-                <span
-                  class="rounded border border-[#0060FF] bg-[rgba(0,96,255,0.05)] px-1.5 py-1 text-[10px] text-[#0060FF]"
-                >
-                  45题
-                </span>
-              </div>
-              <div class="mt-3 text-[14px] text-[#979899]">
-                适用于新生入学、转班学生的首次心理健康筛查……
-              </div>
-              <div class="mt-1 text-[14px] text-[#0060FF] underline">
-                查看详情
-              </div>
-            </div>
-          </div>
-          <div class="mt-8 flex gap-[19px]">
-            <LyButton
-              type="default"
-              size="middle"
-              class="h-12 w-[120px] justify-center"
-              @click="onPrev"
-            >
-              上一步
-            </LyButton>
-            <LyButton
-              type="success"
-              size="middle"
-              class="h-12 w-[120px] justify-center"
-              @click="onNext"
-            >
-              下一步
-            </LyButton>
-          </div>
-        </div>
-
-        <!-- Step 3 & 4（占位） -->
-        <div v-else class="mx-auto max-w-[1049px] rounded-xl bg-white p-8">
-          <div class="text-[20px] font-bold">步骤 {{ step }}</div>
-          <div class="mt-6 text-[14px] text-[#979899]">
-            此步骤内容待接入后端接口后补充。
-          </div>
-          <div class="mt-8 flex gap-[19px]">
-            <LyButton
-              type="default"
-              size="middle"
-              class="h-12 w-[120px] justify-center"
-              @click="onPrev"
-            >
-              上一步
-            </LyButton>
-            <LyButton
-              type="success"
-              size="middle"
-              class="h-12 w-[120px] justify-center"
-              @click="onNext"
-            >
-              下一步
-            </LyButton>
-          </div>
-        </div>
-      </div>
+    <div
+      class="to-[rgba(255, 255, 255, 0.8)] mb-12 flex w-full items-center gap-4 bg-gradient-to-r from-[#FFFFFF] px-6 py-3"
+    >
+      <LyButton
+        type="default"
+        size="middle"
+        class="rounded-[4px] px-[12px]"
+        @click="hasPublished ? handleClose() : (openCancelModal = true)"
+      >
+        返回
+      </LyButton>
+      <div class="text-[18px] font-bold">创建测评任务</div>
     </div>
+    <CreateAssessmentDialogHeader
+      :current-step="step"
+      @change="(v: number) => (step = v)"
+    />
+
+    <div class="mt-6">
+      <CreateAssessmentDialogContent
+        :key="resetKey"
+        :step="step"
+        @next="onNext"
+        @prev="onPrev"
+        @publish="onPublished"
+      />
+    </div>
+  </AModal>
+
+  <AModal
+    v-model:open="openCancelModal"
+    :title="null"
+    centered
+    :closable="false"
+  >
+    <div>确定要放弃创建测评任务吗？已填写的信息将丢失</div>
+    <template #footer>
+      <div>
+        <LyButton
+          type="default"
+          size="middle"
+          class="rounded-[4px] px-[12px]"
+          @click="openCancelModal = false"
+        >
+          取消
+        </LyButton>
+        <LyButton
+          type="success"
+          size="middle"
+          class="rounded-[4px] px-[12px]"
+          @click="handleClose"
+        >
+          确定
+        </LyButton>
+      </div>
+    </template>
   </AModal>
 </template>
 
-<style lang="less">
+<style lang="scss">
 .full-modal {
   .ant-modal {
-    max-width: 100%;
     top: 0;
+    max-width: 100%;
     padding-bottom: 0;
     margin: 0;
   }
+
   .ant-modal-content {
     display: flex;
     flex-direction: column;
     height: calc(100vh);
+    padding: 0;
   }
+
   .ant-modal-body {
     flex: 1;
     background: #f5f6f8; // 轻灰底与内容区域反差

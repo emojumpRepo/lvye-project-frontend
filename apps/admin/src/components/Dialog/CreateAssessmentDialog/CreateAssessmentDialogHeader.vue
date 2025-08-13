@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
+import { Steps as ASteps } from 'ant-design-vue';
+
 const props = withDefaults(
   defineProps<{
     currentStep?: number; // 1-based
@@ -12,71 +14,131 @@ const props = withDefaults(
   },
 );
 
-// Figma Dev assets
-const ellipseActive =
-  'http://localhost:3845/assets/7d58263d5a0edaf864022bc38df80e564779fe75.svg';
-const ellipseInactive =
-  'http://localhost:3845/assets/08ccc5cc49260e5fd95b8637dd8fe74003a481d7.svg';
-const lineActive =
-  'http://localhost:3845/assets/7858ba218830a2f9cd819d0d70ad39a9c00c4a85.svg';
-const lineInactive =
-  'http://localhost:3845/assets/6d99145b2e3331e1a25ab25ada889dcac9164865.svg';
+const emit = defineEmits<{
+  (e: 'change', step: number): void;
+}>();
+
+const currentIndex = computed(() => Math.max(0, (props.currentStep || 1) - 1));
 
 const items = computed(() =>
   props.steps.map((label, idx) => ({
     index: idx + 1,
     label,
-    active: props.currentStep === idx + 1,
-    done: props.currentStep > idx + 1,
+    active: (props.currentStep || 1) === idx + 1,
+    done: (props.currentStep || 1) > idx + 1,
   })),
 );
 </script>
 
 <template>
   <div
-    class="relative rounded-2xl bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]"
+    class="relative mx-auto w-full max-w-[1049px] rounded-2xl bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]"
   >
     <div
       class="pointer-events-none absolute inset-0 rounded-2xl border border-white"
     ></div>
 
-    <div class="px-8 py-8">
-      <div class="flex items-center justify-between">
-        <template v-for="(it, i) in items" :key="it.index">
-          <div class="flex w-1/4 flex-col items-center gap-4">
-            <div class="relative h-10 w-10">
-              <img
-                :src="it.active || it.done ? ellipseActive : ellipseInactive"
-                alt=""
-                class="h-10 w-10"
-              />
-              <div
-                class="pointer-events-none absolute inset-0 flex items-center justify-center text-white"
-              >
-                <span class="text-[16px] font-semibold">{{ it.index }}</span>
-              </div>
-            </div>
+    <div class="px-8 py-10">
+      <ASteps
+        :current="currentIndex"
+        label-placement="vertical"
+        class="custom-steps"
+        @change="(i: number) => emit('change', i + 1)"
+      >
+        <ASteps.Step v-for="it in items" :key="it.index" :title="it.label">
+          <template #icon>
             <div
-              class="text-[16px]"
+              class="step-dot"
               :class="
-                it.active ? 'font-semibold text-[#14E77E]' : 'text-[#979899]'
+                it.active
+                  ? 'step-dot--active'
+                  : it.done
+                    ? 'step-dot--done'
+                    : 'step-dot--wait'
               "
             >
-              {{ it.label }}
+              <span class="step-dot__num">{{ it.index }}</span>
             </div>
-          </div>
-
-          <div v-if="i < items.length - 1" class="flex w-1/12 items-center">
-            <img
-              :src="items[i] && items[i].done ? lineActive : lineInactive"
-              alt=""
-              class="h-[2px] w-full"
-            />
-          </div>
-        </template>
-      </div>
+          </template>
+        </ASteps.Step>
+      </ASteps>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* 调整 Steps 在不同状态下的标题颜色和字重 */
+:deep(.custom-steps .ant-steps-item-process .ant-steps-item-title),
+:deep(.custom-steps .ant-steps-item-finish .ant-steps-item-title) {
+  font-weight: 600;
+  color: #000;
+}
+
+:deep(.custom-steps .ant-steps-item-wait .ant-steps-item-title) {
+  font-weight: 500;
+  color: #979899;
+}
+
+:deep(.custom-steps .ant-steps-item-title) {
+  margin-left: 8px;
+}
+
+:deep(.custom-steps .ant-steps-item:last-child) {
+  margin-right: 8px;
+}
+
+/* 调整连线为 2px，纯色实现，并精确垂直居中到 40px 圆点的中心 */
+:deep(.custom-steps .ant-steps-item-tail) {
+  top: 20px; /* 40/2 => 20，保证与圆心同一高度 */
+  padding: 0 32px;
+  margin-inline-start: 60px; /* 半径: 40/2 => 20，使线从圆心开始 */
+}
+
+:deep(.custom-steps .ant-steps-item-tail::after) {
+  height: 1px;
+  background-color: #e6e7eb;
+}
+
+/* 进行中与待处理（灰色） */
+:deep(.custom-steps .ant-steps-item-process .ant-steps-item-tail::after),
+:deep(.custom-steps .ant-steps-item-wait .ant-steps-item-tail::after) {
+  background-color: #e6e7eb;
+}
+
+/* 调整图标容器大小，避免默认 32px 限制 */
+:deep(.custom-steps .ant-steps-item-icon) {
+  width: 40px;
+  height: 40px;
+}
+
+:deep(.custom-steps .ant-steps-item-active .ant-steps-item-tail::after) {
+  background-color: #04dc70;
+}
+
+.step-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.step-dot__num {
+  line-height: 1;
+}
+
+.step-dot--active,
+.step-dot--done {
+  color: #fff;
+  background-color: #04dc70;
+}
+
+.step-dot--wait {
+  font-weight: 500;
+  color: #b0b1b2;
+  background-color: #f0f2f5;
+}
+</style>

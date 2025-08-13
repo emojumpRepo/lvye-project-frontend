@@ -177,8 +177,8 @@ const classes = computed(() => [
 
 .ly-btn-success.is-ghost.ant-btn,
 .ly-btn-success.is-ghost.ant-btn-default {
-  color: var(--ant-color-success, #52c41a);
-  border-color: var(--ant-color-success, #52c41a);
+  color: var(--ant-color-success, #04dc70);
+  border-color: var(--ant-color-success, #04dc70);
 }
 
 .ly-btn-cyan.is-ghost.ant-btn,
@@ -229,14 +229,14 @@ const classes = computed(() => [
 .ly-btn-success:not(.is-ghost).ant-btn,
 .ly-btn-success:not(.is-ghost).ant-btn-default {
   color: #fff;
-  background-color: var(--ant-color-success, #52c41a);
-  border-color: var(--ant-color-success, #52c41a);
+  background-color: var(--ant-color-success, #04dc70);
+  border-color: var(--ant-color-success, #04dc70);
 }
 
 .ly-btn-success:not(.is-ghost).ant-btn:hover {
   color: #fff;
-  background-color: var(--ant-color-success-hover, #73d13d);
-  border-color: var(--ant-color-success, #52c41a);
+  background-color: var(--ant-color-success-hover, #02c663);
+  border-color: var(--ant-color-success-hover, #02c663);
 }
 
 .ly-btn-cyan:not(.is-ghost).ant-btn,
@@ -276,5 +276,15 @@ const classes = computed(() => [
   color: #fff;
   background-color: #c951fa;
   border-color: #b500fe;
+}
+
+/* Disabled 状态统一置灰 */
+.ant-btn[disabled],
+.ant-btn[disabled]:hover,
+.ant-btn[disabled]:focus {
+  color: rgb(0 0 0 / 25%) !important;
+  background-color: #f5f5f5 !important;
+  border-color: #d9d9d9 !important;
+  box-shadow: none !important;
 }
 </style>
