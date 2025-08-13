@@ -7,6 +7,7 @@ import { getPackagesSync } from '@manypkg/get-packages';
 import typographyPlugin from '@tailwindcss/typography';
 import animate from 'tailwindcss-animate';
 
+import { backgroundPlugin } from './plugins/background';
 import { enterAnimationPlugin } from './plugins/entry';
 
 // import defaultTheme from 'tailwindcss/defaultTheme';
@@ -80,7 +81,7 @@ const customColors = {
     foreground: 'hsl(var(--success-foreground))',
   },
   header: {
-    DEFAULT: 'hsl(var(--header))',
+    DEFAULT: 'var(--header)',
   },
   heavy: {
     DEFAULT: 'hsl(var(--heavy))',
@@ -128,6 +129,7 @@ export default {
     typographyPlugin,
     addDynamicIconSelectors(),
     enterAnimationPlugin,
+    backgroundPlugin,
   ],
   prefix: '',
   theme: {
