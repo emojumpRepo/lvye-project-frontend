@@ -6,7 +6,7 @@ const routes: RouteRecordRaw[] = [
     path: '/ai-healing',
     component: () => import('#/views/ai-healing/index.vue'),
     meta: {
-      icon: 'tabler:ai',
+      icon: 'lucide:heart-handshake',
       order: 3,
       title: '心之旅疗愈室',
     },

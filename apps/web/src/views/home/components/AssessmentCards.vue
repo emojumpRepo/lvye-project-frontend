@@ -6,6 +6,16 @@ interface AssessmentItem {
   gradient: string;
   iconImage: string;
   iconImageSize?: number;
+  /** 小屏幕专用：图标像素高度（优先级高于比例） */
+  iconImageSizeSm?: number;
+  /** 小屏幕专用：图标高度占容器高度的比例(0-1)，当未设置 iconImageSizeSm 时生效 */
+  iconImageScaleSm?: number;
+  /** 小屏幕专用：图标透明度(0-1) */
+  iconOpacitySm?: number;
+  /** 小屏幕专用：图标水平偏移(px)，相对居中位置 */
+  imgOffsetXSm?: number;
+  /** 小屏幕专用：图标垂直偏移(px)，相对顶部位置 */
+  imgOffsetYSm?: number;
   imgOffsetX?: number;
   imgOffsetY?: number;
 }
@@ -15,7 +25,7 @@ defineProps<{ items: AssessmentItem[] }>();
 
 <template>
   <div
-    class="flex h-full min-h-0 flex-col rounded-3xl border-0 bg-white/60 p-4 shadow-lg backdrop-blur-sm"
+    class="flex h-full min-h-0 flex-col rounded-3xl border-0 bg-white/60 p-4 shadow backdrop-blur-sm"
   >
     <div class="mb-3 flex items-center text-xl font-bold text-emerald-900">
       <span
@@ -27,38 +37,51 @@ defineProps<{ items: AssessmentItem[] }>();
         class="ml-2 h-2 w-2 animate-pulse rounded-full bg-gradient-to-r from-emerald-600 to-teal-600"
       ></span>
     </div>
-    <div class="grid flex-1 grid-cols-3 gap-3 lg:grid-cols-1 lg:gap-4">
+    <div
+      class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-1 lg:gap-4"
+    >
       <div
         v-for="item in items"
         :key="item.id"
-        class="group relative overflow-hidden rounded-2xl border border-emerald-100/60 shadow transition-all duration-300 hover:shadow-xl md:hover:-translate-y-1"
+        class="group relative overflow-hidden rounded-2xl border border-emerald-100/60 bg-gray-50 shadow transition-all duration-300 hover:shadow-xl md:hover:-translate-y-1"
       >
         <!-- 小屏幕：垂直布局 -->
-        <div class="flex h-full flex-col p-3 text-center lg:hidden">
-          <div class="mb-2 flex justify-center">
-            <img
-              :src="item.iconImage"
-              alt="assessment"
-              class="object-contain drop-shadow-sm"
-              :style="{
-                height: `${item.iconImageSize ?? 64}px`,
-                width: 'auto',
-              }"
-            />
+        <div
+          class="relative flex h-full min-h-[160px] flex-col p-3 text-center lg:hidden"
+        >
+          <!-- 文案内容：置于上层 -->
+          <div class="relative z-10 flex flex-1 flex-col">
+            <div class="mb-0.5 text-left text-lg font-bold text-emerald-900">
+              {{ item.title }}
+            </div>
+            <div
+              class="line-clamp-3 text-left text-sm leading-relaxed text-emerald-900/80"
+            >
+              {{ item.description }}
+            </div>
+            <span
+              class="mt-auto inline-block rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 active:scale-[0.99]"
+            >
+              开始测评
+            </span>
           </div>
-          <div class="mb-1 text-sm font-bold text-emerald-900">
-            {{ item.title }}
-          </div>
-          <div
-            class="mt-1 line-clamp-2 text-xs leading-relaxed text-emerald-900/80"
-          >
-            {{ item.description }}
-          </div>
-          <span
-            class="mt-auto inline-block rounded-full bg-emerald-600 px-3 py-1 text-xs font-medium text-white shadow hover:bg-emerald-700"
-          >
-            开始测评
-          </span>
+
+          <!-- 背景图标：绝对定位+比例尺寸 -->
+          <img
+            :src="item.iconImage"
+            alt="assessment"
+            class="pointer-events-none absolute right-0 top-0 object-contain drop-shadow-sm"
+            :style="{
+              height: item.iconImageSizeSm
+                ? `${item.iconImageSizeSm}px`
+                : `${Math.round((item.iconImageScaleSm ?? 0.45) * 100)}%`,
+              width: 'auto',
+              opacity: item.iconOpacitySm ?? 0.25,
+              marginLeft: `${item.imgOffsetXSm || 0}px`,
+              marginTop: `${item.imgOffsetYSm || 0}px`,
+              zIndex: 0,
+            }"
+          />
         </div>
 
         <!-- 大屏幕：左右布局 -->

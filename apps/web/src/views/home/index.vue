@@ -19,8 +19,12 @@ interface AssessmentItem {
   gradient: string;
   iconImage: string;
   iconImageSize?: number;
+  iconImageScaleSm?: number;
+  iconOpacitySm?: number;
   imgOffsetX?: number;
   imgOffsetY?: number;
+  imgOffsetXSm?: number;
+  imgOffsetYSm?: number;
 }
 
 const assessments: AssessmentItem[] = [
@@ -30,9 +34,14 @@ const assessments: AssessmentItem[] = [
     description: '了解你的心理状态',
     gradient: 'from-emerald-400 to-teal-500',
     iconImage: 'https://i.111666.best/image/bsZhHgyxJzM0x62xetwj99.png',
+    // 大屏（水平布局）
     iconImageSize: 320,
     imgOffsetX: 40,
     imgOffsetY: -2,
+    // 小屏（垂直布局）
+    iconImageScaleSm: 0.4,
+    imgOffsetXSm: -10,
+    imgOffsetYSm: 5,
   },
   {
     id: 'retest',
@@ -40,9 +49,14 @@ const assessments: AssessmentItem[] = [
     description: '追踪你的成长变化',
     gradient: 'from-emerald-400 to-green-500',
     iconImage: 'https://i.111666.best/image/DCr5ux57H7FukpWvpNXbpO.png',
+    // 大屏（水平布局）
     iconImageSize: 300,
     imgOffsetX: -20,
     imgOffsetY: 0,
+    // 小屏（垂直布局）
+    iconImageScaleSm: 0.5,
+    imgOffsetXSm: -15,
+    imgOffsetYSm: 0,
   },
   {
     id: 'theme',
@@ -50,9 +64,14 @@ const assessments: AssessmentItem[] = [
     description: '深入特定心理领域',
     gradient: 'from-teal-400 to-emerald-500',
     iconImage: 'https://i.111666.best/image/QJ8Lw0jcU3OIAlD63jBXMA.png',
+    // 大屏（水平布局）
     iconImageSize: 100,
     imgOffsetX: 20,
     imgOffsetY: 6,
+    // 小屏（垂直布局）
+    iconImageScaleSm: 0.35,
+    imgOffsetXSm: -8,
+    imgOffsetYSm: 8,
   },
 ];
 
@@ -73,9 +92,7 @@ function toggleAudioBy(id: string) {
 </script>
 
 <template>
-  <div
-    class="h-full overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 lg:p-6"
-  >
+  <div class="h-full overflow-hidden p-4 lg:p-6">
     <!-- 一屏布局：左8/右4 -->
     <div
       class="grid h-full grid-cols-1 gap-4 lg:grid-cols-12 lg:[grid-template-rows:auto_1fr]"

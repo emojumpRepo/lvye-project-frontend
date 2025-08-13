@@ -5,9 +5,9 @@
     class="h-40 rounded-3xl border-0 from-emerald-100 via-teal-50 to-cyan-100 lg:h-48"
   >
     <div class="relative flex h-full flex-col justify-center p-6 lg:p-8">
-      <div
+      <!-- <div
         class="absolute right-0 top-0 h-20 w-20 -translate-y-10 translate-x-10 rounded-full bg-gradient-to-br from-teal-200/50 to-emerald-200/50"
-      ></div>
+      ></div> -->
       <div class="z-10">
         <h2
           class="mb-2 bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-2xl font-bold text-transparent lg:text-3xl"

@@ -4,7 +4,7 @@ defineProps<{ tip: string }>();
 
 <template>
   <div
-    class="rounded-3xl border-0 bg-gradient-to-br from-amber-50 to-orange-50 shadow-xl"
+    class="rounded-3xl border-0 bg-gradient-to-br from-amber-50 to-orange-50 shadow"
   >
     <div class="p-4 lg:p-6">
       <div class="flex items-center text-base lg:text-lg">
@@ -24,11 +24,11 @@ defineProps<{ tip: string }>();
           今日更新
         </span>
       </div>
-      <p class="mt-3 text-sm font-medium leading-relaxed text-amber-900/90 lg:mt-4">
+      <p
+        class="mt-3 text-sm font-medium leading-relaxed text-amber-900/90 lg:mt-4"
+      >
         {{ tip }}
       </p>
     </div>
   </div>
 </template>
-
-

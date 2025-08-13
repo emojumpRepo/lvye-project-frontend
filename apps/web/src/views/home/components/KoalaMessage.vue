@@ -2,7 +2,7 @@
 
 <template>
   <div
-    class="h-40 rounded-3xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-xl lg:h-48"
+    class="h-40 rounded-3xl border-0 bg-gradient-to-br from-emerald-50 to-teal-50 shadow lg:h-48"
   >
     <div class="flex h-full flex-col justify-between px-6 py-2 pb-6 lg:px-8">
       <div>

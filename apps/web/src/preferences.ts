@@ -28,9 +28,10 @@ export const overridesPreferences = defineOverridesPreferences({
   },
   sidebar: {
     width: 260,
-    bottomCustomHeight: 140,
+    bottomCustomHeight: 200,
     collapsedButton: false,
     fixedButton: false,
+    neverCollapse: true,
   },
   footer: {
     /** 默认关闭 footer 页脚，因为有一定遮挡 */

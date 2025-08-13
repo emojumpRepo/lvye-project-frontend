@@ -8,8 +8,8 @@ interface AudioItem {
 }
 
 const props = defineProps<{
+  activeId: null | string;
   items: AudioItem[];
-  activeId: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -23,7 +23,7 @@ function onToggle(id: string) {
 
 <template>
   <div
-    class="flex flex-col rounded-3xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl"
+    class="flex flex-col rounded-3xl border-0 bg-gradient-to-br from-blue-50 to-indigo-50 shadow"
   >
     <div class="p-4 lg:p-6">
       <div
@@ -78,5 +78,3 @@ function onToggle(id: string) {
     </div>
   </div>
 </template>
-
-
