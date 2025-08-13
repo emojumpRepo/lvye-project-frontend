@@ -10,11 +10,13 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { Modal as AModal } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { CommonDialogContent } from '#/components/Dialog/CommonDialog';
 import LyButton from '#/components/LyButton/index.vue';
 
 import AssessmentSelect from './components/AssessmentSelect.vue';
 import BasicInfoForm from './components/BasicInfoForm.vue';
 import PublishConfirm from './components/PublishConfirm.vue';
+import PublishSuccess from './components/PublishSuccess.vue';
 import TargetSelect from './components/TargetSelect.vue';
 
 const props = withDefaults(
@@ -54,7 +56,7 @@ const basicInfoFormData = ref<BasicInfo>({
 const selectedAssessment = ref<AssessmentType | null>(null);
 const targetSelectData = ref<AssessmentTarget>({
   type: 'student',
-  targetIds: [],
+  selected: [],
 });
 const canNext = ref(false);
 
@@ -66,9 +68,16 @@ const successTaskId = ref(`TSK_${dayjs().format('YYYY_MMDD_HH')}`);
 const successLink = computed(
   () => `https://system.com/assessment/${successTaskId.value}`,
 );
-const selectedStudentCount = computed(
-  () => targetSelectData.value.targetIds.length,
+const selectedStudentCount = computed(() =>
+  targetSelectData.value.selected.reduce(
+    (acc, cur) => acc + (cur.studentIds?.length || 0),
+    0,
+  ),
 );
+
+function onTargetUpdate(v: AssessmentTarget) {
+  canNext.value = v.selected.reduce((n, i) => n + i.studentIds.length, 0) > 0;
+}
 const expectedFinishDate = computed(() =>
   basicInfoFormData.value.timeRange?.[1]
     ? dayjs(basicInfoFormData.value.timeRange[1]).format('YYYY-MM-DD')
@@ -79,7 +88,9 @@ const notifySendText = computed(
 );
 
 async function handleNext() {
-  if (props.step === 4) {
+  if (publishSucceeded.value) {
+    // TODO: navigate to task progress page
+  } else if (props.step === 4 && !publishSucceeded.value) {
     isPublishOpen.value = true;
   } else {
     emit('next');
@@ -87,7 +98,11 @@ async function handleNext() {
 }
 
 function handlePrev() {
-  emit('prev');
+  if (publishSucceeded.value) {
+    // TODO: back to task list
+  } else {
+    emit('prev');
+  }
 }
 
 // 根据当前步骤重置/设置下一步可用性，避免沿用上一步的状态
@@ -114,7 +129,7 @@ watch(
         break;
       }
       case 3: {
-        canNext.value = targetSelectData.value.targetIds.length > 0;
+        canNext.value = selectedStudentCount.value > 0;
         break;
       }
       default: {
@@ -145,123 +160,63 @@ function handlePublish() {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1049px] rounded-xl bg-white p-8">
-    <template v-if="!publishSucceeded">
-      <div class="mb-6 text-center text-[20px] font-bold">
-        {{ contentTitle[props.step] }}
-      </div>
+  <CommonDialogContent
+    :title="!publishSucceeded ? contentTitle[props.step] : ''"
+    :show-prev="props.step > 1"
+    :show-next="true"
+    :next-disabled="!canNext"
+    :next-text="
+      publishSucceeded
+        ? '查看任务进度'
+        : props.step === 4
+          ? '确认发布'
+          : '下一步'
+    "
+    :prev-text="publishSucceeded ? '返回任务列表' : '上一步'"
+    :loading="loading"
+    @prev="handlePrev"
+    @next="handleNext"
+  >
+    <!-- Step 1: 基本信息 -->
+    <BasicInfoForm
+      ref="basicInfoFormRef"
+      v-if="props.step === 1"
+      v-model:model-value="basicInfoFormData"
+      @valid="(v: boolean) => (canNext = v)"
+    />
 
-      <!-- Step 1: 基本信息 -->
-      <BasicInfoForm
-        ref="basicInfoFormRef"
-        v-if="props.step === 1"
-        v-model:model-value="basicInfoFormData"
-        @valid="(v: boolean) => (canNext = v)"
-      />
+    <!-- Step 2: 选择量表 -->
+    <AssessmentSelect
+      ref="assessmentSelectRef"
+      v-else-if="props.step === 2"
+      v-model:assessment="selectedAssessment"
+    />
 
-      <!-- Step 2: 选择量表 -->
-      <AssessmentSelect
-        ref="assessmentSelectRef"
-        v-else-if="props.step === 2"
-        v-model:assessment="selectedAssessment"
-      />
+    <!-- Step 3: 选择对象 -->
+    <TargetSelect
+      ref="targetSelectRef"
+      v-else-if="props.step === 3"
+      v-model:model-value="targetSelectData"
+      @update:model-value="onTargetUpdate"
+    />
 
-      <!-- Step 3: 选择对象 -->
-      <TargetSelect
-        ref="targetSelectRef"
-        v-else-if="props.step === 3"
-        v-model:model-value="targetSelectData"
-        @update:model-value="
-          (v: AssessmentTarget) => (canNext = v.targetIds.length > 0)
-        "
-      />
-
-      <!-- Step 4: 确认发布 -->
-      <PublishConfirm
-        v-else
-        :basic="basicInfoFormData"
-        :assessment="selectedAssessment"
-        :target="targetSelectData"
-      />
-    </template>
+    <!-- Step 4: 确认发布 -->
+    <PublishConfirm
+      v-else-if="props.step === 4 && !publishSucceeded"
+      :basic="basicInfoFormData"
+      :assessment="selectedAssessment"
+      :target="targetSelectData"
+    />
 
     <!-- 发布成功页面 -->
-    <template v-else>
-      <div class="mb-6 flex flex-col items-center gap-4">
-        <img
-          src="../../../static/images/assessment/publish_success.svg"
-          alt="发布成功"
-          class="size-21"
-        />
-        <div class="text-[20px] font-bold text-black">测评任务发布成功</div>
-      </div>
-
-      <div class="mx-auto w-full max-w-[600px] rounded-xl bg-[#F7F8FB] p-6">
-        <div class="flex flex-col space-y-3 text-[16px] text-[#959599]">
-          <div>
-            <span class="publish-success-detail-title">任务ID：</span>
-            <span>{{ successTaskId }}</span>
-          </div>
-          <div>
-            <span class="publish-success-detail-title">测评链接：</span>
-            <span class="truncate">{{ successLink }}</span>
-          </div>
-          <div>
-            <span class="publish-success-detail-title">通知发送：</span>
-            <span>{{ notifySendText }}</span>
-          </div>
-          <div>
-            <span class="publish-success-detail-title">预计完成时间：</span>
-            <span>{{ expectedFinishDate }}</span>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div class="mt-8 flex justify-center gap-4">
-      <template v-if="!publishSucceeded">
-        <LyButton
-          v-if="props.step > 1"
-          type="default"
-          size="middle"
-          class="h-12 w-[120px] justify-center"
-          @click="handlePrev"
-        >
-          上一步
-        </LyButton>
-        <LyButton
-          :loading="loading"
-          type="success"
-          size="middle"
-          class="h-12 justify-center"
-          :class="{
-            'w-[150px]': props.step === 1,
-            'w-[120px]': props.step > 1,
-          }"
-          :disabled="!canNext"
-          @click="handleNext"
-        >
-          {{ props.step === 4 ? '确认发布' : '下一步' }}
-        </LyButton>
-      </template>
-      <template v-else>
-        <LyButton
-          type="default"
-          size="middle"
-          class="h-12 w-[120px] justify-center"
-        >
-          返回任务列表
-        </LyButton>
-        <LyButton
-          type="success"
-          size="middle"
-          class="h-12 w-[120px] justify-center"
-        >
-          查看任务进度
-        </LyButton>
-      </template>
-    </div>
-  </div>
+    <PublishSuccess
+      v-else
+      :task-id="successTaskId"
+      :link="successLink"
+      :notify-text="notifySendText"
+      :finish-date="expectedFinishDate"
+    />
+  </CommonDialogContent>
 
   <!-- 确认发布弹窗 -->
   <AModal
@@ -273,7 +228,7 @@ function handlePublish() {
   >
     <div class="p-4">
       发布后将立即向{{
-        targetSelectData.targetIds.length
+        selectedStudentCount
       }}名学生发送测评通知，任务发布后不可撤销, 但可以修改截止时间！
     </div>
 
@@ -287,8 +242,3 @@ function handlePublish() {
     </template>
   </AModal>
 </template>
-<style lang="scss" scoped>
-.publish-success-detail-title {
-  @apply mr-2 font-semibold text-black;
-}
-</style>

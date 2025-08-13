@@ -18,51 +18,20 @@ const props = withDefaults(
   {},
 );
 
-// 占位（如需离线回显可保留，但当前已从父层传递完整对象）
-
 const selectedAssessment = computed(() => props.assessment);
 
-// 用于统计“涉及班级、每个班人数”的演示数据（与 TargetSelect 保持一致）
-type Student = { id: string; name: string; sno: string };
-type ClassGroup = {
-  count: number;
-  id: string;
-  name: string;
-  students: Student[];
-};
-const classGroups: ClassGroup[] = [
-  {
-    id: 'c1',
-    name: '高一（1）班',
-    count: 26,
-    students: [
-      { id: 's1', name: '李三', sno: '1252125212111' },
-      { id: 's2', name: '李四', sno: '1252125212112' },
-    ],
-  },
-  {
-    id: 'c2',
-    name: '高一（2）班',
-    count: 26,
-    students: [
-      { id: 's3', name: '王五', sno: '1252125212113' },
-      { id: 's4', name: '赵六', sno: '1252125212114' },
-    ],
-  },
-];
-
 const classStats = computed(() => {
-  const selected = new Set(props.target.targetIds);
-  const lines: { count: number; name: string }[] = [];
-  classGroups.forEach((c) => {
-    const n = c.students.filter((s) => selected.has(s.id)).length;
-    if (n > 0) lines.push({ count: n, name: c.name });
-  });
-  return lines;
+  // 汇总每个已选择班级中的学生人数
+  return props.target.selected.map((sel) => ({
+    name: sel.className,
+    count: sel.studentIds.length,
+  }));
 });
 
 const involvedClassCount = computed(() => classStats.value.length);
-const selectedStudentCount = computed(() => props.target.targetIds.length);
+const selectedStudentCount = computed(() =>
+  props.target.selected.reduce((acc, cur) => acc + cur.studentIds.length, 0),
+);
 
 const dateRange = computed(() => {
   const [start, end] = props.basic.timeRange || [];
@@ -72,7 +41,7 @@ const dateRange = computed(() => {
 </script>
 
 <template>
-  <div class="max-h-[408px] space-y-6 overflow-y-auto pr-1">
+  <div class="space-y-6 pr-1">
     <!-- 基本信息确认 -->
     <div>
       <div class="mb-3 flex items-center gap-3">

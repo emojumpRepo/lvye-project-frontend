@@ -15,16 +15,16 @@ import {
 import LyButton from '#/components/LyButton/index.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: AssessmentTarget }>(), {
-  modelValue: () => ({ type: 'student', targetIds: [] }),
+  modelValue: () => ({ type: 'student', selected: [] }),
 });
 const emit = defineEmits<{
   (e: 'update:modelValue', value: AssessmentTarget): void;
 }>();
 
-// 单选：批次名称
+// 单选：收件类型
 const type = ref<AssessmentTarget['type']>(props.modelValue.type);
-// 多选：选中的学生 id 列表
-const selectedIds = ref<string[]>([...props.modelValue.targetIds]);
+// 多选：选中的学生，按班级聚合
+const selectedByClass = ref<Map<string, Set<string>>>(new Map());
 
 type Student = { id: string; name: string; sno: string };
 type ClassGroup = {
@@ -56,6 +56,17 @@ const allClasses = ref<ClassGroup[]>([
   },
 ]);
 
+// 初始化已选
+function initSelected() {
+  selectedByClass.value = new Map(
+    (props.modelValue.selected || []).map((item) => [
+      item.classId,
+      new Set(item.studentIds),
+    ]),
+  );
+}
+initSelected();
+
 // 搜索：仅点击“搜索”按钮后才应用关键词
 const keyword = ref('');
 const appliedKeyword = ref('');
@@ -74,37 +85,58 @@ const filteredClasses = computed(() => {
 
 // 同步到父组件
 function sync() {
+  // 将 Map 转换为接口需要的结构
+  const entries = [...selectedByClass.value.entries()];
+  const selected = entries
+    .map(([classId, idSet]) => {
+      const group = allClasses.value.find((c) => c.id === classId);
+      return {
+        classId,
+        className: group?.name ?? '',
+        studentIds: [...idSet],
+      };
+    })
+    .filter((it) => it.studentIds.length > 0);
   emit('update:modelValue', {
     type: type.value,
-    targetIds: [...selectedIds.value],
+    selected,
   });
 }
 
 // 勾选单个学生
-function toggleStudent(id: string, checked: boolean) {
-  const set = new Set(selectedIds.value);
+function toggleStudent(group: ClassGroup, id: string, checked: boolean) {
+  const set = new Set(selectedByClass.value.get(group.id) || []);
   checked ? set.add(id) : set.delete(id);
-  selectedIds.value = [...set];
+  if (set.size > 0) selectedByClass.value.set(group.id, set);
+  else selectedByClass.value.delete(group.id);
   sync();
 }
 
 // 勾选一个班级
-function toggleClass(students: Student[], checked: boolean) {
-  const set = new Set(selectedIds.value);
-  students.forEach((s) => (checked ? set.add(s.id) : set.delete(s.id)));
-  selectedIds.value = [...set];
+function toggleClass(group: ClassGroup, checked: boolean) {
+  if (checked) {
+    selectedByClass.value.set(
+      group.id,
+      new Set(group.students.map((s) => s.id)),
+    );
+  } else {
+    selectedByClass.value.delete(group.id);
+  }
   sync();
 }
 
-function isClassAllChecked(students: Student[]) {
-  return students.every((s) => selectedIds.value.includes(s.id));
+function isClassAllChecked(group: ClassGroup) {
+  const set = selectedByClass.value.get(group.id);
+  if (!set) return false;
+  return set.size > 0 && set.size === group.students.length;
 }
-function isClassIndeterminate(students: Student[]) {
-  const n = students.filter((s) => selectedIds.value.includes(s.id)).length;
-  return n > 0 && n < students.length;
+function isClassIndeterminate(group: ClassGroup) {
+  const set = selectedByClass.value.get(group.id);
+  if (!set) return false;
+  return set.size > 0 && set.size < group.students.length;
 }
 
-// 批次名称变化也要同步
+// 收件类型变化也要同步
 watch(type, sync);
 
 function handleSearch() {
@@ -118,11 +150,11 @@ function isPanelActive(panel: any) {
 
 <template>
   <div class="mx-auto w-full max-w-[610px] space-y-6">
-    <!-- 批次名称 -->
+    <!-- 收件类型 -->
     <div>
       <div class="mb-2 flex items-center gap-1 text-[14px]">
         <div class="font-medium text-black">收件类型</div>
-        <div class="text-[#FA4B4B]">*</div>
+        <div class="text-[#FF0831]">*</div>
       </div>
       <ARadio.Group v-model:value="type">
         <ARadio value="student">学生本人</ARadio>
@@ -134,7 +166,7 @@ function isPanelActive(panel: any) {
     <div>
       <div class="mb-2 flex items-center gap-1 text-[14px]">
         <div class="font-medium text-black">选择班级</div>
-        <div class="text-[#FA4B4B]">*</div>
+        <div class="text-[#FF0831]">*</div>
       </div>
       <div class="mb-3 flex gap-4">
         <AInput
@@ -181,11 +213,9 @@ function isPanelActive(panel: any) {
                   共{{ c.count }}人
                 </span>
                 <ACheckbox
-                  :indeterminate="isClassIndeterminate(c.students)"
-                  :checked="isClassAllChecked(c.students)"
-                  @change="
-                    (e: any) => toggleClass(c.students, e.target.checked)
-                  "
+                  :indeterminate="isClassIndeterminate(c)"
+                  :checked="isClassAllChecked(c)"
+                  @change="(e: any) => toggleClass(c, e.target.checked)"
                 />
               </div>
             </template>
@@ -201,8 +231,10 @@ function isPanelActive(panel: any) {
                   <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
                 </div>
                 <ACheckbox
-                  :checked="selectedIds.includes(stu.id)"
-                  @change="(e: any) => toggleStudent(stu.id, e.target.checked)"
+                  :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
+                  @change="
+                    (e: any) => toggleStudent(c, stu.id, e.target.checked)
+                  "
                 />
               </div>
             </div>

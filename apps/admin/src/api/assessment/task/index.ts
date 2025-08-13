@@ -14,7 +14,13 @@ export interface AssessmentType {
   dimension: string[];
 }
 
+export interface SelectedAssessmentTargetItem {
+  classId: string;
+  className: string;
+  studentIds: string[];
+}
+
 export interface AssessmentTarget {
   type: 'parent' | 'student';
-  targetIds: string[];
+  selected: SelectedAssessmentTargetItem[];
 }

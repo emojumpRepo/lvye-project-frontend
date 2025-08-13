@@ -122,7 +122,7 @@ watch(
         <div>
           <div class="mb-2 flex items-center gap-1 text-[14px]">
             <div class="font-medium text-black">批次名称</div>
-            <div class="text-[#FA4B4B]">*</div>
+            <div class="text-[#FF0831]">*</div>
           </div>
           <AForm.Item class="mb-2" name="name" has-feedback>
             <AInput
@@ -140,7 +140,7 @@ watch(
         <div>
           <div class="mb-2 flex items-center gap-1 text-[14px]">
             <div class="font-medium text-black">测评时间范围</div>
-            <div class="text-[#FA4B4B]">*</div>
+            <div class="text-[#FF0831]">*</div>
           </div>
           <AForm.Item name="timeRange">
             <ADatePicker.RangePicker
