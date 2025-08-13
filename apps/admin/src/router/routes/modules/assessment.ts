@@ -3,35 +3,35 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/assessment',
-    component: () => import('#/views/assessment/index.vue'),
     name: 'Assessment',
     meta: {
-      title: '测评',
+      title: '测评中心',
       icon: 'carbon:checkbox-checked',
-      hideInMenu: false,
+      activePath: '/assessment/list',
+      keepAlive: false,
+      hideInMenu: true,
     },
     children: [
       {
-        path: '/assessment/questionnaire',
-        component: () => import('#/views/assessment/questionnaire/index.vue'),
-        name: 'AssessmentQuestionnaire',
-        meta: {
-          title: '问卷详情',
-          icon: 'lucide:file-text',
-          hideInMenu: false,
-        },
-      },
-      {
-        path: '/assessment/assessment-manage',
-        component: () =>
-          import('#/views/assessment/assessment-manage/index.vue'),
+        path: '/assessment/list',
+        component: () => import('#/views/assessment/list/index.vue'),
         name: 'AssessmentManage',
         meta: {
           title: '测评管理',
           icon: 'lucide:file-text',
-          hideInMenu: false,
+          hideInMenu: true,
         },
       },
+      {
+        path: '/assessment/detail/:taskNo',
+        component: () => import('#/views/assessment/detail/index.vue'),
+        name: 'AssessmentDetail',
+        meta: {
+          title: '测评详情',
+          icon: 'lucide:file-text',
+          hideInMenu: true,
+        },
+      }
     ],
   },
 ];

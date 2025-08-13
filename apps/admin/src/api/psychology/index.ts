@@ -13,44 +13,12 @@
 
 // ==================== 学生档案管理 ====================
 export * from './student-profile';
-export type { PsychologyStudentProfileApi } from './student-profile';
 
 // ==================== 测评管理 ====================
 export * from './assessment';
-export type { PsychologyAssessmentApi } from './assessment';
 
 // ==================== 咨询管理 ====================
 export * from './consultation';
-export type { PsychologyConsultationApi } from './consultation';
-
-// ==================== 通知系统 ====================
-export * from './notification';
-export type { PsychologyNotificationApi } from './notification';
-
-// ==================== 时间线管理 ====================
-export * from './timeline';
-export type { PsychologyTimelineApi } from './timeline';
-
-// ==================== 快速上报 ====================
-export * from './quick-report';
-export type { PsychologyQuickReportApi } from './quick-report';
-
-// ==================== 系统配置 ====================
-export * from './config';
-export type { PsychologyConfigApi } from './config';
-
-// ==================== 统一类型定义 ====================
-
-/** 心理健康系统所有API命名空间 */
-export namespace PsychologyApi {
-  export import StudentProfile = PsychologyStudentProfileApi;
-  export import Assessment = PsychologyAssessmentApi;
-  export import Consultation = PsychologyConsultationApi;
-  export import Notification = PsychologyNotificationApi;
-  export import Timeline = PsychologyTimelineApi;
-  export import QuickReport = PsychologyQuickReportApi;
-  export import Config = PsychologyConfigApi;
-}
 
 // ==================== 常用枚举定义 ====================
 

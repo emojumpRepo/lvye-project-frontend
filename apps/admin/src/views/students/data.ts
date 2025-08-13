@@ -1,8 +1,12 @@
 import type { VbenFormSchema } from '#/adapter/form';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { h } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
+
+// 导出学生档案相关类型
+export type { PsychologyStudentProfileApi };
 
 /** 学籍信息 */
 export function usePersonalInfoFormSchema(): VbenFormSchema[] {

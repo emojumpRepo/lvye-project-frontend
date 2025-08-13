@@ -56,34 +56,34 @@ const figmaRefreshIcon =
     <button
       v-if="showRefresh"
       type="button"
-      class="absolute right-5 top-7 inline-flex items-center gap-1.5 text-[14px] text-[#959599]"
+      class="absolute right-4 top-4 inline-flex items-center gap-1.5 text-sm text-[#959599] sm:right-5 sm:top-7"
       @click="emit('refresh')"
     >
-      <img :src="figmaRefreshIcon" alt="" class="size-3.5" />
+      <img :src="figmaRefreshIcon" alt="" class="size-4" />
       <span>刷新</span>
     </button>
 
-    <div class="ml-5 mt-5 flex items-center gap-2">
+    <div class="mt-4 ml-4 flex items-center gap-2 sm:mt-5 sm:ml-5">
       <img v-if="iconSrc" :src="iconSrc!" alt="" class="size-6" />
-      <div class="text-[20px] font-semibold text-black">{{ title }}</div>
+      <div class="text-lg font-semibold text-black sm:text-xl">{{ title }}</div>
       <div
         v-if="count !== null"
-        class="relative rounded-2xl bg-[#FFF1E0] px-[18px] py-0.5"
+        class="relative rounded-2xl bg-[#FFF1E0] px-4 py-0.5"
       >
         <div
           class="pointer-events-none absolute inset-0 rounded-2xl border border-[#FFC57B]"
         ></div>
-        <span class="text-[14px] font-semibold text-[#FF8400]">{{
+        <span class="text-sm font-semibold text-[#FF8400]">{{
           count
         }}</span>
       </div>
     </div>
 
-    <div class="mt-6 px-[22px] pb-5">
+    <div class="mt-4 px-4 pb-5 sm:mt-6 sm:px-6">
       <slot></slot>
     </div>
 
-    <div v-if="pagination" class="px-[22px] pb-5">
+    <div v-if="pagination" class="px-4 pb-5 sm:px-6">
       <APagination
         size="small"
         :current="pagination.current ?? 1"

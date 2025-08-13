@@ -63,7 +63,7 @@ export namespace PsychologyStudentProfileApi {
 /** 查询学生档案分页列表 */
 export function getStudentProfilePage(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
   return requestClient.get<PageResult<PsychologyStudentProfileApi.StudentProfile>>(
-    '/admin-api/psychology/student-profile/page',
+    '/psychology/student-profile/page',
     { params },
   );
 }
@@ -71,35 +71,35 @@ export function getStudentProfilePage(params: PsychologyStudentProfileApi.Studen
 /** 查询学生档案详情 */
 export function getStudentProfile(id: number) {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile>(
-    `/admin-api/psychology/student-profile/get?id=${id}`,
+    `/psychology/student-profile/get?id=${id}`,
   );
 }
 
 /** 新增学生档案 */
 export function createStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
-  return requestClient.post('/admin-api/psychology/student-profile/create', data);
+  return requestClient.post('/psychology/student-profile/create', data);
 }
 
 /** 修改学生档案 */
 export function updateStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
-  return requestClient.put('/admin-api/psychology/student-profile/update', data);
+  return requestClient.put('/psychology/student-profile/update', data);
 }
 
 /** 删除学生档案 */
 export function deleteStudentProfile(id: number) {
-  return requestClient.delete(`/admin-api/psychology/student-profile/delete?id=${id}`);
+  return requestClient.delete(`/psychology/student-profile/delete?id=${id}`);
 }
 
 /** 批量删除学生档案 */
 export function deleteStudentProfileList(ids: number[]) {
   return requestClient.delete(
-    `/admin-api/psychology/student-profile/delete-list?ids=${ids.join(',')}`,
+    `/psychology/student-profile/delete-list?ids=${ids.join(',')}`,
   );
 }
 
 /** 导出学生档案 */
 export function exportStudentProfile(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
-  return requestClient.download('/admin-api/psychology/student-profile/export-excel', {
+  return requestClient.download('/psychology/student-profile/export-excel', {
     params,
   });
 }
@@ -109,7 +109,7 @@ export function importStudentProfile(file: File) {
   const formData = new FormData();
   formData.append('file', file);
   return requestClient.post<PsychologyStudentProfileApi.StudentProfileImportResp>(
-    '/admin-api/psychology/student-profile/import',
+    '/psychology/student-profile/import',
     formData,
     {
       headers: {
@@ -121,7 +121,7 @@ export function importStudentProfile(file: File) {
 
 /** 下载学生档案导入模板 */
 export function downloadStudentProfileTemplate() {
-  return requestClient.download('/admin-api/psychology/student-profile/import-template');
+  return requestClient.download('/psychology/student-profile/import-template');
 }
 
 /** 更新学生心理状态 */
@@ -131,7 +131,7 @@ export function updateStudentPsychologicalStatus(
   riskLevel: number,
 ) {
   return requestClient.put(
-    `/admin-api/psychology/student-profile/psychological-status/${id}`,
+    `/psychology/student-profile/psychological-status/${id}`,
     null,
     {
       params: {
@@ -145,6 +145,6 @@ export function updateStudentPsychologicalStatus(
 /** 获取学生档案精简列表 */
 export function getStudentProfileSimpleList() {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
-    '/admin-api/psychology/student-profile/simple-list',
+    '/psychology/student-profile/simple-list',
   );
 }

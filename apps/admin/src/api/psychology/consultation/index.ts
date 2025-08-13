@@ -132,7 +132,7 @@ export namespace PsychologyConsultationApi {
 /** 查询心理咨询记录分页列表 */
 export function getConsultationRecordPage(params: PsychologyConsultationApi.ConsultationRecordPageReq) {
   return requestClient.get<PageResult<PsychologyConsultationApi.ConsultationRecord>>(
-    '/admin-api/psychology/consultation-record/page',
+    '/psychology/consultation-record/page',
     { params },
   );
 }
@@ -140,35 +140,35 @@ export function getConsultationRecordPage(params: PsychologyConsultationApi.Cons
 /** 查询心理咨询记录详情 */
 export function getConsultationRecord(id: number) {
   return requestClient.get<PsychologyConsultationApi.ConsultationRecord>(
-    `/admin-api/psychology/consultation-record/get?id=${id}`,
+    `/psychology/consultation-record/get?id=${id}`,
   );
 }
 
 /** 创建心理咨询记录 */
 export function createConsultationRecord(data: PsychologyConsultationApi.ConsultationRecordSaveReq) {
-  return requestClient.post('/admin-api/psychology/consultation-record/create', data);
+  return requestClient.post('/psychology/consultation-record/create', data);
 }
 
 /** 更新心理咨询记录 */
 export function updateConsultationRecord(data: PsychologyConsultationApi.ConsultationRecordSaveReq) {
-  return requestClient.put('/admin-api/psychology/consultation-record/update', data);
+  return requestClient.put('/psychology/consultation-record/update', data);
 }
 
 /** 删除心理咨询记录 */
 export function deleteConsultationRecord(id: number) {
-  return requestClient.delete(`/admin-api/psychology/consultation-record/delete?id=${id}`);
+  return requestClient.delete(`/psychology/consultation-record/delete?id=${id}`);
 }
 
 /** 批量删除心理咨询记录 */
 export function deleteConsultationRecordList(ids: number[]) {
   return requestClient.delete(
-    `/admin-api/psychology/consultation-record/delete-list?ids=${ids.join(',')}`,
+    `/psychology/consultation-record/delete-list?ids=${ids.join(',')}`,
   );
 }
 
 /** 导出心理咨询记录 */
 export function exportConsultationRecord(params: PsychologyConsultationApi.ConsultationRecordPageReq) {
-  return requestClient.download('/admin-api/psychology/consultation-record/export-excel', {
+  return requestClient.download('/psychology/consultation-record/export-excel', {
     params,
   });
 }
@@ -178,7 +178,7 @@ export function exportConsultationRecord(params: PsychologyConsultationApi.Consu
 /** 查询危机干预事件分页列表 */
 export function getCrisisInterventionPage(params: PsychologyConsultationApi.CrisisInterventionPageReq) {
   return requestClient.get<PageResult<PsychologyConsultationApi.CrisisIntervention>>(
-    '/admin-api/psychology/crisis-intervention/page',
+    '/psychology/crisis-intervention/page',
     { params },
   );
 }
@@ -186,28 +186,28 @@ export function getCrisisInterventionPage(params: PsychologyConsultationApi.Cris
 /** 查询危机干预事件详情 */
 export function getCrisisIntervention(id: number) {
   return requestClient.get<PsychologyConsultationApi.CrisisIntervention>(
-    `/admin-api/psychology/crisis-intervention/get?id=${id}`,
+    `/psychology/crisis-intervention/get?id=${id}`,
   );
 }
 
 /** 创建危机干预事件 */
 export function createCrisisIntervention(data: PsychologyConsultationApi.CrisisInterventionSaveReq) {
-  return requestClient.post('/admin-api/psychology/crisis-intervention/create', data);
+  return requestClient.post('/psychology/crisis-intervention/create', data);
 }
 
 /** 更新危机干预事件 */
 export function updateCrisisIntervention(data: PsychologyConsultationApi.CrisisInterventionSaveReq) {
-  return requestClient.put('/admin-api/psychology/crisis-intervention/update', data);
+  return requestClient.put('/psychology/crisis-intervention/update', data);
 }
 
 /** 删除危机干预事件 */
 export function deleteCrisisIntervention(id: number) {
-  return requestClient.delete(`/admin-api/psychology/crisis-intervention/delete?id=${id}`);
+  return requestClient.delete(`/psychology/crisis-intervention/delete?id=${id}`);
 }
 
 /** 分配危机干预处理人 */
 export function assignCrisisHandler(id: number, handlerUserId: number) {
-  return requestClient.put(`/admin-api/psychology/crisis-intervention/assign`, {
+  return requestClient.put(`/psychology/crisis-intervention/assign`, {
     id,
     handlerUserId,
   });
@@ -215,7 +215,7 @@ export function assignCrisisHandler(id: number, handlerUserId: number) {
 
 /** 更新危机干预状态 */
 export function updateCrisisStatus(id: number, status: number, remark?: string) {
-  return requestClient.put(`/admin-api/psychology/crisis-intervention/update-status`, {
+  return requestClient.put(`/psychology/crisis-intervention/update-status`, {
     id,
     status,
     remark,
@@ -224,7 +224,7 @@ export function updateCrisisStatus(id: number, status: number, remark?: string) 
 
 /** 完成危机干预 */
 export function completeCrisisIntervention(id: number, interventionResult: string, followUpPlan?: string) {
-  return requestClient.put(`/admin-api/psychology/crisis-intervention/complete`, {
+  return requestClient.put(`/psychology/crisis-intervention/complete`, {
     id,
     interventionResult,
     followUpPlan,
@@ -236,27 +236,27 @@ export function completeCrisisIntervention(id: number, interventionResult: strin
 /** 获取咨询统计信息 */
 export function getConsultationStatistics() {
   return requestClient.get<PsychologyConsultationApi.ConsultationStatistics>(
-    '/admin-api/psychology/consultation-record/statistics',
+    '/psychology/consultation-record/statistics',
   );
 }
 
 /** 获取危机干预统计信息 */
 export function getCrisisStatistics() {
   return requestClient.get<PsychologyConsultationApi.CrisisStatistics>(
-    '/admin-api/psychology/crisis-intervention/statistics',
+    '/psychology/crisis-intervention/statistics',
   );
 }
 
 /** 获取学生咨询历史 */
 export function getStudentConsultationHistory(studentProfileId: number) {
   return requestClient.get<PsychologyConsultationApi.ConsultationRecord[]>(
-    `/admin-api/psychology/consultation-record/student-history?studentProfileId=${studentProfileId}`,
+    `/psychology/consultation-record/student-history?studentProfileId=${studentProfileId}`,
   );
 }
 
 /** 获取学生危机干预历史 */
 export function getStudentCrisisHistory(studentProfileId: number) {
   return requestClient.get<PsychologyConsultationApi.CrisisIntervention[]>(
-    `/admin-api/psychology/crisis-intervention/student-history?studentProfileId=${studentProfileId}`,
+    `/psychology/crisis-intervention/student-history?studentProfileId=${studentProfileId}`,
   );
 }
