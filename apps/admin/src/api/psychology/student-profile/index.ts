@@ -1,0 +1,150 @@
+import type { PageParam, PageResult } from '@vben/request';
+
+import { requestClient } from '#/api/request';
+
+export namespace PsychologyStudentProfileApi {
+  /** 学生档案信息 */
+  export interface StudentProfile {
+    id?: number;
+    userId?: number;
+    studentNo: string;
+    name: string;
+    sex?: number;
+    mobile?: string;
+    gradeDeptId?: number;
+    classDeptId?: number;
+    graduationStatus?: number;
+    psychologicalStatus?: number;
+    riskLevel?: number;
+    remark?: string;
+    createTime?: Date;
+    updateTime?: Date;
+    // 关联字段
+    gradeName?: string;
+    className?: string;
+  }
+
+  /** 学生档案分页查询参数 */
+  export interface StudentProfilePageReq extends PageParam {
+    studentNo?: string;
+    name?: string;
+    sex?: number;
+    gradeDeptId?: number;
+    classDeptId?: number;
+    graduationStatus?: number;
+    psychologicalStatus?: number;
+    riskLevel?: number;
+  }
+
+  /** 学生档案创建/更新请求 */
+  export interface StudentProfileSaveReq {
+    id?: number;
+    userId?: number;
+    studentNo: string;
+    name: string;
+    sex?: number;
+    mobile?: string;
+    gradeDeptId?: number;
+    classDeptId?: number;
+    graduationStatus?: number;
+    psychologicalStatus?: number;
+    riskLevel?: number;
+    remark?: string;
+  }
+
+  /** 学生档案导入响应 */
+  export interface StudentProfileImportResp {
+    createStudentNames: string[];
+    updateStudentNames: string[];
+    failureStudentNames: Record<string, string>;
+  }
+}
+
+/** 查询学生档案分页列表 */
+export function getStudentProfilePage(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
+  return requestClient.get<PageResult<PsychologyStudentProfileApi.StudentProfile>>(
+    '/admin-api/psychology/student-profile/page',
+    { params },
+  );
+}
+
+/** 查询学生档案详情 */
+export function getStudentProfile(id: number) {
+  return requestClient.get<PsychologyStudentProfileApi.StudentProfile>(
+    `/admin-api/psychology/student-profile/get?id=${id}`,
+  );
+}
+
+/** 新增学生档案 */
+export function createStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+  return requestClient.post('/admin-api/psychology/student-profile/create', data);
+}
+
+/** 修改学生档案 */
+export function updateStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+  return requestClient.put('/admin-api/psychology/student-profile/update', data);
+}
+
+/** 删除学生档案 */
+export function deleteStudentProfile(id: number) {
+  return requestClient.delete(`/admin-api/psychology/student-profile/delete?id=${id}`);
+}
+
+/** 批量删除学生档案 */
+export function deleteStudentProfileList(ids: number[]) {
+  return requestClient.delete(
+    `/admin-api/psychology/student-profile/delete-list?ids=${ids.join(',')}`,
+  );
+}
+
+/** 导出学生档案 */
+export function exportStudentProfile(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
+  return requestClient.download('/admin-api/psychology/student-profile/export-excel', {
+    params,
+  });
+}
+
+/** 批量导入学生档案 */
+export function importStudentProfile(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post<PsychologyStudentProfileApi.StudentProfileImportResp>(
+    '/admin-api/psychology/student-profile/import',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+}
+
+/** 下载学生档案导入模板 */
+export function downloadStudentProfileTemplate() {
+  return requestClient.download('/admin-api/psychology/student-profile/import-template');
+}
+
+/** 更新学生心理状态 */
+export function updateStudentPsychologicalStatus(
+  id: number,
+  psychologicalStatus: number,
+  riskLevel: number,
+) {
+  return requestClient.put(
+    `/admin-api/psychology/student-profile/psychological-status/${id}`,
+    null,
+    {
+      params: {
+        psychologicalStatus,
+        riskLevel,
+      },
+    },
+  );
+}
+
+/** 获取学生档案精简列表 */
+export function getStudentProfileSimpleList() {
+  return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
+    '/admin-api/psychology/student-profile/simple-list',
+  );
+}
