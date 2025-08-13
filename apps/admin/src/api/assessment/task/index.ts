@@ -48,7 +48,7 @@ export interface AssessmentTaskSaveReq {
   name: string;
   scaleCode: string; // A/B 等
   targetAudience: number; // 1-学生，2-家长
-  deadline?: string | Date;
+  deadline?: Date | string;
   publishUserId?: number;
   publishUser?: string;
   deptIdList?: number[];
@@ -63,8 +63,8 @@ export interface AssessmentTaskPageReq extends PageParam {
   targetAudience?: number;
   status?: number;
   publishUserId?: number;
-  deadline?: [string, string] | [Date, Date];
-  createTime?: [string, string] | [Date, Date];
+  deadline?: [Date, Date] | [string, string];
+  createTime?: [Date, Date] | [string, string];
 }
 
 // 列表/详情返回（精简）
@@ -77,8 +77,8 @@ export interface AssessmentTaskVO {
   status?: number;
   publishUserId?: number;
   publishUser?: string;
-  deadline?: string | Date;
-  createTime?: string | Date;
+  deadline?: Date | string;
+  createTime?: Date | string;
 }
 
 export interface AssessmentTaskRespVO extends AssessmentTaskSaveReq {
@@ -103,7 +103,7 @@ export interface AssessmentTaskStatisticsResp {
 
 // ================= API =================
 
-const BASE = '/admin-api/psychology/assessment-task';
+const BASE = '/psychology/assessment-task';
 
 // 模板
 export function getAssessmentTemplates() {
@@ -160,11 +160,15 @@ export function addAssessmentParticipants(data: AssessmentTaskParticipantsReq) {
   return requestClient.post<boolean>(`${BASE}/add-participants`, data);
 }
 
-export function removeAssessmentParticipants(data: AssessmentTaskParticipantsReq) {
+export function removeAssessmentParticipants(
+  data: AssessmentTaskParticipantsReq,
+) {
   return requestClient.post<boolean>(`${BASE}/remove-participants`, data);
 }
 
 // 统计
 export function getAssessmentTaskStatistics(id: number) {
-  return requestClient.get<AssessmentTaskStatisticsResp>(`${BASE}/statistics/${id}`);
+  return requestClient.get<AssessmentTaskStatisticsResp>(
+    `${BASE}/statistics/${id}`,
+  );
 }
