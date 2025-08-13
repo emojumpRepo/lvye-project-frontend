@@ -162,6 +162,8 @@ interface SidebarPreferences {
   collapsedShowTitle: boolean;
   /** 侧边栏折叠宽度 */
   collapseWidth: number;
+  /** 是否禁止折叠，始终展开 */
+  neverCollapse?: boolean;
   /** 侧边栏是否可见 */
   enable: boolean;
   /** 菜单自动展开状态 */

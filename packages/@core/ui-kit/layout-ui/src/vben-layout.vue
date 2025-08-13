@@ -219,7 +219,9 @@ const showSidebar = computed(() => {
 /**
  * 遮罩可见性
  */
-const maskVisible = computed(() => !sidebarCollapse.value && props.isMobile);
+const maskVisible = computed(
+  () => !sidebarCollapse.value && props.isMobile && !props.sidebarNeverCollapse,
+);
 
 const mainStyle = computed(() => {
   let width = '100%';
@@ -377,12 +379,24 @@ watch(
   () => props.isMobile,
   (val) => {
     if (val) {
-      sidebarCollapse.value = true;
+      // 如果禁止折叠，则保持不折叠
+      sidebarCollapse.value = props.sidebarNeverCollapse ? false : true;
     }
   },
   {
     immediate: true,
   },
+);
+
+// 当禁止折叠开关开启时，强制保持展开
+watch(
+  () => props.sidebarNeverCollapse,
+  (val) => {
+    if (val) {
+      sidebarCollapse.value = false;
+    }
+  },
+  { immediate: true },
 );
 
 watch(
@@ -469,12 +483,16 @@ watch(
 }
 
 function handleClickMask() {
-  sidebarCollapse.value = true;
+  if (!props.sidebarNeverCollapse) {
+    sidebarCollapse.value = true;
+  }
 }
 
 function handleHeaderToggle() {
   if (props.isMobile) {
-    sidebarCollapse.value = false;
+    if (!props.sidebarNeverCollapse) {
+      sidebarCollapse.value = false;
+    }
   } else {
     emit('toggleSidebar');
   }
@@ -494,7 +512,7 @@ const idMainContent = ELEMENT_ID_MAIN_CONTENT;
       v-model:extra-visible="sidebarExtraVisible"
       :bottom-custom-height="sidebarBottomCustomHeight"
       :collapse-width="getSideCollapseWidth"
-      :dom-visible="!isMobile"
+      :dom-visible="!isMobile || props.sidebarNeverCollapse"
       :extra-width="sidebarExtraWidth"
       :fixed-extra="sidebarExpandOnHover"
       :header-height="isMixedNav ? 0 : headerHeight"
@@ -503,7 +521,7 @@ const idMainContent = ELEMENT_ID_MAIN_CONTENT;
       :middle-custom-height="sidebarMiddleCustomHeight"
       :mixed-width="sidebarMixedWidth"
       :show="showSidebar"
-      :show-collapse-button="sidebarCollapsedButton"
+      :show-collapse-button="sidebarCollapsedButton && !props.sidebarNeverCollapse"
       :show-fixed-button="sidebarFixedButton"
       :theme="sidebarTheme"
       :top-custom-height="sidebarTopCustomHeight"

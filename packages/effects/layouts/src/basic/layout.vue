@@ -198,7 +198,8 @@ const headerSlots = computed(() => {
     :is-mobile="preferences.app.isMobile"
     :layout="layout"
     :sidebar-bottom-custom-height="preferences.sidebar.bottomCustomHeight || 0"
-    :sidebar-collapse="preferences.sidebar.collapsed"
+    :sidebar-collapse="sidebarCollapsed"
+    :sidebar-never-collapse="preferences.sidebar.neverCollapse"
     :sidebar-collapse-show-title="preferences.sidebar.collapsedShowTitle"
     :sidebar-enable="sidebarVisible"
     :sidebar-collapsed-button="preferences.sidebar.collapsedButton"
@@ -219,7 +220,8 @@ const headerSlots = computed(() => {
     @side-mouse-leave="handleSideMouseLeave"
     @toggle-sidebar="toggleSidebar"
     @update:sidebar-collapse="
-      (value: boolean) => updatePreferences({ sidebar: { collapsed: value } })
+      (value: boolean) =>
+        updatePreferences({ sidebar: { collapsed: preferences.sidebar.neverCollapse ? false : value } })
     "
     @update:sidebar-enable="
       (value: boolean) => updatePreferences({ sidebar: { enable: value } })

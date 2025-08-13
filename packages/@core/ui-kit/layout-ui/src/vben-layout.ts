@@ -107,6 +107,11 @@ interface VbenLayoutProps {
    */
   sidebarCollapse?: boolean;
   /**
+   * 禁止折叠，始终展开
+   * @default false
+   */
+  sidebarNeverCollapse?: boolean;
+  /**
    * 侧边菜单折叠按钮
    * @default true
    */
