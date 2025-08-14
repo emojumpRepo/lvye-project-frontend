@@ -10,6 +10,7 @@ const props = withDefaults(
     nextDisabled?: boolean;
     nextText?: string;
     prevText?: string;
+    saveDisabled?: boolean;
     saveText?: string;
     showNext?: boolean;
     showPrev?: boolean;
@@ -22,6 +23,7 @@ const props = withDefaults(
     prevText: '上一步',
     saveText: '保存',
     nextDisabled: false,
+    saveDisabled: false,
     loading: false,
     showNext: true,
     showPrev: true,
@@ -79,6 +81,7 @@ const hasDescription = computed(() => !!props.description);
           type="default"
           size="middle"
           class="h-12 w-[120px] justify-center"
+          :disabled="props.saveDisabled"
           @click="emit('save')"
         >
           {{ props.saveText }}

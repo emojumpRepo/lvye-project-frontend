@@ -6,6 +6,7 @@ import { computed, ref } from 'vue';
 import { Input as AInput } from 'ant-design-vue';
 
 import { riskOptions } from '#/api/consult';
+import LyLabel from '#/components/LyLabel/index.vue';
 import icon_done from '#/static/icons/consulting/icon_done.svg';
 import icon_guancha from '#/static/icons/consulting/icon_guancha.svg';
 import icon_test from '#/static/icons/consulting/icon_test.svg';
@@ -146,11 +147,13 @@ defineExpose({
   <div class="space-y-8">
     <!-- 风险等级评估 -->
     <section>
-      <div class="form-label-container">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <span class="font-semibold text-black">风险等级评估</span>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel
+        title="风险等级评估"
+        required
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-title-class="text-[16px] font-semibold"
+      />
       <div
         class="grid grid-cols-5 gap-4 rounded-xl bg-[#F7F8FA] px-8 py-6 max-lg:grid-cols-2"
       >
@@ -180,11 +183,13 @@ defineExpose({
 
     <!-- 问题类型识别 -->
     <section>
-      <div class="form-label-container">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <span class="font-semibold text-black">问题类型识别</span>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel
+        title="问题类型识别"
+        required
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-title-class="text-[16px] font-semibold"
+      />
       <div class="flex flex-wrap items-center gap-2">
         <button
           v-for="name in builtinIssues"
@@ -237,11 +242,13 @@ defineExpose({
 
     <!-- 后续处理建议 -->
     <section>
-      <div class="form-label-container">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <span class="font-semibold text-black">后续处理建议</span>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel
+        title="后续处理建议"
+        required
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-title-class="text-[16px] font-semibold"
+      />
 
       <div class="grid grid-cols-2 gap-4">
         <button
@@ -266,8 +273,3 @@ defineExpose({
     </section>
   </div>
 </template>
-<style scoped lang="scss">
-.form-label-container {
-  @apply mb-3 flex items-center gap-2 text-[16px];
-}
-</style>

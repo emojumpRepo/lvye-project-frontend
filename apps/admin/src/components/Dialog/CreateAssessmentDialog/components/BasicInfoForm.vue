@@ -12,6 +12,8 @@ import {
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import LyLabel from '#/components/LyLabel/index.vue';
+
 const props = withDefaults(defineProps<{ modelValue?: BasicInfo }>(), {
   modelValue: () => ({
     name: '',
@@ -120,10 +122,7 @@ watch(
     >
       <div class="space-y-6">
         <div>
-          <div class="mb-2 flex items-center gap-1 text-[14px]">
-            <div class="font-medium text-black">批次名称</div>
-            <div class="text-[#FF0831]">*</div>
-          </div>
+          <LyLabel title="批次名称" required size="small" />
           <AForm.Item class="mb-2" name="name" has-feedback>
             <AInput
               v-model:value="formState.name"
@@ -138,10 +137,7 @@ watch(
         </div>
 
         <div>
-          <div class="mb-2 flex items-center gap-1 text-[14px]">
-            <div class="font-medium text-black">测评时间范围</div>
-            <div class="text-[#FF0831]">*</div>
-          </div>
+          <LyLabel title="测评时间范围" required size="small" />
           <AForm.Item name="timeRange">
             <ADatePicker.RangePicker
               v-model:value="formState.timeRange as any"
@@ -154,7 +150,7 @@ watch(
         </div>
 
         <div>
-          <div class="mb-2 text-[14px] font-medium text-black">任务描述</div>
+          <LyLabel title="任务描述" size="small" />
           <div class="relative w-[400px]">
             <AForm.Item name="description">
               <AInput.TextArea

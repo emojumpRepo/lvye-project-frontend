@@ -143,6 +143,7 @@ watch(
     save-text="保存草稿"
     :show-next="true"
     :next-disabled="!canNext"
+    :save-disabled="!canNext"
     :next-text="nextText"
     :loading="loading"
     @prev="handlePrev"

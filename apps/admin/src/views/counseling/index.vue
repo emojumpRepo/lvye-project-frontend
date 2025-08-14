@@ -10,12 +10,16 @@ const isOpenModal = ref(false);
 </script>
 
 <template>
-  <div class="p-4">
-    <h2 class="text-lg font-semibold">心理咨询</h2>
+  <div>
+    <div class="p-4">
+      <h2 class="text-lg font-semibold">心理咨询</h2>
 
-    <LyButton type="success" @click="isOpenModal = true">创建心理咨询</LyButton>
+      <LyButton type="success" @click="isOpenModal = true">
+        创建心理咨询
+      </LyButton>
+    </div>
+    <PsychologicalConsultDialog v-model:open="isOpenModal" />
   </div>
-  <PsychologicalConsultDialog v-model:open="isOpenModal" />
 </template>
 
 <style scoped></style>

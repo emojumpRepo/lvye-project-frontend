@@ -5,6 +5,8 @@ import { IconifyIcon } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
+import LyLabel from '#/components/LyLabel/index.vue';
+
 type StudentInfo = {
   className: string;
   name: string;
@@ -69,10 +71,7 @@ const consultTimeText = computed(() =>
 
     <!-- 学生信息 -->
     <div>
-      <div class="mb-2 flex items-center gap-2">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <h3 class="text-[16px] font-bold">学生信息</h3>
-      </div>
+      <LyLabel title="学生信息" has-indicator />
       <section class="section-container">
         <div>
           <span class="desc-title">学生姓名：</span>
@@ -91,10 +90,7 @@ const consultTimeText = computed(() =>
 
     <!-- 咨询信息 -->
     <div>
-      <div class="mb-2 flex items-center gap-2">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <h3 class="text-[16px] font-bold">咨询信息</h3>
-      </div>
+      <LyLabel title="咨询信息" has-indicator />
       <section class="section-container">
         <div>
           <span class="desc-title">咨询时间：</span>

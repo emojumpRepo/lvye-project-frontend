@@ -7,9 +7,10 @@ import type {
 
 import { computed, nextTick, ref, watch } from 'vue';
 
-import { Modal as AModal } from 'ant-design-vue';
+import { Modal as AModal, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { createAssessmentTask } from '#/api/assessment/task';
 import { CommonDialogContent } from '#/components/Dialog/CommonDialog';
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -55,7 +56,7 @@ const basicInfoFormData = ref<BasicInfo>({
 });
 const selectedAssessment = ref<AssessmentType | null>(null);
 const targetSelectData = ref<AssessmentTarget>({
-  type: 'student',
+  type: 1,
   selected: [],
 });
 const canNext = ref(false);
@@ -151,11 +152,32 @@ watch(
   { deep: false },
 );
 
-// 发布测评任务（示意：成功后展示发布成功页）
-function handlePublish() {
-  isPublishOpen.value = false;
-  publishSucceeded.value = true;
-  emit('publish');
+// 创建测评任务
+async function createTask() {
+  try {
+    const res = await createAssessmentTask({
+      taskName: basicInfoFormData.value.name,
+      startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
+      deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
+      scaleCode: selectedAssessment.value?.id || '',
+      targetAudience: targetSelectData.value.type,
+      userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
+    });
+    console.log('createTask', res);
+    message.success('创建测评任务成功');
+    publishSucceeded.value = true;
+    emit('publish', res);
+  } catch (error) {
+    console.error('createTask', error);
+    message.error('创建测评任务失败');
+  } finally {
+    isPublishOpen.value = false;
+  }
+}
+
+// 发布测评任务
+async function handlePublish() {
+  await createTask();
 }
 </script>
 
@@ -164,6 +186,8 @@ function handlePublish() {
     :title="!publishSucceeded ? contentTitle[props.step] : ''"
     :show-prev="props.step > 1"
     :show-next="true"
+    :show-save="props.step === 4"
+    save-text="保存为草稿"
     :next-disabled="!canNext"
     :next-text="
       publishSucceeded
@@ -176,6 +200,7 @@ function handlePublish() {
     :loading="loading"
     @prev="handlePrev"
     @next="handleNext"
+    @save="handleNext"
   >
     <!-- Step 1: 基本信息 -->
     <BasicInfoForm
