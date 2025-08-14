@@ -185,10 +185,12 @@ defineExpose({
 
         <!-- 上传评估文档 -->
         <section>
-          <div class="form-label-container">
-            <span class="font-semibold text-black">请上传完成的评估文档</span>
-            <div class="text-[#FF0831]">*</div>
-          </div>
+          <LyLabel
+            title="请上传完成的评估文档"
+            required
+            margin-bottom-class="mb-3"
+            custom-title-class="text-[16px] font-semibold"
+          />
 
           <AUpload
             :before-upload="beforeUpload"
