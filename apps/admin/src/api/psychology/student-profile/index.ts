@@ -61,11 +61,12 @@ export namespace PsychologyStudentProfileApi {
 }
 
 /** 查询学生档案分页列表 */
-export function getStudentProfilePage(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
-  return requestClient.get<PageResult<PsychologyStudentProfileApi.StudentProfile>>(
-    '/psychology/student-profile/page',
-    { params },
-  );
+export function getStudentProfilePage(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyStudentProfileApi.StudentProfile>
+  >('/psychology/student-profile/page', { params });
 }
 
 /** 查询学生档案详情 */
@@ -76,12 +77,16 @@ export function getStudentProfile(id: number) {
 }
 
 /** 新增学生档案 */
-export function createStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+export function createStudentProfile(
+  data: PsychologyStudentProfileApi.StudentProfileSaveReq,
+) {
   return requestClient.post('/psychology/student-profile/create', data);
 }
 
 /** 修改学生档案 */
-export function updateStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+export function updateStudentProfile(
+  data: PsychologyStudentProfileApi.StudentProfileSaveReq,
+) {
   return requestClient.put('/psychology/student-profile/update', data);
 }
 
@@ -98,7 +103,9 @@ export function deleteStudentProfileList(ids: number[]) {
 }
 
 /** 导出学生档案 */
-export function exportStudentProfile(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
+export function exportStudentProfile(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
   return requestClient.download('/psychology/student-profile/export-excel', {
     params,
   });
@@ -143,8 +150,11 @@ export function updateStudentPsychologicalStatus(
 }
 
 /** 获取学生档案精简列表 */
-export function getStudentProfileSimpleList() {
+export function getStudentProfileSimpleList(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
     '/psychology/student-profile/simple-list',
+    { params },
   );
 }

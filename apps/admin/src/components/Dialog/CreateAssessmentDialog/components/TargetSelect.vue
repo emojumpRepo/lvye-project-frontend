@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { AssessmentTarget } from '#/api/assessment/task';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon, Search } from '@vben/icons';
 
@@ -13,17 +13,30 @@ import {
 } from 'ant-design-vue';
 
 import { AssessmentTargetType } from '#/api/assessment/task';
-import { getStudentProfilePage } from '#/api/psychology/student-profile';
-import { getDeptList } from '#/api/system/dept';
+import { getStudentProfileSimpleList } from '#/api/psychology/student-profile';
+import { getSimpleDeptList } from '#/api/system/dept';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: AssessmentTarget }>(), {
   modelValue: () => ({ type: 1, selected: [] }),
 });
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: AssessmentTarget): void;
 }>();
+
+// 从父组件注入缓存方法
+const parentRef = inject<{
+  cacheClassList: (classes: any[]) => void;
+  cacheStudentsForClass: (
+    classId: number,
+    students: any[],
+    count: number,
+  ) => void;
+  getCachedClass: (classId: number) => any;
+  getCachedClassList: () => any[];
+}>('parentRef');
 
 // 单选：收件类型
 const type = ref<AssessmentTarget['type']>(props.modelValue.type);
@@ -44,8 +57,26 @@ type ClassGroup = {
 const allClasses = ref<ClassGroup[]>([]);
 const activeClassKeys = ref<number[]>([]);
 
+// 数据缓存状态
+const isDataLoaded = ref(false);
+
 async function loadClassList() {
-  const data: any[] = await getDeptList();
+  // 如果已经加载过，直接返回
+  if (isDataLoaded.value && allClasses.value.length > 0) {
+    return;
+  }
+
+  // 尝试从父组件缓存恢复数据
+  if (parentRef) {
+    const cachedClasses = parentRef.getCachedClassList();
+    if (cachedClasses.length > 0) {
+      allClasses.value = cachedClasses;
+      isDataLoaded.value = true;
+      return;
+    }
+  }
+
+  const data: any[] = await getSimpleDeptList();
   // 取叶子节点作为班级；若后端已是平铺列表，则直接使用
   function flattenLeaves(nodes: any[]): any[] {
     const result: any[] = [];
@@ -59,7 +90,7 @@ async function loadClassList() {
     return result;
   }
   const leaves = Array.isArray(data) ? flattenLeaves(data) : [];
-  allClasses.value = leaves.map((n) => ({
+  const classes = leaves.map((n) => ({
     id: Number(n.id),
     name: String(n.name),
     count: Number(n.count ?? 0),
@@ -67,26 +98,53 @@ async function loadClassList() {
     loading: false,
     loaded: false,
   }));
+
+  allClasses.value = classes;
+  isDataLoaded.value = true;
+
+  // 同步到父组件缓存
+  if (parentRef) {
+    parentRef.cacheClassList(classes);
+  }
 }
 
 async function loadStudentsForClass(group: ClassGroup) {
   if (group.loaded || group.loading) return;
+
+  // 尝试从父组件缓存恢复学生数据
+  if (parentRef) {
+    const cachedGroup = parentRef.getCachedClass(group.id);
+    if (cachedGroup?.loaded && cachedGroup.students) {
+      group.students = cachedGroup.students;
+      group.count = cachedGroup.count;
+      group.loaded = true;
+      return;
+    }
+  }
+
   group.loading = true;
   try {
-    const resp: any = await getStudentProfilePage({
+    const resp: any = await getStudentProfileSimpleList({
       classDeptId: group.id,
       pageNo: 1,
       pageSize: 1000,
     });
-    const list = (resp?.list || resp?.data || resp?.records || []) as any[];
-    const total = Number(resp?.total ?? list.length ?? 0);
-    group.students = list.map((s: any) => ({
+    const list = resp;
+    const total = Number(list.length ?? 0);
+    const students = list.map((s: any) => ({
       id: Number(s.id ?? s.userId),
       name: String(s.name ?? ''),
       sno: String(s.studentNo ?? ''),
     }));
+
+    group.students = students;
     group.count = total;
     group.loaded = true;
+
+    // 同步到父组件缓存
+    if (parentRef) {
+      parentRef.cacheStudentsForClass(group.id, students, total);
+    }
   } finally {
     group.loading = false;
   }
@@ -119,9 +177,17 @@ function initSelected() {
     ]),
   );
 }
-initSelected();
 
-// 搜索：仅点击“搜索”按钮后才应用关键词
+// 监听 props.modelValue 变化，重新初始化选择状态
+watch(
+  () => props.modelValue,
+  () => {
+    initSelected();
+  },
+  { immediate: true, deep: true },
+);
+
+// 搜索：仅点击"搜索"按钮后才应用关键词
 const keyword = ref('');
 const appliedKeyword = ref('');
 const filteredClasses = computed(() => {
@@ -287,22 +353,27 @@ function isPanelActive(panel: any) {
               展开以加载学生
             </div>
             <div v-else class="bg-#fff flex flex-col gap-6">
-              <div
-                v-for="stu in c.students"
-                :key="stu.id"
-                class="flex items-center justify-between pl-6"
-              >
-                <div>
-                  <div class="text-[14px] text-black">{{ stu.name }}</div>
-                  <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
+              <template v-if="c.students && c.students.length > 0">
+                <div
+                  v-for="stu in c.students"
+                  :key="stu.id"
+                  class="flex items-center justify-between pl-6"
+                >
+                  <div>
+                    <div class="text-[14px] text-black">{{ stu.name }}</div>
+                    <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
+                  </div>
+                  <ACheckbox
+                    :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
+                    @change="
+                      (e: any) => toggleStudent(c, stu.id, e.target.checked)
+                    "
+                  />
                 </div>
-                <ACheckbox
-                  :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
-                  @change="
-                    (e: any) => toggleStudent(c, stu.id, e.target.checked)
-                  "
-                />
-              </div>
+              </template>
+              <template v-else>
+                <div class="px-6 py-2 text-center text-[#979899]">暂无学生</div>
+              </template>
             </div>
           </ACollapse.Panel>
         </ACollapse>

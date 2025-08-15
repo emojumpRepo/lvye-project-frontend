@@ -3,33 +3,37 @@ import { computed, ref } from 'vue';
 
 import { Menu as AMenu, MenuItem as AMenuItem } from 'ant-design-vue';
 
+import LyButton from '#/components/LyButton/index.vue';
+
+import InterventionManage from './components/InterventionManage.vue';
+import OperationLog from './components/OperationLog.vue';
 import SchoolPersonal from './components/SchoolPersonal.vue';
+import StudentPassword from './components/StudentPassword.vue';
 
 const menuList = [
   {
     key: 'school',
     label: '学校个性化配置',
     description: '学校基本信息和组织架构配置',
+    component: SchoolPersonal,
   },
   {
     key: 'intervention',
     label: '干预管理设置',
     description: '干预管理流程的核心参数配置',
-  },
-  {
-    key: 'notification',
-    label: '通知策略配置',
-    description: '测评与干预的消息通知策略配置',
+    component: InterventionManage,
   },
   {
     key: 'operationLog',
     label: '操作日志管理',
     description: '系统配置操作的完整记录和查询',
+    component: OperationLog,
   },
   {
     key: 'password',
     label: '学生密码管理',
     description: '学生账户密码策略和登录验证配置',
+    component: StudentPassword,
   },
 ];
 
@@ -44,6 +48,20 @@ const contentDescription = computed(() => {
   return menuList.find((item) => item.key === selectedKeys.value[0])
     ?.description;
 });
+
+const contentRef = ref<InstanceType<typeof SchoolPersonal>>();
+
+function handleReset() {
+  if (contentRef.value) {
+    contentRef.value.handleReset();
+  }
+}
+
+function handleSave() {
+  if (contentRef.value) {
+    contentRef.value.handleSave();
+  }
+}
 </script>
 
 <template>
@@ -73,8 +91,8 @@ const contentDescription = computed(() => {
     </div>
 
     <!-- 右侧内容区域 -->
-    <div class="flex flex-1 flex-col p-[24px_0px_24px_37px]">
-      <div class="mb-[30px] flex shrink-0 flex-col gap-[12px]">
+    <div class="flex min-w-0 flex-1 flex-col p-[24px_0px_40px_37px]">
+      <div class="mb-[30px] flex shrink-0 flex-col gap-[12px] transition-all">
         <span class="text-[20px] font-semibold leading-[20px] text-black">
           {{ contentTitle }}
         </span>
@@ -83,8 +101,36 @@ const contentDescription = computed(() => {
         }}</span>
       </div>
 
-      <div class="flex-1 overflow-hidden">
-        <SchoolPersonal />
+      <!-- 内容区域 -->
+      <div class="min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
+        <KeepAlive>
+          <Transition name="fade" mode="out-in">
+            <component
+              :is="
+                menuList.find((item) => item.key === selectedKeys[0])?.component
+              "
+              ref="contentRef"
+            />
+          </Transition>
+        </KeepAlive>
+      </div>
+
+      <!-- 操作按钮区域 -->
+      <div
+        class="flex shrink-0 justify-end gap-4 pr-6"
+        v-if="!['operationLog'].includes(selectedKeys[0] ?? '')"
+      >
+        <LyButton class="h-[42px] w-[100px]" size="middle" @click="handleReset">
+          恢复默认
+        </LyButton>
+        <LyButton
+          type="success"
+          class="h-[42px] w-[100px]"
+          size="middle"
+          @click="handleSave"
+        >
+          保存配置
+        </LyButton>
       </div>
     </div>
   </div>

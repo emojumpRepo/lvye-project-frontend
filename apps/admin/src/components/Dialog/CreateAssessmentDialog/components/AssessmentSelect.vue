@@ -18,7 +18,7 @@ const assessmentDetail = ref<AssessmentType | null>(null);
 
 const assessmentList = ref<AssessmentType[]>([
   {
-    id: 1,
+    id: '1',
     name: '初测动态测评问卷',
     time: '15-30分钟',
     questionCount: 45,
@@ -26,7 +26,7 @@ const assessmentList = ref<AssessmentType[]>([
     description: '适用于新生入学、转班学生的首次心理健康筛查',
   },
   {
-    id: 2,
+    id: '2',
     name: '复测动态测评问卷',
     time: '10-15分钟',
     questionCount: 30,
@@ -34,7 +34,7 @@ const assessmentList = ref<AssessmentType[]>([
     description: '适用于已有档案学生的定期复查和跟踪评估',
   },
   {
-    id: 3,
+    id: '3',
     name: '主题动态测评问卷',
     time: '5-10分钟',
     questionCount: [15, 25],
@@ -47,7 +47,7 @@ function selectAssessment(item: AssessmentType) {
   selected.value = item;
 }
 
-function handleViewDetail(id: number) {
+function handleViewDetail(id: string) {
   assessmentDetail.value = assessmentList.value.find(
     (assessment) => assessment.id === id,
   )!;
@@ -56,86 +56,88 @@ function handleViewDetail(id: number) {
 </script>
 
 <template>
-  <div class="max-h-[360px] overflow-y-auto p-1">
-    <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-      <div
-        v-for="assessment in assessmentList"
-        :key="assessment.id"
-        class="cursor-pointer rounded-2xl border-2 p-6 transition"
-        :class="
-          selectedId === assessment.id
-            ? 'border-[#04DC70] bg-[#14E77E0F]'
-            : 'border-transparent bg-[#F7F8FA]'
-        "
-        @click="selectAssessment(assessment)"
-      >
-        <div class="text-[20px] font-semibold">{{ assessment.name }}</div>
-        <div class="mt-2 flex gap-2">
-          <span class="tag border-[#00EC76] bg-[#F2FFF6] text-[#01BE5F]">
-            {{ assessment.time }}
-          </span>
-          <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
-            {{
-              typeof assessment.questionCount === 'number'
-                ? `${assessment.questionCount}题`
-                : `${assessment.questionCount[0]}-${assessment.questionCount[1]}题`
-            }}
-          </span>
-        </div>
-        <div class="mt-3 line-clamp-5 text-[14px] leading-6 text-[#979899]">
-          {{ assessment.description }}
-        </div>
+  <div class="h-full w-full">
+    <div class="max-h-[360px] overflow-y-auto p-1">
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div
-          class="mt-2 w-fit text-[14px] text-[#0060FF] underline"
-          @click.stop="handleViewDetail(assessment.id)"
+          v-for="assessment in assessmentList"
+          :key="assessment.id"
+          class="cursor-pointer rounded-2xl border-2 p-6 transition"
+          :class="
+            selectedId === assessment.id
+              ? 'border-[#04DC70] bg-[#14E77E0F]'
+              : 'border-transparent bg-[#F7F8FA]'
+          "
+          @click="selectAssessment(assessment)"
         >
-          查看详情
+          <div class="text-[20px] font-semibold">{{ assessment.name }}</div>
+          <div class="mt-2 flex gap-2">
+            <span class="tag border-[#00EC76] bg-[#F2FFF6] text-[#01BE5F]">
+              {{ assessment.time }}
+            </span>
+            <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
+              {{
+                typeof assessment.questionCount === 'number'
+                  ? `${assessment.questionCount}题`
+                  : `${assessment.questionCount[0]}-${assessment.questionCount[1]}题`
+              }}
+            </span>
+          </div>
+          <div class="mt-3 line-clamp-5 text-[14px] leading-6 text-[#979899]">
+            {{ assessment.description }}
+          </div>
+          <div
+            class="mt-2 w-fit text-[14px] text-[#0060FF] underline"
+            @click.stop="handleViewDetail(assessment.id)"
+          >
+            查看详情
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- 量表详情弹窗 -->
+    <AModal
+      v-model:open="isModalOpen"
+      :title="assessmentDetail?.name"
+      wrap-class-name="assessment-detail-modal"
+      @cancel="isModalOpen = false"
+    >
+      <template #title>
+        <div class="p-4 text-[20px] font-semibold text-black">
+          {{ assessmentDetail?.name }}
+        </div>
+      </template>
+
+      <div class="flex flex-col gap-1 p-4 pb-0">
+        <div class="detail-col">
+          <span class="detail-col-title">量表介绍</span>
+          {{ assessmentDetail?.description }}
+        </div>
+        <div class="detail-col">
+          <span class="detail-col-title">评估维度</span>
+          {{ assessmentDetail?.dimension.join('、') }}
+        </div>
+        <div class="detail-col">
+          <span class="detail-col-title">题目数量</span>
+          {{
+            typeof assessmentDetail?.questionCount === 'number'
+              ? `${assessmentDetail?.questionCount}`
+              : `${assessmentDetail?.questionCount[0]}-${assessmentDetail?.questionCount[1]}`
+          }}
+        </div>
+        <div class="detail-col">
+          <span class="detail-col-title">预计用时</span>
+          {{ assessmentDetail?.time }}
+        </div>
+      </div>
+      <template #footer>
+        <LyButton type="default" size="middle" @click="isModalOpen = false">
+          关闭
+        </LyButton>
+      </template>
+    </AModal>
   </div>
-
-  <!-- 量表详情弹窗 -->
-  <AModal
-    v-model:open="isModalOpen"
-    :title="assessmentDetail?.name"
-    wrap-class-name="assessment-detail-modal"
-    @cancel="isModalOpen = false"
-  >
-    <template #title>
-      <div class="p-4 text-[20px] font-semibold text-black">
-        {{ assessmentDetail?.name }}
-      </div>
-    </template>
-
-    <div class="flex flex-col gap-1 p-4 pb-0">
-      <div class="detail-col">
-        <span class="detail-col-title">量表介绍</span>
-        {{ assessmentDetail?.description }}
-      </div>
-      <div class="detail-col">
-        <span class="detail-col-title">评估维度</span>
-        {{ assessmentDetail?.dimension.join('、') }}
-      </div>
-      <div class="detail-col">
-        <span class="detail-col-title">题目数量</span>
-        {{
-          typeof assessmentDetail?.questionCount === 'number'
-            ? `${assessmentDetail?.questionCount}`
-            : `${assessmentDetail?.questionCount[0]}-${assessmentDetail?.questionCount[1]}`
-        }}
-      </div>
-      <div class="detail-col">
-        <span class="detail-col-title">预计用时</span>
-        {{ assessmentDetail?.time }}
-      </div>
-    </div>
-    <template #footer>
-      <LyButton type="default" size="middle" @click="isModalOpen = false">
-        关闭
-      </LyButton>
-    </template>
-  </AModal>
 </template>
 
 <style scoped lang="scss">
