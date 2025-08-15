@@ -5,7 +5,6 @@ import { Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
-import LyButton from '#/components/LyButton/index.vue';
 
 import { useGridFormSchema } from '../data';
 
@@ -34,11 +33,7 @@ const isOpenModal = ref(false);
         <Form />
       </Tabs.TabPane>
     </Tabs>
-    <div class="flex justify-end">
-      <LyButton type="success" @click="isOpenModal = true">
-        创建测评任务
-      </LyButton>
-    </div>
+
     <CreateAssessmentDialog v-model:open="isOpenModal" />
   </div>
 </template>

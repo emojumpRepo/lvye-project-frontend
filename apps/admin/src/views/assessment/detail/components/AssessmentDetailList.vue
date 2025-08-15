@@ -5,6 +5,7 @@ import type { QuestionnaireApi } from '#/api/assessment/questionnaire/index';
 import { ref } from 'vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import LyButton from '#/components/LyButton/index.vue';
 
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
@@ -18,7 +19,11 @@ const actionButtons = ref([
 
 const activeButton = ref('');
 const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({ records }: { records: QuestionnaireApi.Questionnaire[] }) {
+function handleRowCheckboxChange({
+  records,
+}: {
+  records: QuestionnaireApi.Questionnaire[];
+}) {
   checkedIds.value = records.map((item) => item.id);
 }
 
@@ -30,13 +35,15 @@ const [Grid] = useVbenVxeGrid({
       enabled: true,
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
-      slots: { total: 'total' },
     },
     proxyConfig: { ajax: { query: async () => [] } },
     rowConfig: { keyField: 'id', isHover: true },
     toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<QuestionnaireApi.Questionnaire>,
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
 });
 
 function viewDetail(record: any) {
@@ -48,31 +55,73 @@ function viewDetail(record: any) {
   <div class="mb-6">
     <AssessmentDetailSearch />
     <div class="my-6 flex gap-2">
-      <span v-for="item in actionButtons" :key="item.value" class="action-button" :class="item.value === activeButton ? 'bg-[#0AD978] text-white' : 'bg-white text-black'" @click="activeButton = item.value">{{ item.label }}</span>
+      <LyButton
+        v-for="item in actionButtons"
+        :key="item.value"
+        size="middle"
+        type="default"
+        @click="activeButton = item.value"
+      >
+        {{ item.label }}
+      </LyButton>
     </div>
     <Grid>
-      <template #total="{ total }">
-        <div class="mr-2 flex items-center text-sm text-[#979899]">共{{ total }}条</div>
-      </template>
       <template #actions="{ row }">
-        <TableAction :actions="[{ label: '查看报告', type: 'link', color: '#2C68FF', onClick: viewDetail.bind(null, row) }]" />
+        <TableAction
+          :actions="[
+            {
+              label: '查看报告',
+              type: 'link',
+              color: '#2C68FF',
+              onClick: viewDetail.bind(null, row),
+            },
+          ]"
+        />
       </template>
     </Grid>
   </div>
-  </template>
+</template>
 
 <style lang="scss" scoped>
-.action-button { @apply flex h-10 cursor-pointer items-center justify-center rounded-md text-xs; width: 100px; }
-:deep(.vxe-cell--col-resizable) { display: none !important; }
-:deep(.vxe-grid) { padding-top: 0 !important; padding-right: 0 !important; padding-left: 0 !important; }
-:deep(.vxe-pager) { background: transparent !important; }
-:deep(.is--active) { font-weight: normal !important; color: #04dc70 !important; background-color: white !important; }
-:deep(.vxe-pager--jump) { color: #979899 !important; }
-:deep(.vxe-pager--goto) { width: 2.4em !important; margin: 0 4px !important; }
-:deep(.vxe-pager--wrapper) { align-items: center !important; }
-:deep(.vxe-pager--sizes) { width: 8em !important; margin-right: 0 !important; }
-:deep(.vxe-icon-caret-down) { margin-top: 3px !important; }
-:deep(.vxe-input--inner) { padding-right: 0 !important; }
+.action-button {
+  @apply flex h-10 cursor-pointer items-center justify-center rounded-md text-xs;
+
+  width: 100px;
+}
+
+:deep(.vxe-cell--col-resizable) {
+  display: none !important;
+}
+
+:deep(.vxe-grid) {
+  padding-top: 0 !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+:deep(.vxe-pager) {
+  background: transparent !important;
+}
+
+:deep(.vxe-pager--goto) {
+  width: 2.4em !important;
+  margin: 0 4px !important;
+}
+
+:deep(.vxe-pager--wrapper) {
+  align-items: center !important;
+}
+
+:deep(.vxe-pager--sizes) {
+  width: 8em !important;
+  margin-right: 0 !important;
+}
+
+:deep(.vxe-icon-caret-down) {
+  margin-top: 3px !important;
+}
+
+:deep(.vxe-input--inner) {
+  padding-right: 0 !important;
+}
 </style>
-
-

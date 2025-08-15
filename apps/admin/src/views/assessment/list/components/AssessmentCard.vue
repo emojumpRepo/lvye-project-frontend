@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { Button, Divider, Progress } from 'ant-design-vue';
+
+import { Divider, Progress } from 'ant-design-vue';
+
+import LyButton from '#/components/LyButton/index.vue';
 
 // 评估卡片数据接口
 interface AssessmentCardData {
@@ -29,14 +32,18 @@ const completionPercentage = computed(() => {
 // 根据状态获取状态颜色
 const statusColor = computed(() => {
   switch (props.card.status) {
-    case '进行中':
-      return '#1966FF';
-    case '已完成':
+    case '已完成': {
       return '#04DC70';
-    case '待开始':
+    }
+    case '待开始': {
       return '#979899';
-    default:
+    }
+    case '进行中': {
       return '#1966FF';
+    }
+    default: {
+      return '#1966FF';
+    }
   }
 });
 
@@ -47,13 +54,15 @@ const handleViewDetail = () => {
 </script>
 
 <template>
-  <div class="assessment-card rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md">
+  <div
+    class="assessment-card rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md"
+  >
     <!-- 卡片标题 -->
     <div class="mb-3 flex items-center justify-between">
       <span class="text-lg font-semibold text-gray-800">{{ card.id }}</span>
-      <span 
+      <span
         class="rounded-full px-2 py-1 text-xs font-medium"
-        :style="{ color: statusColor, backgroundColor: statusColor + '1A' }"
+        :style="{ color: statusColor, backgroundColor: `${statusColor}1A` }"
       >
         {{ card.status }}
       </span>
@@ -65,17 +74,17 @@ const handleViewDetail = () => {
       <Divider type="vertical" class="mx-2 bg-gray-200" />
       <span>有效期至{{ card.effectiveTime }}</span>
       <Divider type="vertical" class="mx-2 bg-gray-200" />
-      <span class="rounded bg-green-50 px-2 py-1 text-green-600 font-medium">
+      <span class="rounded bg-green-50 px-2 py-1 font-medium text-green-600">
         初测问卷
       </span>
     </div>
 
     <!-- 进度条 -->
     <div class="mb-3">
-      <Progress 
-        :percent="card.progress" 
-        stroke-color="#04DC70" 
-        :show-info="false" 
+      <Progress
+        :percent="card.progress"
+        stroke-color="#04DC70"
+        :show-info="false"
         :size="6"
         class="mb-2"
       />
@@ -83,18 +92,16 @@ const handleViewDetail = () => {
 
     <!-- 完成度信息 -->
     <div class="mb-4 text-sm text-gray-600">
-      已完成 {{ card.completed }} / {{ card.total }} ({{ completionPercentage }}%)
+      已完成 {{ card.completed }} / {{ card.total }} ({{
+        completionPercentage
+      }}%)
     </div>
 
     <!-- 操作按钮 -->
     <div class="flex justify-end">
-      <Button 
-        type="primary"
-        @click="handleViewDetail"
-        class="bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600 focus:bg-green-600 focus:border-green-600"
-      >
+      <LyButton type="success" size="middle" @click="handleViewDetail">
         查看详情
-      </Button>
+      </LyButton>
     </div>
   </div>
 </template>

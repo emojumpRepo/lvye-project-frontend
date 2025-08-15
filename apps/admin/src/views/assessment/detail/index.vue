@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+import LyButton from '#/components/LyButton/index.vue';
+
 import AssessmentDetailCompare from './components/AssessmentDetailCompare.vue';
 import AssessmentDetailList from './components/AssessmentDetailList.vue';
 import AssessmentDetailTask from './components/AssessmentDetailTask.vue';
@@ -33,19 +35,15 @@ const taskNo = String(route.params.taskNo || '');
 <template>
   <div class="min-h-screen bg-gray-50 p-6">
     <div class="mb-5 flex items-center justify-end gap-2">
-      <button
-        class="rounded-md px-5 py-2"
-        :class="
-          activeButton === button.value
-            ? 'bg-[#04DC70] text-white'
-            : 'bg-[#FFFFFFB2]'
-        "
-        v-for="button in actionButton"
-        :key="button.value"
-        @click="activeButton = button.value"
+      <LyButton
+        v-for="item in actionButton"
+        :key="item.value"
+        size="middle"
+        type="default"
+        @click="activeButton = item.value"
       >
-        {{ button.label }}
-      </button>
+        {{ item.label }}
+      </LyButton>
     </div>
 
     <div class="mb-6 grid grid-cols-2 gap-5">
@@ -60,7 +58,3 @@ const taskNo = String(route.params.taskNo || '');
     <AssessmentDetailList />
   </div>
 </template>
-
-<style scoped></style>
-
-
