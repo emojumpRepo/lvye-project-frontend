@@ -205,7 +205,7 @@ function handleDetail(row: SystemOperateLogApi.OperateLog) {
 </script>
 
 <template>
-  <Page auto-content-height :height-offset="240" class="custom-page">
+  <Page auto-content-height :height-offset="279" class="custom-page">
     <div class="flex h-full w-full flex-col">
       <!-- 搜索表单 -->
       <div class="mb-4 flex shrink-0 flex-wrap items-center justify-between">

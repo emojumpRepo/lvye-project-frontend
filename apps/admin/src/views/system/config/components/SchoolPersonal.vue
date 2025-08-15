@@ -282,7 +282,6 @@ defineExpose({
             :maxlength="WELCOME_MAX"
             :auto-size="{ minRows: 1, maxRows: 5 }"
             show-count
-            class="school-personal-input"
           />
           <div class="school-personal-input-description !mt-3">
             用户登录后展示的欢迎语
@@ -336,6 +335,11 @@ defineExpose({
 
 .school-personal-input-description {
   @apply mt-2 text-[12px] leading-[12px] text-[#979899];
+}
+
+:deep(textarea.ant-input) {
+  min-height: 40px !important;
+  border-radius: 4px;
 }
 
 :deep(.ant-input-textarea-show-count::after) {
