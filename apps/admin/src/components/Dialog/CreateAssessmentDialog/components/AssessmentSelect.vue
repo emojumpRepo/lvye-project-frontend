@@ -57,7 +57,7 @@ function handleViewDetail(id: string) {
 
 <template>
   <div class="h-full w-full">
-    <div class="max-h-[360px] overflow-y-auto p-1">
+    <div class="h-[408px] overflow-y-auto p-1">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div
           v-for="assessment in assessmentList"

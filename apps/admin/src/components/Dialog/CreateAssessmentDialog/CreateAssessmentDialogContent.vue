@@ -167,12 +167,40 @@ watch(
       case 1: {
         // 初次进入第1步不触发校验；仅在"从其他步骤返回到第1步"时才重校验
         if (oldV && oldV !== 1) {
-          await nextTick();
-          const validator = basicInfoFormRef.value?.validate;
-          if (validator) {
-            const valid = await validator();
-            canNext.value = !!valid;
-          }
+          // 使用轮询方式等待组件挂载完成
+          let retryCount = 0;
+          const maxRetries = 10;
+
+          const waitForComponent = async () => {
+            await nextTick();
+
+            if (
+              basicInfoFormRef.value &&
+              typeof basicInfoFormRef.value.validate === 'function'
+            ) {
+              try {
+                const valid = await basicInfoFormRef.value.validate();
+                canNext.value = !!valid;
+                return true;
+              } catch (error) {
+                console.error('Validation error:', error);
+                canNext.value = false;
+                return true;
+              }
+            } else if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(waitForComponent, 50); // 50ms 延迟
+              return false;
+            } else {
+              console.warn(
+                'basicInfoFormRef is not available after maximum retries',
+              );
+              canNext.value = false;
+              return true;
+            }
+          };
+
+          await waitForComponent();
         } else {
           canNext.value = false;
         }
