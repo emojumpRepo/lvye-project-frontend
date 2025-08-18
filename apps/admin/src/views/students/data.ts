@@ -1,12 +1,10 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { h } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
 // 导出学生档案相关类型
-export type { PsychologyStudentProfileApi };
 
 /** 学籍信息 */
 export function usePersonalInfoFormSchema(): VbenFormSchema[] {
@@ -153,11 +151,6 @@ export function useSearchFormSchema(): VbenFormSchema[] {
       defaultValue: '',
     },
     {
-      fieldName: 'graduated',
-      component: 'Input',
-      defaultValue: '年级毕业',
-    },
-    {
       fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
@@ -176,3 +169,5 @@ export function useSearchFormSchema(): VbenFormSchema[] {
     },
   ];
 }
+
+export { type PsychologyStudentProfileApi } from '#/api/psychology/student-profile';

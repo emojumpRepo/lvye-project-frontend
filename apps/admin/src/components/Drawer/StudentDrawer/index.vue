@@ -6,10 +6,11 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Divider, Tabs } from 'ant-design-vue';
 
-import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
+import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
 import TimelineTab from '#/components/Drawer/StudentDrawer/components/TimelineTab.vue';
+import LyButton from '#/components/LyButton/index.vue';
 
 interface FooterButton {
   label: string;
@@ -82,6 +83,15 @@ const footerButtons = ref<FooterButton[]>([
 </script>
 <template>
   <Drawer title="学生360°档案">
+    <template #title>
+      <div class="flex items-center gap-2">
+        <img
+          src="../../../static/icons/student/360file_student.png"
+          class="w-5"
+        />
+        <span class="text-lg font-bold">学生360°档案</span>
+      </div>
+    </template>
     <div class="flex h-full flex-col gap-3">
       <div class="bg-white px-4 pb-3 pt-6">
         <div class="flex flex-col gap-4">
@@ -96,13 +106,23 @@ const footerButtons = ref<FooterButton[]>([
             </div>
           </div>
         </div>
-        <div class="my-7 flex items-center justify-between rounded-lg border border-solid border-[#8CFFC6] bg-[#14E77E14] px-4 py-3">
+        <div
+          class="my-7 flex items-center justify-between rounded-lg border border-solid border-[#8CFFC6] bg-[#14E77E14] px-4 py-3"
+        >
           <div class="flex items-center gap-1 text-sm font-bold">
-            <IconifyIcon icon="solar:health-bold" :color="mentalStates.normal.color" class="size-5" />
+            <IconifyIcon
+              icon="solar:health-bold"
+              :color="mentalStates.normal.color"
+              class="size-5"
+            />
             <span>心理状态：</span>
             <span :style="{ color: mentalStates.normal.color }">正常</span>
           </div>
-          <div class="text-xs text-[#979899]"><span>张信心</span><span>老师更新于</span><span>2024-01-01 12:00:00</span></div>
+          <div class="text-xs text-[#979899]">
+            <span>张信心</span>
+            <span>老师更新于</span>
+            <span>2024-01-01 12:00:00</span>
+          </div>
         </div>
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
@@ -111,7 +131,11 @@ const footerButtons = ref<FooterButton[]>([
           </div>
           <div class="flex items-center gap-2.5">
             <div v-for="tag in coreProblemTags" :key="tag">
-              <span class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700">{{ tag }}</span>
+              <span
+                class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
+              >
+                {{ tag }}
+              </span>
             </div>
           </div>
         </div>
@@ -120,20 +144,43 @@ const footerButtons = ref<FooterButton[]>([
       <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
         <div class="relative h-full w-full">
           <Tabs :tab-bar-gutter="24">
-            <Tabs.TabPane tab="综合时间线" key="timeline"><TimelineTab /></Tabs.TabPane>
-            <Tabs.TabPane tab="测评历史" key="history"><AssessmentListTab /></Tabs.TabPane>
-            <Tabs.TabPane tab="咨询与干预记录" key="consultation"><ConsultationListTab /></Tabs.TabPane>
-            <Tabs.TabPane tab="完善个人信息" key="personalInfo"><PersonalInfoTab /></Tabs.TabPane>
+            <Tabs.TabPane tab="综合时间线" key="timeline">
+              <TimelineTab />
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="测评历史" key="history">
+              <AssessmentListTab />
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="咨询与干预记录" key="consultation">
+              <ConsultationListTab />
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="完善个人信息" key="personalInfo">
+              <PersonalInfoTab />
+            </Tabs.TabPane>
           </Tabs>
-          <div class="absolute right-7 top-1.5 cursor-pointer rounded-md bg-[#04DC70] px-3 py-1.5 text-sm text-white hover:bg-[#04DC70]/80">导出信息</div>
+          <LyButton
+            type="success"
+            size="middle"
+            class="absolute right-7 top-1.5"
+          >
+            导出信息
+          </LyButton>
         </div>
       </div>
     </div>
 
     <template #footer>
       <div class="flex items-center justify-end gap-2">
-        <button v-for="button in footerButtons" :key="button.value" class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm" :class="button.class">
-          <IconifyIcon :icon="button.icon" :color="button.type === 'dashed' ? button.color : '#fff'" class="size-4" />
+        <button
+          v-for="button in footerButtons"
+          :key="button.value"
+          class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm"
+          :class="button.class"
+        >
+          <IconifyIcon
+            :icon="button.icon"
+            :color="button.type === 'dashed' ? button.color : '#fff'"
+            class="size-4"
+          />
           <span class="text-xs">{{ button.label }}</span>
         </button>
       </div>
@@ -142,11 +189,30 @@ const footerButtons = ref<FooterButton[]>([
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-tabs) { height: 100%; }
-:deep(.ant-tabs-nav) { padding: 0 16px; }
-:deep(.ant-tabs-content-top) { height: 100%; }
-:deep(.ant-tabs-tab-btn) { font-size: 14px; font-weight: 500 !important; color: #979899; }
-:deep(.ant-tabs-nav::before) { display: none !important; }
-:deep(.ant-tabs-ink-bar) { height: 4px !important; background: #04dc70 !important; }
-</style>
+:deep(.ant-tabs) {
+  height: 100%;
+}
 
+:deep(.ant-tabs-nav) {
+  padding: 0 16px;
+}
+
+:deep(.ant-tabs-content-top) {
+  height: 100%;
+}
+
+:deep(.ant-tabs-tab-btn) {
+  font-size: 14px;
+  font-weight: 500 !important;
+  color: #979899;
+}
+
+:deep(.ant-tabs-nav::before) {
+  display: none !important;
+}
+
+:deep(.ant-tabs-ink-bar) {
+  height: 4px !important;
+  background: #04dc70 !important;
+}
+</style>

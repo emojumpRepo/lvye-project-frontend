@@ -16,11 +16,13 @@ type ButtonType =
   | 'warning';
 
 type ButtonSize = 'large' | 'middle' | 'small';
+type ButtonFontSize = 'default' | 'large' | 'small';
 
 const props = withDefaults(
   defineProps<{
     block?: boolean;
     disabled?: boolean;
+    fontSize?: ButtonFontSize;
     ghost?: boolean;
     icon?: string | undefined;
     loading?: boolean;
@@ -37,6 +39,7 @@ const props = withDefaults(
     loading: false,
     block: false,
     shape: 'default',
+    fontSize: 'default',
   },
 );
 
@@ -94,7 +97,7 @@ watch(
         break;
       }
       default: {
-        customClass.value = '';
+        customClass.value = 'ly-btn-default';
         customType.value = 'default';
         break;
       }
@@ -111,6 +114,16 @@ const classes = computed(() => [
   customClass.value,
   { 'is-ghost': isGhost.value },
 ]);
+
+const FONT_SIZE_MAP = {
+  default: '14px',
+  large: '16px',
+  small: '12px',
+} as const;
+
+const buttonFontSize = computed(
+  () => FONT_SIZE_MAP[props.fontSize] || FONT_SIZE_MAP.default,
+);
 </script>
 
 <template>
@@ -123,6 +136,7 @@ const classes = computed(() => [
     :loading="loading"
     :block="block"
     :shape="shape"
+    :style="{ fontSize: buttonFontSize }"
   >
     <template v-if="$slots.icon" #icon>
       <slot name="icon"></slot>
@@ -211,6 +225,13 @@ const classes = computed(() => [
   color: #fff;
   background-color: var(--ant-color-warning-hover, #ffc53d);
   border-color: var(--ant-color-warning, #faad14);
+}
+
+.ly-btn-default:not(.is-ghost).ant-btn,
+.ly-btn-default:not(.is-ghost).ant-btn-default {
+  height: auto;
+  padding: 6px 15px;
+  border-color: white;
 }
 
 .ly-btn-error:not(.is-ghost).ant-btn,

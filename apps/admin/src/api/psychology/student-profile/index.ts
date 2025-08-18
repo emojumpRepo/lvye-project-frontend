@@ -18,6 +18,7 @@ export namespace PsychologyStudentProfileApi {
     graduationStatus?: number;
     psychologicalStatus?: number;
     riskLevel?: number;
+    isMark?: number;
     specialMarks?: string;
     remark?: string;
     createTime?: Date;
@@ -49,10 +50,14 @@ export namespace PsychologyStudentProfileApi {
     homeAddress?: string;
     sex?: number;
     mobile?: string;
+    birthDate?: string;
     gradeDeptId?: number;
     classDeptId?: number;
     graduationStatus?: number;
     psychologicalStatus?: number;
+    homeAddress?: string;
+    isMark?: number;
+    specialMarks?: string;
     riskLevel?: number;
     specialMarks?: string;
     remark?: string;
@@ -63,6 +68,13 @@ export namespace PsychologyStudentProfileApi {
     createStudentNames: string[];
     updateStudentNames: string[];
     failureStudentNames: Record<string, string>;
+  }
+
+  /** 部门精简信息列表 */
+  export interface DeptSimpleListResp {
+    id: number;
+    name: string;
+    parentId: number;
   }
 }
 
@@ -159,5 +171,12 @@ export function updateStudentPsychologicalStatus(
 export function getStudentProfileSimpleList() {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
     '/psychology/student-profile/simple-list',
+  );
+}
+
+/** 获取部门精简信息列表 */
+export function getDeptSimpleList() {
+  return requestClient.get<PsychologyStudentProfileApi.DeptSimpleListResp[]>(
+    '/system/dept/simple-list',
   );
 }

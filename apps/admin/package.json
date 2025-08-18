@@ -54,7 +54,8 @@
     "vue": "catalog:",
     "vue-dompurify-html": "catalog:",
     "vue-router": "catalog:",
-    "vue3-signature": "catalog:"
+    "vue3-signature": "catalog:",
+    "xlsx": "catalog:"
   },
   "devDependencies": {
     "@types/crypto-js": "catalog:"
