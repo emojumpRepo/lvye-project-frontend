@@ -168,9 +168,12 @@ export function updateStudentPsychologicalStatus(
 }
 
 /** 获取学生档案精简列表 */
-export function getStudentProfileSimpleList() {
+export function getStudentProfileSimpleList(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
     '/psychology/student-profile/simple-list',
+    { params },
   );
 }
 
