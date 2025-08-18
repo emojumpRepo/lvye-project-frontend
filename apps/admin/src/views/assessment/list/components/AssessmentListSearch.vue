@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
 import { Tabs } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
 
 import { useGridFormSchema } from '../data';
 
@@ -22,8 +19,6 @@ const [Form] = useVbenForm({
   commonConfig: { componentProps: { class: 'w-full mr-2' } },
   submitButtonOptions: { content: '查询', class: 'bg-[#04DC70]' },
 });
-
-const isOpenModal = ref(false);
 </script>
 
 <template>
@@ -33,8 +28,6 @@ const isOpenModal = ref(false);
         <Form />
       </Tabs.TabPane>
     </Tabs>
-
-    <CreateAssessmentDialog v-model:open="isOpenModal" />
   </div>
 </template>
 
