@@ -1,62 +1,80 @@
 <script setup lang="ts">
 import type { Rule } from 'ant-design-vue/es/form';
 
-import { reactive, ref } from 'vue';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile/index';
+
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
-  Checkbox as ACheckbox,
   DatePicker as ADatePicker,
   Form as AForm,
   Input as AInput,
   Radio as ARadio,
   Select as ASelect,
+  message,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import {
+  createStudentProfile,
+  getDeptSimpleList,
+} from '#/api/psychology/student-profile/index';
 import LyFormLabel from '#/components/LyFormLabel/index.vue';
 
-interface StudentForm {
-  name: string;
-  studentId: string;
-  gender: string;
-  grade: string;
-  class: string;
-  birthDate: string;
-  phone: string;
-  address: string;
-  specialAttention: string[];
+interface DeptOption {
+  value: number;
+  label: string;
+  children?: { label: string; value: number }[];
 }
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
 
 const validateName = ref(false);
 const validateStudentId = ref(false);
 
-const [Drawer] = useVbenDrawer({
-  class: 'w-[800px]',
+const deptList = ref<DeptOption[]>([]);
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  class: 'w-[720px]',
   confirmText: '创建',
   onConfirm: handleCreateStudent,
 });
 
-const studentForm = reactive<StudentForm>({
-  name: '',
-  studentId: '',
-  gender: '',
-  grade: '',
-  class: '',
-  birthDate: '',
-  phone: '',
-  address: '',
-  specialAttention: [],
+const studentForm = reactive<PsychologyStudentProfileApi.StudentProfileSaveReq>(
+  {
+    name: '',
+    studentNo: '',
+    sex: undefined,
+    gradeDeptId: undefined,
+    classDeptId: undefined,
+    birthDate: '',
+    mobile: '',
+    homeAddress: '',
+    isMark: undefined,
+    specialMarks: '',
+    remark: '',
+  },
+);
+
+const classList = computed(() => {
+  return (
+    deptList.value.find((dept) => dept.value === studentForm.gradeDeptId)
+      ?.children || []
+  );
 });
 
-const specialAttentionOptions = [
-  '家庭困难',
-  '学习困难',
-  '行为异常',
-  '心理风险',
-];
+// const specialRemarkOptions = [
+//   { label: '家庭困难', value: '1' },
+//   { label: '行为异常', value: '2' },
+//   { label: '心理风险', value: '3' },
+//   { label: '学习困难', value: '4' },
+//   { label: '身体残疾', value: '5' },
+// ];
 
 const rules: Record<string, Rule[]> = {
   name: [
@@ -77,7 +95,7 @@ const rules: Record<string, Rule[]> = {
       },
     },
   ],
-  studentId: [
+  studentNo: [
     {
       validator: (_, value) => {
         validateStudentId.value = false;
@@ -87,18 +105,14 @@ const rules: Record<string, Rule[]> = {
         if (!/^[a-z0-9]+$/i.test(value)) {
           return Promise.reject(new Error('学号格式不符合规范'));
         }
-        // if (value && value.length > 0) {
-        //   // TODO: 这里可以添加检查学号是否已存在的逻辑、根据学校规则验证学号格式
-        //   return Promise.reject(new Error('学号已存在，请检查'));
-        // }
         validateStudentId.value = true;
         return Promise.resolve();
       },
     },
   ],
-  gender: [{ required: true, message: '请选择性别' }],
-  grade: [{ required: true, message: '请选择年级' }],
-  class: [{ required: true, message: '请选择班级' }],
+  sex: [{ required: true, message: '请选择性别' }],
+  gradeDeptId: [{ required: true, message: '请选择年级' }],
+  classDeptId: [{ required: true, message: '请选择班级' }],
   birthDate: [
     { required: true, message: '请选择出生日期' },
     {
@@ -115,27 +129,72 @@ const rules: Record<string, Rule[]> = {
       },
     },
   ],
-  phone: [
+  mobile: [
     {
       validator: (_, value) => {
         if (value && !/^1[3-9]\d{9}$/.test(value) && value.length !== 11) {
           return Promise.reject(new Error('手机号格式错误'));
         }
-        // if (value && value.length === 11) {
-        //   // TODO: 这里可以添加检查手机号是否重复的逻辑
-        // }
         return Promise.resolve();
       },
-      message: '该手机号已被其他学生使用',
     },
   ],
 };
 
-function handleCreateStudent() {
+async function handleCreateStudent() {
   const formatBirthDate = dayjs(studentForm.birthDate).format('YYYY-MM-DD');
-  console.log('formatBirthDate', formatBirthDate);
-  console.log('studentForm', studentForm);
+  const params = {
+    ...studentForm,
+    birthDate: formatBirthDate,
+  };
+  try {
+    await createStudentProfile(params);
+    message.success('学生档案创建成功');
+  } catch {
+    message.error('学生档案创建失败');
+  }
+  emit('refresh');
+  drawerApi.close();
 }
+
+onMounted(async () => {
+  const data = await getDeptSimpleList();
+  if (data.length > 0) {
+    const filteredData = data.filter((dept) => dept.parentId !== 110);
+
+    const childIds = new Set(filteredData.map((dept) => dept.id));
+
+    const rootDepts = filteredData.filter(
+      (dept) =>
+        !childIds.has(dept.parentId) ||
+        dept.parentId === 0 ||
+        dept.parentId === null,
+    );
+
+    // 构建树形结构
+    const buildTree = (
+      parentId: number,
+    ): undefined | { label: string; value: number }[] => {
+      const children = filteredData
+        .filter((dept) => dept.parentId === parentId)
+        .map((dept) => ({
+          value: dept.id,
+          label: dept.name,
+        }));
+
+      return children.length > 0 ? children : undefined;
+    };
+
+    // 构建最终的树形数据
+    const treeData = rootDepts.map((dept) => ({
+      value: dept.id,
+      label: dept.name,
+      children: buildTree(dept.id),
+    }));
+
+    deptList.value = treeData;
+  }
+});
 </script>
 
 <template>
@@ -154,7 +213,11 @@ function handleCreateStudent() {
         <LyFormLabel label="学生姓名" required />
         <AForm.Item name="name">
           <div class="flex items-center gap-2">
-            <AInput v-model:value="studentForm.name" :maxlength="10" />
+            <AInput
+              v-model:value="studentForm.name"
+              placeholder="请填写"
+              :maxlength="10"
+            />
             <IconifyIcon
               v-if="validateName"
               icon="lets-icons:check-fill"
@@ -166,9 +229,12 @@ function handleCreateStudent() {
 
       <div>
         <LyFormLabel label="学号" required />
-        <AForm.Item name="studentId">
+        <AForm.Item name="studentNo">
           <div class="flex items-center gap-2">
-            <AInput v-model:value="studentForm.studentId" />
+            <AInput
+              v-model:value="studentForm.studentNo"
+              placeholder="请填写"
+            />
             <IconifyIcon
               v-if="validateStudentId"
               icon="lets-icons:check-fill"
@@ -179,9 +245,20 @@ function handleCreateStudent() {
       </div>
 
       <div>
+        <LyFormLabel label="出生日期" required />
+        <AForm.Item name="birthDate">
+          <ADatePicker
+            v-model:value="studentForm.birthDate"
+            placeholder="请选择日期"
+            style="width: 100%"
+          />
+        </AForm.Item>
+      </div>
+
+      <div>
         <LyFormLabel label="性别" required />
-        <AForm.Item name="gender">
-          <ARadio.Group v-model:value="studentForm.gender">
+        <AForm.Item name="sex">
+          <ARadio.Group v-model:value="studentForm.sex">
             <ARadio value="1">男</ARadio>
             <ARadio value="2">女</ARadio>
           </ARadio.Group>
@@ -190,51 +267,32 @@ function handleCreateStudent() {
 
       <div>
         <LyFormLabel label="年级" required />
-        <AForm.Item name="grade">
+        <AForm.Item name="gradeDeptId">
           <ASelect
-            v-model:value="studentForm.grade"
-            :options="[
-              { value: '高一', label: '高一' },
-              { value: '高二', label: '高二' },
-              { value: '高三', label: '高三' },
-            ]"
+            v-model:value="studentForm.gradeDeptId"
+            placeholder="请选择年级"
+            :options="deptList"
           />
         </AForm.Item>
       </div>
 
       <div>
         <LyFormLabel label="班级" required />
-        <AForm.Item name="class">
+        <AForm.Item name="classDeptId">
           <ASelect
-            v-model:value="studentForm.class"
-            :options="[
-              // TODO: 只显示当前用户有管理权限的班级
-              // TODO: 选择班级后自动显示班主任姓名
-              { value: '一班', label: '一班' },
-              { value: '二班', label: '二班' },
-              { value: '三班', label: '三班' },
-            ]"
-          />
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyFormLabel label="出生日期" required />
-        <AForm.Item name="birthDate">
-          <ADatePicker
-            v-model:value="studentForm.birthDate"
-            placeholder="请选择出生日期"
-            style="width: 100%"
+            v-model:value="studentForm.classDeptId"
+            placeholder="请选择班级"
+            :options="classList"
           />
         </AForm.Item>
       </div>
 
       <div>
         <LyFormLabel label="联系电话" />
-        <AForm.Item name="phone">
+        <AForm.Item name="mobile">
           <AInput
-            v-model:value="studentForm.phone"
-            placeholder="请输入11位手机号码"
+            v-model:value="studentForm.mobile"
+            placeholder="请填写"
             :maxlength="11"
           />
         </AForm.Item>
@@ -242,10 +300,10 @@ function handleCreateStudent() {
 
       <div>
         <LyFormLabel label="家庭住址" />
-        <AForm.Item name="address">
+        <AForm.Item name="homeAddress">
           <AInput.TextArea
-            v-model:value="studentForm.address"
-            placeholder="请输入家庭住址"
+            v-model:value="studentForm.homeAddress"
+            placeholder="请填写"
             :rows="3"
             :maxlength="200"
             show-count
@@ -253,13 +311,28 @@ function handleCreateStudent() {
         </AForm.Item>
       </div>
 
-      <div>
-        <LyFormLabel label="特殊关注标记" />
-        <AForm.Item name="specialAttention">
-          <ACheckbox.Group
-            v-model:value="studentForm.specialAttention"
-            :options="specialAttentionOptions"
+      <!-- <div>
+        <LyFormLabel label="特殊标记" />
+        <AForm.Item name="isMark">
+          <ARadioGroup v-model:value="studentForm.isMark">
+            <ARadio value="1">标记</ARadio>
+            <ARadio value="0">不标记</ARadio>
+          </ARadioGroup>
+        </AForm.Item>
+
+        <AForm.Item name="specialMarks">
+          <ASelect
+            v-model:value="studentForm.specialMarks"
+            placeholder="请选择"
+            :options="specialRemarkOptions"
           />
+        </AForm.Item>
+      </div> -->
+
+      <div>
+        <LyFormLabel label="备注说明" />
+        <AForm.Item name="remark">
+          <AInput v-model:value="studentForm.remark" placeholder="请填写" />
         </AForm.Item>
       </div>
     </AForm>

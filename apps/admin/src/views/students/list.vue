@@ -62,10 +62,6 @@ const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
   connectedComponent: GraduatedStudentFileDrawer,
 });
 
-const [GraduationDrawer, graduationDrawerApi] = useVbenDrawer({
-  connectedComponent: GradeGraduationDrawer,
-});
-
 // 视图模式与选择
 const viewMode = ref<'group' | 'list'>('list');
 const selectedRowKeys = ref<number[]>([]);
@@ -227,6 +223,10 @@ function handleExport() {
   message.info('导出功能待实现');
 }
 
+function refresh() {
+  gridApi.query();
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   gridApi.query();
@@ -314,7 +314,7 @@ onMounted(() => {
 
     <!-- 详情抽屉 -->
     <Drawer />
-    <CreateDrawer />
+    <CreateDrawer @refresh="refresh" />
     <BulkClassTransferDrawer />
     <BulkImportDrawer />
     <DeleteStudentModal />

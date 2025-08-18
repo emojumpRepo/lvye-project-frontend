@@ -16,6 +16,8 @@ export namespace PsychologyStudentProfileApi {
     graduationStatus?: number;
     psychologicalStatus?: number;
     riskLevel?: number;
+    isMark?: number;
+    specialMarks?: string;
     remark?: string;
     createTime?: Date;
     updateTime?: Date;
@@ -44,10 +46,14 @@ export namespace PsychologyStudentProfileApi {
     name: string;
     sex?: number;
     mobile?: string;
+    birthDate?: string;
     gradeDeptId?: number;
     classDeptId?: number;
     graduationStatus?: number;
     psychologicalStatus?: number;
+    homeAddress?: string;
+    isMark?: number;
+    specialMarks?: string;
     riskLevel?: number;
     remark?: string;
   }
@@ -58,14 +64,22 @@ export namespace PsychologyStudentProfileApi {
     updateStudentNames: string[];
     failureStudentNames: Record<string, string>;
   }
+
+  /** 部门精简信息列表 */
+  export interface DeptSimpleListResp {
+    id: number;
+    name: string;
+    parentId: number;
+  }
 }
 
 /** 查询学生档案分页列表 */
-export function getStudentProfilePage(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
-  return requestClient.get<PageResult<PsychologyStudentProfileApi.StudentProfile>>(
-    '/psychology/student-profile/page',
-    { params },
-  );
+export function getStudentProfilePage(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyStudentProfileApi.StudentProfile>
+  >('/psychology/student-profile/page', { params });
 }
 
 /** 查询学生档案详情 */
@@ -76,12 +90,16 @@ export function getStudentProfile(id: number) {
 }
 
 /** 新增学生档案 */
-export function createStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+export function createStudentProfile(
+  data: PsychologyStudentProfileApi.StudentProfileSaveReq,
+) {
   return requestClient.post('/psychology/student-profile/create', data);
 }
 
 /** 修改学生档案 */
-export function updateStudentProfile(data: PsychologyStudentProfileApi.StudentProfileSaveReq) {
+export function updateStudentProfile(
+  data: PsychologyStudentProfileApi.StudentProfileSaveReq,
+) {
   return requestClient.put('/psychology/student-profile/update', data);
 }
 
@@ -98,7 +116,9 @@ export function deleteStudentProfileList(ids: number[]) {
 }
 
 /** 导出学生档案 */
-export function exportStudentProfile(params: PsychologyStudentProfileApi.StudentProfilePageReq) {
+export function exportStudentProfile(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
   return requestClient.download('/psychology/student-profile/export-excel', {
     params,
   });
@@ -146,5 +166,12 @@ export function updateStudentPsychologicalStatus(
 export function getStudentProfileSimpleList() {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
     '/psychology/student-profile/simple-list',
+  );
+}
+
+/** 获取部门精简信息列表 */
+export function getDeptSimpleList() {
+  return requestClient.get<PsychologyStudentProfileApi.DeptSimpleListResp[]>(
+    '/system/dept/simple-list',
   );
 }
