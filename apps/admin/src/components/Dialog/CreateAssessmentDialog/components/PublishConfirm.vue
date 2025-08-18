@@ -9,6 +9,9 @@ import { computed } from 'vue';
 
 import dayjs from 'dayjs';
 
+import { AssessmentTargetType } from '#/api/assessment/task';
+import LyLabel from '#/components/LyLabel/index.vue';
+
 const props = withDefaults(
   defineProps<{
     assessment: AssessmentType | null;
@@ -44,10 +47,12 @@ const dateRange = computed(() => {
   <div class="space-y-6 pr-1">
     <!-- 基本信息确认 -->
     <div>
-      <div class="mb-3 flex items-center gap-3">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <h3 class="text-[16px] font-bold">基本信息确认</h3>
-      </div>
+      <LyLabel
+        title="基本信息确认"
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-gap-class="gap-3"
+      />
       <section class="rounded-xl bg-[#F7F8FA] px-6 py-4">
         <div class="grid grid-cols-1 gap-[5px] text-[14px] text-[#4B4B4D]">
           <div>
@@ -74,7 +79,9 @@ const dateRange = computed(() => {
           <div>
             <span class="desc-title">收件类型：</span>
             <span>{{
-              target.type === 'parent' ? '学生家长' : '学生本人'
+              target.type === AssessmentTargetType.PARENT
+                ? '学生家长'
+                : '学生本人'
             }}</span>
           </div>
           <div class="col-span-full">
@@ -87,10 +94,12 @@ const dateRange = computed(() => {
 
     <!-- 目标对象统计 -->
     <div>
-      <div class="mb-3 flex items-center gap-3">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <h3 class="text-[16px] font-bold">目标对象统计</h3>
-      </div>
+      <LyLabel
+        title="目标对象统计"
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-gap-class="gap-3"
+      />
       <section class="rounded-xl bg-[#F7F8FA] px-6 py-4">
         <div class="grid grid-cols-1 gap-[5px] text-[14px] text-[#4B4B4D]">
           <div class="col-span-full">

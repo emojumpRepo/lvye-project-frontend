@@ -12,7 +12,7 @@ export interface BasicInfo {
 
 // 选择量表组件使用到的结构（来自模板接口做轻度映射）
 export interface AssessmentType {
-  id: number;
+  id: string;
   time: string;
   questionCount: [number, number] | number;
   name: string;
@@ -21,13 +21,18 @@ export interface AssessmentType {
 }
 
 export interface SelectedAssessmentTargetItem {
-  classId: string;
+  classId: number;
   className: string;
-  studentIds: string[];
+  studentIds: number[];
+}
+
+export enum AssessmentTargetType {
+  PARENT = 2,
+  STUDENT = 1,
 }
 
 export interface AssessmentTarget {
-  type: 'parent' | 'student';
+  type: AssessmentTargetType;
   selected: SelectedAssessmentTargetItem[];
 }
 
@@ -44,13 +49,12 @@ export interface AssessmentTemplateDO {
 // 保存请求
 export interface AssessmentTaskSaveReq {
   id?: number;
-  taskNo: string;
-  name: string;
+  taskNo?: string;
+  taskName: string;
   scaleCode: string; // A/B 等
   targetAudience: number; // 1-学生，2-家长
+  startline?: Date | string;
   deadline?: Date | string;
-  publishUserId?: number;
-  publishUser?: string;
   deptIdList?: number[];
   userIdList?: number[];
 }
@@ -171,4 +175,11 @@ export function getAssessmentTaskStatistics(id: number) {
   return requestClient.get<AssessmentTaskStatisticsResp>(
     `${BASE}/statistics/${id}`,
   );
+}
+
+// 检查测评任务的名称重复性
+export function checkAssessmentTaskName(taskName: string) {
+  return requestClient.get<boolean>(`${BASE}/check-by-name`, {
+    params: { taskName },
+  });
 }

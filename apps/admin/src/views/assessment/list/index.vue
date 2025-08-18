@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AssessmentListSearch from './components/AssessmentListSearch.vue';
 import AssessmentListGrid from './components/AssessmentListGrid.vue';
+import AssessmentListSearch from './components/AssessmentListSearch.vue';
 </script>
 
 <template>
@@ -8,8 +8,6 @@ import AssessmentListGrid from './components/AssessmentListGrid.vue';
     <AssessmentListSearch />
     <AssessmentListGrid />
   </div>
-  </template>
+</template>
 
 <style scoped></style>
-
-

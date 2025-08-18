@@ -14,6 +14,7 @@ import {
 import { riskOptions } from '#/api/consult';
 import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 import LyButton from '#/components/LyButton/index.vue';
+import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -109,10 +110,12 @@ defineExpose({
   <div class="space-y-6">
     <!-- 评估结论总结 -->
     <div>
-      <div class="form-label-container">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <span class="font-semibold text-black">评估结论总结</span>
-      </div>
+      <LyLabel
+        title="评估结论总结"
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-title-class="text-[16px] font-semibold"
+      />
       <section class="section-container">
         <div>
           <span class="desc-title">风险等级：</span>
@@ -134,11 +137,13 @@ defineExpose({
 
     <!-- 选择评估方式 -->
     <section>
-      <div class="form-label-container">
-        <span class="h-[16px] w-[3px] rounded-full bg-[#04DC70]"></span>
-        <span class="font-semibold text-black">请选择评估方式</span>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel
+        title="请选择评估方式"
+        required
+        has-indicator
+        margin-bottom-class="mb-3"
+        custom-title-class="text-[16px] font-semibold"
+      />
       <div class="mb-2 flex items-center gap-6 text-[14px]">
         <ARadio.Group v-model:value="method">
           <ARadio value="free">自由输入</ARadio>
@@ -180,10 +185,12 @@ defineExpose({
 
         <!-- 上传评估文档 -->
         <section>
-          <div class="form-label-container">
-            <span class="font-semibold text-black">请上传完成的评估文档</span>
-            <div class="text-[#FF0831]">*</div>
-          </div>
+          <LyLabel
+            title="请上传完成的评估文档"
+            required
+            margin-bottom-class="mb-3"
+            custom-title-class="text-[16px] font-semibold"
+          />
 
           <AUpload
             :before-upload="beforeUpload"
@@ -213,10 +220,6 @@ defineExpose({
   </div>
 </template>
 <style scoped lang="scss">
-.form-label-container {
-  @apply mb-3 flex items-center gap-2 text-[16px];
-}
-
 .section-container {
   @apply grid grid-cols-1 gap-1 rounded-xl bg-[#F7F8FA] px-6 py-4 text-[14px] text-[#4B4B4D];
 

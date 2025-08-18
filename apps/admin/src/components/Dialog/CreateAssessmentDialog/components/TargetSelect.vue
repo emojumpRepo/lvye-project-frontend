@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { AssessmentTarget } from '#/api/assessment/task';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon, Search } from '@vben/icons';
 
@@ -12,10 +12,14 @@ import {
   Radio as ARadio,
 } from 'ant-design-vue';
 
+import { AssessmentTargetType } from '#/api/assessment/task';
+import { getStudentProfilePage } from '#/api/psychology/student-profile';
+import { getDeptList } from '#/api/system/dept';
 import LyButton from '#/components/LyButton/index.vue';
+import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: AssessmentTarget }>(), {
-  modelValue: () => ({ type: 'student', selected: [] }),
+  modelValue: () => ({ type: 1, selected: [] }),
 });
 const emit = defineEmits<{
   (e: 'update:modelValue', value: AssessmentTarget): void;
@@ -23,38 +27,88 @@ const emit = defineEmits<{
 
 // 单选：收件类型
 const type = ref<AssessmentTarget['type']>(props.modelValue.type);
-// 多选：选中的学生，按班级聚合
-const selectedByClass = ref<Map<string, Set<string>>>(new Map());
+// 多选：选中的学生，按班级聚合（使用数字 ID）
+const selectedByClass = ref<Map<number, Set<number>>>(new Map());
 
-type Student = { id: string; name: string; sno: string };
+type Student = { id: number; name: string; sno: string };
 type ClassGroup = {
   count: number;
-  id: string;
+  id: number;
+  loaded?: boolean;
+  loading?: boolean;
   name: string;
-  students: Student[];
+  students?: Student[];
 };
 
-// 假数据（后续可替换为接口）
-const allClasses = ref<ClassGroup[]>([
-  {
-    id: 'c1',
-    name: '高一（1）班',
-    count: 26,
-    students: [
-      { id: 's1', name: '李三', sno: '1252125212111' },
-      { id: 's2', name: '李四', sno: '1252125212112' },
-    ],
-  },
-  {
-    id: 'c2',
-    name: '高一（2）班',
-    count: 26,
-    students: [
-      { id: 's3', name: '王五', sno: '1252125212113' },
-      { id: 's4', name: '赵六', sno: '1252125212114' },
-    ],
-  },
-]);
+// 班级列表（初始仅有班级信息，无学生）
+const allClasses = ref<ClassGroup[]>([]);
+const activeClassKeys = ref<number[]>([]);
+
+async function loadClassList() {
+  const data: any[] = await getDeptList();
+  // 取叶子节点作为班级；若后端已是平铺列表，则直接使用
+  function flattenLeaves(nodes: any[]): any[] {
+    const result: any[] = [];
+    nodes?.forEach((n) => {
+      if (n?.children && n.children.length > 0) {
+        result.push(...flattenLeaves(n.children));
+      } else if (n) {
+        result.push(n);
+      }
+    });
+    return result;
+  }
+  const leaves = Array.isArray(data) ? flattenLeaves(data) : [];
+  allClasses.value = leaves.map((n) => ({
+    id: Number(n.id),
+    name: String(n.name),
+    count: Number(n.count ?? 0),
+    students: undefined,
+    loading: false,
+    loaded: false,
+  }));
+}
+
+async function loadStudentsForClass(group: ClassGroup) {
+  if (group.loaded || group.loading) return;
+  group.loading = true;
+  try {
+    const resp: any = await getStudentProfilePage({
+      classDeptId: group.id,
+      pageNo: 1,
+      pageSize: 1000,
+    });
+    const list = (resp?.list || resp?.data || resp?.records || []) as any[];
+    const total = Number(resp?.total ?? list.length ?? 0);
+    group.students = list.map((s: any) => ({
+      id: Number(s.id ?? s.userId),
+      name: String(s.name ?? ''),
+      sno: String(s.studentNo ?? ''),
+    }));
+    group.count = total;
+    group.loaded = true;
+  } finally {
+    group.loading = false;
+  }
+}
+
+function onCollapseChange(key: unknown): void {
+  const keys = Array.isArray(key)
+    ? (key as Array<number | string>)
+    : [key as number | string];
+  activeClassKeys.value = keys.map(Number);
+  // 仅对新展开的面板加载学生（不阻塞 UI）
+  activeClassKeys.value.forEach((k) => {
+    const group = allClasses.value.find((c) => c.id === k);
+    if (group && !group.loaded) {
+      void loadStudentsForClass(group);
+    }
+  });
+}
+
+onMounted(() => {
+  loadClassList();
+});
 
 // 初始化已选
 function initSelected() {
@@ -76,11 +130,13 @@ const filteredClasses = computed(() => {
   return allClasses.value
     .map((c) => ({
       ...c,
-      students: c.students.filter(
+      students: (c.students || []).filter(
         (s) => s.name.includes(kw) || s.sno.includes(kw),
       ),
     }))
-    .filter((c) => c.students.length > 0);
+    .filter(
+      (c) => c.name.includes(kw) || (c.students && c.students.length > 0),
+    );
 });
 
 // 同步到父组件
@@ -104,7 +160,7 @@ function sync() {
 }
 
 // 勾选单个学生
-function toggleStudent(group: ClassGroup, id: string, checked: boolean) {
+function toggleStudent(group: ClassGroup, id: number, checked: boolean) {
   const set = new Set(selectedByClass.value.get(group.id) || []);
   checked ? set.add(id) : set.delete(id);
   if (set.size > 0) selectedByClass.value.set(group.id, set);
@@ -115,10 +171,16 @@ function toggleStudent(group: ClassGroup, id: string, checked: boolean) {
 // 勾选一个班级
 function toggleClass(group: ClassGroup, checked: boolean) {
   if (checked) {
-    selectedByClass.value.set(
-      group.id,
-      new Set(group.students.map((s) => s.id)),
-    );
+    const ensure = async () => {
+      if (!group.loaded) await loadStudentsForClass(group);
+      selectedByClass.value.set(
+        group.id,
+        new Set((group.students || []).map((s) => s.id)),
+      );
+      sync();
+    };
+    ensure();
+    return;
   } else {
     selectedByClass.value.delete(group.id);
   }
@@ -128,12 +190,12 @@ function toggleClass(group: ClassGroup, checked: boolean) {
 function isClassAllChecked(group: ClassGroup) {
   const set = selectedByClass.value.get(group.id);
   if (!set) return false;
-  return set.size > 0 && set.size === group.students.length;
+  return set.size > 0 && set.size === (group.students?.length || 0);
 }
 function isClassIndeterminate(group: ClassGroup) {
   const set = selectedByClass.value.get(group.id);
   if (!set) return false;
-  return set.size > 0 && set.size < group.students.length;
+  return set.size > 0 && set.size < (group.students?.length || 0);
 }
 
 // 收件类型变化也要同步
@@ -152,22 +214,16 @@ function isPanelActive(panel: any) {
   <div class="mx-auto w-full max-w-[610px] space-y-6">
     <!-- 收件类型 -->
     <div>
-      <div class="mb-2 flex items-center gap-1 text-[14px]">
-        <div class="font-medium text-black">收件类型</div>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel title="收件类型" required size="small" />
       <ARadio.Group v-model:value="type">
-        <ARadio value="student">学生本人</ARadio>
-        <ARadio value="parent">学生家长</ARadio>
+        <ARadio :value="AssessmentTargetType.STUDENT">学生本人</ARadio>
+        <ARadio :value="AssessmentTargetType.PARENT">学生家长</ARadio>
       </ARadio.Group>
     </div>
 
     <!-- 选择班级 -->
     <div>
-      <div class="mb-2 flex items-center gap-1 text-[14px]">
-        <div class="font-medium text-black">选择班级</div>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel title="选择班级" required size="small" />
       <div class="mb-3 flex gap-4">
         <AInput
           v-model:value="keyword"
@@ -188,8 +244,12 @@ function isPanelActive(panel: any) {
         </LyButton>
       </div>
 
+      <!-- 班级折叠列表 -->
       <div class="max-h-[250px] overflow-y-auto pr-1">
-        <ACollapse>
+        <ACollapse
+          v-model:active-key="activeClassKeys"
+          @change="onCollapseChange"
+        >
           <template #expandIcon="panel">
             <IconifyIcon
               :icon="
@@ -220,7 +280,13 @@ function isPanelActive(panel: any) {
               </div>
             </template>
 
-            <div class="bg-#fff flex flex-col gap-6">
+            <div v-if="c.loading" class="px-6 py-4 text-[#979899]">
+              加载中...
+            </div>
+            <div v-else-if="!c.loaded" class="px-6 py-4 text-[#979899]">
+              展开以加载学生
+            </div>
+            <div v-else class="bg-#fff flex flex-col gap-6">
               <div
                 v-for="stu in c.students"
                 :key="stu.id"
