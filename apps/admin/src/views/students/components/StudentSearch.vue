@@ -1,20 +1,19 @@
- <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+<script setup lang="ts">
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
+import { ref } from 'vue';
+
+import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
-import { message } from 'ant-design-vue';
 
-import {
-  getStudentProfilePage,
-  type PsychologyStudentProfileApi
-} from '#/api/psychology/student-profile';
 import { useSearchFormSchema } from '../data';
 
 // 定义 emit 事件
 const emit = defineEmits<{
-  search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
   loading: [loading: boolean];
+  search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
 }>();
 
 // 搜索参数
@@ -26,7 +25,7 @@ const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>({
 const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema(),
   layout: 'horizontal',
-  wrapperClass: 'grid-cols-12',
+  wrapperClass: 'grid-cols-12 md:grid-cols-9',
   commonConfig: {
     componentProps: {
       class: 'w-full mr-2',
@@ -110,5 +109,3 @@ defineExpose({
   padding-bottom: 0 !important;
 }
 </style>
-
-

@@ -22,6 +22,7 @@ export namespace SystemOperateLogApi {
     creator: string;
     creatorName: string;
     createTime: string;
+    sensitive: boolean;
   }
 }
 

@@ -4,6 +4,7 @@ import { computed } from 'vue';
 const props = withDefaults(
   defineProps<{
     customGapClass?: string;
+    customIndicatorClass?: string;
     customTitleClass?: string;
     hasIndicator?: boolean;
     marginBottomClass?: string;
@@ -13,6 +14,7 @@ const props = withDefaults(
   }>(),
   {
     customTitleClass: '',
+    customIndicatorClass: '',
     hasIndicator: false,
     required: false,
     size: 'default',
@@ -39,6 +41,9 @@ const titleClass = computed(() => {
 });
 
 const indicatorClass = computed(() => {
+  if (props.customIndicatorClass) {
+    return props.customIndicatorClass;
+  }
   switch (props.size) {
     case 'large': {
       return 'h-[18px] w-[4px]';
