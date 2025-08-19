@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -10,6 +10,7 @@ import {
   Select as ASelect,
 } from 'ant-design-vue';
 
+import { getDeptSimpleList } from '#/api/psychology/student-profile/index';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -25,11 +26,7 @@ const graduationForm = ref({
   session: '',
 });
 
-const gradeOptions = ref([
-  { label: '一年级', value: '1' },
-  { label: '二年级', value: '2' },
-  { label: '三年级', value: '3' },
-]);
+const gradeOptions = ref<{ label: string; value: number }[]>([]);
 
 const graduationYearOptions = ref([
   { label: '2025年', value: '2025' },
@@ -57,6 +54,33 @@ const rules = ref({
   graduationYear: [{ required: true, message: '请选择毕业年份' }],
   session: [{ required: true, message: '请输入届别' }],
 });
+
+/**
+ * 获取年级选项
+ */
+async function getGradeOptions() {
+  try {
+    const data = await getDeptSimpleList();
+    if (data.length > 0) {
+      const filteredData = data.filter((dept) => dept.parentId !== 110);
+      const allIds = new Set(filteredData.map((dept) => dept.id));
+      const parentData = filteredData.filter(
+        (dept) => !allIds.has(dept.parentId),
+      );
+      gradeOptions.value =
+        parentData.map((dept) => ({
+          value: dept.id,
+          label: dept.name,
+        })) || [];
+    }
+  } catch (error) {
+    console.error('获取年级选项失败', error);
+  }
+}
+
+onMounted(async () => {
+  await getGradeOptions();
+});
 </script>
 
 <template>
@@ -78,8 +102,8 @@ const rules = ref({
             <LyLabel title="年级" required custom-title-class="text-sm" />
             <ASelect
               v-model:value="graduationForm.gradeId"
-              :options="gradeOptions"
               placeholder="请选择"
+              :options="gradeOptions"
             />
           </div>
         </AForm.Item>
@@ -89,8 +113,8 @@ const rules = ref({
             <LyLabel title="毕业年份" required custom-title-class="text-sm" />
             <ASelect
               v-model:value="graduationForm.graduationYear"
-              :options="graduationYearOptions"
               placeholder="请选择"
+              :options="graduationYearOptions"
             />
           </div>
         </AForm.Item>

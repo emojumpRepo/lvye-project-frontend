@@ -157,7 +157,7 @@ async function handleCreateStudent() {
   drawerApi.close();
 }
 
-onMounted(async () => {
+async function loadDeptList() {
   const data = await getDeptSimpleList();
   if (data.length > 0) {
     const filteredData = data.filter((dept) => dept.parentId !== 110);
@@ -192,8 +192,18 @@ onMounted(async () => {
       children: buildTree(dept.id),
     }));
 
-    deptList.value = treeData;
+    sessionStorage.setItem('deptList', JSON.stringify(treeData));
+    return treeData;
   }
+
+  return [];
+}
+
+onMounted(async () => {
+  const stored = sessionStorage.getItem('deptList');
+  deptList.value = stored
+    ? (JSON.parse(stored) as DeptOption[])
+    : await loadDeptList();
 });
 </script>
 

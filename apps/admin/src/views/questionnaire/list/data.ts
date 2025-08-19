@@ -226,38 +226,6 @@ export function useQuestionGridColumns() {
       width: 100,
       slots: { default: 'isOpen' },
     },
-    // {
-    //   field: 'validFrom',
-    //   title: '答题有效期开始',
-    //   width: 180,
-    //   formatter: 'formatDateTime',
-    //   // editRender: {
-    //   //   name: 'VxeDatePicker',
-    //   //   componentProps: {
-    //   //     type: 'datetime',
-    //   //     format: 'YYYY-MM-DD HH:mm:ss',
-    //   //     valueFormat: 'x',
-    //   //     showTime: true,
-    //   //   },
-    //   // },
-    //   // slots: { default: 'validFrom', edit: 'validFrom_edit' },
-    // },
-    // {
-    //   field: 'validTo',
-    //   title: '答题有效期结束',
-    //   width: 180,
-    //   formatter: 'formatDateTime',
-    //   // editRender: {
-    //   //   name: 'VxeDatePicker',
-    //   //   props: {
-    //   //     type: 'datetime',
-    //   //     format: 'YYYY-MM-DD HH:mm:ss',
-    //   //     valueFormat: 'x',
-    //   //   },
-    //   // },
-    //   // slots: { default: 'validTo', edit: 'validTo_edit' },
-    // },
-    // { field: 'creator', title: '创建人', width: 100 },
     {
       field: 'createTime',
       title: '创建时间',

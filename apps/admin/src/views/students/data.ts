@@ -1,4 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { h } from 'vue';
 
@@ -166,6 +168,49 @@ export function useSearchFormSchema(): VbenFormSchema[] {
           }),
       }),
       formItemClass: 'col-span-2',
+    },
+  ];
+}
+
+/** 学生档案列表 */
+export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
+  return [
+    { type: 'checkbox', width: '5%' },
+    { field: 'name', title: '学生姓名', width: '10%', showOverflow: 'tooltip' },
+    { field: 'studentNo', title: '学号', width: '10%' },
+    { field: 'sex', title: '性别', width: '10%', slots: { default: 'sex' } },
+    { field: 'gradeName', title: '年级', width: '10%' },
+    {
+      field: 'className',
+      title: '班级',
+      width: '10%',
+      showOverflow: 'tooltip',
+    },
+    {
+      field: 'psychologicalStatus',
+      title: '心理状态',
+      width: '10%',
+      slots: { default: 'psychologicalStatus' },
+    },
+    {
+      field: 'mobile',
+      title: '联系电话',
+      width: '10%',
+      slots: { default: 'mobile' },
+    },
+    {
+      field: 'graduationStatus',
+      title: '毕业状态',
+      width: '10%',
+      slots: { default: 'graduationStatus' },
+    },
+    {
+      field: 'actions',
+      title: '操作',
+      width: '15%',
+      fixed: 'right',
+      align: 'center',
+      slots: { default: 'actions' },
     },
   ];
 }

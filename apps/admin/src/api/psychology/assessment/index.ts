@@ -122,7 +122,9 @@ export namespace PsychologyAssessmentApi {
 // ==================== 测评任务管理 ====================
 
 /** 查询测评任务分页列表 */
-export function getAssessmentTaskPage(params: PsychologyAssessmentApi.AssessmentTaskPageReq) {
+export function getAssessmentTaskPage(
+  params: PsychologyAssessmentApi.AssessmentTaskPageReq,
+) {
   return requestClient.get<PageResult<PsychologyAssessmentApi.AssessmentTask>>(
     '/psychology/assessment-task/page',
     { params },
@@ -137,28 +139,38 @@ export function getAssessmentTask(taskNo: string) {
 }
 
 /** 创建测评任务 */
-export function createAssessmentTask(data: PsychologyAssessmentApi.AssessmentTaskSaveReq) {
+export function createAssessmentTask(
+  data: PsychologyAssessmentApi.AssessmentTaskSaveReq,
+) {
   return requestClient.post('/psychology/assessment-task/create', data);
 }
 
 /** 更新测评任务 */
-export function updateAssessmentTask(data: PsychologyAssessmentApi.AssessmentTaskSaveReq) {
+export function updateAssessmentTask(
+  data: PsychologyAssessmentApi.AssessmentTaskSaveReq,
+) {
   return requestClient.post('/psychology/assessment-task/update', data);
 }
 
 /** 删除测评任务 */
 export function deleteAssessmentTask(taskNo: string) {
-  return requestClient.delete(`/psychology/assessment-task/delete?taskNo=${taskNo}`);
+  return requestClient.delete(
+    `/psychology/assessment-task/delete?taskNo=${taskNo}`,
+  );
 }
 
 /** 发布测评任务 */
 export function publishAssessmentTask(taskNo: string) {
-  return requestClient.post(`/psychology/assessment-task/publish?taskNo=${taskNo}`);
+  return requestClient.post(
+    `/psychology/assessment-task/publish?taskNo=${taskNo}`,
+  );
 }
 
 /** 关闭测评任务 */
 export function closeAssessmentTask(taskNo: string) {
-  return requestClient.post(`/psychology/assessment-task/close?taskNo=${taskNo}`);
+  return requestClient.post(
+    `/psychology/assessment-task/close?taskNo=${taskNo}`,
+  );
 }
 
 /** 延长测评任务时间 */
@@ -170,7 +182,10 @@ export function extendAssessmentTask(taskNo: string, endTime: Date) {
 }
 
 /** 发送测评提醒 */
-export function sendAssessmentReminder(taskNo: string, participantIds?: number[]) {
+export function sendAssessmentReminder(
+  taskNo: string,
+  participantIds?: number[],
+) {
   return requestClient.post(`/psychology/assessment-task/send-reminder`, {
     taskNo,
     participantIds,
@@ -189,11 +204,12 @@ export function getAssessmentTemplateList() {
 // ==================== 测评参与者管理 ====================
 
 /** 查询测评参与者分页列表 */
-export function getAssessmentParticipantPage(params: PsychologyAssessmentApi.AssessmentParticipantPageReq) {
-  return requestClient.get<PageResult<PsychologyAssessmentApi.AssessmentParticipant>>(
-    '/psychology/assessment-participant/page',
-    { params },
-  );
+export function getAssessmentParticipantPage(
+  params: PsychologyAssessmentApi.AssessmentParticipantPageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyAssessmentApi.AssessmentParticipant>
+  >('/psychology/assessment-participant/page', { params });
 }
 
 /** 获取测评参与者详情 */
@@ -228,10 +244,14 @@ export function getAssessmentStatistics(taskId: number) {
 
 /** 导出测评结果 */
 export function exportAssessmentResults(taskId: number) {
-  return requestClient.download(`/psychology/assessment-task/export-results?taskId=${taskId}`);
+  return requestClient.download(
+    `/psychology/assessment-task/export-results?taskId=${taskId}`,
+  );
 }
 
 /** 导出测评报告 */
 export function exportAssessmentReport(taskId: number) {
-  return requestClient.download(`/psychology/assessment-task/export-report?taskId=${taskId}`);
+  return requestClient.download(
+    `/psychology/assessment-task/export-report?taskId=${taskId}`,
+  );
 }

@@ -1,3 +1,5 @@
+import { TAG_TYPE } from '#/api/constants';
+
 export namespace QuestionnaireApi {
   export interface Questionnaire {
     id: number;
@@ -9,25 +11,6 @@ export namespace QuestionnaireApi {
     riskLevel: string;
   }
 }
-
-const TAG_TYPE = {
-  warning: {
-    bg: '#FEAE3314',
-    color: '#FF9C05',
-  },
-  success: {
-    bg: '#14E77E14',
-    color: '#04DC70',
-  },
-  pending: {
-    bg: '#1966FF14',
-    color: '#1966FF',
-  },
-  error: {
-    bg: '#FF083114',
-    color: '#FF0831',
-  },
-};
 
 export const STATUS_TAG_MAP = {
   uncompleted: {

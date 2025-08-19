@@ -12,9 +12,18 @@ import {
 
 import LyFormLabel from '#/components/LyFormLabel/index.vue';
 
-const [Drawer] = useVbenDrawer({
+const selectedStudents = ref([]);
+
+const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '确认换班',
+  onOpenChange: async () => {
+    const data = drawerApi.getData();
+    if (data.selectedStudents.length > 0) {
+      selectedStudents.value = data.selectedStudents;
+    }
+    await loadGradeOptions();
+  },
 });
 
 const columns = [
@@ -26,38 +35,19 @@ const columns = [
   },
   {
     title: '学号',
-    dataIndex: 'studentId',
-    key: 'studentId',
+    dataIndex: 'studentNo',
+    key: 'studentNo',
   },
   {
     title: '当前班级',
-    dataIndex: 'currentClass',
-    key: 'currentClass',
+    dataIndex: 'className',
+    key: 'className',
   },
   {
     title: '操作',
     key: 'action',
   },
 ];
-
-// 模拟数据
-const selectedStudents = ref([
-  {
-    name: '张三',
-    studentId: '123456',
-    currentClass: '1班',
-  },
-  {
-    name: '张三',
-    studentId: '123456',
-    currentClass: '1班',
-  },
-  {
-    name: '张三',
-    studentId: '123456',
-    currentClass: '1班',
-  },
-]);
 
 const transferForm = ref({
   gradeId: '',
@@ -66,11 +56,22 @@ const transferForm = ref({
   remark: '',
 });
 
-const gradeOptions = ref([
-  { label: '高一', value: '1' },
-  { label: '高二', value: '2' },
-  { label: '高三', value: '3' },
-]);
+const gradeOptions = ref([]);
+
+// 加载年级选项
+async function loadGradeOptions() {
+  try {
+    // const deptList = await getDeptSimpleList();
+    // console.log(deptList);
+    // const filterDeptList = deptList.filter((item) => item.parentId === 110);
+    // gradeOptions.value = filterDeptList.map((item) => ({
+    //   label: item.name,
+    //   value: item.id,
+    // }));
+  } catch (error) {
+    console.error('加载年级选项失败:', error);
+  }
+}
 
 const classOptions = ref([
   { label: '1班', value: '1' },

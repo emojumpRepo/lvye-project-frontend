@@ -119,6 +119,7 @@ async function onPause(row: QuestionnaireVO) {
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useQuestionGridFormSchema(),
+    showCollapseButton: false,
   },
   gridOptions: {
     columns: useQuestionGridColumns(),
@@ -143,8 +144,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      refresh: { code: 'query' },
-      search: true,
+      // refresh: { code: 'query' },
+      refresh: false,
+      search: false,
       zoom: false,
       custom: false,
     },
@@ -185,7 +187,7 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
-    <Grid table-title="问卷管理">
+    <Grid>
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -309,4 +311,16 @@ onMounted(() => {
   </Page>
 </template>
 
-<style scoped lang="scss"></style>
+<style lang="scss">
+.vxe-pager .vxe-pager--sizes {
+  margin-right: 0 !important;
+}
+
+:deep(.vxe-pager) {
+  background: transparent !important;
+}
+
+.vxe-grid {
+  padding: 0 !important;
+}
+</style>
