@@ -62,7 +62,11 @@ const hasDescription = computed(() => !!props.description);
       class="box-border overflow-y-auto"
       :class="hasDescription ? 'max-h-[382px]' : 'max-h-[408px]'"
     >
-      <slot></slot>
+      <KeepAlive>
+        <Transition name="fade" mode="out-in">
+          <slot></slot>
+        </Transition>
+      </KeepAlive>
     </div>
 
     <div class="mt-8 flex justify-center gap-4">

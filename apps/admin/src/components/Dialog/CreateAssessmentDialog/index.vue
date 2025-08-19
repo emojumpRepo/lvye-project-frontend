@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import { Modal as AModal } from 'ant-design-vue';
 
 import { CommonDialogHeader } from '#/components/Dialog/CommonDialog';
-import LyButton from '#/components/LyButton/index.vue';
+import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 
 import CreateAssessmentDialogContent from './CreateAssessmentDialogContent.vue';
 
@@ -72,34 +72,11 @@ function onPublished() {
     </div>
   </AModal>
 
-  <AModal
-    v-model:open="openCancelModal"
-    :title="null"
-    centered
-    :closable="false"
-  >
-    <div>确定要放弃创建测评任务吗？已填写的信息将丢失</div>
-    <template #footer>
-      <div>
-        <LyButton
-          type="default"
-          size="middle"
-          class="rounded-[4px] px-[12px]"
-          @click="openCancelModal = false"
-        >
-          取消
-        </LyButton>
-        <LyButton
-          type="success"
-          size="middle"
-          class="rounded-[4px] px-[12px]"
-          @click="handleClose"
-        >
-          确定
-        </LyButton>
-      </div>
-    </template>
-  </AModal>
+  <ConfirmDialog
+    v-model:show="openCancelModal"
+    title="确定要放弃创建测评任务吗？已填写的信息将丢失"
+    @confirm="handleClose"
+  />
 </template>
 
 <style lang="scss">

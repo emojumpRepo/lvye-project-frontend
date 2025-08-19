@@ -9,6 +9,8 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo: string;
     name: string;
+    birthDate?: Date;
+    homeAddress?: string;
     sex?: number;
     mobile?: string;
     gradeDeptId?: number;
@@ -44,6 +46,8 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo: string;
     name: string;
+    birthDate?: Date;
+    homeAddress?: string;
     sex?: number;
     mobile?: string;
     birthDate?: string;
@@ -55,6 +59,7 @@ export namespace PsychologyStudentProfileApi {
     isMark?: number;
     specialMarks?: string;
     riskLevel?: number;
+    specialMarks?: string;
     remark?: string;
   }
 
@@ -105,7 +110,7 @@ export function updateStudentProfile(
 
 /** 删除学生档案 */
 export function deleteStudentProfile(id: number) {
-  return requestClient.delete(`/psychology/student-profile/delete?id=${id}`);
+  return requestClient.delete(`/psychology/student-profile/delete/${id}`);
 }
 
 /** 批量删除学生档案 */
@@ -163,9 +168,12 @@ export function updateStudentPsychologicalStatus(
 }
 
 /** 获取学生档案精简列表 */
-export function getStudentProfileSimpleList() {
+export function getStudentProfileSimpleList(
+  params: PsychologyStudentProfileApi.StudentProfilePageReq,
+) {
   return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
     '/psychology/student-profile/simple-list',
+    { params },
   );
 }
 

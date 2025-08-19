@@ -84,6 +84,8 @@ watch(
         break;
       }
       case 2: {
+        // 进入第2步先禁用“下一步”，待校验通过再放开，避免用户在渲染前连点进入下一步
+        canNext.value = false;
         await nextTick();
         const validator = coreAssessmentRef.value?.validate;
         if (validator) {
@@ -93,6 +95,8 @@ watch(
         break;
       }
       case 3: {
+        // 同理：进入第3步先禁用，待校验通过再启用
+        canNext.value = false;
         await nextTick();
         const validator = detailedAssessmentRef.value?.validate;
         if (validator) {
@@ -157,18 +161,13 @@ watch(
     />
 
     <!-- Step 2: 核心评估结论（保持实例，避免跨步骤丢失状态） -->
-    <KeepAlive>
-      <CoreAssessment
-        v-if="props.step === 2"
-        ref="coreAssessmentRef"
-        v-model="coreAssessment"
-      />
+    <KeepAlive v-else-if="props.step === 2">
+      <CoreAssessment ref="coreAssessmentRef" v-model="coreAssessment" />
     </KeepAlive>
 
     <!-- Step 3: 详细评估内容（保持实例，保留选择方式与已选文件） -->
-    <KeepAlive>
+    <KeepAlive v-else>
       <DetailedAssessment
-        v-if="props.step === 3"
         ref="detailedAssessmentRef"
         v-model="detailedAssessment"
       />
