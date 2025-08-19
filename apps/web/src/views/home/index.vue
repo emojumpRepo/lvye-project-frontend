@@ -25,6 +25,7 @@ interface AssessmentItem {
   imgOffsetY?: number;
   imgOffsetXSm?: number;
   imgOffsetYSm?: number;
+  link: string;
 }
 
 const assessments: AssessmentItem[] = [
@@ -42,6 +43,7 @@ const assessments: AssessmentItem[] = [
     iconImageScaleSm: 0.4,
     imgOffsetXSm: -10,
     imgOffsetYSm: 5,
+    link: '/evaluation/junior/map',
   },
   {
     id: 'retest',
@@ -57,6 +59,7 @@ const assessments: AssessmentItem[] = [
     iconImageScaleSm: 0.5,
     imgOffsetXSm: -15,
     imgOffsetYSm: 0,
+    link: '',
   },
   {
     id: 'theme',
@@ -72,6 +75,7 @@ const assessments: AssessmentItem[] = [
     iconImageScaleSm: 0.35,
     imgOffsetXSm: -8,
     imgOffsetYSm: 8,
+    link: '',
   },
 ];
 

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { useRouter } from 'vue-router';
+
 interface AssessmentItem {
   id: string;
   title: string;
@@ -18,9 +20,19 @@ interface AssessmentItem {
   imgOffsetYSm?: number;
   imgOffsetX?: number;
   imgOffsetY?: number;
+  /** 跳转链接 */
+  link: string;
 }
 
 defineProps<{ items: AssessmentItem[] }>();
+
+const router = useRouter();
+
+const handleClick = (link: string) => {
+  if (link) {
+    router.push(link);
+  }
+};
 </script>
 
 <template>
@@ -96,6 +108,7 @@ defineProps<{ items: AssessmentItem[] }>();
             </p>
             <button
               class="inline-flex w-fit items-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow transition-all duration-200 hover:bg-emerald-700 hover:shadow-md"
+              @click="handleClick(item.link)"
             >
               开 始 测 评
             </button>
