@@ -8,6 +8,8 @@ export interface QuestionnaireVO {
   questionnaireType: number;
   syncStatus?: number;
   targetAudience?: number;
+  assessmentDimension?: string;
+  questionCount?: number;
   estimatedDuration?: number;
   accessCount?: number;
   completionCount?: number;
