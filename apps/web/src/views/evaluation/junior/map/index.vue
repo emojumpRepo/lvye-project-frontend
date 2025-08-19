@@ -110,29 +110,38 @@ function getNextAvailableScene() {
           @click="handleBuildingClick(scene)"
         >
           <div class="building-glow"></div>
-          <div class="building-icon">
-            <span class="building-emoji">{{ scene.icon }}</span>
-            <div v-if="scene.disabled" class="lock-icon">🔒</div>
+
+          <div class="relative">
+            <!-- 引导动画 - 显示在下一个可点击的建筑上 -->
+            <div
+              v-if="
+                !scene.disabled &&
+                scene.order === getNextAvailableScene()?.order
+              "
+              class="guide-wave"
+            >
+              <img
+                src="../../../../static/images/evaluation/questionnaire/wave.gif"
+                alt="引导动画"
+                class="wave-gif"
+              />
+              <div
+                class="absolute right-[-30px] top-[-40px] rounded bg-[#4caf50] px-2 py-1 text-xs text-white"
+              >
+                点击这里哦
+              </div>
+            </div>
+            <div class="building-icon">
+              <span class="building-emoji">{{ scene.icon }}</span>
+              <div v-if="scene.disabled" class="lock-icon">🔒</div>
+            </div>
           </div>
+
           <div class="building-label">
             {{ scene.name }}
             <span v-if="scene.disabled" class="disabled-text">(未开放)</span>
           </div>
           <div class="building-pulse"></div>
-
-          <!-- 引导动画 - 显示在下一个可点击的建筑上 -->
-          <div
-            v-if="
-              !scene.disabled && scene.order === getNextAvailableScene()?.order
-            "
-            class="guide-wave"
-          >
-            <img
-              src="../../../../static/images/evaluation/questionnaire/wave.gif"
-              alt="引导动画"
-              class="wave-gif"
-            />
-          </div>
         </div>
       </div>
     </div>
@@ -492,8 +501,8 @@ function getNextAvailableScene() {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 60px;
-          height: 60px;
+          width: 65px;
+          height: 65px;
           margin-bottom: 8px;
           background: linear-gradient(
             135deg,
@@ -578,19 +587,16 @@ function getNextAvailableScene() {
 
     .guide-wave {
       position: absolute;
-      top: -50px;
-      left: 60%;
+      top: -40px;
       z-index: 200;
       width: 80px;
       height: 50px;
       pointer-events: none;
-      transform: translateX(-50%);
       animation: float 3s ease-in-out infinite 0s;
 
       .wave-gif {
         width: 100%;
         height: 100%;
-        filter: drop-shadow(0 4px 8px rgb(0 0 0 / 20%));
       }
     }
   }
