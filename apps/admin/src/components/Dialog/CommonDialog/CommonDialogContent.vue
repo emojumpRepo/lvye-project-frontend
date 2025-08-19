@@ -1,10 +1,24 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, provide, ref } from 'vue';
+
+import { Spin as ASpin } from 'ant-design-vue';
 
 import LyButton from '#/components/LyButton/index.vue';
 
 const props = withDefaults(
   defineProps<{
+    /**
+     * 自动结束 loading（仅在未受控时生效）
+     * - true：组件 mounted 后自动结束
+     * - false：需要使用提供的 API 手动结束
+     */
+    autoFinishLoading?: boolean;
+    /**
+     * 内容区域 loading（受控）。
+     * - 不传时由组件内部管理
+     * - 传入时完全受控，由外部决定开始/结束
+     */
+    contentLoading?: boolean;
     description?: string;
     loading?: boolean;
     nextDisabled?: boolean;
@@ -29,6 +43,7 @@ const props = withDefaults(
     showPrev: true,
     showSave: false,
     description: '',
+    autoFinishLoading: true,
   },
 );
 
@@ -40,6 +55,42 @@ const emit = defineEmits<{
 
 const hasTitle = computed(() => !!props.title);
 const hasDescription = computed(() => !!props.description);
+
+// 内容区域 loading：支持受控与非受控两种方式
+const innerLoading = ref(true);
+const spinning = computed(() => {
+  return props.contentLoading ? !!props.contentLoading : innerLoading.value;
+});
+
+function startContentLoading() {
+  if (!props.contentLoading) innerLoading.value = true;
+}
+
+function stopContentLoading() {
+  if (!props.contentLoading) innerLoading.value = false;
+}
+
+// 默认结束 loading：组件首次挂载完成后自动结束（避免闪烁增加最小展示时长）
+onMounted(async () => {
+  if (!props.contentLoading && props.autoFinishLoading) {
+    await nextTick();
+    setTimeout(() => stopContentLoading(), 200);
+  }
+});
+
+// 向子内容组件暴露控制 API（自定义结束 loading）
+provide('CommonDialogContentLoading', {
+  start: startContentLoading,
+  stop: stopContentLoading,
+  set: (v: boolean) => {
+    if (!props.contentLoading) innerLoading.value = v;
+  },
+});
+
+defineExpose({
+  startContentLoading,
+  stopContentLoading,
+});
 </script>
 
 <template>
@@ -62,11 +113,13 @@ const hasDescription = computed(() => !!props.description);
       class="box-border overflow-y-auto"
       :class="hasDescription ? 'max-h-[382px]' : 'max-h-[408px]'"
     >
-      <KeepAlive>
-        <Transition name="fade" mode="out-in">
-          <slot></slot>
-        </Transition>
-      </KeepAlive>
+      <ASpin :spinning="spinning" tip="加载中...">
+        <KeepAlive>
+          <Transition name="fade" mode="out-in">
+            <slot></slot>
+          </Transition>
+        </KeepAlive>
+      </ASpin>
     </div>
 
     <div class="mt-8 flex justify-center gap-4">
@@ -82,6 +135,7 @@ const hasDescription = computed(() => !!props.description);
         </LyButton>
         <LyButton
           v-if="showSave"
+          :loading="props.loading"
           type="default"
           size="middle"
           class="h-12 w-[120px] justify-center"

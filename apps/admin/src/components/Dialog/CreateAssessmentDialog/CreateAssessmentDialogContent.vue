@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-import type {
-  AssessmentTarget,
-  AssessmentType,
-  BasicInfo,
-} from '#/api/assessment/task';
+import type { AssessmentTarget, BasicInfo } from '#/api/assessment/task';
+import type { QuestionnaireVO } from '#/api/questionnaire';
 
 import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Modal as AModal, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -22,7 +20,6 @@ import TargetSelect from './components/TargetSelect.vue';
 
 const props = withDefaults(
   defineProps<{
-    loading?: boolean;
     step?: number; // 1-4
   }>(),
   {
@@ -33,8 +30,12 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'next'): void;
   (e: 'prev'): void;
+  (e: 'back'): void;
+  (e: 'close'): void;
   (e: 'publish', data: any): void;
 }>();
+
+const router = useRouter();
 
 // 数据缓存类型定义
 type Student = { id: number; name: string; sno: string };
@@ -107,7 +108,7 @@ const basicInfoFormData = ref<BasicInfo>({
   timeRange: [dayjs().startOf('day'), dayjs().startOf('day').add(7, 'day')],
   description: '',
 });
-const selectedAssessment = ref<AssessmentType | null>(null);
+const selectedAssessments = ref<QuestionnaireVO[]>([]);
 const targetSelectData = ref<AssessmentTarget>({
   type: 1,
   selected: [],
@@ -117,10 +118,14 @@ const canNext = ref(false);
 const isPublishOpen = ref(false);
 const publishSucceeded = ref(false);
 
+const isPublish = ref(false); // 是否发布
+
+const isCommiting = ref(false); // 是否正在提交
+
 // 发布成功页面信息
-const successTaskId = ref(`TSK_${dayjs().format('YYYY_MMDD_HH')}`);
+const taskId = ref<null | number>(null);
 const successLink = computed(
-  () => `https://system.com/assessment/${successTaskId.value}`,
+  () => `https://system.com/assessment/${taskId.value}`,
 );
 const selectedStudentCount = computed(() =>
   targetSelectData.value.selected.reduce(
@@ -143,7 +148,12 @@ const notifySendText = computed(
 
 async function handleNext() {
   if (publishSucceeded.value) {
-    // TODO: navigate to task progress page
+    router.push({
+      name: 'AssessmentDetail',
+      params: {
+        taskNo: taskId.value?.toString() ?? '',
+      },
+    });
   } else if (props.step === 4 && !publishSucceeded.value) {
     isPublishOpen.value = true;
   } else {
@@ -153,7 +163,7 @@ async function handleNext() {
 
 function handlePrev() {
   if (publishSucceeded.value) {
-    // TODO: back to task list
+    emit('close');
   } else {
     emit('prev');
   }
@@ -207,7 +217,7 @@ watch(
         break;
       }
       case 2: {
-        canNext.value = !!selectedAssessment.value;
+        canNext.value = selectedAssessments.value.length > 0;
         break;
       }
       case 3: {
@@ -224,40 +234,45 @@ watch(
 
 // 第二步：选择量表后，立即更新下一步按钮可用状态
 watch(
-  selectedAssessment,
+  selectedAssessments,
   (v) => {
     if (props.step === 2) {
-      canNext.value = !!v;
+      canNext.value = v.length > 0;
     }
   },
-  { deep: false },
+  { deep: true },
 );
 
 // 创建测评任务
-async function createTask() {
+async function handleCommit(publish: boolean) {
   try {
+    isCommiting.value = true;
+    isPublish.value = publish;
     const res = await createAssessmentTask({
       taskName: basicInfoFormData.value.name,
       startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
       deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
-      scaleCode: selectedAssessment.value?.id || '',
+      scaleCode: selectedAssessments.value.map((i) => i.id).join(','),
       targetAudience: targetSelectData.value.type,
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
+      isPublish: publish,
     });
-    message.success('创建测评任务成功');
-    publishSucceeded.value = true;
+
+    taskId.value = res;
     emit('publish', res);
-  } catch (error) {
+    message.success(isPublish.value ? '发布测评任务成功' : '创建测评任务成功');
+    publishSucceeded.value = true;
+  } catch (error: any) {
     console.error('createTask', error);
-    message.error('创建测评任务失败');
+    if (error.code === 1_003_002_004) {
+      emit('back');
+      return;
+    }
+    message.error(isPublish.value ? '发布测评任务失败' : '创建测评任务失败');
   } finally {
     isPublishOpen.value = false;
+    isCommiting.value = false;
   }
-}
-
-// 发布测评任务
-async function handlePublish() {
-  await createTask();
 }
 
 // 暴露缓存方法给子组件
@@ -288,7 +303,7 @@ onBeforeUnmount(() => {
     :title="!publishSucceeded ? contentTitle[props.step] : ''"
     :show-prev="props.step > 1"
     :show-next="true"
-    :show-save="props.step === 4"
+    :show-save="props.step === 4 && !publishSucceeded"
     save-text="保存为草稿"
     :next-disabled="!canNext"
     :next-text="
@@ -299,10 +314,10 @@ onBeforeUnmount(() => {
           : '下一步'
     "
     :prev-text="publishSucceeded ? '返回任务列表' : '上一步'"
-    :loading="loading"
+    :loading="isCommiting"
     @prev="handlePrev"
     @next="handleNext"
-    @save="handleNext"
+    @save="handleCommit(false)"
   >
     <!-- Step 1: 基本信息 -->
     <BasicInfoForm
@@ -316,7 +331,7 @@ onBeforeUnmount(() => {
     <AssessmentSelect
       ref="assessmentSelectRef"
       v-else-if="props.step === 2"
-      v-model:assessment="selectedAssessment"
+      v-model:assessments="selectedAssessments"
     />
 
     <!-- Step 3: 选择对象 -->
@@ -331,14 +346,15 @@ onBeforeUnmount(() => {
     <PublishConfirm
       v-else-if="props.step === 4 && !publishSucceeded"
       :basic="basicInfoFormData"
-      :assessment="selectedAssessment"
+      :assessments="selectedAssessments"
       :target="targetSelectData"
     />
 
-    <!-- 发布成功页面 -->
+    <!-- 保存/发布成功页面 -->
     <PublishSuccess
       v-else
-      :task-id="successTaskId"
+      :is-publish="isPublish"
+      :task-id="taskId"
       :link="successLink"
       :notify-text="notifySendText"
       :finish-date="expectedFinishDate"
@@ -363,7 +379,7 @@ onBeforeUnmount(() => {
       <LyButton type="default" size="middle" @click="isPublishOpen = false">
         取消
       </LyButton>
-      <LyButton type="success" size="middle" @click="handlePublish">
+      <LyButton type="success" size="middle" @click="handleCommit(true)">
         确认发布
       </LyButton>
     </template>

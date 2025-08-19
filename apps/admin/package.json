@@ -49,6 +49,7 @@
     "cropperjs": "catalog:",
     "crypto-js": "catalog:",
     "dayjs": "catalog:",
+    "docx": "^9.5.1",
     "highlight.js": "catalog:",
     "pinia": "catalog:",
     "vue": "catalog:",

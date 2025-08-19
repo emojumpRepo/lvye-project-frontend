@@ -1,89 +1,97 @@
 <script lang="ts" setup>
-import type { AssessmentType } from '#/api/assessment/task';
+import type { QuestionnaireVO } from '#/api/questionnaire';
 
-import { computed, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 
 import { Modal as AModal } from 'ant-design-vue';
 
+import { getQuestionnaireListSimple } from '#/api/questionnaire';
 import LyButton from '#/components/LyButton/index.vue';
 
-// 双向绑定：选中的量表对象（支持 v-model:assessment）
-const selected = defineModel<AssessmentType | null>('assessment', {
-  default: null,
+const { start, stop } = inject('CommonDialogContentLoading') as {
+  set: (v: boolean) => void;
+  start: () => void;
+  stop: () => void;
+};
+
+// 多选：选中的量表列表（支持 v-model:assessments）
+const selectedList = defineModel<QuestionnaireVO[]>('assessments', {
+  default: [],
 });
-const selectedId = computed(() => selected.value?.id ?? null);
+const selectedIds = computed(() => selectedList.value.map((i) => i.id));
 
 const isModalOpen = ref(false);
-const assessmentDetail = ref<AssessmentType | null>(null);
+const assessmentDetail = ref<null | QuestionnaireVO>(null);
 
-const assessmentList = ref<AssessmentType[]>([
-  {
-    id: '1',
-    name: '初测动态测评问卷',
-    time: '15-30分钟',
-    questionCount: 45,
-    dimension: ['情绪', '人际', '学习'],
-    description: '适用于新生入学、转班学生的首次心理健康筛查',
-  },
-  {
-    id: '2',
-    name: '复测动态测评问卷',
-    time: '10-15分钟',
-    questionCount: 30,
-    dimension: ['情绪', '人际', '学习'],
-    description: '适用于已有档案学生的定期复查和跟踪评估',
-  },
-  {
-    id: '3',
-    name: '主题动态测评问卷',
-    time: '5-10分钟',
-    questionCount: [15, 25],
-    dimension: ['情绪', '人际', '学习'],
-    description: '适用于特定问题的专项测评，如考试焦虑、人际关系等',
-  },
-]);
+const assessmentList = ref<QuestionnaireVO[]>([]);
 
-function selectAssessment(item: AssessmentType) {
-  selected.value = item;
+function toggleAssessment(item: QuestionnaireVO) {
+  const idx = selectedList.value.findIndex((i) => i.id === item.id);
+  selectedList.value =
+    idx === -1
+      ? [...selectedList.value, item]
+      : [
+          ...selectedList.value.slice(0, idx),
+          ...selectedList.value.slice(idx + 1),
+        ];
 }
 
-function handleViewDetail(id: string) {
+function handleViewDetail(id: number) {
   assessmentDetail.value = assessmentList.value.find(
     (assessment) => assessment.id === id,
   )!;
   isModalOpen.value = true;
 }
+
+async function getAssessmentList() {
+  try {
+    const res = await getQuestionnaireListSimple();
+    assessmentList.value = res;
+  } catch (error) {
+    console.error(error);
+  } finally {
+    stop();
+  }
+}
+
+onMounted(async () => {
+  start();
+  await getAssessmentList();
+});
 </script>
 
 <template>
-  <div class="h-full w-full">
-    <div class="h-[408px] overflow-y-auto p-1">
+  <div class="flex h-full w-full flex-col">
+    <div class="mb-2 text-[12px] text-[#6b7280]">
+      已选择：{{ selectedIds.length }} 个量表
+    </div>
+    <div class="h-[381px] overflow-y-auto p-1">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div
           v-for="assessment in assessmentList"
           :key="assessment.id"
           class="cursor-pointer rounded-2xl border-2 p-6 transition"
           :class="
-            selectedId === assessment.id
+            selectedIds.includes(assessment.id)
               ? 'border-[#04DC70] bg-[#14E77E0F]'
               : 'border-transparent bg-[#F7F8FA]'
           "
-          @click="selectAssessment(assessment)"
+          @click="toggleAssessment(assessment)"
         >
-          <div class="text-[20px] font-semibold">{{ assessment.name }}</div>
+          <div class="line-clamp-1 text-[20px] font-semibold">
+            {{ assessment.title }}
+          </div>
           <div class="mt-2 flex gap-2">
             <span class="tag border-[#00EC76] bg-[#F2FFF6] text-[#01BE5F]">
-              {{ assessment.time }}
+              {{ assessment.estimatedDuration }}分钟
             </span>
             <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
-              {{
-                typeof assessment.questionCount === 'number'
-                  ? `${assessment.questionCount}题`
-                  : `${assessment.questionCount[0]}-${assessment.questionCount[1]}题`
-              }}
+              {{ assessment.questionCount }}题
             </span>
           </div>
-          <div class="mt-3 line-clamp-5 text-[14px] leading-6 text-[#979899]">
+          <div
+            class="mt-3 line-clamp-2 h-[50px] text-[14px] leading-6 text-[#979899]"
+          >
             {{ assessment.description }}
           </div>
           <div
@@ -99,13 +107,13 @@ function handleViewDetail(id: string) {
     <!-- 量表详情弹窗 -->
     <AModal
       v-model:open="isModalOpen"
-      :title="assessmentDetail?.name"
+      :title="assessmentDetail?.title"
       wrap-class-name="assessment-detail-modal"
       @cancel="isModalOpen = false"
     >
       <template #title>
         <div class="p-4 text-[20px] font-semibold text-black">
-          {{ assessmentDetail?.name }}
+          {{ assessmentDetail?.title }}
         </div>
       </template>
 
@@ -116,19 +124,15 @@ function handleViewDetail(id: string) {
         </div>
         <div class="detail-col">
           <span class="detail-col-title">评估维度</span>
-          {{ assessmentDetail?.dimension.join('、') }}
+          {{ assessmentDetail?.assessmentDimensionLabels?.join('、') }}
         </div>
         <div class="detail-col">
           <span class="detail-col-title">题目数量</span>
-          {{
-            typeof assessmentDetail?.questionCount === 'number'
-              ? `${assessmentDetail?.questionCount}`
-              : `${assessmentDetail?.questionCount[0]}-${assessmentDetail?.questionCount[1]}`
-          }}
+          {{ assessmentDetail?.questionCount }}
         </div>
         <div class="detail-col">
           <span class="detail-col-title">预计用时</span>
-          {{ assessmentDetail?.time }}
+          {{ assessmentDetail?.estimatedDuration }}
         </div>
       </div>
       <template #footer>

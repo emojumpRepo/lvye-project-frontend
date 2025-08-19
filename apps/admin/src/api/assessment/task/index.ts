@@ -57,6 +57,7 @@ export interface AssessmentTaskSaveReq {
   deadline?: Date | string;
   deptIdList?: number[];
   userIdList?: number[];
+  isPublish?: boolean; // 是否发布
 }
 
 // 分页请求

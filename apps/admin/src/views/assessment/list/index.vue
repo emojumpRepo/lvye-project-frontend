@@ -14,16 +14,18 @@ const handleCreateAssessment = () => {
 </script>
 
 <template>
-  <CreateAssessmentDialog v-model:open="isOpenCreateAssessmentDialog" />
-  <div class="flex min-h-screen flex-col gap-4 p-6">
-    <div class="flex items-center justify-between">
-      <div class="text-xl font-bold">测评中心</div>
-      <LyButton type="success" size="large" @click="handleCreateAssessment">
-        创建测评
-      </LyButton>
+  <div>
+    <CreateAssessmentDialog v-model:open="isOpenCreateAssessmentDialog" />
+    <div class="flex min-h-screen flex-col gap-4 p-6">
+      <div class="flex items-center justify-between">
+        <div class="text-xl font-bold">测评中心</div>
+        <LyButton type="success" size="large" @click="handleCreateAssessment">
+          创建测评
+        </LyButton>
+      </div>
+      <AssessmentListSearch @open-create="handleCreateAssessment" />
+      <AssessmentListGrid />
     </div>
-    <AssessmentListSearch @open-create="handleCreateAssessment" />
-    <AssessmentListGrid />
   </div>
 </template>
 
