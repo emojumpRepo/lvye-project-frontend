@@ -19,7 +19,7 @@ export default defineConfig(
           proxy: {
             '/admin-api': {
               changeOrigin: true,
-              rewrite: (path) => path.replace(/^\/admin-api/, ''),
+              rewrite: (path: string) => path.replace(/^\/admin-api/, ''),
               target: `${baseUrl}/admin-api`,
               ws: true,
             },
@@ -28,4 +28,4 @@ export default defineConfig(
       },
     };
   },
-);
+) as any;

@@ -171,7 +171,7 @@ function onAlertsRefresh() {
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
-        <div class="flex w-[459px] max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedTaskList"
             :key="idx"
@@ -194,7 +194,7 @@ function onAlertsRefresh() {
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex w-[459px] max-w-full flex-col gap-4">
+        <div class="flex  max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedInterveneList"
             :key="idx"
@@ -217,7 +217,7 @@ function onAlertsRefresh() {
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex w-[459px] max-w-full flex-col gap-4">
+        <div class="flex  max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedAlertsList"
             :key="idx"

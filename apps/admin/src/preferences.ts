@@ -37,4 +37,7 @@ export const overridesPreferences = defineOverridesPreferences({
   tabbar: {
     enable: false,
   },
+  sidebar: {
+    bottomCustomHeight: 40,
+  },
 });

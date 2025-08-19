@@ -5,11 +5,12 @@ import type {
   BasicInfo,
 } from '#/api/assessment/task';
 
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
 
-import { Modal as AModal } from 'ant-design-vue';
+import { Modal as AModal, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { createAssessmentTask } from '#/api/assessment/task';
 import { CommonDialogContent } from '#/components/Dialog/CommonDialog';
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -32,8 +33,61 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'next'): void;
   (e: 'prev'): void;
-  (e: 'publish'): void;
+  (e: 'publish', data: any): void;
 }>();
+
+// 数据缓存类型定义
+type Student = { id: number; name: string; sno: string };
+type ClassGroup = {
+  count: number;
+  id: number;
+  loaded?: boolean;
+  loading?: boolean;
+  name: string;
+  students?: Student[];
+};
+
+// 全局数据缓存 - 在弹窗打开期间保持
+const classCache = ref<Map<number, ClassGroup>>(new Map());
+const classesLoaded = ref(false);
+
+// 缓存班级列表
+function cacheClassList(classes: ClassGroup[]) {
+  classes.forEach((cls) => {
+    classCache.value.set(cls.id, { ...cls });
+  });
+  classesLoaded.value = true;
+}
+
+// 缓存班级的学生数据
+function cacheStudentsForClass(
+  classId: number,
+  students: Student[],
+  count: number,
+) {
+  const cachedClass = classCache.value.get(classId);
+  if (cachedClass) {
+    cachedClass.students = students;
+    cachedClass.count = count;
+    cachedClass.loaded = true;
+  }
+}
+
+// 获取缓存的班级列表
+function getCachedClassList(): ClassGroup[] {
+  return [...classCache.value.values()];
+}
+
+// 获取缓存的班级数据
+function getCachedClass(classId: number): ClassGroup | undefined {
+  return classCache.value.get(classId);
+}
+
+// 清空缓存（弹窗关闭时调用）
+function clearCache() {
+  classCache.value.clear();
+  classesLoaded.value = false;
+}
 
 const contentTitle: Record<number, string> = {
   1: '基本信息设置',
@@ -55,7 +109,7 @@ const basicInfoFormData = ref<BasicInfo>({
 });
 const selectedAssessment = ref<AssessmentType | null>(null);
 const targetSelectData = ref<AssessmentTarget>({
-  type: 'student',
+  type: 1,
   selected: [],
 });
 const canNext = ref(false);
@@ -111,14 +165,42 @@ watch(
   async (v, oldV) => {
     switch (v) {
       case 1: {
-        // 初次进入第1步不触发校验；仅在“从其他步骤返回到第1步”时才重校验
+        // 初次进入第1步不触发校验；仅在"从其他步骤返回到第1步"时才重校验
         if (oldV && oldV !== 1) {
-          await nextTick();
-          const validator = basicInfoFormRef.value?.validate;
-          if (validator) {
-            const valid = await validator();
-            canNext.value = !!valid;
-          }
+          // 使用轮询方式等待组件挂载完成
+          let retryCount = 0;
+          const maxRetries = 10;
+
+          const waitForComponent = async () => {
+            await nextTick();
+
+            if (
+              basicInfoFormRef.value &&
+              typeof basicInfoFormRef.value.validate === 'function'
+            ) {
+              try {
+                const valid = await basicInfoFormRef.value.validate();
+                canNext.value = !!valid;
+                return true;
+              } catch (error) {
+                console.error('Validation error:', error);
+                canNext.value = false;
+                return true;
+              }
+            } else if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(waitForComponent, 50); // 50ms 延迟
+              return false;
+            } else {
+              console.warn(
+                'basicInfoFormRef is not available after maximum retries',
+              );
+              canNext.value = false;
+              return true;
+            }
+          };
+
+          await waitForComponent();
         } else {
           canNext.value = false;
         }
@@ -151,12 +233,54 @@ watch(
   { deep: false },
 );
 
-// 发布测评任务（示意：成功后展示发布成功页）
-function handlePublish() {
-  isPublishOpen.value = false;
-  publishSucceeded.value = true;
-  emit('publish');
+// 创建测评任务
+async function createTask() {
+  try {
+    const res = await createAssessmentTask({
+      taskName: basicInfoFormData.value.name,
+      startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
+      deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
+      scaleCode: selectedAssessment.value?.id || '',
+      targetAudience: targetSelectData.value.type,
+      userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
+    });
+    message.success('创建测评任务成功');
+    publishSucceeded.value = true;
+    emit('publish', res);
+  } catch (error) {
+    console.error('createTask', error);
+    message.error('创建测评任务失败');
+  } finally {
+    isPublishOpen.value = false;
+  }
 }
+
+// 发布测评任务
+async function handlePublish() {
+  await createTask();
+}
+
+// 暴露缓存方法给子组件
+defineExpose({
+  cacheClassList,
+  cacheStudentsForClass,
+  getCachedClassList,
+  getCachedClass,
+  clearCache,
+});
+
+// 通过 provide 传递缓存方法给子组件
+provide('parentRef', {
+  cacheClassList,
+  cacheStudentsForClass,
+  getCachedClassList,
+  getCachedClass,
+});
+
+// 组件卸载时清空缓存
+onBeforeUnmount(() => {
+  clearCache();
+});
 </script>
 
 <template>
@@ -164,6 +288,8 @@ function handlePublish() {
     :title="!publishSucceeded ? contentTitle[props.step] : ''"
     :show-prev="props.step > 1"
     :show-next="true"
+    :show-save="props.step === 4"
+    save-text="保存为草稿"
     :next-disabled="!canNext"
     :next-text="
       publishSucceeded
@@ -176,6 +302,7 @@ function handlePublish() {
     :loading="loading"
     @prev="handlePrev"
     @next="handleNext"
+    @save="handleNext"
   >
     <!-- Step 1: 基本信息 -->
     <BasicInfoForm

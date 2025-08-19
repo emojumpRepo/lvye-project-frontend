@@ -36,6 +36,7 @@ import {
   updateNotifyMessageRead,
 } from '#/api/system/notify/message';
 import { getSimpleTenantList } from '#/api/system/tenant';
+import UserCard from '#/components/user/UserCard.vue';
 import { $t } from '#/locales';
 import { router } from '#/router';
 import { useAuthStore } from '#/store';
@@ -261,6 +262,16 @@ watch(
     </template>
     <template #lock-screen>
       <LockScreen :avatar @to-login="handleLogout" />
+    </template>
+    <template #sidebar-bottom-custom>
+      <div class="px-2">
+        <UserCard
+          :avatar="avatar"
+          :class-name="userStore.userInfo?.username ?? ''"
+          :name="userStore.userInfo?.nickname ?? ''"
+          :student-no="userStore.userInfo?.id ?? ''"
+        />
+      </div>
     </template>
   </BasicLayout>
   <HelpModal />

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { AssessmentTarget } from '#/api/assessment/task';
 
-import { computed, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon, Search } from '@vben/icons';
 
@@ -12,49 +12,161 @@ import {
   Radio as ARadio,
 } from 'ant-design-vue';
 
+import { AssessmentTargetType } from '#/api/assessment/task';
+import { getStudentProfileSimpleList } from '#/api/psychology/student-profile';
+import { getSimpleDeptList } from '#/api/system/dept';
 import LyButton from '#/components/LyButton/index.vue';
+import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(defineProps<{ modelValue?: AssessmentTarget }>(), {
-  modelValue: () => ({ type: 'student', selected: [] }),
+  modelValue: () => ({ type: 1, selected: [] }),
 });
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: AssessmentTarget): void;
 }>();
 
+// 从父组件注入缓存方法
+const parentRef = inject<{
+  cacheClassList: (classes: any[]) => void;
+  cacheStudentsForClass: (
+    classId: number,
+    students: any[],
+    count: number,
+  ) => void;
+  getCachedClass: (classId: number) => any;
+  getCachedClassList: () => any[];
+}>('parentRef');
+
 // 单选：收件类型
 const type = ref<AssessmentTarget['type']>(props.modelValue.type);
-// 多选：选中的学生，按班级聚合
-const selectedByClass = ref<Map<string, Set<string>>>(new Map());
+// 多选：选中的学生，按班级聚合（使用数字 ID）
+const selectedByClass = ref<Map<number, Set<number>>>(new Map());
 
-type Student = { id: string; name: string; sno: string };
+type Student = { id: number; name: string; sno: string };
 type ClassGroup = {
   count: number;
-  id: string;
+  id: number;
+  loaded?: boolean;
+  loading?: boolean;
   name: string;
-  students: Student[];
+  students?: Student[];
 };
 
-// 假数据（后续可替换为接口）
-const allClasses = ref<ClassGroup[]>([
-  {
-    id: 'c1',
-    name: '高一（1）班',
-    count: 26,
-    students: [
-      { id: 's1', name: '李三', sno: '1252125212111' },
-      { id: 's2', name: '李四', sno: '1252125212112' },
-    ],
-  },
-  {
-    id: 'c2',
-    name: '高一（2）班',
-    count: 26,
-    students: [
-      { id: 's3', name: '王五', sno: '1252125212113' },
-      { id: 's4', name: '赵六', sno: '1252125212114' },
-    ],
-  },
-]);
+// 班级列表（初始仅有班级信息，无学生）
+const allClasses = ref<ClassGroup[]>([]);
+const activeClassKeys = ref<number[]>([]);
+
+// 数据缓存状态
+const isDataLoaded = ref(false);
+
+async function loadClassList() {
+  // 如果已经加载过，直接返回
+  if (isDataLoaded.value && allClasses.value.length > 0) {
+    return;
+  }
+
+  // 尝试从父组件缓存恢复数据
+  if (parentRef) {
+    const cachedClasses = parentRef.getCachedClassList();
+    if (cachedClasses.length > 0) {
+      allClasses.value = cachedClasses;
+      isDataLoaded.value = true;
+      return;
+    }
+  }
+
+  const data: any[] = await getSimpleDeptList();
+  // 取叶子节点作为班级；若后端已是平铺列表，则直接使用
+  function flattenLeaves(nodes: any[]): any[] {
+    const result: any[] = [];
+    nodes?.forEach((n) => {
+      if (n?.children && n.children.length > 0) {
+        result.push(...flattenLeaves(n.children));
+      } else if (n) {
+        result.push(n);
+      }
+    });
+    return result;
+  }
+  const leaves = Array.isArray(data) ? flattenLeaves(data) : [];
+  const classes = leaves.map((n) => ({
+    id: Number(n.id),
+    name: String(n.name),
+    count: Number(n.count ?? 0),
+    students: undefined,
+    loading: false,
+    loaded: false,
+  }));
+
+  allClasses.value = classes;
+  isDataLoaded.value = true;
+
+  // 同步到父组件缓存
+  if (parentRef) {
+    parentRef.cacheClassList(classes);
+  }
+}
+
+async function loadStudentsForClass(group: ClassGroup) {
+  if (group.loaded || group.loading) return;
+
+  // 尝试从父组件缓存恢复学生数据
+  if (parentRef) {
+    const cachedGroup = parentRef.getCachedClass(group.id);
+    if (cachedGroup?.loaded && cachedGroup.students) {
+      group.students = cachedGroup.students;
+      group.count = cachedGroup.count;
+      group.loaded = true;
+      return;
+    }
+  }
+
+  group.loading = true;
+  try {
+    const resp: any = await getStudentProfileSimpleList({
+      classDeptId: group.id,
+      pageNo: 1,
+      pageSize: 1000,
+    });
+    const list = resp;
+    const total = Number(list.length ?? 0);
+    const students = list.map((s: any) => ({
+      id: Number(s.id ?? s.userId),
+      name: String(s.name ?? ''),
+      sno: String(s.studentNo ?? ''),
+    }));
+
+    group.students = students;
+    group.count = total;
+    group.loaded = true;
+
+    // 同步到父组件缓存
+    if (parentRef) {
+      parentRef.cacheStudentsForClass(group.id, students, total);
+    }
+  } finally {
+    group.loading = false;
+  }
+}
+
+function onCollapseChange(key: unknown): void {
+  const keys = Array.isArray(key)
+    ? (key as Array<number | string>)
+    : [key as number | string];
+  activeClassKeys.value = keys.map(Number);
+  // 仅对新展开的面板加载学生（不阻塞 UI）
+  activeClassKeys.value.forEach((k) => {
+    const group = allClasses.value.find((c) => c.id === k);
+    if (group && !group.loaded) {
+      void loadStudentsForClass(group);
+    }
+  });
+}
+
+onMounted(() => {
+  loadClassList();
+});
 
 // 初始化已选
 function initSelected() {
@@ -65,9 +177,17 @@ function initSelected() {
     ]),
   );
 }
-initSelected();
 
-// 搜索：仅点击“搜索”按钮后才应用关键词
+// 监听 props.modelValue 变化，重新初始化选择状态
+watch(
+  () => props.modelValue,
+  () => {
+    initSelected();
+  },
+  { immediate: true, deep: true },
+);
+
+// 搜索：仅点击"搜索"按钮后才应用关键词
 const keyword = ref('');
 const appliedKeyword = ref('');
 const filteredClasses = computed(() => {
@@ -76,11 +196,13 @@ const filteredClasses = computed(() => {
   return allClasses.value
     .map((c) => ({
       ...c,
-      students: c.students.filter(
+      students: (c.students || []).filter(
         (s) => s.name.includes(kw) || s.sno.includes(kw),
       ),
     }))
-    .filter((c) => c.students.length > 0);
+    .filter(
+      (c) => c.name.includes(kw) || (c.students && c.students.length > 0),
+    );
 });
 
 // 同步到父组件
@@ -104,7 +226,7 @@ function sync() {
 }
 
 // 勾选单个学生
-function toggleStudent(group: ClassGroup, id: string, checked: boolean) {
+function toggleStudent(group: ClassGroup, id: number, checked: boolean) {
   const set = new Set(selectedByClass.value.get(group.id) || []);
   checked ? set.add(id) : set.delete(id);
   if (set.size > 0) selectedByClass.value.set(group.id, set);
@@ -115,10 +237,16 @@ function toggleStudent(group: ClassGroup, id: string, checked: boolean) {
 // 勾选一个班级
 function toggleClass(group: ClassGroup, checked: boolean) {
   if (checked) {
-    selectedByClass.value.set(
-      group.id,
-      new Set(group.students.map((s) => s.id)),
-    );
+    const ensure = async () => {
+      if (!group.loaded) await loadStudentsForClass(group);
+      selectedByClass.value.set(
+        group.id,
+        new Set((group.students || []).map((s) => s.id)),
+      );
+      sync();
+    };
+    ensure();
+    return;
   } else {
     selectedByClass.value.delete(group.id);
   }
@@ -128,12 +256,12 @@ function toggleClass(group: ClassGroup, checked: boolean) {
 function isClassAllChecked(group: ClassGroup) {
   const set = selectedByClass.value.get(group.id);
   if (!set) return false;
-  return set.size > 0 && set.size === group.students.length;
+  return set.size > 0 && set.size === (group.students?.length || 0);
 }
 function isClassIndeterminate(group: ClassGroup) {
   const set = selectedByClass.value.get(group.id);
   if (!set) return false;
-  return set.size > 0 && set.size < group.students.length;
+  return set.size > 0 && set.size < (group.students?.length || 0);
 }
 
 // 收件类型变化也要同步
@@ -152,22 +280,16 @@ function isPanelActive(panel: any) {
   <div class="mx-auto w-full max-w-[610px] space-y-6">
     <!-- 收件类型 -->
     <div>
-      <div class="mb-2 flex items-center gap-1 text-[14px]">
-        <div class="font-medium text-black">收件类型</div>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel title="收件类型" required size="small" />
       <ARadio.Group v-model:value="type">
-        <ARadio value="student">学生本人</ARadio>
-        <ARadio value="parent">学生家长</ARadio>
+        <ARadio :value="AssessmentTargetType.STUDENT">学生本人</ARadio>
+        <ARadio :value="AssessmentTargetType.PARENT">学生家长</ARadio>
       </ARadio.Group>
     </div>
 
     <!-- 选择班级 -->
     <div>
-      <div class="mb-2 flex items-center gap-1 text-[14px]">
-        <div class="font-medium text-black">选择班级</div>
-        <div class="text-[#FF0831]">*</div>
-      </div>
+      <LyLabel title="选择班级" required size="small" />
       <div class="mb-3 flex gap-4">
         <AInput
           v-model:value="keyword"
@@ -188,8 +310,12 @@ function isPanelActive(panel: any) {
         </LyButton>
       </div>
 
+      <!-- 班级折叠列表 -->
       <div class="max-h-[250px] overflow-y-auto pr-1">
-        <ACollapse>
+        <ACollapse
+          v-model:active-key="activeClassKeys"
+          @change="onCollapseChange"
+        >
           <template #expandIcon="panel">
             <IconifyIcon
               :icon="
@@ -220,23 +346,34 @@ function isPanelActive(panel: any) {
               </div>
             </template>
 
-            <div class="bg-#fff flex flex-col gap-6">
-              <div
-                v-for="stu in c.students"
-                :key="stu.id"
-                class="flex items-center justify-between pl-6"
-              >
-                <div>
-                  <div class="text-[14px] text-black">{{ stu.name }}</div>
-                  <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
+            <div v-if="c.loading" class="px-6 py-4 text-[#979899]">
+              加载中...
+            </div>
+            <div v-else-if="!c.loaded" class="px-6 py-4 text-[#979899]">
+              展开以加载学生
+            </div>
+            <div v-else class="bg-#fff flex flex-col gap-6">
+              <template v-if="c.students && c.students.length > 0">
+                <div
+                  v-for="stu in c.students"
+                  :key="stu.id"
+                  class="flex items-center justify-between pl-6"
+                >
+                  <div>
+                    <div class="text-[14px] text-black">{{ stu.name }}</div>
+                    <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
+                  </div>
+                  <ACheckbox
+                    :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
+                    @change="
+                      (e: any) => toggleStudent(c, stu.id, e.target.checked)
+                    "
+                  />
                 </div>
-                <ACheckbox
-                  :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
-                  @change="
-                    (e: any) => toggleStudent(c, stu.id, e.target.checked)
-                  "
-                />
-              </div>
+              </template>
+              <template v-else>
+                <div class="px-6 py-2 text-center text-[#979899]">暂无学生</div>
+              </template>
             </div>
           </ACollapse.Panel>
         </ACollapse>
