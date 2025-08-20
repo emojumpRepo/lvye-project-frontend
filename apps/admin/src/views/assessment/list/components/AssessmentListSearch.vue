@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 import { Tabs } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
 
@@ -24,18 +25,48 @@ const activeTab = ref('all');
 
 // 处理表单提交
 const handleSubmit = async (formData: any) => {
-  console.log(formData);
-
   const currentTab = tabs.find((tab) => tab.key === activeTab.value);
+
+  const [startDate, endDate] = formatDate(formData.date);
 
   // 合并表单数据和当前tab状态
   const searchParams = {
-    ...formData,
+    createTime: [startDate, endDate],
     status: currentTab?.status,
+    questionnaireId: formData.questionnaireId,
   };
 
   emit('search', searchParams);
 };
+
+function formatDate(date: string): [string, string] {
+  switch (date) {
+    case 'month': {
+      return [
+        dayjs().subtract(1, 'month').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().format('YYYY-MM-DDTHH:mm:ss'),
+      ];
+    }
+    case 'week': {
+      return [
+        dayjs().subtract(1, 'week').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().format('YYYY-MM-DDTHH:mm:ss'),
+      ];
+    }
+    case 'year': {
+      return [
+        dayjs().subtract(1, 'year').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().format('YYYY-MM-DDTHH:mm:ss'),
+      ];
+    }
+    default: {
+      return [
+        dayjs().subtract(1, 'month').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().format('YYYY-MM-DDTHH:mm:ss'),
+      ];
+    }
+  }
+}
 
 const handleReset = () => {
   formRef?.resetForm();

@@ -27,8 +27,8 @@ export interface SelectedAssessmentTargetItem {
 }
 
 export enum AssessmentTargetType {
-  PARENT = 2,
-  STUDENT = 1,
+  PARENT = 1,
+  STUDENT = 0,
 }
 
 export interface AssessmentTarget {

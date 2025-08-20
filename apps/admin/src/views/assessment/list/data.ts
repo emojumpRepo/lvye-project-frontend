@@ -1,22 +1,49 @@
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { h } from 'vue';
+import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
+import { getQuestionnaireListSimple } from '#/api/questionnaire';
+
+// 量表选项的响应式数据
+const questionnaireOptions = ref<{ label: string; value: string }[]>([]);
+const isLoading = ref(false);
+
+// 异步加载量表数据
+const loadQuestionnaireOptions = async () => {
+  if (questionnaireOptions.value.length > 0) {
+    return; // 如果已有数据，不再重复加载
+  }
+
+  isLoading.value = true;
+  try {
+    const response = await getQuestionnaireListSimple();
+    questionnaireOptions.value = response.map((item) => ({
+      label: item.title,
+      value: item.id.toString(),
+    }));
+  } catch (error) {
+    console.error('加载量表数据失败:', error);
+    questionnaireOptions.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
+  // 组件挂载时加载数据
+  loadQuestionnaireOptions();
+
   return [
     {
-      fieldName: 'templateId',
+      fieldName: 'questionnaireId',
       component: 'Select',
       componentProps: {
         placeholder: '请选择量表',
-        options: [
-          { label: '我是量表名称1', value: '1' },
-          { label: '我是量表名称2', value: '2' },
-          { label: '我是量表名称3', value: '3' },
-        ],
+        options: questionnaireOptions,
+        loading: isLoading,
       },
       hideLabel: true,
     },
