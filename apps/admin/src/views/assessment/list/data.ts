@@ -8,7 +8,7 @@ import { IconifyIcon } from '@vben/icons';
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'questionnaireName',
+      fieldName: 'templateId',
       component: 'Select',
       componentProps: {
         placeholder: '请选择量表',
@@ -34,7 +34,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       hideLabel: true,
     },
     {
-      fieldName: 'taskName',
+      fieldName: 'name',
       component: 'Input',
       componentProps: {
         placeholder: '请输入任务名称',

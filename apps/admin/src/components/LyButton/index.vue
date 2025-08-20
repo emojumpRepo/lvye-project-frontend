@@ -97,7 +97,7 @@ watch(
         break;
       }
       default: {
-        customClass.value = 'ly-btn-default';
+        customClass.value = '';
         customType.value = 'default';
         break;
       }

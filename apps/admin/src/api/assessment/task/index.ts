@@ -51,19 +51,20 @@ export interface AssessmentTaskSaveReq {
   id?: number;
   taskNo?: string;
   taskName: string;
-  scaleCode: string; // A/B 等
+  questionnaireIds: number[]; // A/B 等
   targetAudience: number; // 1-学生，2-家长
   startline?: Date | string;
   deadline?: Date | string;
   deptIdList?: number[];
   userIdList?: number[];
+  isPublish?: boolean; // 是否发布
 }
 
 // 分页请求
 export interface AssessmentTaskPageReq extends PageParam {
   taskNo?: string;
   name?: string;
-  scaleCode?: string;
+  questionnaireIds?: number[];
   targetAudience?: number;
   status?: number;
   publishUserId?: number;
@@ -76,7 +77,7 @@ export interface AssessmentTaskVO {
   id: number;
   taskNo: string;
   name: string;
-  scaleCode: string;
+  questionnaireIds: number[];
   targetAudience: number;
   status?: number;
   publishUserId?: number;

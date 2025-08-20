@@ -33,6 +33,10 @@ function onPrev() {
   if (step.value > 1) step.value -= 1;
 }
 
+function onBack() {
+  step.value = 1;
+}
+
 function onPublished() {
   hasPublished.value = true;
 }
@@ -67,7 +71,9 @@ function onPublished() {
         :step="step"
         @next="onNext"
         @prev="onPrev"
+        @back="onBack"
         @publish="onPublished"
+        @close="handleClose"
       />
     </div>
   </AModal>

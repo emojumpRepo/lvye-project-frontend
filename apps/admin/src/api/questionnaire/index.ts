@@ -1,8 +1,9 @@
 import { requestClient } from '#/api/request';
 
 export interface QuestionnaireVO {
-  id?: number;
+  id: number;
   title: string;
+  status?: number;
   description?: string;
   externalLink: string;
   questionnaireType: number;
@@ -12,7 +13,10 @@ export interface QuestionnaireVO {
   questionCount?: number;
   estimatedDuration?: number;
   accessCount?: number;
+  questionCount?: number;
   completionCount?: number;
+  assessmentDimension?: string[];
+  assessmentDimensionLabels?: string[];
   isOpen?: boolean;
   validFrom?: number;
   validTo?: number;
@@ -141,5 +145,12 @@ export const getQuestionnaireResultList = (
 export const getQuestionnaireResult = (id: number) => {
   return requestClient.get<QuestionnaireResultVO>(
     `/emojump/questionnaire-result/get?id=${id}`,
+  );
+};
+
+// 获取问卷精简列表
+export const getQuestionnaireListSimple = () => {
+  return requestClient.get<QuestionnaireVO[]>(
+    '/psychology/questionnaire/list-all-simple',
   );
 };
