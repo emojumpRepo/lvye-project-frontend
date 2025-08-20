@@ -73,6 +73,13 @@ export namespace PsychologyStudentProfileApi {
     name: string;
     parentId: number;
   }
+
+  /** 部门树形结构 */
+  export interface DeptTree {
+    value: number;
+    label: string;
+    children?: { label: string; value: number }[];
+  }
 }
 
 /** 查询学生档案分页列表 */

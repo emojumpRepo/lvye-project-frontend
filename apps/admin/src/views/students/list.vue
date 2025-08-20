@@ -10,11 +10,8 @@ import { Button, message, Radio } from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  getGraduationStatusTag,
-  getPsychologicalStatusTag,
-} from '#/api/constants';
-import {
   deleteStudentProfile,
+  getDeptSimpleList,
   getStudentProfilePage,
 } from '#/api/psychology/student-profile';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
@@ -24,6 +21,8 @@ import GraduatedStudentFileDrawer from '#/components/Drawer/GraduatedStudentFile
 import StudentBulkClassTransferDrawer from '#/components/Drawer/StudentBulkClassTransferDrawer/index.vue';
 import StudentBulkImportDrawer from '#/components/Drawer/StudentBulkImportDrawer/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
+import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
 
 import StudentSearch from './components/StudentSearch.vue';
@@ -228,9 +227,55 @@ function refresh() {
   gridApi.query();
 }
 
+/**
+ * 加载部门列表
+ */
+async function loadDeptList() {
+  const data = await getDeptSimpleList();
+  if (data.length > 0) {
+    const filteredData = data.filter((dept) => dept.parentId !== 110);
+
+    const childIds = new Set(filteredData.map((dept) => dept.id));
+
+    const rootDepts = filteredData.filter(
+      (dept) =>
+        !childIds.has(dept.parentId) ||
+        dept.parentId === 0 ||
+        dept.parentId === null,
+    );
+
+    // 构建树形结构
+    const buildTree = (
+      parentId: number,
+    ): undefined | { label: string; value: number }[] => {
+      const children = filteredData
+        .filter((dept) => dept.parentId === parentId)
+        .map((dept) => ({
+          value: dept.id,
+          label: dept.name,
+        }));
+
+      return children.length > 0 ? children : undefined;
+    };
+
+    // 构建最终的树形数据
+    const treeData = rootDepts.map((dept) => ({
+      value: dept.id,
+      label: dept.name,
+      children: buildTree(dept.id),
+    }));
+
+    sessionStorage.setItem('deptList', JSON.stringify(treeData));
+    return treeData;
+  }
+
+  return [];
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   gridApi.query();
+  loadDeptList();
 });
 </script>
 
@@ -272,31 +317,23 @@ onMounted(() => {
         <Grid>
           <!-- 性别 -->
           <template #sex="{ row }">
-            <span>{{
-              row.sex === 1 ? '男' : row.sex === 2 ? '女' : '未知'
-            }}</span>
+            <span> {{ getDictLabel('system_user_sex', row.sex) }} </span>
           </template>
 
           <!-- 心理状态 -->
           <template #psychologicalStatus="{ row }">
-            <span
-              class="rounded-md px-2 py-1 text-xs"
-              :style="
-                getPsychologicalStatusTag(row.psychologicalStatus!).tagStyle
-              "
-            >
-              {{ getPsychologicalStatusTag(row.psychologicalStatus!).label }}
-            </span>
+            <LyTag
+              tag-category-key="student_psychological_status"
+              :dict-value="row.psychologicalStatus"
+            />
           </template>
 
           <!-- 毕业状态 -->
           <template #graduationStatus="{ row }">
-            <span
-              class="rounded-md px-2 py-1 text-xs"
-              :style="getGraduationStatusTag(row.graduationStatus!).tagStyle"
-            >
-              {{ getGraduationStatusTag(row.graduationStatus!).label }}
-            </span>
+            <LyTag
+              tag-category-key="student_graduation_status"
+              :dict-value="String(row.graduationStatus)"
+            />
           </template>
 
           <!-- 联系电话 -->

@@ -1,28 +1,15 @@
 <script setup lang="ts">
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { QuestionnaireVO } from '#/api/questionnaire/index';
+import type {
+  QuestionnairePageReqVO,
+  QuestionnaireVO,
+} from '#/api/questionnaire/index';
 
 import { onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
-import {
-  Button,
-  DatePicker,
-  Dropdown,
-  Menu,
-  MenuItem,
-  message,
-  Tag,
-} from 'ant-design-vue';
-import dayjs from 'dayjs';
+import { Button, message } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  getStatusColor,
-  getStatusLabel,
-  getTypeLabel,
-} from '#/api/questionnaire/constants';
 import {
   deleteQuestionnaire,
   getQuestionnaireList,
@@ -31,14 +18,24 @@ import {
   syncQuestionnaireData,
   updateQuestionnaire,
 } from '#/api/questionnaire/index';
+import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
+import { getDictLabel } from '#/utils/dict';
 
-import { useQuestionGridColumns, useQuestionGridFormSchema } from './data';
+import QuestionnaireSearch from './components/QuestionnaireSearch.vue';
+import { useQuestionGridColumns } from './data';
 
 defineOptions({ name: 'QuestionnaireManagement' });
 
+const loading = ref(false);
+
 /** 子表的列表 */
 const selectQuestionnaire = ref<QuestionnaireVO>();
+
+// 处理加载状态
+function handleLoading(isLoading: boolean) {
+  loading.value = isLoading;
+}
 
 // 同步数据
 async function handleSync() {
@@ -86,44 +83,64 @@ async function onDelete(row: QuestionnaireVO) {
   }
 }
 
+/** 发布问卷 */
 async function onPublish(row: QuestionnaireVO) {
   const hideLoading = message.loading({
-    content: $t('ui.actionMessage.publishing', [row.title]),
+    content: `${row.title} 发布中...`,
     duration: 0,
     key: 'action_process_msg',
   });
   try {
-    await publishQuestionnaire(row.id as number);
-    message.success($t('ui.actionMessage.publishSuccess', [row.title]));
+    const res = await publishQuestionnaire({
+      externalId: row.externalId as string,
+      id: row.id as number,
+      syncType: 1,
+    });
+    if (res.success) {
+      message.success(`${row.title} 已发布`);
+      onRefresh();
+    } else {
+      message.error(res.message);
+    }
+  } finally {
+    hideLoading();
+  }
+}
+
+/** 暂停问卷 */
+async function onPause(row: QuestionnaireVO) {
+  const hideLoading = message.loading({
+    content: `${row.title} 暂停中...`,
+    duration: 0,
+    key: 'action_process_msg',
+  });
+  try {
+    const res = await pauseQuestionnaire({
+      externalId: row.externalId as string,
+      id: row.id as number,
+      syncType: 2,
+    });
+    if (res.success) {
+      message.success(`${row.title} 已暂停`);
+      onRefresh();
+    } else {
+      message.error(res.message);
+    }
     onRefresh();
   } finally {
     hideLoading();
   }
 }
 
-async function onPause(row: QuestionnaireVO) {
-  const hideLoading = message.loading({
-    content: $t('ui.actionMessage.pausing', [row.title]),
-    duration: 0,
-    key: 'action_process_msg',
-  });
-  try {
-    await pauseQuestionnaire(row.id as number);
-    message.success($t('ui.actionMessage.pauseSuccess', [row.title]));
-    onRefresh();
-  } finally {
-    hideLoading();
-  }
+// 处理搜索
+function handleSearch(params: QuestionnairePageReqVO) {
+  gridApi.query({ ...params, pageNo: 1 });
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useQuestionGridFormSchema(),
-    showCollapseButton: false,
-  },
   gridOptions: {
     columns: useQuestionGridColumns(),
-    height: 'auto',
+    height: '600px',
     keepSource: true,
     editConfig: {
       mode: 'row',
@@ -131,11 +148,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }, formValues) => {
+        query: async ({ page }) => {
           return await getQuestionnaireList({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...formValues,
           });
         },
       },
@@ -158,10 +174,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+/** 是否处于编辑状态 */
 function hasEditStatus(row: QuestionnaireVO) {
   return gridApi.grid?.isEditByRow(row);
 }
 
+/** 保存行事件 */
 async function saveRowEvent(row: QuestionnaireVO) {
   await gridApi.grid?.clearEdit();
   gridApi.setLoading(true);
@@ -176,8 +194,10 @@ async function saveRowEvent(row: QuestionnaireVO) {
   }
 }
 
-function cancelRowEvent() {
+/** 取消行事件 */
+function cancelRowEvent(row: QuestionnaireVO) {
   gridApi.grid?.clearEdit();
+  gridApi.grid?.revertData(row);
 }
 
 onMounted(() => {
@@ -186,129 +206,99 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <Grid>
-      <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '同步最新数据',
-              type: 'primary',
-              icon: ACTION_ICON.REFRESH,
-              onClick: handleSync,
-            },
-          ]"
-        />
-      </template>
+  <div class="flex h-full flex-col p-6">
+    <div class="my-4 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+      <div>
+        <QuestionnaireSearch @loading="handleLoading" @search="handleSearch" />
+      </div>
+      <div class="min-h-0 flex-1 overflow-hidden">
+        <Grid>
+          <template #toolbar-tools>
+            <TableAction
+              :actions="[
+                {
+                  label: '同步最新数据',
+                  type: 'primary',
+                  icon: ACTION_ICON.REFRESH,
+                  onClick: handleSync,
+                },
+              ]"
+            />
+          </template>
 
-      <!-- 问卷类型列 -->
-      <template #type="{ row }">
-        <Tag color="blue">
-          {{ getTypeLabel(row.questionnaireType, 'questionnaire') }}
-        </Tag>
-      </template>
+          <!-- 问卷类型列 -->
+          <template #type="{ row }">
+            <LyTag
+              color-type="processing"
+              :tag-label="
+                getDictLabel('questionnaire_type', row.questionnaireType)
+              "
+            />
+          </template>
 
-      <!-- 状态列 -->
-      <template #status="{ row }">
-        <Tag :color="getStatusColor(row.syncStatus ?? 0, 'questionnaire')">
-          {{ getStatusLabel(row.syncStatus ?? 0, 'questionnaire') }}
-        </Tag>
-      </template>
+          <!-- 状态列 -->
+          <template #status="{ row }">
+            <LyTag
+              tag-category-key="questionnaire_status"
+              :dict-value="row.status"
+            />
+          </template>
 
-      <!-- 是否开放列 -->
-      <template #isOpen="{ row }">
-        <Tag :color="row.isOpen ? 'green' : 'red'">
-          {{ row.isOpen ? '开放' : '关闭' }}
-        </Tag>
-      </template>
+          <!-- 目标受众列 -->
+          <template #targetAudience="{ row }">
+            <LyTag
+              tag-category-key="questionnaire_target_audience"
+              :dict-value="row.targetAudience"
+            />
+          </template>
 
-      <template #targetAudience="{ row }">
-        <Tag :color="row.targetAudience === 1 ? 'blue' : 'green'">
-          {{ row.targetAudience === 1 ? '学生' : '家长' }}
-        </Tag>
-      </template>
+          <!-- 是否开放列 -->
+          <template #isOpen="{ row }">
+            <LyTag
+              tag-category-key="questionnaire_is_open"
+              :dict-value="String(row.isOpen)"
+            />
+          </template>
 
-      <!-- 答题有效期开始列 -->
-      <template #validFrom="{ row }">
-        {{
-          row.validFrom
-            ? dayjs(row.validFrom).format('YYYY-MM-DD HH:mm:ss')
-            : '0'
-        }}
-      </template>
-
-      <template #validFrom_edit="{ row }">
-        <DatePicker
-          v-model="row.validFrom"
-          type="datetime"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="x"
-          show-time
-        />
-      </template>
-
-      <!-- 答题有效期结束列 -->
-      <template #validTo="{ row }">
-        {{
-          row.validTo ? dayjs(row.validTo).format('YYYY-MM-DD HH:mm:ss') : '0'
-        }}
-      </template>
-
-      <template #validTo_edit="{ row }">
-        <DatePicker
-          v-model="row.validTo"
-          type="datetime"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="x"
-          show-time
-        />
-      </template>
-
-      <template #operation="{ row }">
-        <div v-if="hasEditStatus(row)" class="flex w-full items-center gap-2">
-          <Button type="primary" @click="saveRowEvent(row)"> 保存 </Button>
-          <Button type="text" @click="cancelRowEvent()"> 取消 </Button>
-          <Dropdown>
-            <Button type="link">更多</Button>
-            <template #overlay>
-              <Menu>
-                <!-- <MenuItem @click="onEdit(row)">编辑</MenuItem> -->
-                <MenuItem danger @click="onDelete(row)">删除</MenuItem>
-              </Menu>
-            </template>
-          </Dropdown>
-        </div>
-        <div v-else class="flex w-full items-center gap-2">
-          <Button
-            v-if="![1, 3].includes(row.syncStatus ?? 0)"
-            type="link"
-            @click="onPublish(row)"
-          >
-            发布
-          </Button>
-          <Button
-            v-else-if="[1, 3].includes(row.syncStatus ?? 0)"
-            type="link"
-            @click="onPause(row)"
-          >
-            暂停
-          </Button>
-          <Dropdown>
-            <Button type="link">更多</Button>
-            <template #overlay>
-              <Menu>
-                <!-- <MenuItem @click="onEdit(row)">编辑</MenuItem> -->
-                <MenuItem danger @click="onDelete(row)">删除</MenuItem>
-              </Menu>
-            </template>
-          </Dropdown>
-        </div>
-      </template>
-    </Grid>
-
-    <!-- 子表的表单 -->
-    <!-- <ResultList :id="selectQuestionnaire?.id" /> -->
-  </Page>
+          <!-- 操作列 -->
+          <template #operation="{ row }">
+            <div v-if="hasEditStatus(row)" class="flex w-full items-center">
+              <Button type="primary" size="small" @click="saveRowEvent(row)">
+                保存
+              </Button>
+              <Button type="text" size="small" @click="cancelRowEvent(row)">
+                取消
+              </Button>
+              <Button type="link" size="small" danger @click="onDelete(row)">
+                删除
+              </Button>
+            </div>
+            <div v-else class="flex w-full items-center">
+              <Button
+                v-if="row.status !== 1"
+                type="link"
+                size="small"
+                @click="onPublish(row)"
+              >
+                发布
+              </Button>
+              <Button
+                v-else-if="row.status === 1"
+                type="link"
+                size="small"
+                @click="onPause(row)"
+              >
+                暂停
+              </Button>
+              <Button type="link" size="small" danger @click="onDelete(row)">
+                删除
+              </Button>
+            </div>
+          </template>
+        </Grid>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss">

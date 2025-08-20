@@ -149,6 +149,7 @@ export function useTypeGridColumns(): VxeTableGridOptions['columns'] {
 const colorOptions = [
   { value: '', label: '无' },
   { value: 'processing', label: '主要' },
+  { value: 'pending', label: '次要' },
   { value: 'success', label: '成功' },
   { value: 'default', label: '默认' },
   { value: 'warning', label: '警告' },

@@ -8,6 +8,7 @@ import {
   Form as AForm,
   Input as AInput,
   Select as ASelect,
+  Table as ATable,
 } from 'ant-design-vue';
 
 import { getDeptSimpleList } from '#/api/psychology/student-profile/index';
@@ -98,35 +99,29 @@ onMounted(async () => {
     <div class="mx-2 mb-2">
       <AForm :model="graduationForm" :rules="rules">
         <AForm.Item name="gradeId">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="年级" required custom-title-class="text-sm" />
-            <ASelect
-              v-model:value="graduationForm.gradeId"
-              placeholder="请选择"
-              :options="gradeOptions"
-            />
-          </div>
+          <LyLabel title="年级" required custom-title-class="font-normal" />
+          <ASelect
+            v-model:value="graduationForm.gradeId"
+            placeholder="请选择"
+            :options="gradeOptions"
+          />
         </AForm.Item>
 
         <AForm.Item name="graduationYear">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="毕业年份" required custom-title-class="text-sm" />
-            <ASelect
-              v-model:value="graduationForm.graduationYear"
-              placeholder="请选择"
-              :options="graduationYearOptions"
-            />
-          </div>
+          <LyLabel title="毕业年份" required custom-title-class="font-normal" />
+          <ASelect
+            v-model:value="graduationForm.graduationYear"
+            placeholder="请选择"
+            :options="graduationYearOptions"
+          />
         </AForm.Item>
 
         <AForm.Item name="session">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="届别" required custom-title-class="text-sm" />
-            <AInput
-              v-model:value="graduationForm.session"
-              placeholder="如：2024届"
-            />
-          </div>
+          <LyLabel title="届别" required custom-title-class="font-normal" />
+          <AInput
+            v-model:value="graduationForm.session"
+            placeholder="如：2024届"
+          />
         </AForm.Item>
       </AForm>
 

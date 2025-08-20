@@ -18,17 +18,8 @@ import {
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import {
-  createStudentProfile,
-  getDeptSimpleList,
-} from '#/api/psychology/student-profile/index';
-import LyFormLabel from '#/components/LyFormLabel/index.vue';
-
-interface DeptOption {
-  value: number;
-  label: string;
-  children?: { label: string; value: number }[];
-}
+import { createStudentProfile } from '#/api/psychology/student-profile/index';
+import LyLabel from '#/components/LyLabel/index.vue';
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
@@ -37,7 +28,7 @@ const emit = defineEmits<{
 const validateName = ref(false);
 const validateStudentId = ref(false);
 
-const deptList = ref<DeptOption[]>([]);
+const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
 
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
@@ -157,53 +148,13 @@ async function handleCreateStudent() {
   drawerApi.close();
 }
 
-async function loadDeptList() {
-  const data = await getDeptSimpleList();
-  if (data.length > 0) {
-    const filteredData = data.filter((dept) => dept.parentId !== 110);
-
-    const childIds = new Set(filteredData.map((dept) => dept.id));
-
-    const rootDepts = filteredData.filter(
-      (dept) =>
-        !childIds.has(dept.parentId) ||
-        dept.parentId === 0 ||
-        dept.parentId === null,
-    );
-
-    // 构建树形结构
-    const buildTree = (
-      parentId: number,
-    ): undefined | { label: string; value: number }[] => {
-      const children = filteredData
-        .filter((dept) => dept.parentId === parentId)
-        .map((dept) => ({
-          value: dept.id,
-          label: dept.name,
-        }));
-
-      return children.length > 0 ? children : undefined;
-    };
-
-    // 构建最终的树形数据
-    const treeData = rootDepts.map((dept) => ({
-      value: dept.id,
-      label: dept.name,
-      children: buildTree(dept.id),
-    }));
-
-    sessionStorage.setItem('deptList', JSON.stringify(treeData));
-    return treeData;
-  }
-
-  return [];
-}
-
-onMounted(async () => {
+onMounted(() => {
   const stored = sessionStorage.getItem('deptList');
-  deptList.value = stored
-    ? (JSON.parse(stored) as DeptOption[])
-    : await loadDeptList();
+  if (stored) {
+    deptList.value = JSON.parse(
+      stored,
+    ) as PsychologyStudentProfileApi.DeptTree[];
+  }
 });
 </script>
 
@@ -220,7 +171,7 @@ onMounted(async () => {
     </template>
     <AForm :model="studentForm" :rules="rules">
       <div>
-        <LyFormLabel label="学生姓名" required />
+        <LyLabel title="学生姓名" required custom-title-class="font-normal" />
         <AForm.Item name="name">
           <div class="flex items-center gap-2">
             <AInput
@@ -238,7 +189,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="学号" required />
+        <LyLabel title="学号" required custom-title-class="font-normal" />
         <AForm.Item name="studentNo">
           <div class="flex items-center gap-2">
             <AInput
@@ -255,7 +206,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="出生日期" required />
+        <LyLabel title="出生日期" required custom-title-class="font-normal" />
         <AForm.Item name="birthDate">
           <ADatePicker
             v-model:value="studentForm.birthDate"
@@ -266,7 +217,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="性别" required />
+        <LyLabel title="性别" required custom-title-class="font-normal" />
         <AForm.Item name="sex">
           <ARadio.Group v-model:value="studentForm.sex">
             <ARadio value="1">男</ARadio>
@@ -276,7 +227,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="年级" required />
+        <LyLabel title="年级" required custom-title-class="font-normal" />
         <AForm.Item name="gradeDeptId">
           <ASelect
             v-model:value="studentForm.gradeDeptId"
@@ -287,7 +238,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="班级" required />
+        <LyLabel title="班级" required custom-title-class="font-normal" />
         <AForm.Item name="classDeptId">
           <ASelect
             v-model:value="studentForm.classDeptId"
@@ -298,7 +249,7 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="联系电话" />
+        <LyLabel title="联系电话" custom-title-class="font-normal" />
         <AForm.Item name="mobile">
           <AInput
             v-model:value="studentForm.mobile"
@@ -309,20 +260,20 @@ onMounted(async () => {
       </div>
 
       <div>
-        <LyFormLabel label="家庭住址" />
+        <LyLabel title="家庭住址" custom-title-class="font-normal" />
         <AForm.Item name="homeAddress">
           <AInput.TextArea
             v-model:value="studentForm.homeAddress"
             placeholder="请填写"
             :rows="3"
-            :maxlength="200"
-            show-count
+            :maxlength="100"
+            :show-count="false"
           />
         </AForm.Item>
       </div>
 
       <!-- <div>
-        <LyFormLabel label="特殊标记" />
+        <LyLabel label="特殊标记" />
         <AForm.Item name="isMark">
           <ARadioGroup v-model:value="studentForm.isMark">
             <ARadio value="1">标记</ARadio>
@@ -340,7 +291,7 @@ onMounted(async () => {
       </div> -->
 
       <div>
-        <LyFormLabel label="备注说明" />
+        <LyLabel title="备注说明" custom-title-class="font-normal" />
         <AForm.Item name="remark">
           <AInput v-model:value="studentForm.remark" placeholder="请填写" />
         </AForm.Item>

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
+import { computed, onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -10,21 +12,16 @@ import {
   Textarea as ATextarea,
 } from 'ant-design-vue';
 
-import LyFormLabel from '#/components/LyFormLabel/index.vue';
+import LyLabel from '#/components/LyLabel/index.vue';
 
-const selectedStudents = ref([]);
+interface DeptOption {
+  value: number;
+  label: string;
+  children?: { label: string; value: number }[];
+}
 
-const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-[720px]',
-  confirmText: '确认换班',
-  onOpenChange: async () => {
-    const data = drawerApi.getData();
-    if (data.selectedStudents.length > 0) {
-      selectedStudents.value = data.selectedStudents;
-    }
-    await loadGradeOptions();
-  },
-});
+// ============= 数据 =============
+const selectedStudents = ref<PsychologyStudentProfileApi.StudentProfile[]>([]);
 
 const columns = [
   {
@@ -50,39 +47,53 @@ const columns = [
 ];
 
 const transferForm = ref({
-  gradeId: '',
-  classId: '',
+  gradeId: undefined,
+  classId: undefined,
   reason: '',
   remark: '',
 });
 
-const gradeOptions = ref([]);
+const deptList = ref<DeptOption[]>([]);
 
-// 加载年级选项
-async function loadGradeOptions() {
-  try {
-    // const deptList = await getDeptSimpleList();
-    // console.log(deptList);
-    // const filterDeptList = deptList.filter((item) => item.parentId === 110);
-    // gradeOptions.value = filterDeptList.map((item) => ({
-    //   label: item.name,
-    //   value: item.id,
-    // }));
-  } catch (error) {
-    console.error('加载年级选项失败:', error);
-  }
-}
-
-const classOptions = ref([
-  { label: '1班', value: '1' },
-  { label: '2班', value: '2' },
-]);
+const classList = computed(() => {
+  return (
+    deptList.value.find((dept) => dept.value === transferForm.value.gradeId)
+      ?.children || []
+  );
+});
 
 const reasonOptions = ref([
   { label: '转学', value: '1' },
   { label: '休学', value: '2' },
   { label: '退学', value: '3' },
 ]);
+
+// =================== 事件 ===================
+const [Drawer, drawerApi] = useVbenDrawer({
+  class: 'w-[720px]',
+  confirmText: '确认换班',
+  onOpenChange: async () => {
+    const data = drawerApi.getData();
+    if (data.selectedStudents.length > 0) {
+      selectedStudents.value = data.selectedStudents;
+    }
+  },
+});
+
+function handleRemoveStudent(
+  record: PsychologyStudentProfileApi.StudentProfile,
+) {
+  selectedStudents.value = selectedStudents.value.filter(
+    (student) => student.studentNo !== record.studentNo,
+  );
+}
+
+onMounted(() => {
+  const stored = sessionStorage.getItem('deptList');
+  if (stored) {
+    deptList.value = JSON.parse(stored);
+  }
+});
 </script>
 
 <template>
@@ -113,9 +124,18 @@ const reasonOptions = ref([
           :data-source="selectedStudents"
           :pagination="false"
         >
-          <template #bodyCell="{ column }">
+          <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'action'">
-              <span class="cursor-pointer text-sm text-[#1966FF]">移除</span>
+              <span
+                class="cursor-pointer text-sm text-[#1966FF]"
+                @click="
+                  handleRemoveStudent(
+                    record as PsychologyStudentProfileApi.StudentProfile,
+                  )
+                "
+              >
+                移除
+              </span>
             </template>
           </template>
         </ATable>
@@ -125,27 +145,39 @@ const reasonOptions = ref([
       <div class="mt-6">
         <AForm>
           <div>
-            <LyFormLabel label="目标年级" required />
+            <LyLabel
+              title="目标年级"
+              required
+              custom-title-class="font-normal"
+            />
             <AForm.Item name="grade">
               <ASelect
                 v-model:value="transferForm.gradeId"
-                :options="gradeOptions"
+                :options="deptList"
               />
             </AForm.Item>
           </div>
 
           <div>
-            <LyFormLabel label="目标班级" required />
+            <LyLabel
+              title="目标班级"
+              required
+              custom-title-class="font-normal"
+            />
             <AForm.Item name="grade">
               <ASelect
                 v-model:value="transferForm.classId"
-                :options="classOptions"
+                :options="classList"
               />
             </AForm.Item>
           </div>
 
           <div>
-            <LyFormLabel label="换班理由" required />
+            <LyLabel
+              title="换班理由"
+              required
+              custom-title-class="font-normal"
+            />
             <AForm.Item name="grade">
               <ASelect
                 v-model:value="transferForm.reason"
@@ -155,9 +187,13 @@ const reasonOptions = ref([
           </div>
 
           <div>
-            <LyFormLabel label="备注说明" required />
+            <LyLabel
+              title="备注说明"
+              required
+              custom-title-class="font-normal"
+            />
             <AForm.Item name="grade">
-              <ATextarea v-model:value="transferForm.remark" disabled />
+              <ATextarea v-model:value="transferForm.remark" />
             </AForm.Item>
           </div>
         </AForm>
