@@ -252,7 +252,7 @@ async function handleCommit(publish: boolean) {
       taskName: basicInfoFormData.value.name,
       startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
       deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
-      scaleCode: selectedAssessments.value.map((i) => i.id).join(','),
+      questionnaireIds: selectedAssessments.value.map((i) => i.id),
       targetAudience: targetSelectData.value.type,
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
       isPublish: publish,

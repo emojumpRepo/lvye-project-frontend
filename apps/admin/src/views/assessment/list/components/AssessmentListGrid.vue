@@ -1,53 +1,82 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
 
+import { Pagination as APagination, Spin as ASpin } from 'ant-design-vue';
+
+import { useTask } from '../composables/useTask';
 import AssessmentCard from './AssessmentCard.vue';
 
-interface AssessmentCardData {
-  completed: number;
-  createTime: string;
-  effectiveTime: string;
-  id: string;
-  progress: number;
-  status: string;
-  total: number;
-}
+// 使用 hook 管理测评任务数据
+const {
+  loading,
+  pageSize,
+  current,
+  total,
+  cards,
+  loadData,
+  handlePageChange,
+  search,
+  filterByStatus,
+  resetSearch,
+} = useTask();
 
-const cards = ref<AssessmentCardData[]>([
-  {
-    id: '25211252',
-    status: '进行中',
-    createTime: '2025-01-01',
-    effectiveTime: '2025-01-05',
-    completed: 0,
-    total: 1,
-    progress: 0,
-  },
-  {
-    id: '25211253',
-    status: '已完成',
-    createTime: '2024-12-28',
-    effectiveTime: '2025-01-02',
-    completed: 5,
-    total: 5,
-    progress: 100,
-  },
-  {
-    id: '25211254',
-    status: '待开始',
-    createTime: '2025-01-03',
-    effectiveTime: '2025-01-10',
-    completed: 0,
-    total: 3,
-    progress: 0,
-  },
-]);
+onMounted(async () => {
+  await loadData();
+});
+
+// 暴露方法给父组件
+defineExpose({
+  search,
+  filterByStatus,
+  resetSearch,
+});
 </script>
 
 <template>
-  <div
-    class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
-  >
-    <AssessmentCard v-for="card in cards" :key="card.id" :card="card" />
+  <div class="flex h-full w-full flex-1 flex-col gap-4">
+    <Transition name="fade" mode="out-in">
+      <div v-if="loading" class="flex flex-1 items-center justify-center">
+        <ASpin spinning />
+      </div>
+      <div v-else class="flex flex-1 flex-col gap-4">
+        <template v-if="cards.length > 0">
+          <div
+            class="grid flex-1 grid-cols-1 grid-rows-3 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+          >
+            <AssessmentCard v-for="card in cards" :key="card.id" :card="card" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="flex flex-1 items-center justify-center">
+            暂无测评任务哦，快去创建一个吧~
+          </div>
+        </template>
+      </div>
+    </Transition>
+    <div class="flex shrink-0 justify-end">
+      <APagination
+        v-model:current="current"
+        :default-page-size="9"
+        :show-size-changer="true"
+        :show-total="(total) => `共 ${total} 个测评任务`"
+        :show-quick-jumper="true"
+        :page-size="pageSize"
+        :total="total"
+        @change="handlePageChange"
+      />
+    </div>
   </div>
 </template>
+<style lang="scss" scoped>
+:deep(.ant-pagination-item-active) {
+  background-color: #0bd092 !important;
+
+  &:hover {
+    background-color: #6de3be !important;
+  }
+
+  a {
+    color: #fff !important;
+  }
+}
+</style>
