@@ -124,9 +124,6 @@ const isCommiting = ref(false); // 是否正在提交
 
 // 发布成功页面信息
 const taskId = ref<null | number>(null);
-const successLink = computed(
-  () => `https://system.com/assessment/${taskId.value}`,
-);
 const selectedStudentCount = computed(() =>
   targetSelectData.value.selected.reduce(
     (acc, cur) => acc + (cur.studentIds?.length || 0),
@@ -355,7 +352,6 @@ onBeforeUnmount(() => {
       v-else
       :is-publish="isPublish"
       :task-id="taskId"
-      :link="successLink"
       :notify-text="notifySendText"
       :finish-date="expectedFinishDate"
     />
@@ -376,10 +372,20 @@ onBeforeUnmount(() => {
     </div>
 
     <template #footer>
-      <LyButton type="default" size="middle" @click="isPublishOpen = false">
+      <LyButton
+        type="default"
+        size="middle"
+        @click="isPublishOpen = false"
+        :loading="isCommiting"
+      >
         取消
       </LyButton>
-      <LyButton type="success" size="middle" @click="handleCommit(true)">
+      <LyButton
+        type="success"
+        size="middle"
+        @click="handleCommit(true)"
+        :loading="isCommiting"
+      >
         确认发布
       </LyButton>
     </template>

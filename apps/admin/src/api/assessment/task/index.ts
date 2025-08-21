@@ -27,8 +27,8 @@ export interface SelectedAssessmentTargetItem {
 }
 
 export enum AssessmentTargetType {
-  PARENT = 2,
-  STUDENT = 1,
+  PARENT = 1,
+  STUDENT = 0,
 }
 
 export interface AssessmentTarget {
@@ -172,9 +172,9 @@ export function removeAssessmentParticipants(
 }
 
 // 统计
-export function getAssessmentTaskStatistics(id: number) {
+export function getAssessmentTaskStatistics(taskNo: string) {
   return requestClient.get<AssessmentTaskStatisticsResp>(
-    `${BASE}/statistics/${id}`,
+    `${BASE}/statistics/${taskNo}`,
   );
 }
 

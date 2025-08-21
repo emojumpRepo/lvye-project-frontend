@@ -3,7 +3,6 @@ const props = withDefaults(
   defineProps<{
     finishDate: string;
     isPublish: boolean;
-    link: string;
     notifyText: string;
     taskId: null | number;
   }>(),
@@ -29,10 +28,6 @@ const props = withDefaults(
         <div>
           <span class="publish-success-detail-title">任务ID：</span>
           <span>{{ props.taskId }}</span>
-        </div>
-        <div>
-          <span class="publish-success-detail-title">测评链接：</span>
-          <span class="truncate">{{ props.link }}</span>
         </div>
         <div>
           <span class="publish-success-detail-title">通知发送：</span>

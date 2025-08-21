@@ -14,7 +14,6 @@ const handleCreateAssessment = () => {
 
 // 处理搜索
 const handleSearch = (params: any) => {
-  // 将搜索参数传递给网格组件
   if (gridRef.value) {
     gridRef.value.search(params);
   }
