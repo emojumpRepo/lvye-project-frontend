@@ -22,6 +22,7 @@ interface DeptOption {
 
 // ============= 数据 =============
 const selectedStudents = ref<PsychologyStudentProfileApi.StudentProfile[]>([]);
+const formRef = ref();
 
 const columns = [
   {
@@ -77,6 +78,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (data.selectedStudents.length > 0) {
       selectedStudents.value = data.selectedStudents;
     }
+  },
+  onClosed: () => {
+    formRef.value?.resetFields();
+    drawerApi.close();
   },
 });
 
@@ -143,7 +148,7 @@ onMounted(() => {
 
       <!-- 换班表单 -->
       <div class="mt-6">
-        <AForm>
+        <AForm ref="formRef">
           <div>
             <LyLabel
               title="目标年级"

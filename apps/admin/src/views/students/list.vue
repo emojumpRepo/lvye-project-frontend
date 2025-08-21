@@ -31,7 +31,11 @@ import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
-import { getDeptTreeList, loadDeptList } from '#/utils/transformDeptToTree';
+import {
+  formatDeptListToTree,
+  getDeptTreeList,
+  loadDeptList,
+} from '#/utils/transformDeptToTree';
 
 import StudentSearch from './components/StudentSearch.vue';
 import {
@@ -44,14 +48,6 @@ defineOptions({ name: 'StudentArchive' });
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
-const deptList = ref<{
-  list: PsychologyStudentProfileApi.StudentProfile[];
-  total: number;
-}>({ list: [], total: 0 });
-const deptGroup = ref<{
-  list: PsychologyStudentProfileApi.StudentProfile[];
-  total: number;
-}>({ list: [], total: 0 });
 
 // ============== 抽屉 ==============
 // 详情抽屉
@@ -132,6 +128,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       records: PsychologyStudentProfileApi.StudentProfile[];
     }) => {
       selectedRowKeys.value = (records || [])
+        .filter((r: any) => !r.hasChildField)
         .map((r: any) => r.id)
         .filter((v: any) => v !== null);
     },
@@ -149,10 +146,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // ============== 事件 ==============
 // 处理搜索
-function handleSearch(
+async function handleSearch(
   params: PsychologyStudentProfileApi.StudentProfilePageReq,
 ) {
-  gridApi.query({ ...params, pageNo: 1 });
+  if (viewMode.value === 'group') return;
+  await gridApi.query({ ...params, pageNo: 1 });
 }
 
 // 处理视图模式切换
@@ -160,33 +158,37 @@ function handleViewModeChange({ target }: { target: any }) {
   selectedRowKeys.value = [];
   gridApi.grid?.clearCheckboxRow();
   gridApi.grid.clearData();
+  gridApi.grid.clearAll();
   if (target.value === 'group') {
     gridApi.setGridOptions({
       pagerConfig: { enabled: false },
       columns: useStudentProfileGroupGridSchema(),
-      data: getDeptTreeList(),
+      columnConfig: {
+        resizable: true,
+      },
+      rowConfig: {
+        keyField: 'gradeDeptId',
+        resizable: true,
+      },
+      proxyConfig: {
+        ajax: {
+          query: async () => {
+            return await getDeptTreeList();
+          },
+        },
+      },
       treeConfig: {
         parentField: 'gradeDeptId',
         rowField: 'classDeptId',
         transform: true,
-        expandAll: true,
         accordion: false,
         lazy: true,
-        hasChild: 'hasChild',
-        toggleMethod: ({ row, expanded }: any) => {
-          console.log('row', row);
-          console.log('expanded', expanded);
-          return true;
-        },
-        loadMethod: ({ row }: any) => {
-          console.log('row', row);
-          return [];
+        hasChildField: 'hasChildField',
+        loadMethod({ row }: any) {
+          return formatDeptListToTree(row.classDeptId, row.children);
         },
       },
       showHeader: false,
-      rowConfig: {
-        resizable: true,
-      },
       cellConfig: {
         height: 60,
       },
@@ -197,18 +199,18 @@ function handleViewModeChange({ target }: { target: any }) {
       columns: useStudentProfileGridSchema(),
       proxyConfig: {
         ajax: {
-          query: async ({
-            page,
-          }: {
-            page: { currentPage: number; pageSize: number };
-          }) => {
+          query: async ({ page, formValues }: any) => {
             const data = await getStudentProfilePage({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
+              ...formValues,
             });
             return data;
           },
         },
+      },
+      rowConfig: {
+        keyField: 'id',
       },
       showHeader: true,
       cellConfig: {
