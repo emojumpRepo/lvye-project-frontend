@@ -57,6 +57,7 @@ export interface AssessmentTaskSaveReq {
   deadline?: Date | string;
   deptIdList?: number[];
   userIdList?: number[];
+  scenarioId?: number; // 场景ID，可为空（默认NONE）
   isPublish?: boolean; // 是否发布
 }
 
