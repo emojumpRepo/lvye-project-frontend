@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import type { AssessmentTarget, BasicInfo } from '#/api/assessment/task';
-import type { QuestionnaireVO } from '#/api/questionnaire';
+import type { QuestionnaireVO } from '@vben/types';
+
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
 import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -8,7 +9,7 @@ import { useRouter } from 'vue-router';
 import { Modal as AModal, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import { createAssessmentTask } from '#/api/assessment/task';
+import { createAssessmentTask } from '#/api/psychology/assessment';
 import { CommonDialogContent } from '#/components/Dialog/CommonDialog';
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -103,14 +104,14 @@ const assessmentSelectRef = ref<InstanceType<typeof AssessmentSelect> | null>(
 );
 const targetSelectRef = ref<InstanceType<typeof TargetSelect> | null>(null);
 
-const basicInfoFormData = ref<BasicInfo>({
+const basicInfoFormData = ref<PsychologyAssessmentApi.BasicInfo>({
   name: '',
   timeRange: [dayjs().startOf('day'), dayjs().startOf('day').add(7, 'day')],
   description: '',
 });
 const selectedAssessments = ref<QuestionnaireVO[]>([]);
 const selectedScenarioId = ref<number | undefined>(undefined);
-const targetSelectData = ref<AssessmentTarget>({
+const targetSelectData = ref<PsychologyAssessmentApi.AssessmentTarget>({
   type: 1,
   selected: [],
 });
@@ -132,7 +133,7 @@ const selectedStudentCount = computed(() =>
   ),
 );
 
-function onTargetUpdate(v: AssessmentTarget) {
+function onTargetUpdate(v: PsychologyAssessmentApi.AssessmentTarget) {
   canNext.value = v.selected.reduce((n, i) => n + i.studentIds.length, 0) > 0;
 }
 const expectedFinishDate = computed(() =>
@@ -250,7 +251,7 @@ async function handleCommit(publish: boolean) {
       taskName: basicInfoFormData.value.name,
       startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
       deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
-      questionnaireIds: selectedAssessments.value.map((i) => i.id),
+      questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
       scenarioId: selectedScenarioId.value,

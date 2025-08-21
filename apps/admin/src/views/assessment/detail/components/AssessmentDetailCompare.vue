@@ -3,7 +3,11 @@ import { computed, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Progress } from 'ant-design-vue';
+import {
+  Pagination as APagination,
+  Progress as AProgress,
+  Radio as ARadio,
+} from 'ant-design-vue';
 
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
@@ -17,19 +21,6 @@ const classType = ref<ClassType[]>([
   { label: '班级', value: 'class' },
 ]);
 const currentType = ref('grade');
-
-function getButtonClasses(type: ClassType, index: number) {
-  const isActive = currentType.value === type.value;
-  const isFirst = index === 0;
-  const isLast = index === classType.value.length - 1;
-  return [
-    isActive
-      ? 'border-[#04DC70] bg-[#14E77E14] text-[#04DC70]'
-      : 'border-[#EAEBED] bg-white text-[#979899] hover:bg-gray-50',
-    isFirst && 'rounded-l-md',
-    isLast && 'rounded-r-md',
-  ].filter(Boolean);
-}
 
 const currentPage = ref(1);
 const pageSize = ref(5);
@@ -77,9 +68,13 @@ const allGradeComparison = ref([
     trend: 'up',
   },
 ]);
+
+/** 计算总页数 */
 const totalPages = computed(() =>
   Math.ceil(allGradeComparison.value.length / pageSize.value),
 );
+
+/** 计算当前页的班级对比数据 */
 const gradeComparison = computed(() =>
   allGradeComparison.value.slice(
     (currentPage.value - 1) * pageSize.value,
@@ -90,32 +85,6 @@ const gradeComparison = computed(() =>
 const goToPage = (p: number) => {
   if (p >= 1 && p <= totalPages.value) currentPage.value = p;
 };
-const prevPage = () => {
-  if (currentPage.value > 1) currentPage.value--;
-};
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) currentPage.value++;
-};
-
-const visiblePages = computed(() => {
-  const pages: (number | string)[] = [];
-  const total = totalPages.value;
-  const current = currentPage.value;
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i);
-  } else if (current <= 4) {
-    for (let i = 1; i <= 5; i++) pages.push(i);
-    pages.push('...', total);
-  } else if (current >= total - 3) {
-    pages.push(1, '...');
-    for (let i = total - 4; i <= total; i++) pages.push(i);
-  } else {
-    pages.push(1, '...');
-    for (let i = current - 1; i <= current + 1; i++) pages.push(i);
-    pages.push('...', total);
-  }
-  return pages;
-});
 </script>
 
 <template>
@@ -128,52 +97,65 @@ const visiblePages = computed(() => {
         :pb="3"
       >
         <template #right>
-          <div class="flex overflow-hidden">
-            <button
-              v-for="(type, index) in classType"
-              class="border px-4 py-1 text-sm font-medium transition-all duration-200"
-              :key="type.value"
-              :class="getButtonClasses(type, index)"
-              @click="currentType = type.value"
+          <ARadio.Group v-model:value="currentType">
+            <ARadio.Button
+              v-for="item in classType"
+              :key="item.value"
+              :value="item.value"
             >
-              {{ type.label }}
-            </button>
-          </div>
+              {{ item.label }}
+            </ARadio.Button>
+          </ARadio.Group>
         </template>
       </LyCardTitle>
     </div>
 
-    <div class="space-y-4">
-      <div
-        v-for="(item, index) in gradeComparison"
-        :key="index"
-        class="flex flex-col justify-between gap-2 rounded-xl bg-[#F7F8FA] px-4 py-2"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <div class="text-sm font-medium">{{ item.grade }}</div>
-            <span class="rounded bg-[#FF083114] p-1 text-xs text-[#FF0831]">{{
-              item.status
-            }}</span>
+    <div class="flex flex-col gap-5">
+      <div class="space-y-4">
+        <div
+          v-for="(item, index) in gradeComparison"
+          :key="index"
+          class="flex flex-col justify-between gap-2 rounded-xl bg-[#F7F8FA] px-4 py-2"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div class="text-sm font-medium">{{ item.grade }}</div>
+              <span class="rounded bg-[#FF083114] p-1 text-xs text-[#FF0831]">{{
+                item.status
+              }}</span>
+            </div>
+            <div class="flex items-center text-xs">
+              <IconifyIcon
+                icon="lucide:user-round"
+                color="#979899"
+                :size="10"
+              />
+              <span class="ml-1 mr-3 text-[#979899]">324/343人完成</span>
+              <span class="rounded-md bg-[#14E77E1F] p-1 text-[#04DC70]">
+                {{ item.progress }}%
+              </span>
+            </div>
           </div>
-          <div class="flex items-center text-xs">
-            <IconifyIcon icon="lucide:user-round" color="#979899" :size="10" />
-            <span class="ml-1 mr-3 text-[#979899]">324/343人完成</span>
-            <span class="rounded-md bg-[#14E77E1F] p-1 text-[#04DC70]">
-              {{ item.progress }}%
-            </span>
-          </div>
+          <AProgress
+            :percent="item.progress"
+            stroke-color="#04DC70"
+            :show-info="false"
+            :size="5"
+          />
         </div>
-        <Progress
-          :percent="item.progress"
-          stroke-color="#04DC70"
-          :show-info="false"
-          :size="5"
+      </div>
+
+      <div class="flex justify-end">
+        <APagination
+          :current="currentPage"
+          :page-size="pageSize"
+          :total="allGradeComparison.length"
+          @change="goToPage"
         />
       </div>
     </div>
 
-    <div class="mt-6 flex justify-end">
+    <!-- <div class="mt-6 flex justify-end">
       <div class="flex items-center space-x-2">
         <button
           class="flex size-7 items-center justify-center rounded text-sm transition-all duration-200"
@@ -191,7 +173,9 @@ const visiblePages = computed(() => {
           <span
             v-if="page === '...'"
             class="flex size-7 items-center justify-center text-sm text-gray-400"
-            >...</span>
+          >
+            ...
+          </span>
           <button
             v-else
             class="flex size-7 items-center justify-center rounded text-sm transition-all duration-200"
@@ -218,7 +202,7 @@ const visiblePages = computed(() => {
           <IconifyIcon icon="lucide:chevron-right" :size="16" />
         </button>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

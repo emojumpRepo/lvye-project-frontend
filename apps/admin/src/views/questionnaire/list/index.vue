@@ -1,15 +1,14 @@
 <script setup lang="ts">
+import type { QuestionnaireVO } from '@vben/types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type {
-  QuestionnairePageReqVO,
-  QuestionnaireVO,
-} from '#/api/questionnaire/index';
+import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire/index';
 
 import { onMounted, ref } from 'vue';
 
 import { Button, message } from 'ant-design-vue';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteQuestionnaire,
   getQuestionnaireList,
@@ -17,7 +16,7 @@ import {
   publishQuestionnaire,
   syncQuestionnaireData,
   updateQuestionnaire,
-} from '#/api/questionnaire/index';
+} from '#/api/psychology/questionnaire/index';
 import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
@@ -207,25 +206,15 @@ onMounted(() => {
 
 <template>
   <div class="flex h-full flex-col p-6">
-    <div class="my-4 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div>
         <QuestionnaireSearch @loading="handleLoading" @search="handleSearch" />
       </div>
+      <div>
+        <Button type="primary" @click="handleSync">同步最新数据</Button>
+      </div>
       <div class="min-h-0 flex-1 overflow-hidden">
         <Grid>
-          <template #toolbar-tools>
-            <TableAction
-              :actions="[
-                {
-                  label: '同步最新数据',
-                  type: 'primary',
-                  icon: ACTION_ICON.REFRESH,
-                  onClick: handleSync,
-                },
-              ]"
-            />
-          </template>
-
           <!-- 问卷类型列 -->
           <template #type="{ row }">
             <LyTag
@@ -310,7 +299,7 @@ onMounted(() => {
   background: transparent !important;
 }
 
-.vxe-grid {
-  padding: 0 !important;
-}
+// .vxe-grid {
+//   padding: 0 !important;
+// }
 </style>

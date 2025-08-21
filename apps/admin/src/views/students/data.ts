@@ -178,7 +178,7 @@ export function useSearchFormSchema(): VbenFormSchema[] {
   ];
 }
 
-/** 学生档案列表 */
+/** 学生档案列表（列表视图） */
 export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
   return [
     { type: 'checkbox', width: '5%' },
@@ -218,6 +218,30 @@ export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStu
       align: 'center',
       slots: { default: 'actions' },
     },
+  ];
+}
+
+/** 学生档案列表（分组视图） */
+export function useStudentProfileGroupGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
+  return [
+    {
+      field: 'name',
+      title: '名称',
+      align: 'left',
+      fixed: 'left',
+      showOverflow: 'tooltip',
+      treeNode: true,
+      slots: {
+        default: 'name',
+      },
+    },
+    {
+      field: 'amount',
+      title: '学生人数',
+      width: '80',
+      slots: { default: 'amount' },
+    },
+    { type: 'checkbox', width: '50', align: 'center', fixed: 'right' },
   ];
 }
 

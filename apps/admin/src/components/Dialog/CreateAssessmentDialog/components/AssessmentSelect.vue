@@ -1,16 +1,17 @@
 <script lang="ts" setup>
+import type { QuestionnaireVO } from '@vben/types';
+
 import type { PsychologyScenarioApi } from '#/api/psychology/scenario';
-import type { QuestionnaireVO } from '#/api/questionnaire';
 
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 
 import { Modal as AModal, message, Select, Steps } from 'ant-design-vue';
 
+import { getQuestionnaireListSimple } from '#/api/psychology/questionnaire';
 import {
   getAssessmentScenarioList,
   getAssessmentScenarioSlots,
 } from '#/api/psychology/scenario';
-import { getQuestionnaireListSimple } from '#/api/questionnaire';
 import LyButton from '#/components/LyButton/index.vue';
 
 const { start, stop } = inject('CommonDialogContentLoading') as {

@@ -1,3 +1,31 @@
+/** 测评任务信息 */
+export interface AssessmentTask {
+  id?: number;
+  taskNo?: string;
+  deadline?: Date;
+  finishNum?: number; // 完成人数
+  totalNum?: number; // 总人数
+  taskName: string;
+  description?: string;
+  templateId: number;
+  templateName?: string;
+  status: number;
+  startTime?: Date;
+  questionnaireIds?: number[];
+  endTime?: Date;
+  targetType: number;
+  targetIds?: number[];
+  allowParentParticipation?: boolean;
+  creatorUserId?: number;
+  creatorName?: string;
+  createTime?: Date;
+  updateTime?: Date;
+  // 统计字段
+  totalParticipants?: number;
+  completedParticipants?: number;
+  completionRate?: number;
+}
+
 // 测评状态枚举
 export const ASSESSMENT_STATUS = {
   DRAFT: 0,
@@ -30,6 +58,16 @@ export const ASSESSMENT_TYPE_OPTIONS = [
   { value: 5, label: '社交技能测评' },
 ];
 
+export enum ASSESSMENT_TARGET_TYPE {
+  PARENT = 1,
+  STUDENT = 0,
+}
+
+export const TARGET_AUDIENCE_OPTIONS = [
+  { value: ASSESSMENT_TARGET_TYPE.STUDENT, label: '学生' },
+  { value: ASSESSMENT_TARGET_TYPE.PARENT, label: '家长' },
+];
+
 // 问卷状态枚举
 export const QUESTIONNAIRE_STATUS = {
   DRAFT: 0,
@@ -43,11 +81,6 @@ export const QUESTIONNAIRE_STATUS_OPTIONS = [
   { value: 1, label: '已发布', color: 'processing' },
   { value: 2, label: '已下线', color: 'error' },
   { value: 3, label: '已归档', color: 'warning' },
-];
-
-export const TARGET_AUDIENCE_OPTIONS = [
-  { value: 1, label: '学生' },
-  { value: 2, label: '家长' },
 ];
 
 // 问卷类型枚举
