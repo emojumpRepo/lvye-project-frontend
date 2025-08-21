@@ -1,3 +1,15 @@
+import {
+  AlignmentType,
+  Document,
+  HeadingLevel,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+} from 'docx';
 import * as XLSX from 'xlsx';
 
 function downloadTemplate() {
@@ -101,4 +113,414 @@ function downloadTemplate() {
   XLSX.writeFile(wb, fileName);
 }
 
+async function downloadPsychologicalReportTemplate() {
+  // 创建文档
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children: [
+          // 标题
+          new Paragraph({
+            text: '心理评估报告模板',
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: {
+              after: 400,
+            },
+          }),
+
+          // 基本信息表格
+          new Paragraph({
+            text: '一、基本信息',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Table({
+            width: {
+              size: 100,
+              type: WidthType.PERCENTAGE,
+            },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '姓名' })],
+                    width: { size: 20, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                    width: { size: 30, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '性别' })],
+                    width: { size: 20, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                    width: { size: 30, type: WidthType.PERCENTAGE },
+                  }),
+                ],
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '年龄' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '年级' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                ],
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '班级' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '评估日期' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                ],
+              }),
+            ],
+          }),
+
+          // 评估目的
+          new Paragraph({
+            text: '二、评估目的',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: '本次心理评估的主要目的是：',
+                bold: true,
+              }),
+            ],
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          // 评估工具
+          new Paragraph({
+            text: '三、评估工具',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Table({
+            width: {
+              size: 100,
+              type: WidthType.PERCENTAGE,
+            },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '序号' })],
+                    width: { size: 15, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '量表名称' })],
+                    width: { size: 35, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '适用年龄' })],
+                    width: { size: 25, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '评估维度' })],
+                    width: { size: 25, type: WidthType.PERCENTAGE },
+                  }),
+                ],
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '1' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                ],
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '2' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                ],
+              }),
+            ],
+          }),
+
+          // 评估结果
+          new Paragraph({
+            text: '四、评估结果',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: '4.1 量表得分情况',
+                bold: true,
+              }),
+            ],
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Table({
+            width: {
+              size: 100,
+              type: WidthType.PERCENTAGE,
+            },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '量表名称' })],
+                    width: { size: 30, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '维度' })],
+                    width: { size: 25, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '原始分' })],
+                    width: { size: 15, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '标准分' })],
+                    width: { size: 15, type: WidthType.PERCENTAGE },
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '等级' })],
+                    width: { size: 15, type: WidthType.PERCENTAGE },
+                  }),
+                ],
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                  new TableCell({
+                    children: [new Paragraph({ text: '_________________' })],
+                  }),
+                ],
+              }),
+            ],
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: '4.2 结果分析',
+                bold: true,
+              }),
+            ],
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          // 建议与干预
+          new Paragraph({
+            text: '五、建议与干预',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: '5.1 教育建议',
+                bold: true,
+              }),
+            ],
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: '5.2 干预措施',
+                bold: true,
+              }),
+            ],
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '_________________________________________________________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          // 评估师签名
+          new Paragraph({
+            text: '六、评估师签名',
+            heading: HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '评估师：_________________    日期：_________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+
+          new Paragraph({
+            text: '审核人：_________________    日期：_________________',
+            spacing: {
+              after: 200,
+            },
+          }),
+        ],
+      },
+    ],
+  });
+
+  // 生成文档并下载
+  const blob = await Packer.toBlob(doc);
+  const fileName = `心理评估报告模板_${new Date().toISOString().slice(0, 10)}.docx`;
+
+  // 创建下载链接
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export default downloadTemplate;
+export { downloadPsychologicalReportTemplate };

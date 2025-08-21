@@ -26,6 +26,12 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: AssessmentTarget): void;
 }>();
 
+const { start, stop } = inject('CommonDialogContentLoading') as {
+  set: (v: boolean) => void;
+  start: () => void;
+  stop: () => void;
+};
+
 // 从父组件注入缓存方法
 const parentRef = inject<{
   cacheClassList: (classes: any[]) => void;
@@ -63,6 +69,7 @@ const isDataLoaded = ref(false);
 async function loadClassList() {
   // 如果已经加载过，直接返回
   if (isDataLoaded.value && allClasses.value.length > 0) {
+    stop();
     return;
   }
 
@@ -72,6 +79,7 @@ async function loadClassList() {
     if (cachedClasses.length > 0) {
       allClasses.value = cachedClasses;
       isDataLoaded.value = true;
+      stop();
       return;
     }
   }
@@ -106,6 +114,7 @@ async function loadClassList() {
   if (parentRef) {
     parentRef.cacheClassList(classes);
   }
+  stop();
 }
 
 async function loadStudentsForClass(group: ClassGroup) {
@@ -164,8 +173,9 @@ function onCollapseChange(key: unknown): void {
   });
 }
 
-onMounted(() => {
-  loadClassList();
+onMounted(async () => {
+  start();
+  await loadClassList();
 });
 
 // 初始化已选

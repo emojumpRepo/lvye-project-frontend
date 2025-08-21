@@ -2,9 +2,9 @@
 const props = withDefaults(
   defineProps<{
     finishDate: string;
-    link: string;
+    isPublish: boolean;
     notifyText: string;
-    taskId: string;
+    taskId: null | number;
   }>(),
   {},
 );
@@ -18,7 +18,9 @@ const props = withDefaults(
         alt="发布成功"
         class="size-21"
       />
-      <div class="text-[20px] font-bold text-black">测评任务发布成功</div>
+      <div class="text-[20px] font-bold text-black">
+        {{ isPublish ? '测评任务发布成功' : '测评任务创建成功' }}
+      </div>
     </div>
 
     <div class="mx-auto w-full max-w-[600px] rounded-xl bg-[#F7F8FB] p-6">
@@ -26,10 +28,6 @@ const props = withDefaults(
         <div>
           <span class="publish-success-detail-title">任务ID：</span>
           <span>{{ props.taskId }}</span>
-        </div>
-        <div>
-          <span class="publish-success-detail-title">测评链接：</span>
-          <span class="truncate">{{ props.link }}</span>
         </div>
         <div>
           <span class="publish-success-detail-title">通知发送：</span>

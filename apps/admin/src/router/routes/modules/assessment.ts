@@ -31,7 +31,7 @@ const routes: RouteRecordRaw[] = [
           icon: 'lucide:file-text',
           hideInMenu: true,
         },
-      }
+      },
     ],
   },
 ];

@@ -6,6 +6,8 @@ import type {
 
 import { onMounted, ref, watchEffect } from 'vue';
 
+import { getStatusLabel } from '@vben/types';
+
 import dayjs from 'dayjs';
 
 import {
@@ -18,7 +20,7 @@ const props = defineProps<{ taskNo: string }>();
 
 const taskInfo = ref({
   task: {
-    taskId: '',
+    taskNo: '',
     questionnaireName: '',
     createTime: '',
     endTime: '',
@@ -31,17 +33,17 @@ const taskInfo = ref({
 async function loadTask() {
   const base: AssessmentTaskRespVO = await getAssessmentTask(props.taskNo);
   const stats: AssessmentTaskStatisticsResp = await getAssessmentTaskStatistics(
-    Number(base.id),
+    base?.taskNo ?? '',
   );
   taskInfo.value = {
     task: {
-      taskId: base.taskNo,
-      questionnaireName: base.scaleCode,
+      taskNo: base?.taskNo ?? '',
+      questionnaireName: base?.questionnaireName ?? '',
       createTime: dayjs(base.createTime).format('YYYY-MM-DD HH:mm'),
       endTime: base.deadline
         ? dayjs(base.deadline).format('YYYY-MM-DD HH:mm')
         : '-',
-      status: String(base.status ?? ''),
+      status: getStatusLabel(base.status ?? 0, 'assessment'),
     },
     participate: {
       total: Number(stats.totalParticipants ?? 0),
@@ -86,7 +88,7 @@ watchEffect(() => {
       <div class="space-y-3 text-sm">
         <div class="flex justify-between">
           <span>任务</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.taskId }}</span>
+          <span class="text-[#4C4C4D]">{{ taskInfo.task.taskNo }}</span>
         </div>
         <div class="flex justify-between">
           <span>测评量表</span>

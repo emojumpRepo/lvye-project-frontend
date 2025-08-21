@@ -1,9 +1,6 @@
 <script lang="ts" setup>
-import type {
-  AssessmentTarget,
-  AssessmentType,
-  BasicInfo,
-} from '#/api/assessment/task';
+import type { AssessmentTarget, BasicInfo } from '#/api/assessment/task';
+import type { QuestionnaireVO } from '#/api/questionnaire';
 
 import { computed } from 'vue';
 
@@ -14,14 +11,14 @@ import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(
   defineProps<{
-    assessment: AssessmentType | null;
+    assessments: QuestionnaireVO[];
     basic: BasicInfo;
     target: AssessmentTarget;
   }>(),
   {},
 );
 
-const selectedAssessment = computed(() => props.assessment);
+const selectedAssessments = computed(() => props.assessments ?? []);
 
 const classStats = computed(() => {
   // 汇总每个已选择班级中的学生人数
@@ -62,12 +59,8 @@ const dateRange = computed(() => {
           <div>
             <span class="desc-title">测评量表：</span>
             <span>
-              <template v-if="selectedAssessment">
-                {{ selectedAssessment.name }}（预计{{
-                  typeof selectedAssessment.questionCount === 'number'
-                    ? selectedAssessment.time
-                    : selectedAssessment.time
-                }}）
+              <template v-if="selectedAssessments.length > 0">
+                {{ selectedAssessments.map((a) => a.title).join('、') }}
               </template>
               <template v-else>—</template>
             </span>
