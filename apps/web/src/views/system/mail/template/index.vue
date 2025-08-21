@@ -5,7 +5,7 @@ import type { SystemMailTemplateApi } from '#/api/system/mail/template';
 
 import { onMounted, ref } from 'vue';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
@@ -141,10 +141,6 @@ onMounted(async () => {
 </script>
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="邮件配置" url="https://doc.iocoder.cn/mail" />
-    </template>
-
     <FormModal @success="onRefresh" />
     <SendModal />
     <Grid table-title="邮件模板列表">
