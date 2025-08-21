@@ -15,7 +15,7 @@ import { riskOptions } from '#/api/consult';
 import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
-import { downloadPsychologicalReportTemplate } from '#/utils/downloadTemplate';
+import { downloadPsychologicalReportTemplate } from '#/utils/export';
 
 const props = withDefaults(
   defineProps<{

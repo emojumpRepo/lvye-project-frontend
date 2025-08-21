@@ -409,7 +409,9 @@ onMounted(() => {
   background: transparent !important;
 }
 
+/**
 .vxe-grid {
   padding: 0 !important;
 }
+  */
 </style>
