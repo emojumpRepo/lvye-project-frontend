@@ -11,6 +11,7 @@ export namespace PsychologyAssessmentApi {
     finishNum?: number; // 完成人数
     totalNum?: number; // 总人数
     taskName: string;
+    questionnaireIds: number[];
     description?: string;
     templateId: number;
     templateName?: string;

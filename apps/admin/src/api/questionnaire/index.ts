@@ -11,8 +11,6 @@ export interface QuestionnaireVO {
   syncStatus?: number;
   status?: number;
   targetAudience?: number;
-  assessmentDimension?: string;
-  questionCount?: number;
   estimatedDuration?: number;
   accessCount?: number;
   questionCount?: number;
