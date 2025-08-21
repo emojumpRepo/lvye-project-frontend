@@ -19,7 +19,6 @@ import {
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteStudentProfile,
-  getDeptSimpleList,
   getStudentProfilePage,
 } from '#/api/psychology/student-profile';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
@@ -32,15 +31,27 @@ import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
+import { getDeptTreeList, loadDeptList } from '#/utils/transformDeptToTree';
 
 import StudentSearch from './components/StudentSearch.vue';
-import { useStudentProfileGridSchema } from './data';
+import {
+  useStudentProfileGridSchema,
+  useStudentProfileGroupGridSchema,
+} from './data';
 
 defineOptions({ name: 'StudentArchive' });
 
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
+const deptList = ref<{
+  list: PsychologyStudentProfileApi.StudentProfile[];
+  total: number;
+}>({ list: [], total: 0 });
+const deptGroup = ref<{
+  list: PsychologyStudentProfileApi.StudentProfile[];
+  total: number;
+}>({ list: [], total: 0 });
 
 // ============== 抽屉 ==============
 // 详情抽屉
@@ -106,11 +117,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getStudentProfilePage({
+          const data = await getStudentProfilePage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
           });
+          return data;
         },
       },
     },
@@ -141,6 +153,70 @@ function handleSearch(
   params: PsychologyStudentProfileApi.StudentProfilePageReq,
 ) {
   gridApi.query({ ...params, pageNo: 1 });
+}
+
+// 处理视图模式切换
+function handleViewModeChange({ target }: { target: any }) {
+  selectedRowKeys.value = [];
+  gridApi.grid?.clearCheckboxRow();
+  gridApi.grid.clearData();
+  if (target.value === 'group') {
+    gridApi.setGridOptions({
+      pagerConfig: { enabled: false },
+      columns: useStudentProfileGroupGridSchema(),
+      data: getDeptTreeList(),
+      treeConfig: {
+        parentField: 'gradeDeptId',
+        rowField: 'classDeptId',
+        transform: true,
+        expandAll: true,
+        accordion: false,
+        lazy: true,
+        hasChild: 'hasChild',
+        toggleMethod: ({ row, expanded }: any) => {
+          console.log('row', row);
+          console.log('expanded', expanded);
+          return true;
+        },
+        loadMethod: ({ row }: any) => {
+          console.log('row', row);
+          return [];
+        },
+      },
+      showHeader: false,
+      rowConfig: {
+        resizable: true,
+      },
+      cellConfig: {
+        height: 60,
+      },
+    });
+  } else {
+    gridApi.setGridOptions({
+      pagerConfig: { enabled: true },
+      columns: useStudentProfileGridSchema(),
+      proxyConfig: {
+        ajax: {
+          query: async ({
+            page,
+          }: {
+            page: { currentPage: number; pageSize: number };
+          }) => {
+            const data = await getStudentProfilePage({
+              pageNo: page.currentPage,
+              pageSize: page.pageSize,
+            });
+            return data;
+          },
+        },
+      },
+      showHeader: true,
+      cellConfig: {
+        height: 40,
+      },
+    });
+  }
+  gridApi.reload();
 }
 
 // 打开删除学生对话框
@@ -235,55 +311,10 @@ function refresh() {
   gridApi.query();
 }
 
-/**
- * 加载部门列表
- */
-async function loadDeptList() {
-  const data = await getDeptSimpleList();
-  if (data.length > 0) {
-    const filteredData = data.filter((dept) => dept.parentId !== 110);
-
-    const childIds = new Set(filteredData.map((dept) => dept.id));
-
-    const rootDepts = filteredData.filter(
-      (dept) =>
-        !childIds.has(dept.parentId) ||
-        dept.parentId === 0 ||
-        dept.parentId === null,
-    );
-
-    // 构建树形结构
-    const buildTree = (
-      parentId: number,
-    ): undefined | { label: string; value: number }[] => {
-      const children = filteredData
-        .filter((dept) => dept.parentId === parentId)
-        .map((dept) => ({
-          value: dept.id,
-          label: dept.name,
-        }));
-
-      return children.length > 0 ? children : undefined;
-    };
-
-    // 构建最终的树形数据
-    const treeData = rootDepts.map((dept) => ({
-      value: dept.id,
-      label: dept.name,
-      children: buildTree(dept.id),
-    }));
-
-    sessionStorage.setItem('deptList', JSON.stringify(treeData));
-    return treeData;
-  }
-
-  return [];
-}
-
 // 组件挂载时加载数据
-onMounted(() => {
+onMounted(async () => {
+  await loadDeptList();
   gridApi.query();
-  loadDeptList();
 });
 </script>
 
@@ -329,64 +360,94 @@ onMounted(() => {
             批量换班
           </Button>
         </div>
-        <Radio.Group v-model:value="viewMode">
+        <Radio.Group v-model:value="viewMode" @change="handleViewModeChange">
           <Radio.Button value="list">列表视图</Radio.Button>
           <Radio.Button value="group">分组视图</Radio.Button>
         </Radio.Group>
       </div>
 
       <div class="min-h-0 flex-1 overflow-hidden">
-        <Grid>
-          <!-- 性别 -->
-          <template #sex="{ row }">
-            <span> {{ getDictLabel('system_user_sex', row.sex) }} </span>
-          </template>
+        <template v-if="viewMode === 'list'">
+          <Grid>
+            <!-- 性别 -->
+            <template #sex="{ row }">
+              <span>
+                {{ row.sex ? getDictLabel('system_user_sex', row.sex) : '--' }}
+              </span>
+            </template>
 
-          <!-- 心理状态 -->
-          <template #psychologicalStatus="{ row }">
-            <LyTag
-              tag-category-key="student_psychological_status"
-              :dict-value="row.psychologicalStatus"
-            />
-          </template>
+            <!-- 心理状态 -->
+            <template #psychologicalStatus="{ row }">
+              <LyTag
+                tag-category-key="student_psychological_status"
+                :dict-value="row?.psychologicalStatus"
+              />
+            </template>
 
-          <!-- 毕业状态 -->
-          <template #graduationStatus="{ row }">
-            <LyTag
-              tag-category-key="student_graduation_status"
-              :dict-value="String(row.graduationStatus)"
-            />
-          </template>
+            <!-- 毕业状态 -->
+            <template #graduationStatus="{ row }">
+              <LyTag
+                tag-category-key="student_graduation_status"
+                :dict-value="String(row?.graduationStatus)"
+              />
+            </template>
 
-          <!-- 联系电话 -->
-          <template #mobile="{ row }">
-            <span>{{ row.mobile || '---' }}</span>
-          </template>
+            <!-- 联系电话 -->
+            <template #mobile="{ row }">
+              <span>{{ row?.mobile || '---' }}</span>
+            </template>
 
-          <!-- 操作 -->
-          <template #actions="{ row }">
-            <TableAction
-              :actions="[
-                {
-                  label: '查看详情',
-                  type: 'link',
-                  onClick: () => drawerApi.setData({ id: row.id }).open(),
-                },
-                {
-                  label: '删除',
-                  type: 'link',
-                  danger: true,
-                  onClick: () =>
-                    openDeleteStudentModal(
-                      row.id as number,
-                      row.studentNo,
-                      row.name,
-                    ),
-                },
-              ]"
-            />
-          </template>
-        </Grid>
+            <!-- 操作 -->
+            <template #actions="{ row }">
+              <TableAction
+                :actions="[
+                  {
+                    label: '查看详情',
+                    type: 'link',
+                    onClick: () => drawerApi.setData({ id: row.id }).open(),
+                  },
+                  {
+                    label: '删除',
+                    type: 'link',
+                    danger: true,
+                    onClick: () =>
+                      openDeleteStudentModal(
+                        row.id as number,
+                        row.studentNo,
+                        row.name,
+                      ),
+                  },
+                ]"
+              />
+            </template>
+          </Grid>
+        </template>
+        <template v-else>
+          <Grid class="my-rdah-grid">
+            <template #name="{ row }">
+              <div class="my-2 flex flex-col gap-1">
+                <span
+                  :class="
+                    row.studentNo
+                      ? 'text-sm text-[#4C4C4D]'
+                      : 'font-bold text-[#000000A6]'
+                  "
+                >
+                  {{ row.name }}
+                </span>
+                <span v-if="row.studentNo" class="text-sm text-[#B0B1B2]">
+                  {{ row.studentNo }}
+                </span>
+              </div>
+            </template>
+
+            <template #amount="{ row }">
+              <span v-if="row.amount && row.amount > 0">
+                共{{ row.amount }}人
+              </span>
+            </template>
+          </Grid>
+        </template>
       </div>
     </div>
 
@@ -400,7 +461,8 @@ onMounted(() => {
     <GradeGraduationDrawer v-model:open="graduationDrawerOpen" />
   </div>
 </template>
-<style lang="scss">
+
+<style lang="scss" scoped>
 .vxe-pager .vxe-pager--sizes {
   margin-right: 0 !important;
 }
@@ -413,5 +475,5 @@ onMounted(() => {
 .vxe-grid {
   padding: 0 !important;
 }
-  */
+*/
 </style>

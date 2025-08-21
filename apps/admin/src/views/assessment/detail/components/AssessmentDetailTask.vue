@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import type {
-  AssessmentTaskRespVO,
-  AssessmentTaskStatisticsResp,
-} from '#/api/assessment/task';
+import type { AssessmentTaskRespVO } from '#/api/assessment/task';
 
-import { onMounted, ref, watchEffect } from 'vue';
+import { ref, watchEffect } from 'vue';
 
 import { getStatusLabel } from '@vben/types';
 
 import dayjs from 'dayjs';
 
-import {
-  getAssessmentTask,
-  getAssessmentTaskStatistics,
-} from '#/api/assessment/task';
+import { getAssessmentTask } from '#/api/assessment/task';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = defineProps<{ taskNo: string }>();
@@ -32,9 +26,11 @@ const taskInfo = ref({
 
 async function loadTask() {
   const base: AssessmentTaskRespVO = await getAssessmentTask(props.taskNo);
-  const stats: AssessmentTaskStatisticsResp = await getAssessmentTaskStatistics(
-    base?.taskNo ?? '',
-  );
+  console.log('base', base);
+  // const stats: AssessmentTaskStatisticsResp = await getAssessmentTaskStatistics(
+  //   base?.taskNo ?? '',
+  // );
+  const stats = {};
   taskInfo.value = {
     task: {
       taskNo: base?.taskNo ?? '',
@@ -63,13 +59,14 @@ async function loadTask() {
       highRisk: 0,
     },
   };
+  console.log('taskInfo', taskInfo.value);
 }
 
-onMounted(() => {
-  if (props.taskNo) {
-    loadTask();
-  }
-});
+// onMounted(() => {
+//   if (props.taskNo) {
+//    loadTask();
+//   }
+// });
 watchEffect(() => {
   if (props.taskNo) {
     loadTask();
@@ -88,7 +85,7 @@ watchEffect(() => {
       <div class="space-y-3 text-sm">
         <div class="flex justify-between">
           <span>任务</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.taskNo }}</span>
+          <span class="text-[#4C4C4D]">{{ taskInfo?.task?.taskNo }}</span>
         </div>
         <div class="flex justify-between">
           <span>测评量表</span>
