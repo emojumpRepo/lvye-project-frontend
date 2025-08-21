@@ -38,17 +38,6 @@ export function useQuestionGridFormSchema() {
         options: questionnaireStatusOptions,
       },
     },
-    // {
-    //   component: 'RangePicker',
-    //   fieldName: 'createTime',
-    //   label: '创建时间',
-    //   componentProps: {
-    //     placeholder: ['开始时间', '结束时间'],
-    //     format: 'YYYY-MM-DD HH:mm:ss',
-    //     valueFormat: 'YYYY-MM-DD HH:mm:ss',
-    //     showTime: true,
-    //   },
-    // },
     {
       component: 'Select',
       fieldName: 'isOpen',

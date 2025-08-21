@@ -138,12 +138,6 @@ function handleSearch(params: QuestionnairePageReqVO) {
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useQuestionGridFormSchema(),
-  },
-  separator: {
-    backgroundColor: '#F8F9FB',
-  },
   gridOptions: {
     columns: useQuestionGridColumns(),
     height: '600px',
