@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import type { QuestionnaireVO } from '#/api/questionnaire';
+import type { QuestionnaireVO } from '@vben/types';
 
 import { computed, inject, onMounted, ref } from 'vue';
 
 import { Modal as AModal } from 'ant-design-vue';
 
-import { getQuestionnaireListSimple } from '#/api/questionnaire';
+import { getQuestionnaireListSimple } from '#/api/psychology/questionnaire';
 import LyButton from '#/components/LyButton/index.vue';
 
 const { start, stop } = inject('CommonDialogContentLoading') as {

@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { AssessmentTask } from '@vben/types';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Copy } from '@vben/icons';
+import { getStatusColor, getStatusLabel } from '@vben/types';
 
 import { Divider, message, Progress, Tag } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import { getStatusColor, getStatusLabel } from '#/api/questionnaire/constants';
 import LyButton from '#/components/LyButton/index.vue';
 
 const props = defineProps<{
-  card: PsychologyAssessmentApi.AssessmentTask;
+  card: AssessmentTask;
 }>();
 
 const router = useRouter();

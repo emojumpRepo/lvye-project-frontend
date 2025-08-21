@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { AssessmentTask } from '@vben/types';
 
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -14,7 +14,7 @@ const route = useRoute();
 const router = useRouter();
 
 const assessmentTaskNo = ref<string>('');
-const assessmentData = ref<null | PsychologyAssessmentApi.AssessmentTask>(null);
+const assessmentData = ref<AssessmentTask | null>(null);
 const loading = ref(false);
 
 onMounted(() => {
@@ -123,9 +123,11 @@ async function loadAssessmentData() {
           <div
             class="flex items-center justify-between text-sm text-emerald-600"
           >
-            <span>已完成 {{ completedCount }}/{{
+            <span
+              >已完成 {{ completedCount }}/{{
                 assessmentData?.questionnaireIds?.length
-              }}</span>
+              }}</span
+            >
             <span>{{ progress }}%</span>
           </div>
           <div class="mt-2 h-2 overflow-hidden rounded-full bg-emerald-100">

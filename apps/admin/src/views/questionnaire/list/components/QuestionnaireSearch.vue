@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { QuestionnairePageReqVO } from '#/api/questionnaire';
+import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire';
 
 import { ref } from 'vue';
 
