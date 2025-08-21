@@ -19,6 +19,7 @@ import {
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteStudentProfile,
+  getDeptSimpleList,
   getStudentProfilePage,
 } from '#/api/psychology/student-profile';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
@@ -28,52 +29,65 @@ import GraduatedStudentFileDrawer from '#/components/Drawer/GraduatedStudentFile
 import StudentBulkClassTransferDrawer from '#/components/Drawer/StudentBulkClassTransferDrawer/index.vue';
 import StudentBulkImportDrawer from '#/components/Drawer/StudentBulkImportDrawer/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
+import { getDictLabel } from '#/utils/dict';
+import { exportStudentsToExcel } from '#/utils/export';
 
 import StudentSearch from './components/StudentSearch.vue';
+import { useStudentProfileGridSchema } from './data';
 
 defineOptions({ name: 'StudentArchive' });
 
-// 数据状态
+// ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
 
-// 抽屉
+// ============== 抽屉 ==============
+// 详情抽屉
 const [Drawer, drawerApi] = useVbenDrawer({
   connectedComponent: StudentDrawer,
 });
 
+// 新增学生抽屉
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   connectedComponent: CreateStudentDrawer,
 });
 
+// 批量换班抽屉
 const [BulkClassTransferDrawer, bulkClassTransferDrawerApi] = useVbenDrawer({
   connectedComponent: StudentBulkClassTransferDrawer,
 });
 
+// 批量导入抽屉
 const [BulkImportDrawer, bulkImportDrawerApi] = useVbenDrawer({
   connectedComponent: StudentBulkImportDrawer,
 });
 
+// 删除学生确认框
 const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
   // 连接抽离的组件
   connectedComponent: DeleteStudentDialog,
   onConfirm: async () => {
     const data = deleteStudentModalApi.getData();
-    await deleteStudentProfile(data.id);
-    message.success('删除成功');
-    gridApi.query();
-    deleteStudentModalApi.close();
+    const result = await deleteStudentProfile(data.id);
+    if (result) {
+      message.success('删除成功');
+      gridApi.query();
+      deleteStudentModalApi.close();
+    } else {
+      message.error('删除失败');
+    }
   },
 });
 
+// 已毕业学生档案抽屉
 const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
   connectedComponent: GraduatedStudentFileDrawer,
 });
 
-// 视图模式与选择
+// ============== 视图模式与选择 ==============
 const viewMode = ref<'group' | 'list'>('list');
 const selectedRowKeys = ref<number[]>([]);
-// const confirmDialogVisible = ref(false);
 
 // Grid 定义
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -87,40 +101,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       pageSizes: [10, 20, 50, 100],
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
     },
-    columns: [
-      { type: 'checkbox', width: 48 },
-      { field: 'studentNo', title: '学号', width: 120 },
-      { field: 'name', title: '姓名', minWidth: 140, showOverflow: 'tooltip' },
-      {
-        field: 'className',
-        title: '班级',
-        minWidth: 120,
-        showOverflow: 'tooltip',
-      },
-      { field: 'sex', title: '性别', width: 80, slots: { default: 'sex' } },
-      { field: 'gradeName', title: '年级', width: 100 },
-      { field: 'mobile', title: '联系电话', width: 140 },
-      {
-        field: 'psychologicalStatus',
-        title: '心理状态',
-        width: 100,
-        slots: { default: 'psychologicalStatus' },
-      },
-      {
-        field: 'graduationStatus',
-        title: '毕业状态',
-        width: 100,
-        slots: { default: 'graduationStatus' },
-      },
-      {
-        field: 'actions',
-        title: '操作',
-        width: 140,
-        fixed: 'right',
-        align: 'center',
-        slots: { default: 'actions' },
-      },
-    ],
+    columns: useStudentProfileGridSchema(),
     toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
     proxyConfig: {
       ajax: {
@@ -140,7 +121,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     }) => {
       selectedRowKeys.value = (records || [])
         .map((r: any) => r.id)
-        .filter((v: any) => v != null);
+        .filter((v: any) => v !== null);
     },
     onCheckboxAll: ({
       records,
@@ -149,13 +130,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     }) => {
       selectedRowKeys.value = (records || [])
         .map((r: any) => r.id)
-        .filter((v: any) => v != null);
+        .filter((v: any) => v !== null);
     },
   } as VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>,
 });
 
-// 加载学生列表数据交由 Grid 代理
-
+// ============== 事件 ==============
 // 处理搜索
 function handleSearch(
   params: PsychologyStudentProfileApi.StudentProfilePageReq,
@@ -163,10 +143,7 @@ function handleSearch(
   gridApi.query({ ...params, pageNo: 1 });
 }
 
-// 处理分页变化由 Grid 管理
-
-// 详情抽屉打开在后续行事件中接入
-
+// 打开删除学生对话框
 function openDeleteStudentModal(id: number, studentNo: string, name: string) {
   deleteStudentModalApi.setData({ id, studentNo, name }).open();
 }
@@ -210,7 +187,8 @@ function handleImport() {
 
 // 批量换班
 function handleBulkChangeClass() {
-  bulkClassTransferDrawerApi.open();
+  const selectedStudents = gridApi.grid.getCheckboxRecords();
+  bulkClassTransferDrawerApi.setData({ selectedStudents }).open();
 }
 
 // 已毕业学生档案
@@ -220,24 +198,92 @@ function handleGraduatedStudentFile() {
 
 // 年级毕业
 function handleGraduated() {
-  // graduationDrawerApi.open();
   graduationDrawerOpen.value = true;
 }
 
 // 导出数据
-function handleExport() {
-  console.log('导出数据');
-  // TODO: 实现导出功能
-  message.info('导出功能待实现');
+async function handleExport() {
+  try {
+    loading.value = true;
+
+    if (selectedRowKeys.value.length > 0) {
+      // 导出选中的数据
+      const selectedStudents = gridApi.grid.getCheckboxRecords();
+      if (selectedStudents && selectedStudents.length > 0) {
+        exportStudentsToExcel(selectedStudents);
+      } else {
+        message.warning('请先选择要导出的学生数据');
+      }
+    } else {
+      // 导出全部数据
+      const studentProfileList = gridApi.grid.getData();
+      if (studentProfileList.length > 0) {
+        exportStudentsToExcel(studentProfileList);
+      } else {
+        message.warning('没有数据可导出');
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    message.error('导出失败，请重试');
+  } finally {
+    loading.value = false;
+  }
 }
 
 function refresh() {
   gridApi.query();
 }
 
+/**
+ * 加载部门列表
+ */
+async function loadDeptList() {
+  const data = await getDeptSimpleList();
+  if (data.length > 0) {
+    const filteredData = data.filter((dept) => dept.parentId !== 110);
+
+    const childIds = new Set(filteredData.map((dept) => dept.id));
+
+    const rootDepts = filteredData.filter(
+      (dept) =>
+        !childIds.has(dept.parentId) ||
+        dept.parentId === 0 ||
+        dept.parentId === null,
+    );
+
+    // 构建树形结构
+    const buildTree = (
+      parentId: number,
+    ): undefined | { label: string; value: number }[] => {
+      const children = filteredData
+        .filter((dept) => dept.parentId === parentId)
+        .map((dept) => ({
+          value: dept.id,
+          label: dept.name,
+        }));
+
+      return children.length > 0 ? children : undefined;
+    };
+
+    // 构建最终的树形数据
+    const treeData = rootDepts.map((dept) => ({
+      value: dept.id,
+      label: dept.name,
+      children: buildTree(dept.id),
+    }));
+
+    sessionStorage.setItem('deptList', JSON.stringify(treeData));
+    return treeData;
+  }
+
+  return [];
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   gridApi.query();
+  loadDeptList();
 });
 </script>
 
@@ -291,30 +337,40 @@ onMounted(() => {
 
       <div class="min-h-0 flex-1 overflow-hidden">
         <Grid>
+          <!-- 性别 -->
           <template #sex="{ row }">
-            <span>{{
-              row.sex === 1 ? '男' : row.sex === 2 ? '女' : '未知'
-            }}</span>
+            <span> {{ getDictLabel('system_user_sex', row.sex) }} </span>
           </template>
+
+          <!-- 心理状态 -->
           <template #psychologicalStatus="{ row }">
-            <span>{{
-              row.psychologicalStatus === 1
-                ? '良好'
-                : row.psychologicalStatus === 2
-                  ? '较差'
-                  : '一般'
-            }}</span>
+            <LyTag
+              tag-category-key="student_psychological_status"
+              :dict-value="row.psychologicalStatus"
+            />
           </template>
+
+          <!-- 毕业状态 -->
           <template #graduationStatus="{ row }">
-            <span>{{ row.graduationStatus === 1 ? '已毕业' : '未毕业' }}</span>
+            <LyTag
+              tag-category-key="student_graduation_status"
+              :dict-value="String(row.graduationStatus)"
+            />
           </template>
+
+          <!-- 联系电话 -->
+          <template #mobile="{ row }">
+            <span>{{ row.mobile || '---' }}</span>
+          </template>
+
+          <!-- 操作 -->
           <template #actions="{ row }">
             <TableAction
               :actions="[
                 {
                   label: '查看详情',
                   type: 'link',
-                  onClick: () => drawerApi.open(),
+                  onClick: () => drawerApi.setData({ id: row.id }).open(),
                 },
                 {
                   label: '删除',

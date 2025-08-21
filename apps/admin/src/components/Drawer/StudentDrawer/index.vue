@@ -1,11 +1,15 @@
 <script lang="ts" setup>
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile/index';
+
 import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import { Divider, Tabs } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
+import { getStudentProfile } from '#/api/psychology/student-profile/index';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
@@ -21,20 +25,66 @@ interface FooterButton {
   class: string;
 }
 
-const [Drawer] = useVbenDrawer({
+const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>({});
+
+const baseInfo = ref([
+  { label: '姓名', value: '', key: 'name' },
+  { label: '性别', value: '', key: 'sex' },
+  { label: '年龄', value: '', key: 'birthDate' },
+  { label: '年级', value: '', key: 'className' },
+  { label: '学号', value: '', key: 'studentNo' },
+]);
+
+/**
+ * 计算年龄
+ * @param timestamp 时间戳
+ * @returns 年龄
+ */
+function calculate(timestamp: Date | number | string): number {
+  if (!timestamp) return 0;
+
+  const birthDate = dayjs(timestamp);
+  const today = dayjs();
+
+  return today.diff(birthDate, 'year');
+}
+
+const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[800px]',
   contentClass: 'bg-gray-50 p-0',
   showCancelButton: false,
   showConfirmButton: false,
-});
+  onOpenChange: async () => {
+    const data = drawerApi.getData();
+    if (data.id) {
+      const studentProfileData = await getStudentProfile(data.id);
+      studentProfile.value = studentProfileData;
 
-const baseInfo = ref([
-  { label: '姓名', value: '张明' },
-  { label: '性别', value: '男' },
-  { label: '年龄', value: '18岁' },
-  { label: '年级', value: '初三（2）班' },
-  { label: '学号', value: '20210101' },
-]);
+      // 赋值操作：将API返回的数据匹配到baseInfo中
+      if (studentProfileData) {
+        // 性别映射
+        const sexMap: Record<number, string> = { 1: '男', 2: '女' };
+
+        // 字段映射配置
+        const fieldMappers: Record<string, (data: any) => string> = {
+          name: (data) => data.name || '',
+          sex: (data) => sexMap[data.sex] || '',
+          birthDate: (data) => data.birthDate || '',
+          className: (data) => data.className || '',
+          studentNo: (data) => data.studentNo || '',
+        };
+
+        // 统一赋值
+        baseInfo.value.forEach((item) => {
+          const mapper = fieldMappers[item.key];
+          if (mapper) {
+            item.value = mapper(studentProfileData);
+          }
+        });
+      }
+    }
+  },
+});
 
 const mentalStates = ref({
   normal: { bg: '#E4FFF0', borderColor: '#8CFFC6', color: '#04DC70' },
@@ -92,6 +142,8 @@ const footerButtons = ref<FooterButton[]>([
         <span class="text-lg font-bold">学生360°档案</span>
       </div>
     </template>
+
+    <!-- 基础信息 -->
     <div class="flex h-full flex-col gap-3">
       <div class="bg-white px-4 pb-3 pt-6">
         <div class="flex flex-col gap-4">
