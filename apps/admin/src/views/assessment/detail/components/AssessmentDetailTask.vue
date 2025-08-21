@@ -7,7 +7,7 @@ import { getStatusLabel } from '@vben/types';
 
 import dayjs from 'dayjs';
 
-import { getAssessmentTask } from '#/api/assessment/task';
+import { getAssessmentTask } from '#/api/psychology/assessment';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = defineProps<{ taskNo: string }>();
