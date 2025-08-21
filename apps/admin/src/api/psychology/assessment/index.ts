@@ -1,55 +1,53 @@
 import type { PageParam, PageResult } from '@vben/request';
+import type { ASSESSMENT_TARGET_TYPE, AssessmentTask } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace PsychologyAssessmentApi {
-  /** 测评任务信息 */
-  export interface AssessmentTask {
-    id?: number;
-    taskNo?: string;
-    deadline?: Date;
-    finishNum?: number; // 完成人数
-    totalNum?: number; // 总人数
-    taskName: string;
-    description?: string;
-    templateId: number;
-    templateName?: string;
-    status: number;
-    startTime?: Date;
-    endTime?: Date;
-    targetType: number;
-    targetIds?: number[];
-    allowParentParticipation?: boolean;
-    creatorUserId?: number;
-    creatorName?: string;
-    createTime?: Date;
-    updateTime?: Date;
-    // 统计字段
-    totalParticipants?: number;
-    completedParticipants?: number;
-    completionRate?: number;
+  /** 基本信息 */
+  export interface BasicInfo {
+    description: string;
+    name: string;
+    timeRange: [any, any];
+  }
+
+  /** 已选择的班级以及学生 */
+  export interface SelectedAssessmentTargetItem {
+    classId: number;
+    className: string;
+    studentIds: number[];
+  }
+
+  /** 选择量表 */
+  export interface AssessmentTarget {
+    type: ASSESSMENT_TARGET_TYPE;
+    selected: SelectedAssessmentTargetItem[];
   }
 
   /** 测评任务分页查询参数 */
   export interface AssessmentTaskPageReq extends PageParam {
-    title?: string;
+    taskNo?: string;
+    name?: string;
+    questionnaireIds?: number[];
+    targetAudience?: number;
     status?: number;
-    templateId?: number;
-    startTime?: Date[];
-    createTime?: Date[];
+    publishUserId?: number;
+    deadline?: [Date, Date] | [string, string];
+    createTime?: [Date, Date] | [string, string];
   }
 
   /** 测评任务创建/更新请求 */
   export interface AssessmentTaskSaveReq {
     id?: number;
-    title: string;
-    description?: string;
-    templateId: number;
-    startTime?: Date;
-    endTime?: Date;
-    targetType: number;
-    targetIds?: number[];
-    allowParentParticipation?: boolean;
+    taskNo?: string;
+    taskName: string;
+    questionnaireIds: number[];
+    targetAudience: number; // 0-学生，1-家长
+    startline?: Date | string;
+    deadline?: Date | string;
+    deptIdList?: number[];
+    userIdList?: number[];
+    isPublish?: boolean; // 是否发布
   }
 
   /** 测评模板信息 */
@@ -87,6 +85,12 @@ export namespace PsychologyAssessmentApi {
     studentNo?: string;
     status?: number;
     isParent?: boolean;
+  }
+
+  /** 测评参与者请求参数 */
+  export interface AssessmentTaskParticipantsReq {
+    taskNo: string;
+    userIds: number[];
   }
 
   /** 测评结果信息 */
@@ -128,7 +132,7 @@ export namespace PsychologyAssessmentApi {
 export function getAssessmentTaskPage(
   params: PsychologyAssessmentApi.AssessmentTaskPageReq,
 ) {
-  return requestClient.get<PageResult<PsychologyAssessmentApi.AssessmentTask>>(
+  return requestClient.get<PageResult<AssessmentTask>>(
     '/psychology/assessment-task/page',
     { params },
   );
@@ -136,7 +140,7 @@ export function getAssessmentTaskPage(
 
 /** 查询测评任务详情 */
 export function getAssessmentTask(taskNo: string) {
-  return requestClient.get<PsychologyAssessmentApi.AssessmentTask>(
+  return requestClient.get<AssessmentTask>(
     `/psychology/assessment-task/get?taskNo=${taskNo}`,
   );
 }
@@ -195,6 +199,15 @@ export function sendAssessmentReminder(
   });
 }
 
+/** 导出测评任务 */
+export function exportAssessmentTask(
+  params: PsychologyAssessmentApi.AssessmentTaskPageReq,
+) {
+  return requestClient.download(`/psychology/assessment-task/export-excel`, {
+    params,
+  });
+}
+
 // ==================== 测评模板管理 ====================
 
 /** 获取测评模板列表 */
@@ -233,6 +246,26 @@ export function getAssessmentResults(participantId: number) {
 export function getAssessmentAnswers(participantId: number) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentAnswer[]>(
     `/psychology/assessment-participant/answers?participantId=${participantId}`,
+  );
+}
+
+/** 新增测评参与者 */
+export function addAssessmentParticipants(
+  data: PsychologyAssessmentApi.AssessmentTaskParticipantsReq,
+) {
+  return requestClient.post<boolean>(
+    '/psychology/assessment-task/add-participants',
+    data,
+  );
+}
+
+/** 移除测评参与者 */
+export function removeAssessmentParticipants(
+  data: PsychologyAssessmentApi.AssessmentTaskParticipantsReq,
+) {
+  return requestClient.post<boolean>(
+    '/psychology/assessment-task/remove-participants',
+    data,
   );
 }
 

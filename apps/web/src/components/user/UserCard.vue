@@ -84,7 +84,7 @@ const avatarUrl = computed(() => props.avatar || preferences.app.defaultAvatar);
 
         <div class="ml-auto">
           <slot name="corner">
-            <div class="relative">
+            <div class="relative cursor-pointer">
               <span
                 class="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-emerald-100/80 to-teal-100/60 px-3 py-1.5 text-sm font-bold tracking-wider text-emerald-700 backdrop-blur-sm transition-all duration-300 group-hover:from-emerald-200/90 group-hover:to-teal-200/70"
               >

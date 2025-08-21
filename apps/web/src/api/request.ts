@@ -132,12 +132,28 @@ export const requestClient = createRequestClient(apiURL, {
   responseReturn: 'data',
 });
 
+export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+baseRequestClient.addRequestInterceptor({
+  fulfilled: (config) => {
+    const accessStore = useAccessStore();
+    // 添加租户编号
+    config.headers['tenant-id'] = tenantEnable
+      ? accessStore.tenantId
+      : undefined;
+    // 只有登录时，才设置 visit-tenant-id 访问租户
+    config.headers['visit-tenant-id'] = tenantEnable
+      ? accessStore.visitTenantId
+      : undefined;
+    return config;
+  },
+});
+
 export const appRequestClient = createRequestClient('/app-api', {
   responseReturn: 'data',
 });
 
-export const baseRequestClient = new RequestClient({ baseURL: apiURL });
-baseRequestClient.addRequestInterceptor({
+export const appBaseRequestClient = new RequestClient({ baseURL: '/app-api' });
+appBaseRequestClient.addRequestInterceptor({
   fulfilled: (config) => {
     const accessStore = useAccessStore();
     // 添加租户编号

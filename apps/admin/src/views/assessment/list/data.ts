@@ -4,7 +4,7 @@ import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { getQuestionnaireListSimple } from '#/api/questionnaire';
+import { getQuestionnaireListSimple } from '#/api/psychology/questionnaire';
 
 // 量表选项的响应式数据
 const questionnaireOptions = ref<{ label: string; value: string }[]>([]);

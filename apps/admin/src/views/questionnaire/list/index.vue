@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import type { QuestionnaireVO } from '@vben/types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type {
-  QuestionnairePageReqVO,
-  QuestionnaireVO,
-} from '#/api/questionnaire/index';
+import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire/index';
 
 import { onMounted, ref } from 'vue';
 
@@ -17,7 +16,7 @@ import {
   publishQuestionnaire,
   syncQuestionnaireData,
   updateQuestionnaire,
-} from '#/api/questionnaire/index';
+} from '#/api/psychology/questionnaire/index';
 import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
