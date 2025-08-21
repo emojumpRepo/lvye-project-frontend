@@ -1,4 +1,4 @@
-import type { AuthPermissionInfo, Recordable, UserInfo } from '@vben/types';
+import type { Recordable, UserInfo } from '@vben/types';
 
 import type { AuthApi } from '#/api';
 
@@ -12,14 +12,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
-import {
-  getAuthPermissionInfoApi,
-  loginApi,
-  logoutApi,
-  register,
-  smsLogin,
-  socialLogin,
-} from '#/api';
+import { loginApi, logoutApi, register, smsLogin, socialLogin } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -78,7 +71,9 @@ export const useAuthStore = defineStore('auth', () => {
         // ]);
         const fetchUserInfoResult = await fetchUserInfo();
 
-        userInfo = fetchUserInfoResult.user;
+        userInfo = fetchUserInfoResult?.user || null;
+
+        console.log(preferences);
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -86,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
           onSuccess
             ? await onSuccess?.()
             : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
+                userInfo?.homePath || preferences.app.defaultHomePath,
               );
         }
 
@@ -132,15 +127,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchUserInfo() {
     // 加载
-    let authPermissionInfo: AuthPermissionInfo | null = null;
-    authPermissionInfo = await getAuthPermissionInfoApi();
-    // userStore
-    userStore.setUserInfo(authPermissionInfo.user);
-    userStore.setUserRoles(authPermissionInfo.roles);
-    // accessStore
-    accessStore.setAccessMenus(authPermissionInfo.menus);
-    accessStore.setAccessCodes(authPermissionInfo.permissions);
-    return authPermissionInfo;
+    // let authPermissionInfo: AuthPermissionInfo | null = null;
+    // authPermissionInfo = await getAuthPermissionInfoApi();
+    // // userStore
+    // userStore.setUserInfo(authPermissionInfo.user);
+    // userStore.setUserRoles(authPermissionInfo.roles);
+    // // accessStore
+    // accessStore.setAccessMenus(authPermissionInfo.menus);
+    // accessStore.setAccessCodes(authPermissionInfo.permissions);
+    // return authPermissionInfo;
+    return null;
   }
 
   function $reset() {

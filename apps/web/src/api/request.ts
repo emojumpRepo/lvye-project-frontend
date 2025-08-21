@@ -132,6 +132,10 @@ export const requestClient = createRequestClient(apiURL, {
   responseReturn: 'data',
 });
 
+export const appRequestClient = createRequestClient('/app-api', {
+  responseReturn: 'data',
+});
+
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
 baseRequestClient.addRequestInterceptor({
   fulfilled: (config) => {

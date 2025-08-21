@@ -5,8 +5,16 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
-import { Button, message, Radio } from 'ant-design-vue';
+import {
+  Button,
+  Dropdown,
+  Menu,
+  MenuItem,
+  message,
+  Radio,
+} from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -242,24 +250,38 @@ onMounted(() => {
     <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
+          <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button>
+          <Dropdown>
+            <template #overlay>
+              <Menu>
+                <MenuItem key="1" @click="handleGraduated">年级毕业</MenuItem>
+                <MenuItem key="2" @click="handleExport">导出数据</MenuItem>
+                <MenuItem key="3" @click="handleImport">批量导入</MenuItem>
+              </Menu>
+            </template>
+            <Button>
+              <div class="flex items-center">
+                <span class="mr-1">更多操作</span>
+                <IconifyIcon icon="lucide:chevron-right" />
+              </div>
+            </Button>
+          </Dropdown>
+          <Button type="primary" @click="handleAdd">创建学生</Button>
           <Button
             danger
             @click="handleBulkDelete"
+            v-show="selectedRowKeys.length > 0"
             :disabled="selectedRowKeys.length === 0"
           >
             批量删除
           </Button>
           <Button
+            v-show="selectedRowKeys.length > 0"
             :disabled="selectedRowKeys.length === 0"
             @click="handleBulkChangeClass"
           >
             批量换班
           </Button>
-          <Button @click="handleImport">批量导入</Button>
-          <Button @click="handleExport">导出数据</Button>
-          <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button>
-          <Button @click="handleGraduated">年级毕业</Button>
-          <Button type="primary" @click="handleAdd">创建学生</Button>
         </div>
         <Radio.Group v-model:value="viewMode">
           <Radio.Button value="list">列表视图</Radio.Button>

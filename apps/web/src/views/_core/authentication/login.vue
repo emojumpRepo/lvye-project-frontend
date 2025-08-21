@@ -75,14 +75,19 @@ async function handleLogin(values: any) {
     return;
   }
   // 无验证码，直接登录
-  await authStore.authLogin('username', values);
+  await authStore.authLogin('username', {
+    ...values,
+    isParent: Number(values.isParent),
+  });
 }
 
 /** 验证码通过，执行登录 */
 async function handleVerifySuccess({ captchaVerification }: any) {
   try {
+    const formValues = await loginRef.value.getFormApi().getValues();
     await authStore.authLogin('username', {
-      ...(await loginRef.value.getFormApi().getValues()),
+      ...formValues,
+      isParent: Number(formValues.isParent),
       captchaVerification,
     });
   } catch (error) {
@@ -142,6 +147,20 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
     },
     {
+      component: 'VbenSelect',
+      componentProps: {
+        options: [
+          { label: '学生', value: '0' },
+          { label: '家长', value: '1' },
+        ],
+        placeholder: $t('authentication.isParentTip'),
+      },
+      fieldName: 'isParent',
+      label: $t('authentication.isParent'),
+      rules: z.string().min(1, { message: $t('authentication.isParentTip') }),
+      defaultValue: '0',
+    },
+    {
       component: 'VbenInput',
       componentProps: {
         placeholder: $t('authentication.usernameTip'),
@@ -175,6 +194,10 @@ const formSchema = computed((): VbenFormSchema[] => {
       ref="loginRef"
       :form-schema="formSchema"
       :loading="authStore.loginLoading"
+      :show-code-login="false"
+      :show-qrcode-login="false"
+      :show-register="false"
+      :show-third-party-login="false"
       @submit="handleLogin"
       @third-login="handleThirdLogin"
     />
