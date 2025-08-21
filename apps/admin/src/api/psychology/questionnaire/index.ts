@@ -1,29 +1,6 @@
-import { requestClient } from '#/api/request';
+import type { QuestionnaireVO } from '@vben/types';
 
-export interface QuestionnaireVO {
-  id?: number;
-  externalId?: string;
-  title: string;
-  status?: number;
-  description?: string;
-  externalLink: string;
-  questionnaireType: number;
-  syncStatus?: number;
-  status?: number;
-  targetAudience?: number;
-  estimatedDuration?: number;
-  accessCount?: number;
-  questionCount?: number;
-  completionCount?: number;
-  assessmentDimension?: string[];
-  assessmentDimensionLabels?: string[];
-  isOpen?: boolean;
-  validFrom?: number;
-  validTo?: number;
-  remark?: string;
-  createTime?: string;
-  creator?: string;
-}
+import { requestClient } from '#/api/request';
 
 export interface QuestionnairePageReqVO {
   pageNo?: number;

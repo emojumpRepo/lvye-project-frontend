@@ -1,5 +1,6 @@
 export interface QuestionnaireVO {
   id: number;
+  externalId?: string;
   title: string;
   status?: number;
   description?: string;
