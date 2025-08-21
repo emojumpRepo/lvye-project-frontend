@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import type { EvaluationScene } from './data';
+
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { ArrowLeft } from '@vben/icons';
+
 import { message } from 'ant-design-vue';
 
-import { EVALUATION_SCENES } from '../data';
+import { EVALUATION_SCENES } from './data';
 
 const router = useRouter();
 
@@ -21,7 +25,7 @@ function startEvaluation() {
   // 跳转到测评页面
   if (SelectedScene.value) {
     router.push({
-      name: 'EvaluationJuniorQuestionnaire',
+      name: 'EvaluationQuestionnaire',
       params: { id: SelectedScene.value.evaluation.id },
       query: {
         scene: SelectedScene.value.id,
@@ -50,7 +54,7 @@ function showSummaryReport() {
 
 // 获取下一个可点击的场景
 function getNextAvailableScene() {
-  return EVALUATION_SCENES.find((scene) => !scene.disabled);
+  return EVALUATION_SCENES.find((scene: EvaluationScene) => !scene.disabled);
 }
 </script>
 
@@ -64,14 +68,7 @@ function getNextAvailableScene() {
       <!-- 返回按钮 - 左上角 -->
       <div class="back-button" @click="handleBack">
         <div class="back-icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft />
         </div>
         <span class="back-text">返回</span>
       </div>
@@ -91,7 +88,7 @@ function getNextAvailableScene() {
         :class="{ disabled: !hasReport }"
       >
         <img
-          src="../../../../static/icons/report.svg"
+          src="../../static/icons/report.svg"
           alt=""
           width="64"
           class="report-icon"
@@ -121,7 +118,7 @@ function getNextAvailableScene() {
               class="guide-wave"
             >
               <img
-                src="../../../../static/images/evaluation/questionnaire/wave.gif"
+                src="../../static/images/evaluation/questionnaire/wave.gif"
                 alt="引导动画"
                 class="wave-gif"
               />
@@ -268,7 +265,7 @@ function getNextAvailableScene() {
     .map-background {
       width: 100%;
       height: 100%;
-      background: url('../../../../static/images/evaluation/junior_evaluation_map.png');
+      background: url('../../static/images/evaluation/junior_evaluation_map.png');
       background-repeat: no-repeat;
       background-position: center;
       background-size: cover;

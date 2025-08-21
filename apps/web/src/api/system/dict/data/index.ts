@@ -1,6 +1,6 @@
 import type { PageParam } from '@vben/request';
 
-import { requestClient } from '#/api/request';
+import { appRequestClient, requestClient } from '#/api/request';
 
 export namespace SystemDictDataApi {
   /** 字典数据 */
@@ -20,7 +20,7 @@ export namespace SystemDictDataApi {
 
 // 查询字典数据（精简)列表
 export function getSimpleDictDataList() {
-  return requestClient.get('/system/dict-data/simple-list');
+  return appRequestClient.get('/system/dict-data/simple-list');
 }
 
 // 查询字典数据列表

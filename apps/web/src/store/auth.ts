@@ -1,4 +1,4 @@
-import type { Recordable, UserInfo } from '@vben/types';
+import type { AuthPermissionInfo, Recordable, UserInfo } from '@vben/types';
 
 import type { AuthApi } from '#/api';
 
@@ -13,6 +13,7 @@ import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
 import { loginApi, logoutApi, register, smsLogin, socialLogin } from '#/api';
+import { getAuthPermissionInfoApi } from '#/api/core/auth';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -73,8 +74,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         userInfo = fetchUserInfoResult?.user || null;
 
-        console.log(preferences);
-
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
         } else {
@@ -127,16 +126,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchUserInfo() {
     // 加载
-    // let authPermissionInfo: AuthPermissionInfo | null = null;
-    // authPermissionInfo = await getAuthPermissionInfoApi();
-    // // userStore
-    // userStore.setUserInfo(authPermissionInfo.user);
-    // userStore.setUserRoles(authPermissionInfo.roles);
-    // // accessStore
-    // accessStore.setAccessMenus(authPermissionInfo.menus);
-    // accessStore.setAccessCodes(authPermissionInfo.permissions);
-    // return authPermissionInfo;
-    return null;
+    let authPermissionInfo: AuthPermissionInfo | null = null;
+    authPermissionInfo = await getAuthPermissionInfoApi();
+    // userStore
+    userStore.setUserInfo(authPermissionInfo.user);
+    userStore.setUserRoles(authPermissionInfo.roles);
+    // accessStore
+    accessStore.setAccessMenus(authPermissionInfo.menus);
+    accessStore.setAccessCodes(authPermissionInfo.permissions);
+    return authPermissionInfo;
   }
 
   function $reset() {

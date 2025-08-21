@@ -1,3 +1,30 @@
+/** 测评任务信息 */
+export interface AssessmentTask {
+  id?: number;
+  taskNo?: string;
+  deadline?: Date;
+  finishNum?: number; // 完成人数
+  totalNum?: number; // 总人数
+  taskName: string;
+  description?: string;
+  templateId: number;
+  templateName?: string;
+  status: number;
+  startTime?: Date;
+  endTime?: Date;
+  targetType: number;
+  targetIds?: number[];
+  allowParentParticipation?: boolean;
+  creatorUserId?: number;
+  creatorName?: string;
+  createTime?: Date;
+  updateTime?: Date;
+  // 统计字段
+  totalParticipants?: number;
+  completedParticipants?: number;
+  completionRate?: number;
+}
+
 // 测评状态枚举
 export const ASSESSMENT_STATUS = {
   DRAFT: 0,
@@ -46,8 +73,8 @@ export const QUESTIONNAIRE_STATUS_OPTIONS = [
 ];
 
 export const TARGET_AUDIENCE_OPTIONS = [
-  { value: 1, label: '学生' },
-  { value: 2, label: '家长' },
+  { value: 0, label: '学生' },
+  { value: 1, label: '家长' },
 ];
 
 // 问卷类型枚举

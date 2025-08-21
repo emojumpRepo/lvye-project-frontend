@@ -1,6 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
-import { requestClient } from '#/api/request';
+import { appRequestClient, requestClient } from '#/api/request';
 
 export namespace SystemNotifyMessageApi {
   /** 站内信消息信息 */
@@ -61,5 +61,7 @@ export function getUnreadNotifyMessageList() {
 
 /** 获得当前用户的未读站内信数量 */
 export function getUnreadNotifyMessageCount() {
-  return requestClient.get<number>('/system/notify-message/get-unread-count');
+  return appRequestClient.get<number>(
+    '/system/notify-message/get-unread-count',
+  );
 }
