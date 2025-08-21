@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import type { AssessmentTarget } from '#/api/assessment/task';
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
 import { computed, inject, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon, Search } from '@vben/icons';
+import { ASSESSMENT_TARGET_TYPE } from '@vben/types';
 
 import {
   Checkbox as ACheckbox,
@@ -12,18 +13,23 @@ import {
   Radio as ARadio,
 } from 'ant-design-vue';
 
-import { AssessmentTargetType } from '#/api/assessment/task';
 import { getStudentProfileSimpleList } from '#/api/psychology/student-profile';
 import { getSimpleDeptList } from '#/api/system/dept';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
-const props = withDefaults(defineProps<{ modelValue?: AssessmentTarget }>(), {
-  modelValue: () => ({ type: 1, selected: [] }),
-});
+const props = withDefaults(
+  defineProps<{ modelValue?: PsychologyAssessmentApi.AssessmentTarget }>(),
+  {
+    modelValue: () => ({ type: 1, selected: [] }),
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: AssessmentTarget): void;
+  (
+    e: 'update:modelValue',
+    value: PsychologyAssessmentApi.AssessmentTarget,
+  ): void;
 }>();
 
 const { start, stop } = inject('CommonDialogContentLoading') as {
@@ -45,7 +51,9 @@ const parentRef = inject<{
 }>('parentRef');
 
 // 单选：收件类型
-const type = ref<AssessmentTarget['type']>(props.modelValue.type);
+const type = ref<PsychologyAssessmentApi.AssessmentTarget['type']>(
+  props.modelValue.type,
+);
 // 多选：选中的学生，按班级聚合（使用数字 ID）
 const selectedByClass = ref<Map<number, Set<number>>>(new Map());
 
@@ -292,8 +300,8 @@ function isPanelActive(panel: any) {
     <div>
       <LyLabel title="收件类型" required size="small" />
       <ARadio.Group v-model:value="type">
-        <ARadio :value="AssessmentTargetType.STUDENT">学生本人</ARadio>
-        <ARadio :value="AssessmentTargetType.PARENT">学生家长</ARadio>
+        <ARadio :value="ASSESSMENT_TARGET_TYPE.STUDENT">学生本人</ARadio>
+        <ARadio :value="ASSESSMENT_TARGET_TYPE.PARENT">学生家长</ARadio>
       </ARadio.Group>
     </div>
 

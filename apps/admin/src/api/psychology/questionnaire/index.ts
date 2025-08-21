@@ -1,29 +1,6 @@
-import { requestClient } from '#/api/request';
+import type { QuestionnaireVO } from '@vben/types';
 
-export interface QuestionnaireVO {
-  id: number;
-  title: string;
-  status?: number;
-  description?: string;
-  externalLink: string;
-  questionnaireType: number;
-  syncStatus?: number;
-  targetAudience?: number;
-  assessmentDimension?: string;
-  questionCount?: number;
-  estimatedDuration?: number;
-  accessCount?: number;
-  questionCount?: number;
-  completionCount?: number;
-  assessmentDimension?: string[];
-  assessmentDimensionLabels?: string[];
-  isOpen?: boolean;
-  validFrom?: number;
-  validTo?: number;
-  remark?: string;
-  createTime?: string;
-  creator?: string;
-}
+import { requestClient } from '#/api/request';
 
 export interface QuestionnairePageReqVO {
   pageNo?: number;
@@ -31,7 +8,7 @@ export interface QuestionnairePageReqVO {
   title?: string;
   syncStatus?: number;
   questionnaireType?: number;
-  isOpen?: boolean;
+  isOpen?: number;
   createTime?: string[];
 }
 
@@ -73,12 +50,12 @@ export const createQuestionnaire = (data: QuestionnaireVO) => {
 
 // 更新问卷
 export const updateQuestionnaire = (data: QuestionnaireVO) => {
-  return requestClient.put('/emojump/questionnaire/update', data);
+  return requestClient.put('/psychology/questionnaire/update', data);
 };
 
 // 删除问卷
 export const deleteQuestionnaire = (id: number) => {
-  return requestClient.delete(`/emojump/questionnaire/delete?id=${id}`);
+  return requestClient.delete(`/psychology/questionnaire/delete?id=${id}`);
 };
 
 // 获取问卷详情
@@ -102,13 +79,21 @@ export const getAllQuestionnaireList = () => {
 };
 
 // 发布问卷
-export const publishQuestionnaire = (id: number) => {
-  return requestClient.post(`/emojump/questionnaire/publish?id=${id}`);
+export const publishQuestionnaire = (params: {
+  externalId: string;
+  id: number;
+  syncType: number;
+}) => {
+  return requestClient.post(`/psychology/questionnaire/publish`, params);
 };
 
 // 暂停问卷
-export const pauseQuestionnaire = (id: number) => {
-  return requestClient.post(`/emojump/questionnaire/pause?id=${id}`);
+export const pauseQuestionnaire = (params: {
+  externalId: string;
+  id: number;
+  syncType: number;
+}) => {
+  return requestClient.post(`/psychology/questionnaire/pause`, params);
 };
 
 // 获取已发布问卷列表

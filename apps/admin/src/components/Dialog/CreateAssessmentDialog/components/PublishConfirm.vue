@@ -1,19 +1,21 @@
 <script lang="ts" setup>
-import type { AssessmentTarget, BasicInfo } from '#/api/assessment/task';
-import type { QuestionnaireVO } from '#/api/questionnaire';
+import type { QuestionnaireVO } from '@vben/types';
+
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
 import { computed } from 'vue';
 
+import { ASSESSMENT_TARGET_TYPE } from '@vben/types';
+
 import dayjs from 'dayjs';
 
-import { AssessmentTargetType } from '#/api/assessment/task';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(
   defineProps<{
     assessments: QuestionnaireVO[];
-    basic: BasicInfo;
-    target: AssessmentTarget;
+    basic: PsychologyAssessmentApi.BasicInfo;
+    target: PsychologyAssessmentApi.AssessmentTarget;
   }>(),
   {},
 );
@@ -72,7 +74,7 @@ const dateRange = computed(() => {
           <div>
             <span class="desc-title">收件类型：</span>
             <span>{{
-              target.type === AssessmentTargetType.PARENT
+              target.type === ASSESSMENT_TARGET_TYPE.PARENT
                 ? '学生家长'
                 : '学生本人'
             }}</span>

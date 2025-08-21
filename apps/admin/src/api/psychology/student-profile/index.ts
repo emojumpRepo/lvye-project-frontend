@@ -9,7 +9,7 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo: string;
     name: string;
-    birthDate?: Date;
+    birthDate?: string;
     homeAddress?: string;
     sex?: number;
     mobile?: string;
@@ -46,20 +46,17 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo: string;
     name: string;
-    birthDate?: Date;
+    birthDate?: string;
     homeAddress?: string;
     sex?: number;
     mobile?: string;
-    birthDate?: string;
     gradeDeptId?: number;
     classDeptId?: number;
     graduationStatus?: number;
     psychologicalStatus?: number;
-    homeAddress?: string;
     isMark?: number;
     specialMarks?: string;
     riskLevel?: number;
-    specialMarks?: string;
     remark?: string;
   }
 
@@ -75,6 +72,13 @@ export namespace PsychologyStudentProfileApi {
     id: number;
     name: string;
     parentId: number;
+  }
+
+  /** 部门树形结构 */
+  export interface DeptTree {
+    value: number;
+    label: string;
+    children?: { label: string; value: number }[];
   }
 }
 
@@ -120,15 +124,6 @@ export function deleteStudentProfileList(ids: number[]) {
   );
 }
 
-/** 导出学生档案 */
-export function exportStudentProfile(
-  params: PsychologyStudentProfileApi.StudentProfilePageReq,
-) {
-  return requestClient.download('/psychology/student-profile/export-excel', {
-    params,
-  });
-}
-
 /** 批量导入学生档案 */
 export function importStudentProfile(file: File) {
   const formData = new FormData();
@@ -142,11 +137,6 @@ export function importStudentProfile(file: File) {
       },
     },
   );
-}
-
-/** 下载学生档案导入模板 */
-export function downloadStudentProfileTemplate() {
-  return requestClient.download('/psychology/student-profile/import-template');
 }
 
 /** 更新学生心理状态 */
@@ -183,3 +173,12 @@ export function getDeptSimpleList() {
     '/system/dept/simple-list',
   );
 }
+
+/** 获取学生时间线列表 */
+// export function getStudentProfileTimeline(studentProfileId: number) {
+//   return requestClient.get<
+//     PsychologyStudentProfileApi.StudentProfileTimeline[]
+//   >('/psychology/student-profile/timeline-list', {
+//     params: { studentProfileId },
+//   });
+// }

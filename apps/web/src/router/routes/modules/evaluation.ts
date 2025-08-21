@@ -3,8 +3,8 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     name: 'Evaluation',
-    path: '/evaluation/junior',
-    component: () => import('#/views/evaluation/junior/index.vue'),
+    path: '/evaluation',
+    component: () => import('#/views/evaluation/index.vue'),
     meta: {
       icon: 'lucide:map',
       order: 1,
@@ -15,15 +15,25 @@ const routes: RouteRecordRaw[] = [
     },
     children: [
       {
-        name: 'EvaluationJuniorMap',
-        path: 'map',
-        component: () => import('#/views/evaluation/junior/map/index.vue'),
+        name: 'EvaluationScene',
+        path: 'scene',
+        meta: {
+          title: '测评场景',
+        },
+        component: () => import('#/views/evaluation/scene.vue'),
       },
       {
-        name: 'EvaluationJuniorQuestionnaire',
+        name: 'EvaluationQuestionnaire',
         path: 'questionnaire',
-        component: () =>
-          import('#/views/evaluation/junior/questionnaire/index.vue'),
+        component: () => import('#/views/evaluation/questionnaire.vue'),
+      },
+      {
+        name: 'EvaluationAssessment',
+        path: 'assessment/:id',
+        component: () => import('#/views/evaluation/assessment.vue'),
+        meta: {
+          title: '测评详情',
+        },
       },
     ],
   },

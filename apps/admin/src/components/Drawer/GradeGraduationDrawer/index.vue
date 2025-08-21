@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -8,8 +8,10 @@ import {
   Form as AForm,
   Input as AInput,
   Select as ASelect,
+  Table as ATable,
 } from 'ant-design-vue';
 
+import { getDeptSimpleList } from '#/api/psychology/student-profile/index';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -25,11 +27,7 @@ const graduationForm = ref({
   session: '',
 });
 
-const gradeOptions = ref([
-  { label: '一年级', value: '1' },
-  { label: '二年级', value: '2' },
-  { label: '三年级', value: '3' },
-]);
+const gradeOptions = ref<{ label: string; value: number }[]>([]);
 
 const graduationYearOptions = ref([
   { label: '2025年', value: '2025' },
@@ -57,6 +55,33 @@ const rules = ref({
   graduationYear: [{ required: true, message: '请选择毕业年份' }],
   session: [{ required: true, message: '请输入届别' }],
 });
+
+/**
+ * 获取年级选项
+ */
+async function getGradeOptions() {
+  try {
+    const data = await getDeptSimpleList();
+    if (data.length > 0) {
+      const filteredData = data.filter((dept) => dept.parentId !== 110);
+      const allIds = new Set(filteredData.map((dept) => dept.id));
+      const parentData = filteredData.filter(
+        (dept) => !allIds.has(dept.parentId),
+      );
+      gradeOptions.value =
+        parentData.map((dept) => ({
+          value: dept.id,
+          label: dept.name,
+        })) || [];
+    }
+  } catch (error) {
+    console.error('获取年级选项失败', error);
+  }
+}
+
+onMounted(async () => {
+  await getGradeOptions();
+});
 </script>
 
 <template>
@@ -74,35 +99,29 @@ const rules = ref({
     <div class="mx-2 mb-2">
       <AForm :model="graduationForm" :rules="rules">
         <AForm.Item name="gradeId">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="年级" required custom-title-class="text-sm" />
-            <ASelect
-              v-model:value="graduationForm.gradeId"
-              :options="gradeOptions"
-              placeholder="请选择"
-            />
-          </div>
+          <LyLabel title="年级" required custom-title-class="font-normal" />
+          <ASelect
+            v-model:value="graduationForm.gradeId"
+            placeholder="请选择"
+            :options="gradeOptions"
+          />
         </AForm.Item>
 
         <AForm.Item name="graduationYear">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="毕业年份" required custom-title-class="text-sm" />
-            <ASelect
-              v-model:value="graduationForm.graduationYear"
-              :options="graduationYearOptions"
-              placeholder="请选择"
-            />
-          </div>
+          <LyLabel title="毕业年份" required custom-title-class="font-normal" />
+          <ASelect
+            v-model:value="graduationForm.graduationYear"
+            placeholder="请选择"
+            :options="graduationYearOptions"
+          />
         </AForm.Item>
 
         <AForm.Item name="session">
-          <div class="flex flex-col gap-1">
-            <LyLabel title="届别" required custom-title-class="text-sm" />
-            <AInput
-              v-model:value="graduationForm.session"
-              placeholder="如：2024届"
-            />
-          </div>
+          <LyLabel title="届别" required custom-title-class="font-normal" />
+          <AInput
+            v-model:value="graduationForm.session"
+            placeholder="如：2024届"
+          />
         </AForm.Item>
       </AForm>
 

@@ -1,8 +1,12 @@
 import type { VbenFormSchema } from '#/adapter/form';
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { h } from 'vue';
+import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
+
+import { getDictOptions } from '#/utils/dict';
 
 // 导出学生档案相关类型
 
@@ -92,60 +96,64 @@ export function useFamilyBackgroundFormSchema(): VbenFormSchema[] {
 
 /** 搜索表单 */
 export function useSearchFormSchema(): VbenFormSchema[] {
+  /** 年级列表 */
+  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
+  const stored = sessionStorage.getItem('deptList');
+  if (stored) {
+    deptList.value = JSON.parse(stored);
+  }
+
+  /** 班级列表 */
+  const classList = deptList.value.reduce(
+    (acc, item) => {
+      if (item.children) {
+        acc.push(...item.children);
+      }
+      return acc;
+    },
+    [] as { label: string; value: number }[],
+  );
+
+  /** 心理状态 */
+  const studentProfileStatusList = getDictOptions(
+    'student_psychological_status',
+  );
+
+  /** 毕业状态 */
+  const graduationStatusList = getDictOptions('student_graduation_status');
+
   return [
     {
-      fieldName: 'grade',
+      fieldName: 'gradeDeptId',
       component: 'Select',
       componentProps: {
-        options: [
-          { label: '全部年级', value: '' },
-          { label: '一年级', value: '1' },
-          { label: '二年级', value: '2' },
-          { label: '三年级', value: '3' },
-          { label: '四年级', value: '4' },
-          { label: '五年级', value: '5' },
-          { label: '六年级', value: '6' },
-        ],
+        options: [{ label: '全部年级', value: '' }, ...deptList.value],
       },
       defaultValue: '',
     },
     {
-      fieldName: 'class',
+      fieldName: 'classDeptId',
       component: 'Select',
       componentProps: {
-        options: [
-          { label: '全部班级', value: '' },
-          { label: '1班', value: '1' },
-          { label: '2班', value: '2' },
-          { label: '3班', value: '3' },
-          { label: '4班', value: '4' },
-          { label: '5班', value: '5' },
-          { label: '6班', value: '6' },
-        ],
+        options: [{ label: '全部班级', value: '' }, ...classList],
       },
       defaultValue: '',
     },
     {
-      fieldName: 'isGraduated',
+      fieldName: 'graduationStatus',
       component: 'Select',
       componentProps: {
-        options: [
-          { label: '是否毕业', value: '' },
-          { label: '已毕业', value: '1' },
-          { label: '未毕业', value: '0' },
-        ],
+        options: [{ label: '是否毕业', value: '' }, ...graduationStatusList],
       },
       defaultValue: '',
     },
     {
-      fieldName: 'status',
+      fieldName: 'psychologicalStatus',
       component: 'Select',
       componentProps: {
         options: [
           { label: '全部心理状态', value: '' },
-          { label: '良好', value: '1' },
-          { label: '一般', value: '0' },
-          { label: '较差', value: '2' },
+          ...studentProfileStatusList,
         ],
       },
       defaultValue: '',
@@ -166,6 +174,49 @@ export function useSearchFormSchema(): VbenFormSchema[] {
           }),
       }),
       formItemClass: 'col-span-2',
+    },
+  ];
+}
+
+/** 学生档案列表 */
+export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
+  return [
+    { type: 'checkbox', width: '5%' },
+    { field: 'name', title: '学生姓名', width: '10%', showOverflow: 'tooltip' },
+    { field: 'studentNo', title: '学号', width: '10%' },
+    { field: 'sex', title: '性别', width: '10%', slots: { default: 'sex' } },
+    { field: 'gradeName', title: '年级', width: '10%' },
+    {
+      field: 'className',
+      title: '班级',
+      width: '10%',
+      showOverflow: 'tooltip',
+    },
+    {
+      field: 'psychologicalStatus',
+      title: '心理状态',
+      width: '10%',
+      slots: { default: 'psychologicalStatus' },
+    },
+    {
+      field: 'mobile',
+      title: '联系电话',
+      width: '10%',
+      slots: { default: 'mobile' },
+    },
+    {
+      field: 'graduationStatus',
+      title: '毕业状态',
+      width: '10%',
+      slots: { default: 'graduationStatus' },
+    },
+    {
+      field: 'actions',
+      title: '操作',
+      width: '15%',
+      fixed: 'right',
+      align: 'center',
+      slots: { default: 'actions' },
     },
   ];
 }

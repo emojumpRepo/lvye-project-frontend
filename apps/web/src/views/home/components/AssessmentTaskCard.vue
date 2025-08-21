@@ -1,15 +1,16 @@
 <script lang="ts" setup>
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
+import { useRouter } from 'vue-router';
+
 import { getStatusColor, getStatusLabel } from '@vben/types';
 
-import { Tag } from 'ant-design-vue';
+import { message, Tag } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 const props = defineProps<{ task: PsychologyAssessmentApi.AssessmentTask }>();
-const emit = defineEmits<{
-  (e: 'action', task: PsychologyAssessmentApi.AssessmentTask): void;
-}>();
+
+const router = useRouter();
 
 function getPercent(task: PsychologyAssessmentApi.AssessmentTask): number {
   if (typeof task.completionRate === 'number') {
@@ -39,7 +40,25 @@ function isActionDisabled(task: PsychologyAssessmentApi.AssessmentTask) {
 }
 
 function handleClick() {
-  emit('action', props.task);
+  router.push(`/evaluation/assessment/${props.task.taskNo}`);
+  return;
+  switch (props.task.status) {
+    case 1: {
+      // 跳转到测评详情页面，传递任务ID
+      router.push(
+        `/evaluation/assessment/${props.task.id || props.task.taskNo}`,
+      );
+      break;
+    }
+    case 2: {
+      router.push('/evaluation/result');
+      break;
+    }
+    case 3: {
+      message.warning('测评已取消');
+      break;
+    }
+  }
 }
 </script>
 

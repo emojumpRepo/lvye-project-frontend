@@ -130,11 +130,12 @@ export namespace PsychologyConsultationApi {
 // ==================== 心理咨询记录管理 ====================
 
 /** 查询心理咨询记录分页列表 */
-export function getConsultationRecordPage(params: PsychologyConsultationApi.ConsultationRecordPageReq) {
-  return requestClient.get<PageResult<PsychologyConsultationApi.ConsultationRecord>>(
-    '/psychology/consultation-record/page',
-    { params },
-  );
+export function getConsultationRecordPage(
+  params: PsychologyConsultationApi.ConsultationRecordPageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyConsultationApi.ConsultationRecord>
+  >('/psychology/consultation-record/page', { params });
 }
 
 /** 查询心理咨询记录详情 */
@@ -145,18 +146,24 @@ export function getConsultationRecord(id: number) {
 }
 
 /** 创建心理咨询记录 */
-export function createConsultationRecord(data: PsychologyConsultationApi.ConsultationRecordSaveReq) {
+export function createConsultationRecord(
+  data: PsychologyConsultationApi.ConsultationRecordSaveReq,
+) {
   return requestClient.post('/psychology/consultation-record/create', data);
 }
 
 /** 更新心理咨询记录 */
-export function updateConsultationRecord(data: PsychologyConsultationApi.ConsultationRecordSaveReq) {
+export function updateConsultationRecord(
+  data: PsychologyConsultationApi.ConsultationRecordSaveReq,
+) {
   return requestClient.put('/psychology/consultation-record/update', data);
 }
 
 /** 删除心理咨询记录 */
 export function deleteConsultationRecord(id: number) {
-  return requestClient.delete(`/psychology/consultation-record/delete?id=${id}`);
+  return requestClient.delete(
+    `/psychology/consultation-record/delete?id=${id}`,
+  );
 }
 
 /** 批量删除心理咨询记录 */
@@ -167,20 +174,26 @@ export function deleteConsultationRecordList(ids: number[]) {
 }
 
 /** 导出心理咨询记录 */
-export function exportConsultationRecord(params: PsychologyConsultationApi.ConsultationRecordPageReq) {
-  return requestClient.download('/psychology/consultation-record/export-excel', {
-    params,
-  });
+export function exportConsultationRecord(
+  params: PsychologyConsultationApi.ConsultationRecordPageReq,
+) {
+  return requestClient.download(
+    '/psychology/consultation-record/export-excel',
+    {
+      params,
+    },
+  );
 }
 
 // ==================== 危机干预事件管理 ====================
 
 /** 查询危机干预事件分页列表 */
-export function getCrisisInterventionPage(params: PsychologyConsultationApi.CrisisInterventionPageReq) {
-  return requestClient.get<PageResult<PsychologyConsultationApi.CrisisIntervention>>(
-    '/psychology/crisis-intervention/page',
-    { params },
-  );
+export function getCrisisInterventionPage(
+  params: PsychologyConsultationApi.CrisisInterventionPageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyConsultationApi.CrisisIntervention>
+  >('/psychology/crisis-intervention/page', { params });
 }
 
 /** 查询危机干预事件详情 */
@@ -191,18 +204,24 @@ export function getCrisisIntervention(id: number) {
 }
 
 /** 创建危机干预事件 */
-export function createCrisisIntervention(data: PsychologyConsultationApi.CrisisInterventionSaveReq) {
+export function createCrisisIntervention(
+  data: PsychologyConsultationApi.CrisisInterventionSaveReq,
+) {
   return requestClient.post('/psychology/crisis-intervention/create', data);
 }
 
 /** 更新危机干预事件 */
-export function updateCrisisIntervention(data: PsychologyConsultationApi.CrisisInterventionSaveReq) {
+export function updateCrisisIntervention(
+  data: PsychologyConsultationApi.CrisisInterventionSaveReq,
+) {
   return requestClient.put('/psychology/crisis-intervention/update', data);
 }
 
 /** 删除危机干预事件 */
 export function deleteCrisisIntervention(id: number) {
-  return requestClient.delete(`/psychology/crisis-intervention/delete?id=${id}`);
+  return requestClient.delete(
+    `/psychology/crisis-intervention/delete?id=${id}`,
+  );
 }
 
 /** 分配危机干预处理人 */
@@ -214,7 +233,11 @@ export function assignCrisisHandler(id: number, handlerUserId: number) {
 }
 
 /** 更新危机干预状态 */
-export function updateCrisisStatus(id: number, status: number, remark?: string) {
+export function updateCrisisStatus(
+  id: number,
+  status: number,
+  remark?: string,
+) {
   return requestClient.put(`/psychology/crisis-intervention/update-status`, {
     id,
     status,
@@ -223,7 +246,11 @@ export function updateCrisisStatus(id: number, status: number, remark?: string) 
 }
 
 /** 完成危机干预 */
-export function completeCrisisIntervention(id: number, interventionResult: string, followUpPlan?: string) {
+export function completeCrisisIntervention(
+  id: number,
+  interventionResult: string,
+  followUpPlan?: string,
+) {
   return requestClient.put(`/psychology/crisis-intervention/complete`, {
     id,
     interventionResult,

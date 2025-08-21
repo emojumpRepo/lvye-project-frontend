@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire';
 
 import { ref } from 'vue';
 
@@ -8,22 +8,22 @@ import { message } from 'ant-design-vue';
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
-import { useSearchFormSchema } from '../data';
+import { useQuestionGridFormSchema } from '../data';
 
 // 定义 emit 事件
 const emit = defineEmits<{
   loading: [loading: boolean];
-  search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
+  search: [params: QuestionnairePageReqVO];
 }>();
 
 // 搜索参数
-const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>({
+const searchParams = ref<QuestionnairePageReqVO>({
   pageNo: 1,
   pageSize: 10,
 });
 
 const [Form, formApi] = useVbenForm({
-  schema: useSearchFormSchema(),
+  schema: useQuestionGridFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   commonConfig: {
@@ -46,19 +46,14 @@ async function handleSearch(values: any) {
   try {
     emit('loading', true);
 
-    // 智能识别搜索关键词是学号还是姓名
-    const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
-
     // 构建搜索参数
-    const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
+    const params: QuestionnairePageReqVO = {
       ...searchParams.value,
       pageNo: 1, // 重置到第一页
-      studentNo,
-      name,
-      gradeDeptId: values.gradeDeptId || undefined,
-      classDeptId: values.classDeptId || undefined,
-      graduationStatus: values.graduationStatus || undefined,
-      psychologicalStatus: values.psychologicalStatus || undefined,
+      title: values.title || undefined,
+      questionnaireType: values.questionnaireType || undefined,
+      isOpen: values.isOpen || undefined,
+      createTime: values.createTime || undefined,
     };
 
     searchParams.value = params;
@@ -69,29 +64,6 @@ async function handleSearch(values: any) {
   } finally {
     emit('loading', false);
   }
-}
-
-/**
- * 智能解析搜索关键词，判断是学号还是姓名
- * @param keyword 搜索关键词
- * @returns 返回解析后的学号和姓名字段
- */
-function parseSearchKeyword(keyword?: string) {
-  if (!keyword || keyword.trim() === '') {
-    return { studentNo: undefined, name: undefined };
-  }
-
-  const trimmedKeyword = keyword.trim();
-
-  // 判断是否为学号的特征：
-  // 1. 纯数字
-  // 2. 以数字开头
-  const isStudentNo = /^\d+$/.test(trimmedKeyword);
-
-  // 如果符合学号特征，则赋值给学号字段，否则认为是姓名
-  return isStudentNo
-    ? { studentNo: trimmedKeyword, name: undefined }
-    : { studentNo: undefined, name: trimmedKeyword };
 }
 
 // 重置搜索
@@ -115,8 +87,8 @@ defineExpose({
 <template>
   <div class="box-border rounded-xl bg-white p-6">
     <LyCardTitle
-      icon="ph:student"
-      title="学生管理档案"
+      icon="basil:document-solid"
+      title="问卷管理"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
 

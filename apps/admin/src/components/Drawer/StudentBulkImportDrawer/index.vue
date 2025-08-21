@@ -8,7 +8,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import LyUpload from '#/components/LyUpload/index.vue';
-import downloadTemplate from '#/utils/downloadTemplate';
+import { downloadTemplate } from '#/utils/export';
 
 const [Drawer] = useVbenDrawer({
   class: 'w-[720px]',

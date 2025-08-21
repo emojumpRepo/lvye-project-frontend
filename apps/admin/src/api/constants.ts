@@ -1,34 +1,43 @@
-export namespace QuestionnaireApi {
-  export interface Questionnaire {
-    id: number;
-    name: string;
-    class: string;
-    studentId: string;
-    status: string;
-    completedTime: string;
-    riskLevel: string;
-  }
-}
+import { getDictObj } from '#/utils/dict';
 
-const TAG_TYPE = {
+/** 标签类型 */
+export const TAG_TYPE = {
   warning: {
-    bg: '#FEAE3314',
+    backgroundColor: '#FEAE3314',
     color: '#FF9C05',
   },
   success: {
-    bg: '#14E77E14',
+    backgroundColor: '#14E77E14',
     color: '#04DC70',
   },
-  pending: {
-    bg: '#1966FF14',
+  processing: {
+    backgroundColor: '#1966FF14',
     color: '#1966FF',
   },
+  pending: {
+    backgroundColor: '#1998FF14',
+    color: '#1998FF',
+  },
   error: {
-    bg: '#FF083114',
+    backgroundColor: '#FF083114',
     color: '#FF0831',
   },
-};
+} as const;
 
+/** 获取标签样式 */
+export function getTagByCategory(category: string, value: number | string) {
+  const dictObj = getDictObj(category, value);
+  if (!dictObj) {
+    return null;
+  }
+  return {
+    tagStyle: TAG_TYPE[dictObj.colorType as keyof typeof TAG_TYPE],
+    label: dictObj.label,
+    value: dictObj.value,
+  };
+}
+
+/** 状态标签 */
 export const STATUS_TAG_MAP = {
   uncompleted: {
     tag: TAG_TYPE.warning,
@@ -44,6 +53,7 @@ export const STATUS_TAG_MAP = {
   },
 };
 
+/** 风险等级标签 */
 export const RISK_LEVEL_TAG_MAP = {
   normal: {
     tag: TAG_TYPE.success,

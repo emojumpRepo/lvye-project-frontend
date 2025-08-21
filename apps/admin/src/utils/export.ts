@@ -1,3 +1,6 @@
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
+import { message } from 'ant-design-vue';
 import {
   AlignmentType,
   Document,
@@ -12,7 +15,178 @@ import {
 } from 'docx';
 import * as XLSX from 'xlsx';
 
-function downloadTemplate() {
+import { getDictLabel } from '#/utils';
+
+/**
+ * 学生档案导出字段映射
+ */
+const STUDENT_EXPORT_COLUMNS = [
+  { key: 'name', label: '学生姓名' },
+  { key: 'studentNo', label: '学号' },
+  { key: 'sex', label: '性别' },
+  { key: 'gradeName', label: '年级' },
+  { key: 'className', label: '班级' },
+  { key: 'psychologicalStatus', label: '心理状态' },
+  { key: 'mobile', label: '联系电话' },
+  { key: 'graduationStatus', label: '毕业状态' },
+  { key: 'homeAddress', label: '家庭住址' },
+  { key: 'birthDate', label: '出生日期' },
+  { key: 'remark', label: '备注' },
+];
+
+/**
+ * 格式化学生数据用于导出
+ */
+function formatStudentDataForExport(
+  data: PsychologyStudentProfileApi.StudentProfile[],
+): any[] {
+  return data.map((student) => {
+    const formattedStudent: any = {};
+
+    for (const column of STUDENT_EXPORT_COLUMNS) {
+      let value =
+        student[column.key as keyof PsychologyStudentProfileApi.StudentProfile];
+
+      // 格式化特殊字段
+      switch (column.key) {
+        case 'birthDate': {
+          value = value ? new Date(value).toLocaleDateString('zh-CN') : '---';
+          break;
+        }
+        case 'graduationStatus': {
+          value = value === 1 ? '已毕业' : '未毕业';
+          break;
+        }
+        case 'homeAddress':
+        case 'remark': {
+          value = value || '---';
+          break;
+        }
+        case 'mobile': {
+          value = value || '---';
+          break;
+        }
+        case 'psychologicalStatus': {
+          switch (value) {
+            case 0: {
+              value = '一般';
+
+              break;
+            }
+            case 1: {
+              value = '良好';
+
+              break;
+            }
+            case 2: {
+              value = '较差';
+
+              break;
+            }
+            default: {
+              value = '未知';
+            }
+          }
+          break;
+        }
+        case 'sex': {
+          value = getDictLabel('system_user_sex', value);
+          break;
+        }
+        default: {
+          // 保持原值
+          break;
+        }
+      }
+
+      formattedStudent[column.label] = value;
+    }
+
+    return formattedStudent;
+  });
+}
+
+/**
+ * 导出学生档案为Excel文件
+ * @param data 学生数据
+ * @param filename 文件名（可选）
+ */
+export function exportStudentsToExcel(
+  data: PsychologyStudentProfileApi.StudentProfile[],
+  filename?: string,
+): void {
+  try {
+    if (!data || data.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+
+    // 格式化数据
+    const formattedData = formatStudentDataForExport(data);
+
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new();
+
+    // 创建工作表
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    // 设置列宽
+    const columnWidths = STUDENT_EXPORT_COLUMNS.map((column) => {
+      switch (column.key) {
+        case 'birthDate': {
+          return { wch: 12 };
+        }
+        case 'className':
+        case 'gradeName':
+        case 'sex': {
+          return { wch: 8 };
+        }
+        case 'graduationStatus':
+        case 'psychologicalStatus': {
+          return { wch: 10 };
+        }
+        case 'homeAddress': {
+          return { wch: 25 };
+        }
+        case 'mobile': {
+          return { wch: 15 };
+        }
+        case 'name':
+        case 'studentNo': {
+          return { wch: 12 };
+        }
+        case 'remark': {
+          return { wch: 20 };
+        }
+        default: {
+          return { wch: 10 };
+        }
+      }
+    });
+
+    worksheet['!cols'] = columnWidths;
+
+    // 添加工作表到工作簿
+    XLSX.utils.book_append_sheet(workbook, worksheet, '学生档案');
+
+    // 生成文件名
+    const defaultFilename = `学生档案.xlsx`;
+    const finalFilename = filename || defaultFilename;
+
+    // 导出文件
+    XLSX.writeFile(workbook, finalFilename);
+
+    message.success(`已导出 ${data.length} 条学生档案数据`);
+  } catch (error) {
+    console.error('导出失败:', error);
+    message.error('导出失败，请重试');
+  }
+}
+
+/**
+ * 下载学生批量导入模板
+ */
+export function downloadTemplate() {
   // 创建工作簿
   const wb = XLSX.utils.book_new();
 
@@ -113,7 +287,7 @@ function downloadTemplate() {
   XLSX.writeFile(wb, fileName);
 }
 
-async function downloadPsychologicalReportTemplate() {
+export async function downloadPsychologicalReportTemplate() {
   // 创建文档
   const doc = new Document({
     sections: [
@@ -521,6 +695,3 @@ async function downloadPsychologicalReportTemplate() {
   link.remove();
   window.URL.revokeObjectURL(url);
 }
-
-export default downloadTemplate;
-export { downloadPsychologicalReportTemplate };

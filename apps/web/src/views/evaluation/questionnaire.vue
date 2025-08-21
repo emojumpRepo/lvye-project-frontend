@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import type { EvaluationScene } from '../data';
+import type { EvaluationScene } from './data';
 
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Check, X } from '@vben/icons';
+import { ArrowLeft, ArrowRight, Check, X } from '@vben/icons';
 
 import LyButton from '#/components/LyButton/index.vue';
 
-import { EVALUATION_SCENES } from '../data';
+import { EVALUATION_SCENES } from './data';
 
-const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
+const imgBaseUrl = '../../static/images/evaluation/questionnaire/';
 
 const route = useRoute();
 const router = useRouter();
@@ -58,7 +58,7 @@ function handleContinue() {
   );
   if (nextScene) {
     router.replace({
-      path: '/evaluation/junior/questionnaire',
+      path: '/evaluation/questionnaire',
       query: {
         scene: nextScene.id,
       },
@@ -72,7 +72,7 @@ function handleContinue() {
 
 function handleIntroClose() {
   router.replace({
-    path: '/evaluation/junior/map',
+    path: '/evaluation/scene',
   });
 }
 </script>
@@ -104,7 +104,7 @@ function handleIntroClose() {
               <!-- 背后的考拉医生 -->
               <div class="koala-figure">
                 <img
-                  src="../../../../static/images/evaluation/questionnaire/kaola_doctor.png"
+                  src="../../static/images/evaluation/questionnaire/kaola_doctor.png"
                   alt="考拉医生"
                 />
               </div>
@@ -140,7 +140,7 @@ function handleIntroClose() {
                   </div>
                   <div class="bubble-actions">
                     <button class="btn-start" @click="hasIntro = false">
-                      开始作答 →
+                      开始作答 <ArrowRight class="size-4" />
                     </button>
                   </div>
                 </div>
@@ -153,14 +153,7 @@ function handleIntroClose() {
         <div class="flex h-full w-full flex-col items-center justify-center">
           <div class="back-button" @click="handleBack">
             <div class="back-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
+              <ArrowLeft />
             </div>
             <span class="back-text">返回</span>
           </div>
@@ -182,20 +175,7 @@ function handleIntroClose() {
               @click="handleContinue"
             >
               继续答题
-              <svg
-                class="ml-2"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
+              <ArrowRight class="ml-2 size-5" />
             </LyButton>
           </template>
           <template v-else>
@@ -580,6 +560,9 @@ function handleIntroClose() {
 }
 
 .btn-start {
+  display: flex;
+  gap: 4px;
+  align-items: center;
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 800;

@@ -51,7 +51,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     type: 'library',
     icon: '📖',
     order: 2,
-    position: { right: '31%', top: '24%' },
+    position: { right: '33%', top: '24%' },
     disabled: false,
     evaluation: {
       id: 'reading-comprehension',

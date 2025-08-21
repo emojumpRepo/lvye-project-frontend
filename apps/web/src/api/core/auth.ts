@@ -1,6 +1,7 @@
 import type { AuthPermissionInfo } from '@vben/types';
 
 import {
+  appBaseRequestClient,
   appRequestClient,
   baseRequestClient,
   requestClient,
@@ -77,14 +78,14 @@ export async function loginApi(data: AuthApi.LoginParams) {
 
 /** 刷新 accessToken */
 export async function refreshTokenApi(refreshToken: string) {
-  return appRequestClient.post(
+  return appBaseRequestClient.post(
     `/psychology/auth/refresh-token?refreshToken=${refreshToken}`,
   );
 }
 
 /** 退出登录 */
 export async function logoutApi(accessToken: string) {
-  return appRequestClient.post(
+  return appBaseRequestClient.post(
     '/psychology/auth/logout',
     {},
     {
@@ -97,7 +98,7 @@ export async function logoutApi(accessToken: string) {
 
 /** 获取权限信息 */
 export async function getAuthPermissionInfoApi() {
-  return requestClient.get<AuthPermissionInfo>(
+  return appRequestClient.get<AuthPermissionInfo>(
     '/system/auth/get-permission-info',
   );
 }
