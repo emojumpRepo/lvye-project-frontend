@@ -36,7 +36,7 @@ async function handleCopyTaskNo() {
 
 // 处理查看详情点击事件
 function handleViewDetail() {
-  router.push(`/assessment/detail/${props.card.id}`);
+  router.push(`/assessment/detail/${props.card.taskNo}`);
 }
 </script>
 
@@ -65,10 +65,6 @@ function handleViewDetail() {
       <span>创建时间：{{ dayjs(card.createTime).format('YYYY-MM-DD') }}</span>
       <Divider type="vertical" class="mx-2 bg-gray-200" />
       <span>有效期至{{ dayjs(card.deadline).format('YYYY-MM-DD') }}</span>
-      <Divider type="vertical" class="mx-2 bg-gray-200" />
-      <span class="rounded bg-green-50 px-2 py-1 font-medium text-green-600">
-        初测问卷
-      </span>
     </div>
 
     <!-- 进度条 -->

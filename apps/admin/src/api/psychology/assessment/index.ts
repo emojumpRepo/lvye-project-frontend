@@ -239,9 +239,9 @@ export function getAssessmentAnswers(participantId: number) {
 // ==================== 测评统计分析 ====================
 
 /** 获取测评任务统计信息 */
-export function getAssessmentStatistics(taskId: number) {
+export function getAssessmentStatistics(taskNo: string) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentStatistics>(
-    `/psychology/assessment-task/statistics?taskId=${taskId}`,
+    `/psychology/assessment-task/statistics/${taskNo}`,
   );
 }
 

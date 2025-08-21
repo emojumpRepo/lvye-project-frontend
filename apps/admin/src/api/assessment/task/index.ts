@@ -172,9 +172,9 @@ export function removeAssessmentParticipants(
 }
 
 // 统计
-export function getAssessmentTaskStatistics(id: number) {
+export function getAssessmentTaskStatistics(taskNo: string) {
   return requestClient.get<AssessmentTaskStatisticsResp>(
-    `${BASE}/statistics/${id}`,
+    `${BASE}/statistics/${taskNo}`,
   );
 }
 

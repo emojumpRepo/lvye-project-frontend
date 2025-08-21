@@ -25,16 +25,20 @@ const activeTab = ref('all');
 
 // 处理表单提交
 const handleSubmit = async (formData: any) => {
-  const currentTab = tabs.find((tab) => tab.key === activeTab.value);
-
-  const [startDate, endDate] = formatDate(formData.date);
-
-  // 合并表单数据和当前tab状态
-  const searchParams = {
-    createTime: [startDate, endDate],
-    status: currentTab?.status,
+  const searchParams: any = {
+    name: formData.name,
+    createTime: [],
     questionnaireId: formData.questionnaireId,
+    status: undefined,
   };
+
+  if (formData.date) {
+    const [startDate, endDate] = formatDate(formData.date);
+    searchParams.createTime = [startDate, endDate];
+  }
+
+  const currentTab = tabs.find((tab) => tab.key === activeTab.value);
+  searchParams.status = currentTab?.status;
 
   emit('search', searchParams);
 };
