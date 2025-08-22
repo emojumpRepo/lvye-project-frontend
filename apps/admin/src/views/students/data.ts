@@ -236,10 +236,10 @@ export function useStudentProfileGroupGridSchema(): VxeTableGridOptions<Psycholo
       },
     },
     {
-      field: 'amount',
+      field: 'count',
       title: '学生人数',
       width: '80',
-      slots: { default: 'amount' },
+      slots: { default: 'count' },
     },
     { type: 'checkbox', width: '50', align: 'center', fixed: 'right' },
   ];

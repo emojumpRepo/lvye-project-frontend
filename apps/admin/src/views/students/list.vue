@@ -184,8 +184,8 @@ function handleViewModeChange({ target }: { target: any }) {
         accordion: false,
         lazy: true,
         hasChildField: 'hasChildField',
-        loadMethod({ row }: any) {
-          return formatDeptListToTree(row.classDeptId, row.children);
+        loadMethod: async ({ row }: any) => {
+          return await formatDeptListToTree(row.classDeptId, row.children);
         },
       },
       showHeader: false,
@@ -421,7 +421,7 @@ onMounted(async () => {
           </Grid>
         </template>
         <template v-else>
-          <Grid class="my-rdah-grid">
+          <Grid>
             <template #name="{ row }">
               <div class="my-2 flex flex-col gap-1">
                 <span
@@ -439,9 +439,9 @@ onMounted(async () => {
               </div>
             </template>
 
-            <template #amount="{ row }">
-              <span v-if="row.amount && row.amount > 0">
-                共{{ row.amount }}人
+            <template #count="{ row }">
+              <span v-if="row.count && row.count > 0">
+                共{{ row.count }}人
               </span>
             </template>
           </Grid>
