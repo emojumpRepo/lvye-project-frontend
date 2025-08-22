@@ -34,8 +34,6 @@ const emit = defineEmits<{
   ): void;
 }>();
 
-const selectedRowKeys = ref<number[]>([]);
-
 const { start, stop } = inject('CommonDialogContentLoading') as {
   set: (v: boolean) => void;
   start: () => void;
@@ -212,62 +210,6 @@ async function loadClassList() {
   stop();
 }
 
-async function loadStudentsForClass(group: ClassGroup) {
-  if (group.loaded || group.loading) return;
-
-  // 尝试从父组件缓存恢复学生数据
-  if (parentRef) {
-    const cachedGroup = parentRef.getCachedClass(group.id);
-    if (cachedGroup?.loaded && cachedGroup.students) {
-      group.students = cachedGroup.students;
-      group.count = cachedGroup.count;
-      group.loaded = true;
-      return;
-    }
-  }
-
-  group.loading = true;
-  try {
-    const resp: any = await getStudentProfileSimpleList({
-      classDeptId: group.id,
-      pageNo: 1,
-      pageSize: 1000,
-    });
-    const list = resp;
-    const total = Number(list.length ?? 0);
-    const students = list.map((s: any) => ({
-      id: Number(s.userId),
-      name: String(s.name ?? ''),
-      sno: String(s.studentNo ?? ''),
-    }));
-
-    group.students = students;
-    group.count = total;
-    group.loaded = true;
-
-    // 同步到父组件缓存
-    if (parentRef) {
-      parentRef.cacheStudentsForClass(group.id, students, total);
-    }
-  } finally {
-    group.loading = false;
-  }
-}
-
-function onCollapseChange(key: unknown): void {
-  const keys = Array.isArray(key)
-    ? (key as Array<number | string>)
-    : [key as number | string];
-  activeClassKeys.value = keys.map(Number);
-  // 仅对新展开的面板加载学生（不阻塞 UI）
-  activeClassKeys.value.forEach((k) => {
-    const group = allClasses.value.find((c) => c.id === k);
-    if (group && !group.loaded) {
-      void loadStudentsForClass(group);
-    }
-  });
-}
-
 onMounted(async () => {
   start();
   await loadClassList();
@@ -310,7 +252,6 @@ function sync() {
       };
     })
     .filter((it) => it.studentIds.length > 0);
-  console.log('selected', selected);
   emit('update:modelValue', {
     type: type.value,
     selected,
