@@ -21,7 +21,7 @@ import LyLabel from '#/components/LyLabel/index.vue';
 const props = withDefaults(
   defineProps<{ modelValue?: PsychologyAssessmentApi.AssessmentTarget }>(),
   {
-    modelValue: () => ({ type: 1, selected: [] }),
+    modelValue: () => ({ type: ASSESSMENT_TARGET_TYPE.STUDENT, selected: [] }),
   },
 );
 
@@ -149,7 +149,7 @@ async function loadStudentsForClass(group: ClassGroup) {
     const list = resp;
     const total = Number(list.length ?? 0);
     const students = list.map((s: any) => ({
-      id: Number(s.id ?? s.userId),
+      id: Number(s.userId),
       name: String(s.name ?? ''),
       sno: String(s.studentNo ?? ''),
     }));
