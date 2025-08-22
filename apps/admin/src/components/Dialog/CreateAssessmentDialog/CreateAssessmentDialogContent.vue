@@ -110,6 +110,7 @@ const basicInfoFormData = ref<PsychologyAssessmentApi.BasicInfo>({
   description: '',
 });
 const selectedAssessments = ref<QuestionnaireVO[]>([]);
+const selectedScenarioId = ref<number | undefined>(undefined);
 const targetSelectData = ref<PsychologyAssessmentApi.AssessmentTarget>({
   type: 1,
   selected: [],
@@ -253,6 +254,7 @@ async function handleCommit(publish: boolean) {
       questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
+      scenarioId: selectedScenarioId.value,
       isPublish: publish,
     });
 
@@ -330,6 +332,7 @@ onBeforeUnmount(() => {
       ref="assessmentSelectRef"
       v-else-if="props.step === 2"
       v-model:assessments="selectedAssessments"
+      v-model:scenario-id="selectedScenarioId"
     />
 
     <!-- Step 3: 选择对象 -->

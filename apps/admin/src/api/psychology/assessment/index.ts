@@ -48,6 +48,7 @@ export namespace PsychologyAssessmentApi {
     deptIdList?: number[];
     userIdList?: number[];
     isPublish?: boolean; // 是否发布
+    scenarioId?: number; // 场景ID，可为空（默认NONE）
   }
 
   /** 测评模板信息 */

@@ -18,6 +18,7 @@ import LyLabel from '#/components/LyLabel/index.vue';
 import { specialStudentColumns } from './data';
 
 const open = defineModel<boolean>('open', { required: true });
+const formRef = ref();
 
 const specialStudentDrawerOpen = ref<boolean>(false);
 
@@ -85,7 +86,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ADrawer v-model:open="open" width="720" :closable="false">
+  <ADrawer
+    v-model:open="open"
+    width="720"
+    :closable="false"
+    @closed="formRef?.resetFields()"
+  >
     <template #title>
       <div class="flex items-center gap-2">
         <img
@@ -97,7 +103,7 @@ onMounted(async () => {
     </template>
 
     <div class="mx-2 mb-2">
-      <AForm :model="graduationForm" :rules="rules">
+      <AForm ref="formRef" :model="graduationForm" :rules="rules">
         <AForm.Item name="gradeId">
           <LyLabel title="年级" required custom-title-class="font-normal" />
           <ASelect

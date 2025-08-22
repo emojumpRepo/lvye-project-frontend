@@ -1,4 +1,4 @@
-import type { PageParam, PageResult } from '@vben/request';
+import type { PageResult } from '@vben/request';
 
 import { requestClient } from '#/api/request';
 
@@ -21,6 +21,7 @@ export namespace PsychologyStudentProfileApi {
     isMark?: number;
     specialMarks?: string;
     remark?: string;
+    amount?: number;
     createTime?: Date;
     updateTime?: Date;
     // 关联字段
@@ -29,7 +30,7 @@ export namespace PsychologyStudentProfileApi {
   }
 
   /** 学生档案分页查询参数 */
-  export interface StudentProfilePageReq extends PageParam {
+  export interface StudentProfilePageReq {
     studentNo?: string;
     name?: string;
     sex?: number;
@@ -38,6 +39,8 @@ export namespace PsychologyStudentProfileApi {
     graduationStatus?: number;
     psychologicalStatus?: number;
     riskLevel?: number;
+    pageNo?: number;
+    pageSize?: number;
   }
 
   /** 学生档案创建/更新请求 */

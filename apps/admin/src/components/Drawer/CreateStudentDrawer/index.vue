@@ -27,6 +27,7 @@ const emit = defineEmits<{
 
 const validateName = ref(false);
 const validateStudentId = ref(false);
+const formRef = ref();
 
 const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
 
@@ -34,6 +35,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '创建',
   onConfirm: handleCreateStudent,
+  onClosed: () => {
+    formRef.value?.resetFields();
+    drawerApi.close();
+  },
 });
 
 const studentForm = reactive<PsychologyStudentProfileApi.StudentProfileSaveReq>(
@@ -133,10 +138,10 @@ const rules: Record<string, Rule[]> = {
 };
 
 async function handleCreateStudent() {
-  const formatBirthDate = dayjs(studentForm.birthDate).format('YYYY-MM-DD');
+  const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
   const params = {
     ...studentForm,
-    birthDate: formatBirthDate,
+    birthDate: formatBirthDate.toString(),
   };
   try {
     await createStudentProfile(params);
@@ -145,6 +150,7 @@ async function handleCreateStudent() {
     message.error('学生档案创建失败');
   }
   emit('refresh');
+  formRef.value?.resetFields();
   drawerApi.close();
 }
 
@@ -169,7 +175,7 @@ onMounted(() => {
         <span class="text-lg font-bold">创建学生</span>
       </div>
     </template>
-    <AForm :model="studentForm" :rules="rules">
+    <AForm ref="formRef" :model="studentForm" :rules="rules">
       <div>
         <LyLabel title="学生姓名" required custom-title-class="font-normal" />
         <AForm.Item name="name">

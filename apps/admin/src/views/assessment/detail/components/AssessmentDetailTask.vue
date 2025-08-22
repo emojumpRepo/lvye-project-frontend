@@ -3,7 +3,7 @@ import type { AssessmentTask } from '@vben/types';
 
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
-import { onMounted, ref, watchEffect } from 'vue';
+import { ref, watchEffect } from 'vue';
 
 import { getStatusLabel } from '@vben/types';
 
@@ -61,13 +61,14 @@ async function loadTask() {
       highRisk: 0,
     },
   };
+  console.log('taskInfo', taskInfo.value);
 }
 
-onMounted(() => {
-  if (props.taskNo) {
-    loadTask();
-  }
-});
+// onMounted(() => {
+//   if (props.taskNo) {
+//    loadTask();
+//   }
+// });
 watchEffect(() => {
   if (props.taskNo) {
     loadTask();
@@ -86,7 +87,7 @@ watchEffect(() => {
       <div class="space-y-3 text-sm">
         <div class="flex justify-between">
           <span>任务</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.taskNo }}</span>
+          <span class="text-[#4C4C4D]">{{ taskInfo?.task?.taskNo }}</span>
         </div>
         <div class="flex justify-between">
           <span>测评量表</span>

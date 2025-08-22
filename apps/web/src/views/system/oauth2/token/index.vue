@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SystemOAuth2TokenApi } from '#/api/system/oauth2/token';
 
-import { DocAlert, Page } from '@vben/common-ui';
+import { Page } from '@vben/common-ui';
 
 import { message } from 'ant-design-vue';
 
@@ -70,13 +70,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="OAuth 2.0（SSO 单点登录）"
-        url="https://doc.iocoder.cn/oauth2/"
-      />
-    </template>
-
     <Grid table-title="令牌列表">
       <template #actions="{ row }">
         <TableAction
