@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -34,6 +34,16 @@ const handleReset = () => {
 };
 
 const gridRef = ref();
+
+watch(
+  isOpenCreateAssessmentDialog,
+  (newVal) => {
+    if (!newVal) {
+      handleReset();
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
