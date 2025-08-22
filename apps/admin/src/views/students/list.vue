@@ -138,6 +138,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       records: PsychologyStudentProfileApi.StudentProfile[];
     }) => {
       selectedRowKeys.value = (records || [])
+        .filter((r: any) => !r.hasChildField)
         .map((r: any) => r.id)
         .filter((v: any) => v !== null);
     },
@@ -167,7 +168,6 @@ function handleViewModeChange({ target }: { target: any }) {
         resizable: true,
       },
       rowConfig: {
-        keyField: 'gradeDeptId',
         resizable: true,
       },
       proxyConfig: {
@@ -199,18 +199,14 @@ function handleViewModeChange({ target }: { target: any }) {
       columns: useStudentProfileGridSchema(),
       proxyConfig: {
         ajax: {
-          query: async ({ page, formValues }: any) => {
-            const data = await getStudentProfilePage({
+          query: async ({ page }: any, formValues: any) => {
+            return await getStudentProfilePage({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
               ...formValues,
             });
-            return data;
           },
         },
-      },
-      rowConfig: {
-        keyField: 'id',
       },
       showHeader: true,
       cellConfig: {
