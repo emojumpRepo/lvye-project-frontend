@@ -1,78 +1,32 @@
 <script setup lang="ts">
-import type { AssessmentTask } from '@vben/types';
-
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
-
-import { ref, watchEffect } from 'vue';
-
-import { getStatusLabel } from '@vben/types';
-
-import dayjs from 'dayjs';
-
-import {
-  getAssessmentStatistics,
-  getAssessmentTask,
-} from '#/api/psychology/assessment';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 // 定义任务信息的数据结构
 interface TaskInfo {
   task: {
-    taskNo: '',
-    questionnaireName: '',
-    createTime: '',
-    endTime: '',
-    status: '',
-  },
-  participate: { total: 0, completed: 0, completionRate: 0 },
-  riskDistribution: { normal: 0, attention: 0, warning: 0, highRisk: 0 },
-});
-
-async function loadTask() {
-  const base: AssessmentTask = await getAssessmentTask(props.taskNo);
-  const stats: PsychologyAssessmentApi.AssessmentStatistics =
-    await getAssessmentStatistics(base?.taskNo ?? '');
-  taskInfo.value = {
-    task: {
-      taskNo: base?.taskNo ?? '',
-      questionnaireName: base?.questionnaireName ?? '',
-      createTime: dayjs(base.createTime).format('YYYY-MM-DD HH:mm'),
-      endTime: base.deadline
-        ? dayjs(base.deadline).format('YYYY-MM-DD HH:mm')
-        : '-',
-      status: getStatusLabel(base.status ?? 0, 'assessment'),
-    },
-    participate: {
-      total: Number(stats.totalParticipants ?? 0),
-      completed: Number(stats.completedParticipants ?? 0),
-      completionRate: Number(stats.completionRate ?? 0),
-    },
-    riskDistribution: {
-      normal: Number(stats.notStartedParticipants ?? 0),
-      attention: Number(stats.inProgressParticipants ?? 0),
-      warning: Math.max(
-        0,
-        Number(stats.totalParticipants ?? 0) -
-          Number(stats.inProgressParticipants ?? 0) -
-          Number(stats.completedParticipants ?? 0) -
-          Number(stats.notStartedParticipants ?? 0),
-      ),
-      highRisk: 0,
-    },
+    createTime: string;
+    endTime: string;
+    questionnaireName: string;
+    status: string;
+    taskNo: string;
   };
-  console.log('taskInfo', taskInfo.value);
+  participate: {
+    completed: number;
+    completionRate: number;
+    total: number;
+  };
+  riskDistribution: {
+    attention: number;
+    highRisk: number;
+    normal: number;
+    warning: number;
+  };
 }
 
-// onMounted(() => {
-//   if (props.taskNo) {
-//    loadTask();
-//   }
-// });
-watchEffect(() => {
-  if (props.taskNo) {
-    loadTask();
-  }
-});
+const props = defineProps<{
+  loading: boolean;
+  taskInfo: TaskInfo;
+}>();
 </script>
 
 <template>
