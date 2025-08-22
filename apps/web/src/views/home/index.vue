@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { AssessmentTask } from '@vben/types';
 
 import { onMounted, ref } from 'vue';
 
@@ -13,7 +13,7 @@ import KoalaMessage from './components/KoalaMessage.vue';
 import WelcomeBanner from './components/WelcomeBanner.vue';
 
 const tasksLoading = ref(false);
-const myTasks = ref<PsychologyAssessmentApi.AssessmentTask[]>([]);
+const myTasks = ref<AssessmentTask[]>([]);
 const dailyTip = ref(
   '当你感到紧张或心情低落时，放慢脚步，做五次深呼吸，闭上眼睛专注在气息上，允许所有感受如云飘过，告诉自己：我正在照顾我的情绪，这一切都会慢慢好起来。',
 );
@@ -24,7 +24,7 @@ async function getMyTasks() {
     const res = await getMyAssessmentTask();
     // 兼容 PageResult 结构
     // @ts-ignore
-    myTasks.value = (res as PsychologyAssessmentApi.AssessmentTask[]) || [];
+    myTasks.value = (res as AssessmentTask[]) || [];
   } catch (error) {
     // 记录错误但不抛出
     console.error(error);
@@ -37,7 +37,7 @@ onMounted(async () => {
   await getMyTasks();
 });
 
-function onTaskAction(task: PsychologyAssessmentApi.AssessmentTask) {
+function onTaskAction(task: AssessmentTask) {
   // 待接入任务详情或答题路由
   console.warn('TODO: navigate to task detail or answer page', task.taskNo);
 }
