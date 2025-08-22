@@ -31,7 +31,11 @@ import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
-import { getDeptTreeList, loadDeptList } from '#/utils/transformDeptToTree';
+import {
+  formatDeptListToTree,
+  getDeptTreeList,
+  loadDeptList,
+} from '#/utils/transformDeptToTree';
 
 import StudentSearch from './components/StudentSearch.vue';
 import {
@@ -44,14 +48,6 @@ defineOptions({ name: 'StudentArchive' });
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
-const deptList = ref<{
-  list: PsychologyStudentProfileApi.StudentProfile[];
-  total: number;
-}>({ list: [], total: 0 });
-const deptGroup = ref<{
-  list: PsychologyStudentProfileApi.StudentProfile[];
-  total: number;
-}>({ list: [], total: 0 });
 
 // ============== 抽屉 ==============
 // 详情抽屉
@@ -132,6 +128,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       records: PsychologyStudentProfileApi.StudentProfile[];
     }) => {
       selectedRowKeys.value = (records || [])
+        .filter((r: any) => !r.hasChildField)
         .map((r: any) => r.id)
         .filter((v: any) => v !== null);
     },
@@ -141,6 +138,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       records: PsychologyStudentProfileApi.StudentProfile[];
     }) => {
       selectedRowKeys.value = (records || [])
+        .filter((r: any) => !r.hasChildField)
         .map((r: any) => r.id)
         .filter((v: any) => v !== null);
     },
@@ -149,10 +147,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // ============== 事件 ==============
 // 处理搜索
-function handleSearch(
+async function handleSearch(
   params: PsychologyStudentProfileApi.StudentProfilePageReq,
 ) {
-  gridApi.query({ ...params, pageNo: 1 });
+  if (viewMode.value === 'group') return;
+  await gridApi.query({ ...params, pageNo: 1 });
 }
 
 // 处理视图模式切换
@@ -160,33 +159,36 @@ function handleViewModeChange({ target }: { target: any }) {
   selectedRowKeys.value = [];
   gridApi.grid?.clearCheckboxRow();
   gridApi.grid.clearData();
+  gridApi.grid.clearAll();
   if (target.value === 'group') {
     gridApi.setGridOptions({
       pagerConfig: { enabled: false },
       columns: useStudentProfileGroupGridSchema(),
-      data: getDeptTreeList(),
+      columnConfig: {
+        resizable: true,
+      },
+      rowConfig: {
+        resizable: true,
+      },
+      proxyConfig: {
+        ajax: {
+          query: async () => {
+            return await getDeptTreeList();
+          },
+        },
+      },
       treeConfig: {
         parentField: 'gradeDeptId',
         rowField: 'classDeptId',
         transform: true,
-        expandAll: true,
         accordion: false,
         lazy: true,
-        hasChild: 'hasChild',
-        toggleMethod: ({ row, expanded }: any) => {
-          console.log('row', row);
-          console.log('expanded', expanded);
-          return true;
-        },
-        loadMethod: ({ row }: any) => {
-          console.log('row', row);
-          return [];
+        hasChildField: 'hasChildField',
+        loadMethod: async ({ row }: any) => {
+          return await formatDeptListToTree(row.classDeptId, row.children);
         },
       },
       showHeader: false,
-      rowConfig: {
-        resizable: true,
-      },
       cellConfig: {
         height: 60,
       },
@@ -197,16 +199,12 @@ function handleViewModeChange({ target }: { target: any }) {
       columns: useStudentProfileGridSchema(),
       proxyConfig: {
         ajax: {
-          query: async ({
-            page,
-          }: {
-            page: { currentPage: number; pageSize: number };
-          }) => {
-            const data = await getStudentProfilePage({
+          query: async ({ page }: any, formValues: any) => {
+            return await getStudentProfilePage({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
+              ...formValues,
             });
-            return data;
           },
         },
       },
@@ -423,7 +421,7 @@ onMounted(async () => {
           </Grid>
         </template>
         <template v-else>
-          <Grid class="my-rdah-grid">
+          <Grid>
             <template #name="{ row }">
               <div class="my-2 flex flex-col gap-1">
                 <span
@@ -441,9 +439,9 @@ onMounted(async () => {
               </div>
             </template>
 
-            <template #amount="{ row }">
-              <span v-if="row.amount && row.amount > 0">
-                共{{ row.amount }}人
+            <template #count="{ row }">
+              <span v-if="row.count && row.count > 0">
+                共{{ row.count }}人
               </span>
             </template>
           </Grid>
@@ -467,13 +465,25 @@ onMounted(async () => {
   margin-right: 0 !important;
 }
 
+:deep(.vxe-cell--col-resizable) {
+  display: none !important;
+}
+
 :deep(.vxe-pager) {
   background: transparent !important;
 }
 
-/**
-.vxe-grid {
-  padding: 0 !important;
+:deep(.vxe-pager--goto) {
+  width: 2.4em !important;
+  margin: 0 4px !important;
 }
-*/
+
+:deep(.vxe-pager--wrapper) {
+  align-items: center !important;
+}
+
+:deep(.vxe-pager--sizes) {
+  width: 8em !important;
+  margin-right: 0 !important;
+}
 </style>

@@ -31,6 +31,11 @@ export async function getDept(id: number) {
   return requestClient.get<SystemDeptApi.Dept>(`/system/dept/get?id=${id}`);
 }
 
+/** 精准查询部门列表 */
+export async function getDeptChildList() {
+  return requestClient.get<SystemDeptApi.Dept[]>('/system/dept/childList');
+}
+
 /** 新增部门 */
 export async function createDept(data: SystemDeptApi.Dept) {
   return requestClient.post('/system/dept/create', data);
