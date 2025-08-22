@@ -137,12 +137,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="短信配置" url="https://doc.iocoder.cn/sms/" />
-    </template>
-
-    <FormModal @success="onRefresh" />
+  <Page auto-content-height><FormModal @success="onRefresh" />
     <SendModal />
     <Grid table-title="短信模板列表">
       <template #toolbar-tools>

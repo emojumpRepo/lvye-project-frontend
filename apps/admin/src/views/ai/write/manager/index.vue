@@ -74,11 +74,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="AI 写作助手" url="https://doc.iocoder.cn/ai/write/" />
-    </template>
-    <Grid table-title="写作管理列表">
+  <Page auto-content-height><Grid table-title="写作管理列表">
       <template #toolbar-tools>
         <TableAction :actions="[]" />
       </template>

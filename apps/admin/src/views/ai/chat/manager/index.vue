@@ -12,11 +12,7 @@ const activeTabName = ref('conversation');
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="AI 对话聊天" url="https://doc.iocoder.cn/ai/chat/" />
-    </template>
-    <Card>
+  <Page auto-content-height><Card>
       <Tabs v-model:active-key="activeTabName">
         <Tabs.TabPane tab="对话列表" key="conversation">
           <ChatConversationList />

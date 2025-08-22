@@ -103,11 +103,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="AI 手册" url="https://doc.iocoder.cn/ai/build/" />
-    </template>
-    <FormModal @success="onRefresh" />
+  <Page auto-content-height><FormModal @success="onRefresh" />
     <Grid table-title="AI 知识库列表">
       <template #toolbar-tools>
         <TableAction
