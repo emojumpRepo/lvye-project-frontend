@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type {
-  AssessmentTaskRespVO,
-  AssessmentTaskStatisticsResp,
-} from '#/api/assessment/task';
+import type { AssessmentTask } from '@vben/types';
+
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
 import { onMounted, ref, watchEffect } from 'vue';
 
@@ -11,9 +10,9 @@ import { getStatusLabel } from '@vben/types';
 import dayjs from 'dayjs';
 
 import {
+  getAssessmentStatistics,
   getAssessmentTask,
-  getAssessmentTaskStatistics,
-} from '#/api/assessment/task';
+} from '#/api/psychology/assessment';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = defineProps<{ taskNo: string }>();
@@ -31,10 +30,9 @@ const taskInfo = ref({
 });
 
 async function loadTask() {
-  const base: AssessmentTaskRespVO = await getAssessmentTask(props.taskNo);
-  const stats: AssessmentTaskStatisticsResp = await getAssessmentTaskStatistics(
-    base?.taskNo ?? '',
-  );
+  const base: AssessmentTask = await getAssessmentTask(props.taskNo);
+  const stats: PsychologyAssessmentApi.AssessmentStatistics =
+    await getAssessmentStatistics(base?.taskNo ?? '');
   taskInfo.value = {
     task: {
       taskNo: base?.taskNo ?? '',
