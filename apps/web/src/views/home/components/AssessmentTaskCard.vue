@@ -1,18 +1,16 @@
 <script lang="ts" setup>
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { AssessmentTask } from '@vben/types';
 
 import { useRouter } from 'vue-router';
 
-import { getStatusColor, getStatusLabel } from '@vben/types';
-
-import { message, Tag } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-const props = defineProps<{ task: PsychologyAssessmentApi.AssessmentTask }>();
+const props = defineProps<{ task: AssessmentTask }>();
 
 const router = useRouter();
 
-function getPercent(task: PsychologyAssessmentApi.AssessmentTask): number {
+function getPercent(task: AssessmentTask): number {
   if (typeof task.completionRate === 'number') {
     return Math.min(100, Math.max(0, Math.round(task.completionRate)));
   }
@@ -26,7 +24,7 @@ function getPercent(task: PsychologyAssessmentApi.AssessmentTask): number {
   return 0;
 }
 
-function getActionText(task: PsychologyAssessmentApi.AssessmentTask) {
+function getActionText(task: AssessmentTask) {
   const percent = getPercent(task);
   if (task.status === 1)
     return percent > 0 && percent < 100 ? '继续答题' : '去答题';
@@ -35,7 +33,7 @@ function getActionText(task: PsychologyAssessmentApi.AssessmentTask) {
   return '开始';
 }
 
-function isActionDisabled(task: PsychologyAssessmentApi.AssessmentTask) {
+function isActionDisabled(task: AssessmentTask) {
   return task.status === 3;
 }
 
@@ -72,9 +70,6 @@ function handleClick() {
           <div class="truncate text-base font-semibold text-emerald-900">
             {{ task.taskName }}
           </div>
-          <Tag :color="getStatusColor(task.status, 'assessment')">
-            {{ getStatusLabel(task.status, 'assessment') }}
-          </Tag>
         </div>
         <div class="mb-2 text-xs text-emerald-900/70">
           截止：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}

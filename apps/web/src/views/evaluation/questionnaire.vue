@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { EvaluationScene } from './data';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { ArrowLeft, ArrowRight, Check, X } from '@vben/icons';
@@ -19,9 +19,77 @@ const hasIntro = ref(true);
 const showTips = ref(false);
 const sceneData = ref<EvaluationScene | null>(null);
 
+// iframe 通信相关
+const iframeRef = ref<HTMLIFrameElement | null>(null);
+const iframeHeight = ref<string>('90%');
+const iframeSrc = ref(
+  'http://localhost:8080/render/zkBhlefz?t=1755843068206&userId=157&assessmentId=28&questionId=9',
+);
+const isIframeCompleted = ref(false);
+const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
+const allowedOrigin = computed(() => {
+  try {
+    return new URL(iframeSrc.value).origin;
+  } catch {
+    return '*';
+  }
+});
+
+function postToIframe(message: unknown) {
+  const targetWindow = iframeRef.value?.contentWindow;
+  if (!targetWindow) return;
+  targetWindow.postMessage(
+    message,
+    allowedOrigin.value === '*' ? '*' : allowedOrigin.value,
+  );
+}
+
+function handleIframeLoad() {
+  // 握手，通知子页面父窗口已就绪
+  postToIframe({ type: 'parentReady' });
+}
+
+function handleWindowMessage(event: MessageEvent) {
+  // 仅接收来自允许源的消息
+  if (allowedOrigin.value !== '*' && event.origin !== allowedOrigin.value) {
+    return;
+  }
+  const data = event.data as null | Record<string, unknown>;
+  if (!data || typeof data !== 'object') return;
+
+  switch (data.type) {
+    case 'childReady': {
+      // 子页面就绪（可根据需要触发后续逻辑）
+      break;
+    }
+    case 'complete': {
+      // 子页面完成作答（可在此触发提交或启用按钮）
+      console.log('iframe completed', data);
+      isIframeCompleted.value = true;
+      iframeCompletionPayload.value = (data as any).payload ?? null;
+      break;
+    }
+    case 'resize': {
+      const newHeight = (data as any).height;
+      if (typeof newHeight === 'number' && Number.isFinite(newHeight)) {
+        iframeHeight.value = `${newHeight}px`;
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+}
+
 onMounted(() => {
   const scene = route.query.scene as string;
   sceneData.value = EVALUATION_SCENES.find((s) => s.id === scene) || null;
+  window.addEventListener('message', handleWindowMessage);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('message', handleWindowMessage);
 });
 
 const bgUrl = computed(() =>
@@ -50,7 +118,7 @@ function handleBack() {
 function handleContinue() {
   // 如果当前是最后一个场景，则不进行跳转，直接提交回答
   if (sceneData.value?.order === EVALUATION_SCENES.length) {
-    console.log('last scene');
+    console.warn('last scene');
     return;
   }
   const nextScene = EVALUATION_SCENES.find(
@@ -158,14 +226,18 @@ function handleIntroClose() {
             <span class="back-text">返回</span>
           </div>
           <iframe
-            src="http://119.29.105.88:8080/render/xZlmykKI?t=1755503264810"
+            ref="iframeRef"
+            :src="iframeSrc"
             frameborder="0"
             width="55%"
-            height="90%"
+            :style="{ height: iframeHeight }"
+            @load="handleIframeLoad"
           ></iframe>
           <template
             v-if="
-              sceneData?.order && sceneData.order < EVALUATION_SCENES.length
+              isIframeCompleted &&
+              sceneData?.order &&
+              sceneData.order < EVALUATION_SCENES.length
             "
           >
             <LyButton
@@ -178,7 +250,7 @@ function handleIntroClose() {
               <ArrowRight class="ml-2 size-5" />
             </LyButton>
           </template>
-          <template v-else>
+          <template v-else-if="isIframeCompleted">
             <LyButton
               type="success"
               size="middle"
