@@ -189,4 +189,26 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+:deep(.vxe-cell--col-resizable) {
+  display: none !important;
+}
+
+:deep(.vxe-pager) {
+  background: transparent !important;
+}
+
+:deep(.vxe-pager--goto) {
+  width: 2.4em !important;
+  margin: 0 4px !important;
+}
+
+:deep(.vxe-pager--wrapper) {
+  align-items: center !important;
+}
+
+:deep(.vxe-pager--sizes) {
+  width: 8em !important;
+  margin-right: 0 !important;
+}
+</style>
