@@ -21,7 +21,7 @@ export namespace PsychologyStudentProfileApi {
     isMark?: number;
     specialMarks?: string;
     remark?: string;
-    amount?: number;
+    count?: number;
     createTime?: Date;
     updateTime?: Date;
     // 关联字段
@@ -75,6 +75,7 @@ export namespace PsychologyStudentProfileApi {
     id: number;
     name: string;
     parentId: number;
+    count: number;
   }
 
   /** 部门树形结构 */
@@ -173,7 +174,19 @@ export function getStudentProfileSimpleList(
 /** 获取部门精简信息列表 */
 export function getDeptSimpleList() {
   return requestClient.get<PsychologyStudentProfileApi.DeptSimpleListResp[]>(
-    '/system/dept/simple-list',
+    '/common/dept/simple-list',
+  );
+}
+
+/** 获取特定部门 */
+export function getDeptById(id: number) {
+  return requestClient.get<PsychologyStudentProfileApi.DeptSimpleListResp>(
+    '/system/dept/get',
+    {
+      params: {
+        id,
+      },
+    },
   );
 }
 

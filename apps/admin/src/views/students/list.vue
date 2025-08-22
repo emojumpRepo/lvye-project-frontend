@@ -138,6 +138,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       records: PsychologyStudentProfileApi.StudentProfile[];
     }) => {
       selectedRowKeys.value = (records || [])
+        .filter((r: any) => !r.hasChildField)
         .map((r: any) => r.id)
         .filter((v: any) => v !== null);
     },
@@ -167,7 +168,6 @@ function handleViewModeChange({ target }: { target: any }) {
         resizable: true,
       },
       rowConfig: {
-        keyField: 'gradeDeptId',
         resizable: true,
       },
       proxyConfig: {
@@ -184,8 +184,8 @@ function handleViewModeChange({ target }: { target: any }) {
         accordion: false,
         lazy: true,
         hasChildField: 'hasChildField',
-        loadMethod({ row }: any) {
-          return formatDeptListToTree(row.classDeptId, row.children);
+        loadMethod: async ({ row }: any) => {
+          return await formatDeptListToTree(row.classDeptId, row.children);
         },
       },
       showHeader: false,
@@ -199,18 +199,14 @@ function handleViewModeChange({ target }: { target: any }) {
       columns: useStudentProfileGridSchema(),
       proxyConfig: {
         ajax: {
-          query: async ({ page, formValues }: any) => {
-            const data = await getStudentProfilePage({
+          query: async ({ page }: any, formValues: any) => {
+            return await getStudentProfilePage({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
               ...formValues,
             });
-            return data;
           },
         },
-      },
-      rowConfig: {
-        keyField: 'id',
       },
       showHeader: true,
       cellConfig: {
@@ -425,7 +421,7 @@ onMounted(async () => {
           </Grid>
         </template>
         <template v-else>
-          <Grid class="my-rdah-grid">
+          <Grid>
             <template #name="{ row }">
               <div class="my-2 flex flex-col gap-1">
                 <span
@@ -443,9 +439,9 @@ onMounted(async () => {
               </div>
             </template>
 
-            <template #amount="{ row }">
-              <span v-if="row.amount && row.amount > 0">
-                共{{ row.amount }}人
+            <template #count="{ row }">
+              <span v-if="row.count && row.count > 0">
+                共{{ row.count }}人
               </span>
             </template>
           </Grid>
@@ -469,13 +465,25 @@ onMounted(async () => {
   margin-right: 0 !important;
 }
 
+:deep(.vxe-cell--col-resizable) {
+  display: none !important;
+}
+
 :deep(.vxe-pager) {
   background: transparent !important;
 }
 
-/**
-.vxe-grid {
-  padding: 0 !important;
+:deep(.vxe-pager--goto) {
+  width: 2.4em !important;
+  margin: 0 4px !important;
 }
-*/
+
+:deep(.vxe-pager--wrapper) {
+  align-items: center !important;
+}
+
+:deep(.vxe-pager--sizes) {
+  width: 8em !important;
+  margin-right: 0 !important;
+}
 </style>

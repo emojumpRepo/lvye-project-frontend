@@ -1,22 +1,24 @@
 <script lang="ts" setup>
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { inject, onMounted, ref, watch } from 'vue';
 
-import { IconifyIcon, Search } from '@vben/icons';
+import { Search } from '@vben/icons';
 import { ASSESSMENT_TARGET_TYPE } from '@vben/types';
 
-import {
-  Checkbox as ACheckbox,
-  Collapse as ACollapse,
-  Input as AInput,
-  Radio as ARadio,
-} from 'ant-design-vue';
+import { Input as AInput, Radio as ARadio } from 'ant-design-vue';
 
-import { getStudentProfileSimpleList } from '#/api/psychology/student-profile';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSimpleDeptList } from '#/api/system/dept';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import {
+  formatDeptListToTree,
+  getDeptTreeList,
+  getDeptTreeListByStudentName,
+} from '#/utils/transformDeptToTree';
+import { useStudentProfileGroupGridSchema } from '#/views/students/data';
 
 const props = withDefaults(
   defineProps<{ modelValue?: PsychologyAssessmentApi.AssessmentTarget }>(),
@@ -31,6 +33,8 @@ const emit = defineEmits<{
     value: PsychologyAssessmentApi.AssessmentTarget,
   ): void;
 }>();
+
+const selectedRowKeys = ref<number[]>([]);
 
 const { start, stop } = inject('CommonDialogContentLoading') as {
   set: (v: boolean) => void;
@@ -69,10 +73,93 @@ type ClassGroup = {
 
 // 班级列表（初始仅有班级信息，无学生）
 const allClasses = ref<ClassGroup[]>([]);
-const activeClassKeys = ref<number[]>([]);
 
 // 数据缓存状态
 const isDataLoaded = ref(false);
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    height: '200px',
+    rowConfig: { keyField: 'id' },
+    checkboxConfig: { reserve: true },
+    pagerConfig: { enabled: false },
+    columns: useStudentProfileGroupGridSchema(),
+    columnConfig: {
+      resizable: true,
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }: any, formValues: any) => {
+          if (formValues.name) {
+            return await getDeptTreeListByStudentName(formValues.name);
+          }
+          return await getDeptTreeList();
+        },
+      },
+    },
+    treeConfig: {
+      parentField: 'gradeDeptId',
+      rowField: 'classDeptId',
+      transform: true,
+      accordion: false,
+      lazy: true,
+      hasChildField: 'hasChildField',
+      loadMethod: async ({ row }: any) => {
+        return await formatDeptListToTree(
+          row.classDeptId,
+          row.children,
+          appliedKeyword.value,
+        );
+      },
+    },
+    showHeader: false,
+    cellConfig: {
+      height: 60,
+    },
+    toolbarConfig: {
+      custom: false,
+      zoom: false,
+      refresh: false,
+    },
+  },
+  gridEvents: {
+    checkboxChange: ({
+      records,
+    }: {
+      records: PsychologyStudentProfileApi.StudentProfile[];
+    }) => {
+      const filteredRecords = (records || []).filter(
+        (r: any) => !r.hasChildField,
+      );
+
+      // 按 gradeDeptId 分组
+      const groupedByClass = new Map<number, number[]>();
+
+      filteredRecords.forEach((r: any) => {
+        const gradeDeptId = r.gradeDeptId;
+        const userId = r.userId;
+
+        if (!groupedByClass.has(gradeDeptId)) {
+          groupedByClass.set(gradeDeptId, []);
+        }
+
+        groupedByClass.get(gradeDeptId)!.push(userId);
+      });
+
+      const formattedData = [...groupedByClass.entries()].map(
+        ([gradeDeptId, studentIds]) => ({
+          classId: gradeDeptId,
+          studentIds,
+        }),
+      );
+
+      // 更新内部状态
+      selectedByClass.value = new Map(
+        formattedData.map((item) => [item.classId, new Set(item.studentIds)]),
+      );
+    },
+  },
+});
 
 async function loadClassList() {
   // 如果已经加载过，直接返回
@@ -208,20 +295,6 @@ watch(
 // 搜索：仅点击"搜索"按钮后才应用关键词
 const keyword = ref('');
 const appliedKeyword = ref('');
-const filteredClasses = computed(() => {
-  const kw = appliedKeyword.value.trim();
-  if (!kw) return allClasses.value;
-  return allClasses.value
-    .map((c) => ({
-      ...c,
-      students: (c.students || []).filter(
-        (s) => s.name.includes(kw) || s.sno.includes(kw),
-      ),
-    }))
-    .filter(
-      (c) => c.name.includes(kw) || (c.students && c.students.length > 0),
-    );
-});
 
 // 同步到父组件
 function sync() {
@@ -237,60 +310,19 @@ function sync() {
       };
     })
     .filter((it) => it.studentIds.length > 0);
+  console.log('selected', selected);
   emit('update:modelValue', {
     type: type.value,
     selected,
   });
 }
 
-// 勾选单个学生
-function toggleStudent(group: ClassGroup, id: number, checked: boolean) {
-  const set = new Set(selectedByClass.value.get(group.id) || []);
-  checked ? set.add(id) : set.delete(id);
-  if (set.size > 0) selectedByClass.value.set(group.id, set);
-  else selectedByClass.value.delete(group.id);
-  sync();
-}
-
-// 勾选一个班级
-function toggleClass(group: ClassGroup, checked: boolean) {
-  if (checked) {
-    const ensure = async () => {
-      if (!group.loaded) await loadStudentsForClass(group);
-      selectedByClass.value.set(
-        group.id,
-        new Set((group.students || []).map((s) => s.id)),
-      );
-      sync();
-    };
-    ensure();
-    return;
-  } else {
-    selectedByClass.value.delete(group.id);
-  }
-  sync();
-}
-
-function isClassAllChecked(group: ClassGroup) {
-  const set = selectedByClass.value.get(group.id);
-  if (!set) return false;
-  return set.size > 0 && set.size === (group.students?.length || 0);
-}
-function isClassIndeterminate(group: ClassGroup) {
-  const set = selectedByClass.value.get(group.id);
-  if (!set) return false;
-  return set.size > 0 && set.size < (group.students?.length || 0);
-}
-
 // 收件类型变化也要同步
 watch(type, sync);
 
-function handleSearch() {
+async function handleSearch() {
   appliedKeyword.value = keyword.value;
-}
-
-function isPanelActive(panel: any) {
-  return !!panel?.isActive;
+  gridApi.query({ name: appliedKeyword.value });
 }
 </script>
 
@@ -329,73 +361,28 @@ function isPanelActive(panel: any) {
       </div>
 
       <!-- 班级折叠列表 -->
-      <div class="max-h-[250px] overflow-y-auto pr-1">
-        <ACollapse
-          v-model:active-key="activeClassKeys"
-          @change="onCollapseChange"
-        >
-          <template #expandIcon="panel">
-            <IconifyIcon
-              :icon="
-                isPanelActive(panel)
-                  ? 'carbon:caret-down'
-                  : 'carbon:caret-right'
+      <Grid>
+        <template #name="{ row }">
+          <div class="my-2 flex flex-col gap-1">
+            <span
+              :class="
+                row.studentNo
+                  ? 'text-sm text-[#4C4C4D]'
+                  : 'font-bold text-[#000000A6]'
               "
-              class="size-4"
-              color="#979899"
-            />
-          </template>
-          <ACollapse.Panel v-for="c in filteredClasses" :key="c.id">
-            <template #header>
-              <div class="text-[16px] font-semibold text-[#4B4B4D]">
-                {{ c.name }}
-              </div>
-            </template>
-            <template #extra>
-              <div class="flex items-center gap-4 text-[14px]">
-                <span class="font-semibold text-[#000000A6]">
-                  共{{ c.count }}人
-                </span>
-                <ACheckbox
-                  :indeterminate="isClassIndeterminate(c)"
-                  :checked="isClassAllChecked(c)"
-                  @change="(e: any) => toggleClass(c, e.target.checked)"
-                />
-              </div>
-            </template>
+            >
+              {{ row.name }}
+            </span>
+            <span v-if="row.studentNo" class="text-sm text-[#B0B1B2]">
+              {{ row.studentNo }}
+            </span>
+          </div>
+        </template>
 
-            <div v-if="c.loading" class="px-6 py-4 text-[#979899]">
-              加载中...
-            </div>
-            <div v-else-if="!c.loaded" class="px-6 py-4 text-[#979899]">
-              展开以加载学生
-            </div>
-            <div v-else class="bg-#fff flex flex-col gap-6">
-              <template v-if="c.students && c.students.length > 0">
-                <div
-                  v-for="stu in c.students"
-                  :key="stu.id"
-                  class="flex items-center justify-between pl-6"
-                >
-                  <div>
-                    <div class="text-[14px] text-black">{{ stu.name }}</div>
-                    <div class="text-[12px] text-[#B0B1B2]">{{ stu.sno }}</div>
-                  </div>
-                  <ACheckbox
-                    :checked="selectedByClass.get(c.id)?.has(stu.id) ?? false"
-                    @change="
-                      (e: any) => toggleStudent(c, stu.id, e.target.checked)
-                    "
-                  />
-                </div>
-              </template>
-              <template v-else>
-                <div class="px-6 py-2 text-center text-[#979899]">暂无学生</div>
-              </template>
-            </div>
-          </ACollapse.Panel>
-        </ACollapse>
-      </div>
+        <template #count="{ row }">
+          <span v-if="row.count && row.count > 0"> 共{{ row.count }}人 </span>
+        </template>
+      </Grid>
     </div>
   </div>
 </template>

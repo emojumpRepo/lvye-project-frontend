@@ -1,4 +1,5 @@
 import {
+  getDeptById,
   getDeptSimpleList,
   getStudentProfileSimpleList,
 } from '#/api/psychology/student-profile';
@@ -30,6 +31,7 @@ export async function loadDeptList() {
           value: dept.id,
           label: dept.name,
           parentId,
+          count: dept.count || 0,
         }));
 
       return children.length > 0 ? children : undefined;
@@ -41,6 +43,7 @@ export async function loadDeptList() {
       label: dept.name,
       parentId: dept.parentId,
       children: buildTree(dept.id),
+      count: dept.count || 0,
     }));
 
     sessionStorage.setItem('deptList', JSON.stringify(treeData));
@@ -77,10 +80,8 @@ export async function getDeptTreeList(
   classDeptId?: number,
   hasChild?: boolean,
 ) {
-  const storedDeptList = sessionStorage.getItem('deptList');
-  if (!storedDeptList) return [];
-
-  const treeData = JSON.parse(storedDeptList) || loadDeptList();
+  const treeData = await loadDeptList();
+  if (!treeData || treeData.length === 0) return [];
 
   if (classDeptId && hasChild) {
     const targetDept = (treeData as any[]).find(
@@ -94,31 +95,37 @@ export async function getDeptTreeList(
       name: simplifyClassName(child.label),
       classDeptId: child.value,
       gradeDeptId: classDeptId,
-      amount: 0,
+      count: child.count,
       hasChildField: true,
     }));
   }
 
-  return treeData.map((dept: any) => ({
+  const allDeptList = treeData.map((dept: any) => ({
     id: dept.value,
     name: dept.label,
     classDeptId: dept.value,
-    gradeDeptId: null,
-    amount: 0,
+    gradeDeptId: dept.parentId ?? null,
+    count: dept.count,
     hasChildField: true,
   }));
+
+  return allDeptList;
 }
 
 // 格式化部门列表为树形结构
 export async function formatDeptListToTree(
-  classDeptId: number,
+  classDeptId?: number,
   children?: any[] | null,
+  name?: string,
 ) {
-  if (classDeptId && children && children.length === 0) {
+  if (classDeptId && children && children.length === 0 && !name) {
     return await getDeptTreeList(classDeptId, true);
   }
 
-  const studentProfileList = await getStudentProfileSimpleList({ classDeptId });
+  const studentProfileList = await getStudentProfileSimpleList({
+    classDeptId,
+    name,
+  });
 
   return studentProfileList.map((profile) => ({
     id: profile.id,
@@ -126,7 +133,48 @@ export async function formatDeptListToTree(
     classDeptId: profile.id,
     gradeDeptId: classDeptId,
     studentNo: profile.studentNo,
+    userId: profile.userId,
     className: profile.className,
     hasChildField: false,
   }));
+}
+
+/**
+ * 根据学生姓名获取部门树形结构
+ */
+export async function getDeptTreeListByStudentName(name: string) {
+  if (!name) return [];
+
+  const profile = await getStudentProfileSimpleList({ name });
+  if (profile.length === 0) return [];
+  const deptList: any[] = [];
+
+  const promises = profile.map(async (profileItem) => {
+    if (profileItem.classDeptId) {
+      const dept = await getDeptById(profileItem.classDeptId);
+      if (dept) {
+        return [
+          {
+            id: dept.id,
+            name: dept.name,
+            classDeptId: dept.id,
+            gradeDeptId: profileItem.gradeDeptId,
+            count: dept.count,
+            hasChildField: true,
+          },
+        ];
+      }
+    }
+    return [];
+  });
+
+  const results = await Promise.all(promises);
+  results.forEach((result) => {
+    deptList.push(...result);
+  });
+
+  const _uniqueDeptList = deptList.filter(
+    (dept, index, self) => index === self.findIndex((d) => d.id === dept.id),
+  );
+  return _uniqueDeptList;
 }
