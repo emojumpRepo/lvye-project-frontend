@@ -7,8 +7,8 @@ import { useGridFormSchema } from '../data';
 const [Form] = useVbenForm({
   schema: useGridFormSchema(),
   layout: 'horizontal',
-  wrapperClass: 'grid-cols-10',
-  commonConfig: { componentProps: { class: 'w-full mr-2' } },
+  wrapperClass: 'gap-2 grid-cols-8',
+  commonConfig: { componentProps: { class: 'w-full' } },
   submitButtonOptions: { content: '查询', class: 'bg-[#04DC70]' },
 });
 </script>
