@@ -8,16 +8,20 @@ import dayjs from 'dayjs';
 
 import { updateAssessmentTask } from '#/api/psychology/assessment';
 import LyLabel from '#/components/LyLabel/index.vue';
-import { useTask } from '#/views/assessment/list/composables/useTask';
 
-const { refresh } = useTask();
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
 
 // 表单数据
 const formData = ref({
+  id: '',
+  targetAudience: '',
+  taskNo: '',
   taskName: '',
+  startline: dayjs(),
   deadline: dayjs(),
   description: '',
-  taskNo: '',
 });
 
 const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
@@ -25,15 +29,17 @@ const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
     if (isOpen) {
       const data = editAssessmentApi.getData();
       formData.value = {
-        taskName: data.taskName,
-        deadline: dayjs(data.deadline),
-        description: data.description,
+        id: data.id,
+        targetAudience: data.targetAudience,
         taskNo: data.taskNo,
+        taskName: data.taskName,
+        description: data.description ?? '',
+        startline: dayjs(data.startline),
+        deadline: dayjs(data.deadline),
       };
     }
   },
   async onConfirm() {
-    console.log('表单信息', formData.value);
     if (!formData.value.taskNo) {
       message.error('任务编号不能为空');
       return;
@@ -49,27 +55,37 @@ const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
 
     loading.value = true;
     try {
-      await updateAssessmentTask({
-        taskNo: formData.value.taskNo,
-        taskName: formData.value.taskName,
-        deadline: formData.value.deadline.toISOString(),
-        description: formData.value.description,
+      const result = await updateAssessmentTask({
+        ...formData.value,
+        startline: dayjs(formData.value.startline).format(
+          'YYYY-MM-DD[T]HH:mm:ss',
+        ),
+        deadline: dayjs(formData.value.deadline).format(
+          'YYYY-MM-DD[T]HH:mm:ss',
+        ),
       });
-      message.success('编辑成功');
-      await refresh();
-      editAssessmentApi.close();
+      if (result) {
+        message.success('编辑成功');
+        emit('refresh');
+        editAssessmentApi.close();
+      } else {
+        message.error('编辑失败');
+      }
     } catch (error) {
-      console.error(error);
+      console.error('编辑任务失败', error);
     } finally {
       loading.value = false;
     }
   },
   onClosed() {
     formData.value = {
+      id: '',
+      targetAudience: '',
+      taskNo: '',
       taskName: '',
+      startline: dayjs(),
       deadline: dayjs(),
       description: '',
-      taskNo: '',
     };
     editAssessmentApi.close();
   },

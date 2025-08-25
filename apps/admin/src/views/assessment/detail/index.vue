@@ -108,6 +108,7 @@ async function loadTaskData() {
 
     // 获取任务基本信息
     const taskInfo = await getAssessmentTask(taskNo);
+    console.log('taskInfo', taskInfo);
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
         label: item.title,

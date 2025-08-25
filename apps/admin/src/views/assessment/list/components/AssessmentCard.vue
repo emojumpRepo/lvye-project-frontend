@@ -39,15 +39,26 @@ const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
 // 删除任务
 const [DeleteAssessmentModal, deleteAssessmentApi] = useVbenModal({
   fullscreenButton: false,
+  header: false,
+  footerClass: '!border-t-0',
+  contentClass: '!min-h-20',
   async onConfirm() {
     if (!props.card.taskNo) {
       message.error('任务编号不能为空');
       return;
     }
-    await deleteAssessmentTask(props.card.taskNo);
-    message.success('删除成功');
-    emit('refresh');
-    deleteAssessmentApi.close();
+    try {
+      const result = await deleteAssessmentTask(props.card.taskNo);
+      if (result) {
+        message.success('删除成功');
+        emit('refresh');
+        deleteAssessmentApi.close();
+      } else {
+        message.error('删除失败');
+      }
+    } catch (error) {
+      console.error('删除任务失败', error);
+    }
   },
 });
 
@@ -82,6 +93,9 @@ function handleViewDetail() {
 function handleEditTask() {
   editAssessmentApi
     .setData({
+      id: props.card.id,
+      targetAudience: props.card.targetAudience,
+      startline: props.card.startline,
       taskNo: props.card.taskNo,
       taskName: props.card.taskName,
       deadline: props.card.deadline,
@@ -91,7 +105,6 @@ function handleEditTask() {
 }
 
 function handleDeleteTask() {
-  console.log('删除任务');
   deleteAssessmentApi.open();
 }
 </script>
@@ -162,9 +175,9 @@ function handleDeleteTask() {
       </DropdownButton>
     </div>
 
-    <EditAssessmentModal />
+    <EditAssessmentModal @refresh="emit('refresh')" />
     <DeleteAssessmentModal title="删除任务">
-      <div class="p-2 text-sm">
+      <div class="mt-5 p-2 text-sm">
         关闭后学生将无法继续参与测评，已完成的数据保留。确定要关闭吗？
       </div>
     </DeleteAssessmentModal>

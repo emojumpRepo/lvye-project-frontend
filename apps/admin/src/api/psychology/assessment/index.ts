@@ -157,6 +157,9 @@ export function createAssessmentTask(
 export function updateAssessmentTask(data: {
   deadline: string;
   description: string;
+  id: string;
+  startline: string;
+  targetAudience: string;
   taskName: string;
   taskNo: string;
 }) {
