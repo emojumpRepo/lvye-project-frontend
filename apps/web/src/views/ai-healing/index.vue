@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { nextTick, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
+
+import { Modal } from 'ant-design-vue';
 
 // 消息类型
 interface Message {
@@ -29,6 +31,10 @@ const inputMessage = ref('');
 const isTyping = ref(false);
 // 消息容器引用
 const messagesContainer = ref<HTMLElement>();
+// 弹窗显示状态
+const showComingSoonModal = ref(false);
+// 功能是否可用（用于控制输入框和按钮状态）
+const isFeatureEnabled = ref(false);
 
 // 预设的AI回复模板
 const aiResponses = [
@@ -59,7 +65,8 @@ function getRandomAIResponse(): string {
 
 // 发送消息
 async function sendMessage() {
-  if (!inputMessage.value.trim() || isTyping.value) return;
+  if (!inputMessage.value.trim() || isTyping.value || !isFeatureEnabled.value)
+    return;
 
   const userMessage: Message = {
     id: Date.now().toString(),
@@ -107,7 +114,7 @@ async function sendMessage() {
 
 // 按Enter发送消息
 function handleKeyPress(event: KeyboardEvent) {
-  if (event.key === 'Enter' && !event.shiftKey) {
+  if (event.key === 'Enter' && !event.shiftKey && isFeatureEnabled.value) {
     event.preventDefault();
     sendMessage();
   }
@@ -128,6 +135,25 @@ function formatTime(date: Date) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+// 页面加载时显示弹窗
+onMounted(() => {
+  // 延迟一点显示弹窗，让页面先渲染
+  setTimeout(() => {
+    showComingSoonModal.value = true;
+  }, 500);
+});
+
+// 关闭弹窗
+function handleCloseModal() {
+  showComingSoonModal.value = false;
+}
+
+// 体验演示版
+function handleTryDemo() {
+  showComingSoonModal.value = false;
+  isFeatureEnabled.value = true;
 }
 </script>
 
@@ -210,7 +236,9 @@ function formatTime(date: Date) {
                       style="animation-delay: 300ms"
                     ></div>
                   </div>
-                  <span class="ml-2 text-sm text-emerald-600">AI正在思考...</span>
+                  <span class="ml-2 text-sm text-emerald-600"
+                    >AI正在思考...</span
+                  >
                 </div>
                 <!-- 消息文本 -->
                 <p
@@ -242,10 +270,14 @@ function formatTime(date: Date) {
           <div class="flex-1">
             <textarea
               v-model="inputMessage"
-              class="w-full resize-none rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              placeholder="输入你想说的话..."
+              class="w-full resize-none rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+              :placeholder="
+                isFeatureEnabled
+                  ? '输入你想说的话...'
+                  : '功能暂未开放，敬请期待...'
+              "
               rows="1"
-              :disabled="isTyping"
+              :disabled="isTyping || !isFeatureEnabled"
               @keypress="handleKeyPress"
               @input="handleTextareaInput"
             ></textarea>
@@ -253,8 +285,8 @@ function formatTime(date: Date) {
 
           <!-- 发送按钮 -->
           <button
-            class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!inputMessage.trim() || isTyping"
+            class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow transition-all duration-200 hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500 disabled:opacity-50"
+            :disabled="!inputMessage.trim() || isTyping || !isFeatureEnabled"
             @click="sendMessage"
           >
             <IconifyIcon v-if="!isTyping" icon="lucide:send" class="h-5 w-5" />
@@ -267,9 +299,141 @@ function formatTime(date: Date) {
 
         <!-- 提示文本 -->
         <div class="mt-2 text-center text-xs text-gray-500">
-          按 Enter 发送消息，Shift + Enter 换行
+          {{
+            isFeatureEnabled
+              ? '按 Enter 发送消息，Shift + Enter 换行'
+              : '功能暂未开放，敬请期待正式版本上线'
+          }}
         </div>
       </div>
     </div>
+
+    <!-- 敬请期待弹窗 -->
+    <Modal
+      v-model:open="showComingSoonModal"
+      :closable="false"
+      :footer="null"
+      :mask-closable="false"
+      :width="600"
+      centered
+      wrap-class-name="coming-soon-modal"
+    >
+      <div class="flex flex-col items-center justify-center py-12 text-center">
+        <!-- 图标 -->
+        <div
+          class="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100"
+        >
+          <IconifyIcon
+            icon="lucide:sparkles"
+            class="h-12 w-12 text-emerald-600"
+          />
+        </div>
+
+        <!-- 标题 -->
+        <h2 class="mb-4 text-3xl font-bold text-gray-800">敬请期待</h2>
+
+        <!-- 副标题 -->
+        <p class="mb-2 text-lg text-gray-600">心之旅疗愈室即将上线</p>
+
+        <!-- 描述 -->
+        <p class="mb-8 max-w-md text-gray-500">
+          我们正在为您打造更智能、更贴心的AI心理疗愈体验，敬请期待正式版本的发布！
+        </p>
+
+        <!-- 按钮组 -->
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button
+            class="transform rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:scale-105 hover:from-emerald-600 hover:to-teal-700 hover:shadow-xl"
+            @click="handleCloseModal"
+          >
+            我知道了
+          </button>
+          <button
+            class="transform rounded-full border-2 border-emerald-500 bg-transparent px-8 py-3 font-medium text-emerald-600 shadow-lg transition-all duration-200 hover:scale-105 hover:bg-emerald-50"
+            @click="handleTryDemo"
+          >
+            体验演示版
+          </button>
+        </div>
+
+        <!-- 装饰元素 -->
+        <div
+          class="absolute -left-4 -top-4 h-8 w-8 rounded-full bg-emerald-200 opacity-60"
+        ></div>
+        <div
+          class="absolute -bottom-2 -right-6 h-6 w-6 rounded-full bg-teal-200 opacity-40"
+        ></div>
+        <div
+          class="absolute -right-2 top-8 h-4 w-4 rounded-full bg-emerald-300 opacity-50"
+        ></div>
+      </div>
+    </Modal>
   </div>
 </template>
+
+<style scoped>
+
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+:deep(.coming-soon-modal .ant-modal-content) {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+:deep(.coming-soon-modal .ant-modal-body) {
+  position: relative;
+  padding: 0;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 50%, #f0f9ff 100%);
+}
+
+/* 装饰背景 */
+:deep(.coming-soon-modal .ant-modal-body::before) {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  content: '';
+  background: radial-gradient(
+    circle,
+    rgb(16 185 129 / 10%) 0%,
+    transparent 70%
+  );
+  animation: rotate 20s linear infinite;
+}
+
+/* 按钮悬停效果 */
+button:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* 图标动画 */
+:deep(.lucide-sparkles) {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* 弹窗自定义样式 */
+</style>
