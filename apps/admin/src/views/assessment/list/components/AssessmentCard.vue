@@ -21,14 +21,15 @@ import dayjs from 'dayjs';
 import { deleteAssessmentTask } from '#/api/psychology/assessment/index';
 import EditAssessmentDialog from '#/components/Dialog/EditAssessmentDialog/index.vue';
 
-import { useTask } from '../composables/useTask';
-
 const props = defineProps<{
   card: AssessmentTask;
 }>();
 
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
+
 const router = useRouter();
-const { refresh } = useTask();
 
 // 编辑任务
 const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
@@ -45,7 +46,7 @@ const [DeleteAssessmentModal, deleteAssessmentApi] = useVbenModal({
     }
     await deleteAssessmentTask(props.card.taskNo);
     message.success('删除成功');
-    await refresh();
+    emit('refresh');
     deleteAssessmentApi.close();
   },
 });

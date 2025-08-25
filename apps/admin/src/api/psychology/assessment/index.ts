@@ -165,7 +165,7 @@ export function updateAssessmentTask(data: {
 
 /** 删除测评任务 */
 export function deleteAssessmentTask(taskNo: string) {
-  return requestClient.delete(
+  return requestClient.post(
     `/psychology/assessment-task/delete?taskNo=${taskNo}`,
   );
 }
