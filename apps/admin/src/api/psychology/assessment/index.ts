@@ -154,15 +154,18 @@ export function createAssessmentTask(
 }
 
 /** 更新测评任务 */
-export function updateAssessmentTask(
-  data: PsychologyAssessmentApi.AssessmentTaskSaveReq,
-) {
+export function updateAssessmentTask(data: {
+  deadline: string;
+  description: string;
+  taskName: string;
+  taskNo: string;
+}) {
   return requestClient.post('/psychology/assessment-task/update', data);
 }
 
 /** 删除测评任务 */
 export function deleteAssessmentTask(taskNo: string) {
-  return requestClient.delete(
+  return requestClient.post(
     `/psychology/assessment-task/delete?taskNo=${taskNo}`,
   );
 }

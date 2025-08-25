@@ -1,15 +1,45 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Tag } from 'ant-design-vue';
+import { IconifyIcon } from '@vben/icons';
 
+import {
+  Divider as ADivider,
+  Radio as ARadio,
+  Tabs as ATabs,
+} from 'ant-design-vue';
+import dayjs from 'dayjs';
+
+import { getTagByCategory } from '#/api/constants';
 import { getAssessmentTask } from '#/api/psychology/assessment';
 import LyButton from '#/components/LyButton/index.vue';
 
+import AssessmentDetailCompare from './components/AssessmentDetailCompare.vue';
 import AssessmentDetailList from './components/AssessmentDetailList.vue';
+import AssessmentDetailTask from './components/AssessmentDetailTask.vue';
 
-const actionButton = ref([
+interface TabItem {
+  key: string;
+  label: string;
+}
+
+interface TaskInfo {
+  taskNo: string;
+  taskName: string;
+  status: number;
+  startline: number;
+  deadline: number;
+  questionnairesTabs: TabItem[];
+}
+
+const classType = ref<TabItem[]>([
+  { label: '全部', key: 'all' },
+  { label: '年级', key: 'grade' },
+  { label: '班级', key: 'class' },
+]);
+
+const actionButtons = ref([
   {
     label: '发布提醒',
     value: 'publish',
@@ -29,32 +59,45 @@ const actionButton = ref([
 ]);
 
 const activeButton = ref('');
+const activeType = ref('all');
 const route = useRoute();
 const router = useRouter();
 const taskNo = String(route.params.taskNo || '');
 
-// 任务信息数据
-const taskInfo = ref<TaskInfo>({
-  task: {
-    createTime: '',
-    endTime: '',
-    questionnaireName: '',
-    status: '',
-    taskNo: '',
-  },
-  participate: { completed: 0, completionRate: 0, total: 0 },
-  riskDistribution: { attention: 0, highRisk: 0, normal: 0, warning: 0 },
-});
-
 const loading = ref(false);
 
-const activeTabKey = ref('default');
-const tabs = ref([
-  {
-    label: '测评任务',
-    key: 'default',
-  },
-]);
+const currentTaskInfo = ref<TaskInfo>();
+const activeTabKey = ref<TabItem>({
+  key: '',
+  label: '',
+});
+
+const taskStatusTag = computed(() => {
+  if (!currentTaskInfo.value) {
+    return null;
+  }
+  const tag = getTagByCategory(
+    'assessment_task_status',
+    currentTaskInfo.value.status,
+  );
+  return {
+    label: tag?.label,
+    color: tag?.tagStyle.color,
+  };
+});
+
+/**
+ * 截取字符串
+ * @param text 字符串
+ * @param maxLength 最大长度
+ */
+function truncateText(
+  text: string | undefined,
+  maxLength: number = 10,
+): string {
+  if (!text) return '';
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
 
 // 加载任务数据
 async function loadTaskData() {
@@ -70,7 +113,18 @@ async function loadTaskData() {
         label: item.title,
         key: item.id.toString(),
       }));
-      tabs.value = [...tabs.value, ...questionnairesTabs];
+      currentTaskInfo.value = {
+        taskNo: taskInfo.taskNo || '',
+        taskName: taskInfo.taskName,
+        status: taskInfo.status,
+        startline: taskInfo.startline || 0,
+        deadline: taskInfo.deadline || 0,
+        questionnairesTabs,
+      };
+      activeTabKey.value = currentTaskInfo.value?.questionnairesTabs[0] || {
+        key: '',
+        label: '',
+      };
     }
   } catch (error) {
     console.error('Failed to load task data:', error);
@@ -79,7 +133,7 @@ async function loadTaskData() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (taskNo) {
     loadTaskData();
   }
@@ -87,52 +141,125 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <a-tabs v-model:active-key="activeTabKey">
-      <a-tab-pane v-for="tab in tabs" :key="tab.key">
-        <template #tab>
-          <span v-if="tab.key === 'default'">
-            <Tag color="green">整体</Tag>
-            {{ tab.label }}
+  <div class="flex min-h-screen flex-col gap-4 p-6">
+    <!-- nav -->
+    <div class="flex flex-wrap items-center justify-between gap-6">
+      <!-- 任务信息 -->
+      <div
+        class="flex flex-1 items-center justify-between rounded-xl bg-[#FFFFFF99] p-4 text-sm text-[#000000A6]"
+      >
+        <div class="flex flex-nowrap items-center gap-2">
+          <IconifyIcon
+            icon="mdi:information"
+            :color="taskStatusTag?.color"
+            class="size-5"
+          />
+          <span class="truncate">{{
+            truncateText(currentTaskInfo?.taskName, 10)
+          }}</span>
+          <ADivider type="vertical" class="h-4" />
+          <span class="truncate"> 任务：{{ currentTaskInfo?.taskNo }} </span>
+          <ADivider type="vertical" class="h-4" />
+          <span class="truncate"> 测评量表：{{ activeTabKey?.label }} </span>
+          <ADivider type="vertical" class="h-4" />
+          <span class="truncate">
+            创建时间：{{
+              dayjs(currentTaskInfo?.startline).format('YYYY-MM-DD')
+            }}
           </span>
-          <span v-else>
-            <Tag color="orange">问卷</Tag>
-            {{ tab.label }}
+          <ADivider type="vertical" class="h-4" />
+          <span class="!truncate">
+            截止时间：{{
+              dayjs(currentTaskInfo?.deadline).format('YYYY-MM-DD')
+            }}
           </span>
-        </template>
-        <template v-if="tab.key === 'default'">
-          <div></div>
-        </template>
-        <template v-else> </template>
-        <!-- 统计卡片区域 -->
-        <!-- <AssessmentDetailTask :task-info="taskInfo" :loading="loading" /> -->
+        </div>
+        <div class="ml-4 truncate" :class="`text-[${taskStatusTag?.color}]`">
+          {{ taskStatusTag?.label }}
+        </div>
+      </div>
+      <!-- 操作按钮 -->
+      <div class="space-x-2">
+        <LyButton
+          v-for="item in actionButtons"
+          :key="item.value"
+          size="middle"
+          type="default"
+          @click="activeButton = item.value"
+        >
+          {{ item.label }}
+        </LyButton>
+      </div>
+    </div>
 
-        <!-- 年级班级对比区域 -->
-        <!-- <AssessmentDetailCompare /> -->
-      </a-tab-pane>
-      <template #leftExtra>
+    <!-- 问卷Tabs -->
+    <ATabs v-model:active-key="activeTabKey.key">
+      <ATabs.TabPane
+        v-for="tab in currentTaskInfo?.questionnairesTabs"
+        :key="tab.key"
+      >
+        <template #tab>
+          <span
+            class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
+            :class="{
+              '!bg-primary !text-white': activeTabKey?.key === tab.key,
+            }"
+          >
+            {{ tab.label }}
+          </span>
+        </template>
+      </ATabs.TabPane>
+      <!-- <template #leftExtra>
         <div class="mr-6">
           <LyButton size="middle" type="default" @click="router.back()">
             返回
           </LyButton>
         </div>
-      </template>
+      </template> -->
       <template #rightExtra>
-        <div class="space-x-2">
-          <LyButton
-            v-for="item in actionButton"
-            :key="item.value"
-            size="middle"
-            type="default"
-            @click="activeButton = item.value"
+        <ARadio.Group v-model:value="activeType">
+          <ARadio.Button
+            v-for="item in classType"
+            :key="item.key"
+            :value="item.key"
           >
             {{ item.label }}
-          </LyButton>
-        </div>
+          </ARadio.Button>
+        </ARadio.Group>
       </template>
-    </a-tabs>
+    </ATabs>
+
+    <div class="grid grid-cols-2 gap-4">
+      <!-- 统计卡片区域 -->
+      <AssessmentDetailTask :task-info="currentTaskInfo" :loading="loading" />
+
+      <!-- 年级班级对比区域 -->
+      <AssessmentDetailCompare :loading="loading" />
+    </div>
 
     <!-- 年级管理区域 -->
     <AssessmentDetailList />
   </div>
 </template>
+
+<style lang="scss" scoped>
+:deep(.ant-tabs-nav) {
+  margin-bottom: 0 !important;
+}
+
+:deep(.ant-tabs-nav::before) {
+  display: none !important;
+}
+
+:deep(.ant-tabs-ink-bar) {
+  display: none !important;
+}
+
+:deep(.ant-btn-default) {
+  height: 100% !important;
+  padding: 12px 15px !important;
+  // font-size: 12px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+</style>
