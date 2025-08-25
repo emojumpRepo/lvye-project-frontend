@@ -64,6 +64,7 @@ export const useTask = (initialParams?: TaskSearchParams) => {
       }
 
       const res = await getAssessmentTaskPage(requestParams.value);
+      console.log('res', res);
 
       cards.value = res.list;
       total.value = res.total;

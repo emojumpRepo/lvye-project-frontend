@@ -26,7 +26,7 @@ export const overridesPreferences = defineOverridesPreferences({
   },
   theme: {
     builtinType: 'green',
-    colorPrimary: 'hsl(161 90% 43%)',
+    colorPrimary: 'hsla(150, 96%, 44%, 1)',
     mode: 'light',
   },
   widget: {
