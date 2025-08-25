@@ -1,3 +1,5 @@
+import type { QuestionnaireVO } from './questionnaire';
+
 /** 测评任务信息 */
 export interface AssessmentTask {
   id?: number;
@@ -12,6 +14,7 @@ export interface AssessmentTask {
   status: number;
   startTime?: Date;
   questionnaireIds?: number[];
+  questionnaires: QuestionnaireVO[];
   endTime?: Date;
   targetType: number;
   targetIds?: number[];

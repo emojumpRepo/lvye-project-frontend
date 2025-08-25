@@ -44,7 +44,7 @@ async function loadAssessmentData() {
   try {
     loading.value = true;
     const res = await getAssessmentTask(assessmentTaskNo.value || '');
-    console.log(res);
+
     assessmentData.value = res;
   } catch (error) {
     console.error(error);
@@ -151,11 +151,11 @@ async function loadAssessmentData() {
           v-else
           class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
         >
-          <!-- <QuestionnaireCard
-            v-for="questionnaire in assessmentData?.questionnaireIds"
+          <QuestionnaireCard
+            v-for="questionnaire in assessmentData?.questionnaires"
             :key="questionnaire.id"
             :questionnaire="questionnaire"
-          /> -->
+          />
         </div>
 
         <!-- 空状态 -->
