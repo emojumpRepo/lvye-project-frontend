@@ -270,10 +270,10 @@ onMounted(() => {
         <AForm.Item name="homeAddress">
           <AInput.TextArea
             v-model:value="studentForm.homeAddress"
-            placeholder="请填写"
+            placeholder="建议填写详细地址便于联系"
             :rows="3"
-            :maxlength="100"
-            :show-count="false"
+            :maxlength="200"
+            :show-count="true"
           />
         </AForm.Item>
       </div>
@@ -296,12 +296,15 @@ onMounted(() => {
         </AForm.Item>
       </div> -->
 
-      <div>
+      <!-- <div>
         <LyLabel title="备注说明" custom-title-class="font-normal" />
         <AForm.Item name="remark">
-          <AInput v-model:value="studentForm.remark" placeholder="请填写" />
+          <AInput
+            v-model:value="studentForm.remark"
+            placeholder="可填写具体情况说明"
+          />
         </AForm.Item>
-      </div>
+      </div> -->
     </AForm>
   </Drawer>
 </template>

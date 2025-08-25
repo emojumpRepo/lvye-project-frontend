@@ -26,9 +26,7 @@ export const TAG_TYPE = {
 
 /** 获取标签样式 */
 export function getTagByCategory(category: string, value: number | string) {
-  console.log('getTagByCategory', category, value);
   const dictObj = getDictObj(category, value);
-  console.log('dictObj', dictObj);
   if (!dictObj) {
     return null;
   }

@@ -9,31 +9,8 @@ import {
 
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
-// 定义任务信息的数据结构
-interface TaskInfo {
-  task: {
-    createTime: string;
-    endTime: string;
-    questionnaireName: string;
-    status: string;
-    taskNo: string;
-  };
-  participate: {
-    completed: number;
-    completionRate: number;
-    total: number;
-  };
-  riskDistribution: {
-    attention: number;
-    highRisk: number;
-    normal: number;
-    warning: number;
-  };
-}
-
 const props = defineProps<{
   loading: boolean;
-  taskInfo: TaskInfo;
 }>();
 
 const currentPage = ref(1);
@@ -85,7 +62,7 @@ const goToPage = (p: number) => {
           </div>
 
           <div class="flex flex-col gap-2 rounded-2xl bg-[#F7F8FA] p-4">
-            <div class="flex items-center justify-between gap-8">
+            <div class="flex items-center justify-between gap-10">
               <span class="whitespace-nowrap font-bold">一年级</span>
               <span class="text-primary whitespace-nowrap text-sm">100</span>
               <span class="whitespace-nowrap text-sm text-[#FF9C05]">40</span>
@@ -121,5 +98,13 @@ const goToPage = (p: number) => {
 
 :deep(.ant-progress-bg) {
   background-color: #ff9c05 !important;
+}
+
+:deep(.ant-spin-nested-loading) {
+  height: 100% !important;
+}
+
+:deep(.ant-spin-container) {
+  height: 100% !important;
 }
 </style>

@@ -154,9 +154,12 @@ export function createAssessmentTask(
 }
 
 /** 更新测评任务 */
-export function updateAssessmentTask(
-  data: PsychologyAssessmentApi.AssessmentTaskSaveReq,
-) {
+export function updateAssessmentTask(data: {
+  deadline: string;
+  description: string;
+  taskName: string;
+  taskNo: string;
+}) {
   return requestClient.post('/psychology/assessment-task/update', data);
 }
 

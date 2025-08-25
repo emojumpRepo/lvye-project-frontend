@@ -1,6 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 
-import { h, ref } from 'vue';
+import { computed, h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -11,7 +11,7 @@ const questionnaireOptions = ref<{ label: string; value: string }[]>([]);
 const isLoading = ref(false);
 
 // 异步加载量表数据
-const loadQuestionnaireOptions = async () => {
+const _loadQuestionnaireOptions = async () => {
   if (questionnaireOptions.value.length > 0) {
     return; // 如果已有数据，不再重复加载
   }
@@ -31,18 +31,25 @@ const loadQuestionnaireOptions = async () => {
   }
 };
 
+const questionnaireSelectOptions = computed(() => [
+  {
+    label: '全部量表',
+    value: '',
+  },
+  ...questionnaireOptions.value,
+]);
+
+export const loadQuestionnaireOptions = _loadQuestionnaireOptions;
+
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
-  // 组件挂载时加载数据
-  loadQuestionnaireOptions();
-
   return [
     {
       fieldName: 'questionnaireId',
       component: 'Select',
       componentProps: {
         placeholder: '请选择量表',
-        options: questionnaireOptions,
+        options: questionnaireSelectOptions,
         loading: isLoading,
       },
       hideLabel: true,
@@ -53,12 +60,32 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         placeholder: '请选择时间',
         options: [
-          { label: '最近一周', value: 'week' },
-          { label: '最近一月', value: 'month' },
-          { label: '最近一年', value: 'year' },
+          { label: '最近7天', value: '7' },
+          { label: '最近30天', value: '30' },
+          { label: '最近90天', value: '90' },
+          {
+            label: '自定义',
+            value: 'custom',
+          },
         ],
       },
       hideLabel: true,
+    },
+    {
+      fieldName: 'customDateRange',
+      component: 'RangePicker',
+      componentProps: {
+        placeholder: ['开始时间', '结束时间'],
+        format: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD',
+        allowClear: true,
+      },
+      hideLabel: true,
+      formItemClass: 'col-span-2',
+      dependencies: {
+        show: (values) => values.date === 'custom',
+        triggerFields: ['date'],
+      },
     },
     {
       fieldName: 'name',

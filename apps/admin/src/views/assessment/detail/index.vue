@@ -234,7 +234,7 @@ onMounted(async () => {
       <AssessmentDetailTask :task-info="currentTaskInfo" :loading="loading" />
 
       <!-- 年级班级对比区域 -->
-      <AssessmentDetailCompare />
+      <AssessmentDetailCompare :loading="loading" />
     </div>
 
     <!-- 年级管理区域 -->

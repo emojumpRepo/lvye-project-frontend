@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
 
-import { useGridFormSchema } from '../data';
+import { loadQuestionnaireOptions, useGridFormSchema } from '../data';
 
 const emit = defineEmits<{
   (e: 'search', params: any): void;
@@ -33,8 +33,18 @@ const handleSubmit = async (formData: any) => {
   };
 
   if (formData.date) {
-    const [startDate, endDate] = formatDate(formData.date);
-    searchParams.createTime = [startDate, endDate];
+    if (formData.date === 'custom' && formData.customDateRange) {
+      // 自定义时间范围
+      const [startDate, endDate] = formData.customDateRange;
+      searchParams.createTime = [
+        dayjs(startDate).format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs(endDate).format('YYYY-MM-DDTHH:mm:ss'),
+      ];
+    } else {
+      // 预设时间范围
+      const [startDate, endDate] = formatDate(formData.date);
+      searchParams.createTime = [startDate, endDate];
+    }
   }
 
   const currentTab = tabs.find((tab) => tab.key === activeTab.value);
@@ -45,21 +55,21 @@ const handleSubmit = async (formData: any) => {
 
 function formatDate(date: string): [string, string] {
   switch (date) {
-    case 'month': {
+    case '7': {
       return [
-        dayjs().subtract(1, 'month').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().subtract(7, 'day').format('YYYY-MM-DDTHH:mm:ss'),
         dayjs().format('YYYY-MM-DDTHH:mm:ss'),
       ];
     }
-    case 'week': {
+    case '30': {
       return [
-        dayjs().subtract(1, 'week').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().subtract(30, 'day').format('YYYY-MM-DDTHH:mm:ss'),
         dayjs().format('YYYY-MM-DDTHH:mm:ss'),
       ];
     }
-    case 'year': {
+    case '90': {
       return [
-        dayjs().subtract(1, 'year').format('YYYY-MM-DDTHH:mm:ss'),
+        dayjs().subtract(90, 'day').format('YYYY-MM-DDTHH:mm:ss'),
         dayjs().format('YYYY-MM-DDTHH:mm:ss'),
       ];
     }
@@ -80,7 +90,7 @@ const handleReset = () => {
 const [Form, formRef] = useVbenForm({
   schema: useGridFormSchema(),
   layout: 'horizontal',
-  wrapperClass: 'grid-cols-7',
+  wrapperClass: 'grid-cols-8',
   commonConfig: { componentProps: { class: 'w-full mr-2' } },
   submitButtonOptions: { content: '查询', class: 'bg-[#04DC70]' },
   handleSubmit,
@@ -93,6 +103,11 @@ const handleTabChange = (key: number | string) => {
   const currentTab = tabs.find((tab) => tab.key === key);
   emit('tabChange', currentTab?.status);
 };
+
+// 在组件挂载时加载问卷选项
+onMounted(async () => {
+  await loadQuestionnaireOptions();
+});
 </script>
 
 <template>

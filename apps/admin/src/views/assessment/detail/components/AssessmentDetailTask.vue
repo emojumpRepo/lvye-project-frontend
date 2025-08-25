@@ -118,4 +118,12 @@ const goToPage = (p: number) => {
 :deep(.ant-progress-line) {
   margin-bottom: 5px !important;
 }
+
+:deep(.ant-spin-nested-loading) {
+  height: 100% !important;
+}
+
+:deep(.ant-spin-container) {
+  height: 100% !important;
+}
 </style>
