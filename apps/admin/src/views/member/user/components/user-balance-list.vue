@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { WalletTransactionApi } from '#/api/pay/wallet/transaction';
+// import type { WalletTransactionApi } from '#/api/pay/wallet/transaction';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getTransactionPage } from '#/api/pay/wallet/transaction';
+// import { getTransactionPage } from '#/api/pay/wallet/transaction';
 
 const props = defineProps<{
   walletId: number | undefined;
@@ -43,12 +42,13 @@ const [Grid] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getTransactionPage({
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-            walletId: props.walletId,
-            ...formValues,
-          });
+          // return await getTransactionPage({
+          //   pageNo: page.currentPage,
+          //   pageSize: page.pageSize,
+          //   walletId: props.walletId,
+          //   ...formValues,
+          // });
+          return [];
         },
       },
     },
@@ -59,7 +59,7 @@ const [Grid] = useVbenVxeGrid({
       refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<WalletTransactionApi.Transaction>,
+  },
 });
 </script>
 

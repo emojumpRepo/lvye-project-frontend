@@ -10,7 +10,7 @@ import { isNumber } from '@vben/utils';
 import { Button, Input, Select } from 'ant-design-vue';
 
 import { testWorkflow } from '#/api/ai/workflow';
-import { Tinyflow } from '#/components/tinyflow';
+// import { Tinyflow } from '#/components/tinyflow';
 
 defineProps<{
   provider: any;
@@ -183,14 +183,14 @@ defineExpose({ validate });
 
 <template>
   <div class="relative h-[700px] w-full">
-    <Tinyflow
+    <!-- <Tinyflow
       v-if="workflowData"
       ref="tinyflowRef"
       class-name="custom-class"
       class="h-full w-full"
       :data="workflowData"
       :provider="provider"
-    />
+    /> -->
     <div class="absolute right-8 top-8">
       <Button
         @click="testWorkflowModel"

@@ -4,13 +4,13 @@ import type { MemberUserApi } from '#/api/member/user';
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
-import { formatToFraction } from '@vben/utils';
+// import { formatToFraction } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import { getUser, updateUser } from '#/api/member/user';
-import { getWallet } from '#/api/pay/wallet/balance';
+// import { getWallet } from '#/api/pay/wallet/balance';
 import { $t } from '#/locales';
 
 import { useBalanceFormSchema } from '../data';
@@ -71,10 +71,10 @@ const [Modal, modalApi] = useVbenModal({
       if (!user || !user.id) {
         return;
       }
-      const wallet = await getWallet({ userId: user.id });
+      // const wallet = await getWallet({ userId: user.id });
       formData.value.id = user.id;
       formData.value.nickname = user.nickname || '';
-      formData.value.balance = formatToFraction(wallet.balance);
+      // formData.value.balance = formatToFraction(wallet.balance);
       formData.value.changeType = 1; // 默认增加余额
       formData.value.changeBalance = 0; // 变动余额默认0
       // 设置到 values

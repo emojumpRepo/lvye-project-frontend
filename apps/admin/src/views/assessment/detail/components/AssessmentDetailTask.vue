@@ -3,7 +3,7 @@ import type { AssessmentTask } from '@vben/types';
 
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
-import { ref, watchEffect } from 'vue';
+import { watchEffect } from 'vue';
 
 import { getStatusLabel } from '@vben/types';
 
@@ -18,15 +18,15 @@ import LyCardTitle from '#/components/LyCardTitle/index.vue';
 // 定义任务信息的数据结构
 interface TaskInfo {
   task: {
-    taskNo: '',
-    questionnaireName: '',
-    createTime: '',
-    endTime: '',
-    status: '',
-  },
-  participate: { total: 0, completed: 0, completionRate: 0 },
-  riskDistribution: { normal: 0, attention: 0, warning: 0, highRisk: 0 },
-});
+    createTime: '';
+    endTime: '';
+    questionnaireName: '';
+    status: '';
+    taskNo: '';
+  };
+  participate: { completed: 0; completionRate: 0; total: 0 };
+  riskDistribution: { attention: 0; highRisk: 0; normal: 0; warning: 0 };
+}
 
 async function loadTask() {
   const base: AssessmentTask = await getAssessmentTask(props.taskNo);

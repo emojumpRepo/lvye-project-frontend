@@ -550,7 +550,7 @@ catalogs:
       specifier: ^4.7.12
       version: 4.7.15
     vxe-table:
-      specifier: latest
+      specifier: ^4.14.4
       version: 4.15.10
     watermark-js-plus:
       specifier: ^1.6.2

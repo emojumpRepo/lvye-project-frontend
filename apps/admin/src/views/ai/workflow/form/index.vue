@@ -10,7 +10,7 @@ import { Button, Card, message } from 'ant-design-vue';
 
 import { getModelSimpleList } from '#/api/ai/model/model';
 import { createWorkflow, getWorkflow, updateWorkflow } from '#/api/ai/workflow';
-import { createModel, deployModel, updateModel } from '#/api/bpm/model';
+// import { createModel, deployModel, updateModel } from '#/api/bpm/model';
 import { AiModelTypeEnum, CommonStatusEnum } from '#/utils';
 
 import BasicInfo from './modules/basic-info.vue';
@@ -144,14 +144,14 @@ async function handleDeploy() {
 
     // 先保存所有数据
     if (formData.value.id) {
-      await updateModel(modelData);
+      // await updateModel(modelData);
     } else {
-      const result = await createModel(modelData);
-      formData.value.id = result.id;
+      // const result = await createModel(modelData);
+      // formData.value.id = result.id;
     }
 
     // 发布
-    await deployModel(formData.value.id);
+    // await deployModel(formData.value.id);
     message.success('发布成功');
     // TODO 返回列表页
     await router.push({ name: '/ai/workflow' });

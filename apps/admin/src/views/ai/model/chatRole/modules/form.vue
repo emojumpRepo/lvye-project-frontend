@@ -8,12 +8,12 @@ import { useVbenModal } from '@vben/common-ui';
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import {
-  createChatRole,
-  getChatRole,
-  updateChatRole,
-} from '#/api/ai/model/chatRole';
-import {} from '#/api/bpm/model';
+// import {
+//   createChatRole,
+//   getChatRole,
+//   updateChatRole,
+// } from '#/api/ai/model/chatRole';
+// import {} from '#/api/bpm/model';
 import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
@@ -49,7 +49,7 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = (await formApi.getValues()) as AiModelChatRoleApi.ChatRole;
     try {
-      await (formData.value?.id ? updateChatRole(data) : createChatRole(data));
+      // await (formData.value?.id ? updateChatRole(data) : createChatRole(data));
       // 关闭并提示
       await modalApi.close();
       emit('success');
@@ -71,7 +71,7 @@ const [Modal, modalApi] = useVbenModal({
     }
     modalApi.lock();
     try {
-      formData.value = await getChatRole(data.id as number);
+      // formData.value = await getChatRole(data.id as number);
       // 设置到 values
       await formApi.setValues({ ...data, ...formData.value });
     } finally {
