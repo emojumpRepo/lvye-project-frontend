@@ -86,7 +86,7 @@ function handleClick() {
           </div>
         </div>
         <div class="mb-2 text-xs text-emerald-900/70">
-          截止：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}
+          截止于：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}
         </div>
         <div class="h-2 w-full rounded-full bg-emerald-100/60">
           <div

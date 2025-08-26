@@ -12,7 +12,7 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'frontend',
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
-    authPageLayout: 'panel-left',
+    authPageLayout: 'panel-center',
     contentCompact: 'compact',
   },
   breadcrumb: {
