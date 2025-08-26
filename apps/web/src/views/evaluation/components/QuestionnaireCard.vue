@@ -1,49 +1,61 @@
 <script setup lang="ts">
 import type { QuestionnaireVO } from '@vben/types';
 
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { AlarmClockCheck, ScrollText } from '@vben/icons';
-import { getStatusColor, getStatusLabel } from '@vben/types';
 
-defineProps<{
+import { message } from 'ant-design-vue';
+
+import { startAssessment } from '#/api/psychology/assessment';
+
+const props = defineProps<{
+  assessmentTaskNo: string;
   questionnaire: QuestionnaireVO;
 }>();
 
 const router = useRouter();
 
-function handleStartQuestionnaire(questionnaire: QuestionnaireVO) {
-  router.push({
-    path: '/evaluation/questionnaire',
-    query: {
-      questionnaireId: questionnaire.id,
-    },
-  });
+const loading = ref(false);
+
+async function handleStartQuestionnaire(questionnaire: QuestionnaireVO) {
+  loading.value = true;
+  try {
+    if (questionnaire.completed) {
+      message.success('该问卷已完成，请等待或查看结果哦~');
+      return;
+    }
+    await startAssessment(props.assessmentTaskNo);
+    router.push({
+      path: '/evaluation/questionnaire',
+      query: {
+        questionnaireId: questionnaire.questionnaireId,
+        sceneId: '',
+        assessmentTaskNo: props.assessmentTaskNo,
+        questionnaireLink: questionnaire.externalLink.split('render/')[1],
+      },
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
 <template>
   <div
-    :key="questionnaire.id"
-    class="group relative overflow-hidden rounded-2xl bg-white/60 p-6 backdrop-blur-sm transition-all duration-300"
+    :key="questionnaire.questionnaireId"
+    class="group relative flex flex-col rounded-2xl bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-md"
   >
-    <!-- 状态标签 -->
-    <div class="absolute right-4 top-4">
-      <span
-        class="rounded-full px-3 py-1 text-xs font-medium"
-        :class="getStatusColor(questionnaire.status || 0, 'questionnaire')"
-      >
-        {{ getStatusLabel(questionnaire.status || 0, 'questionnaire') }}
-      </span>
-    </div>
-
     <!-- 标题和描述 -->
     <h3 class="mb-2 text-lg font-bold text-emerald-900">
-      {{ questionnaire.title }}
+      {{ questionnaire.questionnaireTitle }}
     </h3>
-    <p class="mb-4 line-clamp-2 text-sm text-emerald-600">
+    <div class="mb-4 line-clamp-2 shrink-0 text-sm text-emerald-600">
       {{ questionnaire.description }}
-    </p>
+    </div>
 
     <!-- 信息栏 -->
     <div
@@ -61,10 +73,16 @@ function handleStartQuestionnaire(questionnaire: QuestionnaireVO) {
 
     <!-- 操作按钮 -->
     <button
-      class="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-sm font-medium text-white transition-all duration-300 hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg active:scale-95"
+      class="mt-auto w-full rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 active:scale-95"
+      :class="[
+        questionnaire.completed
+          ? 'border border-emerald-100 bg-emerald-50 text-emerald-600 hover:text-emerald-700'
+          : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600',
+      ]"
+      :loading="loading"
       @click="handleStartQuestionnaire(questionnaire)"
     >
-      开始答题
+      {{ questionnaire.completed ? '已完成' : '开始答题' }}
     </button>
   </div>
 </template>

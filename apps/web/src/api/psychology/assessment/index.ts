@@ -17,3 +17,10 @@ export function getAssessmentTask(taskNo: string) {
     `/psychology/assessment-task/get?taskNo=${taskNo}`,
   );
 }
+
+/** 开始测评 */
+export function startAssessment(taskNo: string) {
+  return appRequestClient.post<AssessmentTask>(
+    `/psychology/assessment-participant/start?taskNo=${taskNo}`,
+  );
+}

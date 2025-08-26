@@ -1,3 +1,4 @@
+import { QUESTIONNAIRE_CONFIG_CALCULATE_TYPE } from '#/api/constants';
 import { getDictOptions } from '#/utils/dict';
 
 // ============== 问卷配置 ======================
@@ -65,15 +66,15 @@ export function useQuestionGridColumns() {
   return [
     {
       field: 'id',
-      minWidth: 40,
+      width: 100,
       title: '编号',
     },
     { field: 'title', title: '问卷标题', width: 200, showOverflow: true },
     {
       field: 'description',
       title: '问卷描述',
-      width: 250,
       showOverflow: true,
+      minWidth: 200,
       editRender: {
         name: 'VxeInput',
       },
@@ -126,16 +127,82 @@ export function useQuestionGridColumns() {
       title: '创建时间',
       width: 150,
       formatter: 'formatDateTime',
-      resizable: false,
     },
     {
       field: 'operation',
       title: '操作',
-      minWidth: 120,
-      align: 'center',
+      width: 180,
       fixed: 'right', // 固定在右侧
       showOverflow: false, // 不显示溢出内容的省略号
+      resizable: false,
       slots: { default: 'operation' },
     },
   ];
 }
+
+// 问题配置表格列配置
+export function useQuestionConfigGridColumns() {
+  return [
+    {
+      title: '维度名称',
+      field: 'dimensionName',
+      width: 120,
+    },
+    {
+      title: '题目索引',
+      field: 'questionIndex',
+      slots: { default: 'questionIndex' },
+    },
+    {
+      title: '计算类型',
+      field: 'calculateType',
+      width: 120,
+      formatter: ({ cellValue }: { cellValue: number }) => {
+        const option = calculateTypeOptions.find(
+          (opt) => opt.value === cellValue,
+        );
+        return option?.label || cellValue;
+      },
+    },
+    {
+      title: '计算公式',
+      field: 'calculateFormula',
+      width: 200,
+      showOverflow: true,
+    },
+    {
+      title: '老师评语',
+      field: 'teacherComment',
+      showOverflow: true,
+    },
+    {
+      title: '学生评语',
+      field: 'studentComment',
+      showOverflow: true,
+    },
+    {
+      title: '是否异常配置',
+      field: 'isAbnormal',
+      width: 100,
+      slots: { default: 'isAbnormal' },
+    },
+    {
+      title: '操作',
+      field: 'action',
+      width: 180,
+      fixed: 'right' as const,
+      resizable: false,
+      slots: { default: 'action' },
+    },
+  ];
+}
+
+// 计算类型选项
+const calculateTypeOptions = [
+  { label: '分数区间', value: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE.SCORE },
+  {
+    label: '年龄性别与分数区间',
+    value: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE.AGE_SEX_SCORE,
+  },
+  { label: '最多选择', value: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE.MOST_CHOOSE },
+];

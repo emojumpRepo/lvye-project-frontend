@@ -25,6 +25,9 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'EvaluationQuestionnaire',
         path: 'questionnaire',
+        meta: {
+          title: '测评问卷',
+        },
         component: () => import('#/views/evaluation/questionnaire.vue'),
       },
       {

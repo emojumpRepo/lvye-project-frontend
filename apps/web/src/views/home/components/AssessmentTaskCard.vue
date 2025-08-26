@@ -3,57 +3,71 @@ import type { AssessmentTask } from '@vben/types';
 
 import { useRouter } from 'vue-router';
 
+import { ASSESSMENT_STATUS } from '@vben/types';
+
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
+
+import { AssessmentTaskParticipantStatus } from '#/api/constant';
 
 const props = defineProps<{ task: AssessmentTask }>();
 
 const router = useRouter();
 
-function getPercent(task: AssessmentTask): number {
-  if (typeof task.completionRate === 'number') {
-    return Math.min(100, Math.max(0, Math.round(task.completionRate)));
-  }
-  if (
-    typeof task.finishNum === 'number' &&
-    typeof task.totalNum === 'number' &&
-    task.totalNum > 0
-  ) {
-    return Math.round((task.finishNum / task.totalNum) * 100);
-  }
-  return 0;
-}
-
 function getActionText(task: AssessmentTask) {
-  const percent = getPercent(task);
-  if (task.status === 1)
-    return percent > 0 && percent < 100 ? '继续答题' : '去答题';
-  if (task.status === 2) return '查看结果';
-  if (task.status === 3) return '已取消';
-  return '开始';
+  switch (task.participantStatus) {
+    case AssessmentTaskParticipantStatus.COMPLETED: {
+      return '查看结果';
+    }
+    case AssessmentTaskParticipantStatus.IN_PROGRESS: {
+      return '继续答题';
+    }
+    case AssessmentTaskParticipantStatus.NOT_STARTED: {
+      return '去答题';
+    }
+    default: {
+      return '去答题';
+    }
+  }
 }
 
 function isActionDisabled(task: AssessmentTask) {
-  return task.status === 3;
+  return task.status === ASSESSMENT_STATUS.ENDED;
 }
 
 function handleClick() {
-  router.push(`/evaluation/assessment/${props.task.taskNo}`);
+  const { task } = props;
+  if (task.status === ASSESSMENT_STATUS.ENDED) {
+    message.warning('此测评任务已结束，无法答题哦');
+  }
+  if (task.scenarioId) {
+    router.push({
+      path: '/evaluation/scene',
+      query: {
+        taskNo: task.taskNo,
+      },
+    });
+  } else {
+    router.push(`/evaluation/assessment/${task.taskNo}`);
+  }
   return;
-  switch (props.task.status) {
+  switch (task.participantStatus) {
+    case 0:
     case 1: {
-      // 跳转到测评详情页面，传递任务ID
-      router.push(
-        `/evaluation/assessment/${props.task.id || props.task.taskNo}`,
-      );
+      if (task.scenarioId) {
+        router.push({
+          path: '/evaluation/scene',
+          query: {
+            taskNo: task.taskNo,
+          },
+        });
+      } else {
+        router.push(`/evaluation/assessment/${task.taskNo}`);
+      }
       break;
     }
     case 2: {
       router.push('/evaluation/result');
-      break;
-    }
-    case 3: {
-      message.warning('测评已取消');
       break;
     }
   }
@@ -77,15 +91,16 @@ function handleClick() {
         <div class="h-2 w-full rounded-full bg-emerald-100/60">
           <div
             class="h-2 rounded-full bg-emerald-500 transition-all"
-            :style="{ width: `${getPercent(task)}%` }"
+            :style="{ width: `${task.progress}%` }"
           ></div>
         </div>
         <div class="mt-1 text-xs text-emerald-900/70">
-          完成度：{{ getPercent(task) }}%
+          完成度：{{ task.progress }}%
         </div>
       </div>
       <button
-        class="shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        v-if="task.status !== ASSESSMENT_STATUS.ENDED"
+        class="box-border w-24 shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         :disabled="isActionDisabled(task)"
         @click="handleClick"
       >

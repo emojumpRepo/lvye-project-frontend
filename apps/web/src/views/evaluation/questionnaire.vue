@@ -4,27 +4,41 @@ import type { EvaluationScene } from './data';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { useUserStore } from '@vben/stores';
+
+import { storeToRefs } from 'pinia';
+
 import QuestionnaireContainer from './components/QuestionnaireContainer.vue';
 import { EVALUATION_SCENES } from './data';
 
 const route = useRoute();
 const router = useRouter();
 
-const sceneData = ref<EvaluationScene | null>(null);
-const iframeSrc = ref(
-  'http://localhost:8080/render/zkBhlefz?t=1755843068206&userId=157&assessmentId=28&questionId=9',
-);
+const surveyBaseUrl = import.meta.env.VITE_SURVEY_URL;
 
-// 根据场景数据判断是否需要介绍
-const hasIntro = ref(true);
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
+
+const sceneData = ref<EvaluationScene | null>(null);
+
+const hasIntro = ref(false); // 是否需要介绍
+const hasScene = ref(false); // 是否需要场景
+
+const iframeSrc = ref('');
 
 onMounted(() => {
-  const scene = route.query.scene as string;
-  sceneData.value = EVALUATION_SCENES.find((s) => s.id === scene) || null;
+  const questionnaireId = route.query.questionnaireId as string;
+  const sceneId = route.query.sceneId as string;
+  const questionnaireLink = route.query.questionnaireLink as string;
+  const assessmentTaskNo = route.query.assessmentTaskNo as string;
 
-  // 根据场景数据或其他逻辑判断是否需要介绍
-  // 这里可以根据实际需求调整逻辑
-  hasIntro.value = !!sceneData.value;
+  if (sceneId) {
+    hasScene.value = true;
+    hasIntro.value = true;
+    sceneData.value = EVALUATION_SCENES.find((s) => s.id === sceneId) || null;
+  }
+
+  iframeSrc.value = `${surveyBaseUrl}${questionnaireLink}&userId=${userInfo.value?.id}&assessmentNo=${assessmentTaskNo}&questionId=${questionnaireId}`;
 });
 
 function handleBack() {

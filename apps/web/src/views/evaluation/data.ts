@@ -3,7 +3,8 @@ export type EvaluationScene = {
   disabled: boolean;
   evaluation: {
     description: string;
-    id: string;
+    id: number;
+    link: string;
     name: string;
   };
   icon: string;
@@ -40,9 +41,10 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     },
     time: 5,
     evaluation: {
-      id: 'physical-fitness',
+      id: 12,
       name: '体能测评',
       description: '测试身体协调性和运动能力',
+      link: 'http://localhost:8080/render/rrvObpEj?t=1756211417105',
     },
   },
   {
@@ -54,9 +56,10 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     position: { right: '33%', top: '24%' },
     disabled: false,
     evaluation: {
-      id: 'reading-comprehension',
+      id: 10,
       name: '阅读理解能力',
       description: '评估阅读理解和分析能力',
+      link: 'http://localhost:8080/render/UHprKVMV?t=1756211457214',
     },
     introDesc: '你将会需要思考你是如何看待你自己的',
     teacherBubble: {
@@ -82,15 +85,16 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     },
     time: 3,
     evaluation: {
-      id: 'social-skills',
+      id: 13,
       name: '社交能力测评',
       description: '评估人际交往能力',
+      link: 'http://localhost:8080/render/BWnQlCSz?t=1756211471459',
     },
   },
   {
     id: 'teaching-building',
     type: 'teaching',
-    name: '教学楼',
+    name: '宿舍楼',
     icon: '🎓',
     order: 4,
     position: { right: '20%', top: '35%' },
@@ -103,9 +107,10 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     time: 5,
     disabled: false,
     evaluation: {
-      id: 'learning-ability',
+      id: 11,
       name: '学习能力测评',
       description: '评估学习方法和效率',
+      link: 'http://localhost:8080/render/zkBhlefz?t=1756211490199',
     },
   },
 ];
