@@ -78,3 +78,10 @@ export function getStatusTag(status: string) {
 export function getRiskLevelTag(riskLevel: string) {
   return RISK_LEVEL_TAG_MAP[riskLevel as keyof typeof RISK_LEVEL_TAG_MAP];
 }
+
+// 问卷配置计算类型
+export enum QUESTIONNAIRE_CONFIG_CALCULATE_TYPE {
+  AGE_SEX_SCORE = 2, // 年龄性别与分数区间
+  MOST_CHOOSE = 3, // 最多选择
+  SCORE = 1, // 分数区间
+}

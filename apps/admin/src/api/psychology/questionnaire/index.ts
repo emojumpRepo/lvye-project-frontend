@@ -1,5 +1,6 @@
 import type { QuestionnaireVO } from '@vben/types';
 
+import { QUESTIONNAIRE_CONFIG_CALCULATE_TYPE } from '#/api/constants';
 import { requestClient } from '#/api/request';
 
 export interface QuestionnairePageReqVO {
@@ -10,6 +11,37 @@ export interface QuestionnairePageReqVO {
   questionnaireType?: number;
   isOpen?: number;
   createTime?: string[];
+}
+
+export interface QuestionnaireConfigBaseVO {
+  questionnaireId: number; // 问卷ID
+  dimensionName: string; // 维度名称
+  questionIndex: string; // 题目索引
+  calculateType: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE; // 计算类型
+  calculateFormula: string; // 计算公式
+  teacherComment: string; // 老师评语
+  studentComment: string; // 学生评语
+  isAbnormal: number; // 是否异常
+}
+
+export interface QuestionnaireConfigVO extends QuestionnaireConfigBaseVO {
+  id: number; // 配置ID
+  createTime: string; // 创建时间
+}
+
+export interface QuestionnaireConfigPageReqVO {
+  pageNo?: number;
+  pageSize?: number;
+  questionnaireId?: number;
+  dimensionName?: string;
+  calculateType?: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE;
+  isAbnormal?: number;
+  createTime?: string[];
+}
+
+export interface QuestionnaireConfigPageResVO {
+  list: QuestionnaireConfigVO[];
+  total: number;
 }
 
 export interface QuestionnaireResultVO {
@@ -114,6 +146,49 @@ export const testQuestionnaireLink = (id: number) => {
 // 同步最新问卷数据
 export const syncQuestionnaireData = () => {
   return requestClient.post('/psychology/questionnaire/manual-sync');
+};
+
+// =============== 问卷配置 ===============
+
+export const getQuestionnaireConfigPage = (
+  params: QuestionnaireConfigPageReqVO,
+) => {
+  return requestClient.get<QuestionnaireConfigPageResVO>(
+    '/psychology/questionnaire-result-config/page',
+    { params },
+  );
+};
+
+export const getQuestionnaireConfigList = (questionnaireId: number) => {
+  return requestClient.get<QuestionnaireConfigPageResVO>(
+    `/psychology/questionnaire-result-config/list-by-questionnaire?questionnaireId=${questionnaireId}`,
+  );
+};
+
+export const getQuestionnaireConfig = (id: number) => {
+  return requestClient.get<QuestionnaireConfigVO>(
+    `/psychology/questionnaire-result-config/get?id=${id}`,
+  );
+};
+
+export const createQuestionnaireConfig = (data: QuestionnaireConfigBaseVO) => {
+  return requestClient.post(
+    '/psychology/questionnaire-result-config/create',
+    data,
+  );
+};
+
+export const updateQuestionnaireConfig = (data: QuestionnaireConfigVO) => {
+  return requestClient.put(
+    '/psychology/questionnaire-result-config/update',
+    data,
+  );
+};
+
+export const deleteQuestionnaireConfig = (id: number) => {
+  return requestClient.delete(
+    `/psychology/questionnaire-result-config/delete?id=${id}`,
+  );
 };
 
 // =============== 问卷结果 ===============

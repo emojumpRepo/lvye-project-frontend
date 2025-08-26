@@ -21,6 +21,7 @@ import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
 
+import QuestionnaireConfigDialog from './components/QuestionnaireConfigDialog.vue';
 import QuestionnaireSearch from './components/QuestionnaireSearch.vue';
 import { useQuestionGridColumns } from './data';
 
@@ -30,6 +31,10 @@ const loading = ref(false);
 
 /** 子表的列表 */
 const selectQuestionnaire = ref<QuestionnaireVO>();
+
+// 配置弹窗相关
+const configDialogVisible = ref(false);
+const selectedQuestionnaire = ref<null | QuestionnaireVO>(null);
 
 // 处理加载状态
 function handleLoading(isLoading: boolean) {
@@ -129,6 +134,12 @@ async function onPause(row: QuestionnaireVO) {
   } finally {
     hideLoading();
   }
+}
+
+/** 配置问卷 */
+function onConfig(row: QuestionnaireVO) {
+  selectedQuestionnaire.value = row;
+  configDialogVisible.value = true;
 }
 
 // 处理搜索
@@ -289,6 +300,9 @@ onMounted(() => {
               >
                 暂停
               </Button>
+              <Button type="link" size="small" @click="onConfig(row)">
+                评分配置
+              </Button>
               <Button type="link" size="small" danger @click="onDelete(row)">
                 删除
               </Button>
@@ -297,6 +311,13 @@ onMounted(() => {
         </Grid>
       </div>
     </div>
+
+    <!-- 问卷配置弹窗 -->
+    <QuestionnaireConfigDialog
+      v-model:visible="configDialogVisible"
+      :questionnaire="selectedQuestionnaire"
+      @refresh="onRefresh"
+    />
   </div>
 </template>
 

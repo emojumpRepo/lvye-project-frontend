@@ -20,6 +20,8 @@ export {
   CircleAlert,
   CircleCheckBig,
   CircleHelp,
+  CircleMinus,
+  CirclePlus,
   CircleX,
   ClipboardList,
   CloudUpload,
