@@ -25,8 +25,9 @@ async function getMyTasks() {
     tasksLoading.value = true;
     const res = await getMyAssessmentTask();
     // 兼容 PageResult 结构
-    // @ts-ignore
-    myTasks.value = (res as AssessmentTask[]) || [];
+    console.warn(res);
+
+    myTasks.value = (res as unknown as AssessmentTask[]) || [];
   } catch (error) {
     // 记录错误但不抛出
     console.error(error);
@@ -77,10 +78,12 @@ function onTaskAction(task: AssessmentTask) {
             >
               <span
                 class="bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent"
-                >我的测评任务</span
-              >
+                >我的测评任务</span>
             </div>
-            <div v-if="tasksLoading" class="flex items-center justify-center">
+            <div
+              v-if="tasksLoading"
+              class="flex flex-1 items-center justify-center"
+            >
               <Spin spinning />
             </div>
             <template v-else>

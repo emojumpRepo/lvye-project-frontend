@@ -24,6 +24,7 @@ export interface AssessmentTask {
   creatorName?: string;
   createTime?: number;
   updateTime?: number;
+  scenarioId?: number; // 场景ID
   // 任务参与信息
   progress: number; // 任务参与进度
   participantStatus: AssessmentTaskParticipantStatus; // 任务参与状态
