@@ -12,6 +12,7 @@ const emit = defineEmits<{
   (e: 'search', params: any): void;
   (e: 'tabChange', status: number | undefined): void;
   (e: 'reset'): void;
+  (e: 'createAssessment'): void;
 }>();
 
 const tabs = [
@@ -117,6 +118,9 @@ onMounted(async () => {
       :tab-bar-gutter="24"
       @change="handleTabChange"
     >
+      <template #tabBarExtraContent>
+        <slot name="extra" />
+      </template>
       <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.label">
         <Form />
       </Tabs.TabPane>

@@ -69,7 +69,7 @@ const isButtonAvailable = computed(() => {
 // 计算实际完成度百分比
 const completionPercentage = computed(() => {
   if (props.card.totalNum === 0) return 0;
-  return Math.round((props.card.finishNum ?? 0) / (props.card.totalNum ?? 0));
+  return Math.round((props.card.finishNum ?? 0) / (props.card.totalNum ?? 0)) * 100;
 });
 
 async function handleCopyTaskNo() {
