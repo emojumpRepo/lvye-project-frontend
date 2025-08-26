@@ -1,182 +1,129 @@
 <script setup lang="ts">
-import type { AssessmentTask } from '@vben/types';
-
-import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
-
-import { onMounted, ref, watchEffect } from 'vue';
-
-import { getStatusLabel } from '@vben/types';
-
-import dayjs from 'dayjs';
+import { ref } from 'vue';
 
 import {
-  getAssessmentStatistics,
-  getAssessmentTask,
-} from '#/api/psychology/assessment';
+  Pagination as APagination,
+  Progress as AProgress,
+  Spin as ASpin,
+} from 'ant-design-vue';
+
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
-const props = defineProps<{ taskNo: string }>();
+const props = defineProps<{
+  loading: boolean;
+  taskInfo: any;
+}>();
 
-const taskInfo = ref({
-  task: {
-    taskNo: '',
-    questionnaireName: '',
-    createTime: '',
-    endTime: '',
-    status: '',
-  },
-  participate: { total: 0, completed: 0, completionRate: 0 },
-  riskDistribution: { normal: 0, attention: 0, warning: 0, highRisk: 0 },
-});
+const currentPage = ref(1);
+const pageSize = ref(5);
+const totalPages = ref(20);
 
-async function loadTask() {
-  const base: AssessmentTask = await getAssessmentTask(props.taskNo);
-  const stats: PsychologyAssessmentApi.AssessmentStatistics =
-    await getAssessmentStatistics(base?.taskNo ?? '');
-  taskInfo.value = {
-    task: {
-      taskNo: base?.taskNo ?? '',
-      questionnaireName: base?.questionnaireName ?? '',
-      createTime: dayjs(base.createTime).format('YYYY-MM-DD HH:mm'),
-      endTime: base.deadline
-        ? dayjs(base.deadline).format('YYYY-MM-DD HH:mm')
-        : '-',
-      status: getStatusLabel(base.status ?? 0, 'assessment'),
-    },
-    participate: {
-      total: Number(stats.totalParticipants ?? 0),
-      completed: Number(stats.completedParticipants ?? 0),
-      completionRate: Number(stats.completionRate ?? 0),
-    },
-    riskDistribution: {
-      normal: Number(stats.notStartedParticipants ?? 0),
-      attention: Number(stats.inProgressParticipants ?? 0),
-      warning: Math.max(
-        0,
-        Number(stats.totalParticipants ?? 0) -
-          Number(stats.inProgressParticipants ?? 0) -
-          Number(stats.completedParticipants ?? 0) -
-          Number(stats.notStartedParticipants ?? 0),
-      ),
-      highRisk: 0,
-    },
-  };
-}
-
-onMounted(() => {
-  if (props.taskNo) {
-    loadTask();
-  }
-});
-watchEffect(() => {
-  if (props.taskNo) {
-    loadTask();
-  }
-});
+const goToPage = (p: number) => {
+  if (p >= 1 && p <= totalPages.value) currentPage.value = p;
+};
 </script>
 
 <template>
   <div class="box-border flex flex-col gap-6 rounded-xl bg-white p-6">
-    <div>
-      <LyCardTitle
-        icon="mingcute:task-2-fill"
-        title="任务信息"
-        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
-      />
-      <div class="space-y-3 text-sm">
-        <div class="flex justify-between">
-          <span>任务</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.taskNo }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>测评量表</span>
-          <span class="text-[#4C4C4D]">{{
-            taskInfo.task.questionnaireName
-          }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>创建时间</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.createTime }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>截止时间</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.endTime }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>任务状态</span>
-          <span class="text-[#4C4C4D]">{{ taskInfo.task.status }}</span>
-        </div>
-      </div>
-    </div>
+    <ASpin :spinning="props.loading">
+      <div class="flex h-full flex-col justify-between gap-6">
+        <div class="space-y-6">
+          <LyCardTitle
+            icon="mingcute:task-2-fill"
+            title="测评完成率"
+            hide-line
+            icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
+          />
 
-    <div>
-      <LyCardTitle
-        icon="tdesign:user-filled"
-        title="参与情况"
-        icon-bg="linear-gradient(143.39deg, #d0e2ff 11.39%, #3d7cfa 89.3%)"
-      />
-      <div class="box-border grid grid-cols-3 gap-10 p-4">
-        <div class="text-center">
-          <div class="text-xl font-bold text-gray-900">
-            {{ taskInfo.participate.total }}
+          <div class="grid grid-cols-4 gap-4">
+            <div
+              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+            >
+              <span class="text-primary text-2xl font-bold">80%</span>
+              <span class="text-xs text-[#979899]">总完成率</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+            >
+              <span class="text-2xl font-bold text-[#4C4C4D]">20</span>
+              <span class="text-xs text-[#979899]">总人数</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+            >
+              <span class="text-primary text-2xl font-bold">0</span>
+              <span class="text-xs text-[#979899]">已完成</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+            >
+              <span class="text-2xl font-bold text-[#FF9C05]">20</span>
+              <span class="text-xs text-[#979899]">未完成</span>
+            </div>
           </div>
-          <div class="mt-2 text-xs text-[#979899]">应参与人数</div>
-        </div>
-        <div class="text-center">
-          <div class="text-xl font-bold text-gray-900">
-            {{ taskInfo.participate.completed }}
-          </div>
-          <div class="mt-2 text-xs text-[#979899]">已完成人数</div>
-        </div>
-        <div class="text-center">
-          <div class="text-xl font-bold text-gray-900">
-            {{ taskInfo.participate.completionRate }}%
-          </div>
-          <div class="mt-2 text-xs text-[#979899]">完成率</div>
-        </div>
-      </div>
-    </div>
 
-    <div>
-      <LyCardTitle
-        icon="ph:bell-ringing-fill"
-        title="风险分布"
-        icon-bg="linear-gradient(143.39deg, #ffb46e 11.39%, #ff6c43 89.3%)"
-      />
-      <div class="mt-8 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="h-3 w-3 rounded bg-[#04DC70]"></span><span>正常</span>
+          <div class="flex flex-col gap-2 rounded-2xl bg-[#F7F8FA] p-4">
+            <div class="flex items-center justify-between gap-4">
+              <span class="whitespace-nowrap font-bold">三年级 1 班</span>
+              <AProgress :percent="80" :size="14" />
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                23/50
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="whitespace-nowrap font-bold">三年级 1 班</span>
+              <AProgress :percent="80" :size="14" />
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                23/50
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="whitespace-nowrap font-bold">三年级 1 班</span>
+              <AProgress :percent="80" :size="14" />
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                23/50
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="whitespace-nowrap font-bold">三年级 1 班</span>
+              <AProgress :percent="80" :size="14" />
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                23/50
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="whitespace-nowrap font-bold">三年级 1 班</span>
+              <AProgress :percent="80" :size="14" />
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                23/50
+              </span>
+            </div>
           </div>
-          <span class="text-[#979899]">
-            {{ taskInfo.riskDistribution.normal }}人
-          </span>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="h-3 w-3 rounded bg-[#1966FF]"></span><span>关注</span>
-          </div>
-          <span class="text-[#979899]">
-            {{ taskInfo.riskDistribution.attention }}人
-          </span>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="h-3 w-3 rounded bg-[#FF9C05]"></span><span>预警</span>
-          </div>
-          <span class="text-[#979899]">
-            {{ taskInfo.riskDistribution.warning }}人
-          </span>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5 text-sm">
-            <span class="h-3 w-3 rounded bg-[#FF0831]"></span><span>高危</span>
-          </div>
-          <span class="text-[#979899]">
-            {{ taskInfo.riskDistribution.highRisk }}人
-          </span>
+
+        <div class="flex justify-end">
+          <APagination
+            :current="currentPage"
+            :page-size="pageSize"
+            :total="20"
+            @change="goToPage"
+          />
         </div>
       </div>
-    </div>
+    </ASpin>
   </div>
 </template>
+
+<style lang="scss" scoped>
+:deep(.ant-progress-line) {
+  margin-bottom: 5px !important;
+}
+
+:deep(.ant-spin-nested-loading) {
+  height: 100% !important;
+}
+
+:deep(.ant-spin-container) {
+  height: 100% !important;
+}
+</style>

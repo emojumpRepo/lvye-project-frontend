@@ -5,7 +5,7 @@ import type { SystemTenantPackageApi } from '#/api/system/tenant-package';
 
 import { onMounted, ref } from 'vue';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
@@ -143,10 +143,6 @@ onMounted(async () => {
 </script>
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="SaaS 多租户" url="https://doc.iocoder.cn/saas-tenant/" />
-    </template>
-
     <FormModal @success="onRefresh" />
     <Grid table-title="租户列表">
       <template #toolbar-tools>

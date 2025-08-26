@@ -8,7 +8,7 @@ import { onMounted, ref } from 'vue';
 
 import { Button, message } from 'ant-design-vue';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteQuestionnaire,
   getQuestionnaireList,
@@ -217,25 +217,15 @@ onMounted(() => {
 
 <template>
   <div class="flex h-full flex-col p-6">
-    <div class="my-4 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div>
         <QuestionnaireSearch @loading="handleLoading" @search="handleSearch" />
       </div>
+      <div>
+        <Button type="primary" @click="handleSync">同步最新数据</Button>
+      </div>
       <div class="min-h-0 flex-1 overflow-hidden">
         <Grid>
-          <template #toolbar-tools>
-            <TableAction
-              :actions="[
-                {
-                  label: '同步最新数据',
-                  type: 'primary',
-                  icon: ACTION_ICON.REFRESH,
-                  onClick: handleSync,
-                },
-              ]"
-            />
-          </template>
-
           <!-- 问卷类型列 -->
           <template #type="{ row }">
             <LyTag
@@ -330,7 +320,7 @@ onMounted(() => {
   background: transparent !important;
 }
 
-.vxe-grid {
-  padding: 0 !important;
-}
+// .vxe-grid {
+//   padding: 0 !important;
+// }
 </style>

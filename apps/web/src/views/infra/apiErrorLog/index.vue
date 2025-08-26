@@ -83,12 +83,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="系统日志" url="https://doc.iocoder.cn/system-log/" />
-    </template>
-
-    <DetailModal @success="onRefresh" />
+  <Page auto-content-height><DetailModal @success="onRefresh" />
     <Grid table-title="API 错误日志列表">
       <template #toolbar-tools>
         <TableAction

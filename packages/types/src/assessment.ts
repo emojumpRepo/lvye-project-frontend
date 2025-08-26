@@ -4,7 +4,7 @@ import type { QuestionnaireVO } from './questionnaire';
 export interface AssessmentTask {
   id?: number;
   taskNo?: string;
-  deadline?: Date;
+  deadline?: Date | number | string;
   finishNum?: number; // 完成人数
   totalNum?: number; // 总人数
   taskName: string;
@@ -12,17 +12,18 @@ export interface AssessmentTask {
   templateId: number;
   templateName?: string;
   status: number;
-  startTime?: Date;
+  startline?: Date | number | string;
   questionnaireIds?: number[];
   questionnaires: QuestionnaireVO[];
   endTime?: Date;
   targetType: number;
+  targetAudience?: string;
   targetIds?: number[];
   allowParentParticipation?: boolean;
   creatorUserId?: number;
   creatorName?: string;
-  createTime?: Date;
-  updateTime?: Date;
+  createTime?: number;
+  updateTime?: number;
   // 任务参与信息
   progress: number; // 任务参与进度
   participantStatus: AssessmentTaskParticipantStatus; // 任务参与状态

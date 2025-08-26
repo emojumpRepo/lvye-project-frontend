@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SystemMailLogApi } from '#/api/system/mail/log';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getMailLogPage } from '#/api/system/mail/log';
@@ -56,10 +56,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="邮件配置" url="https://doc.iocoder.cn/mail" />
-    </template>
-
     <DetailModal @success="onRefresh" />
     <Grid table-title="邮件日志列表">
       <template #actions="{ row }">

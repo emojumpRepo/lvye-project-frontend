@@ -174,15 +174,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page>
-    <template #doc>
-      <DocAlert
-        title="WebSocket 实时通信"
-        url="https://doc.iocoder.cn/websocket/"
-      />
-    </template>
-
-    <div class="mt-4 flex flex-col gap-4 md:flex-row">
+  <Page><div class="mt-4 flex flex-col gap-4 md:flex-row">
       <!-- 左侧：建立连接、发送消息 -->
       <Card :bordered="false" class="w-full md:w-1/2">
         <template #title>

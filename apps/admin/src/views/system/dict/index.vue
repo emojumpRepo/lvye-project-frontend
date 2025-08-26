@@ -14,12 +14,7 @@ function handleDictTypeSelect(dictType: string) {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="字典管理" url="https://doc.iocoder.cn/system-dict/" />
-    </template>
-
-    <div class="flex h-full">
+  <Page auto-content-height><div class="flex h-full">
       <!-- 左侧字典类型列表 -->
       <div class="w-1/2 pr-3">
         <TypeGrid @select="handleDictTypeSelect" />

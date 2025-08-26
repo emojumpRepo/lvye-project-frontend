@@ -149,16 +149,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="功能权限"
-        url="https://doc.iocoder.cn/resource-permission"
-      />
-      <DocAlert title="数据权限" url="https://doc.iocoder.cn/data-permission" />
-    </template>
-
-    <FormModal @success="onRefresh" />
+  <Page auto-content-height><FormModal @success="onRefresh" />
     <AssignDataPermissionFormModel @success="onRefresh" />
     <AssignMenuFormModel @success="onRefresh" />
     <Grid table-title="角色列表">

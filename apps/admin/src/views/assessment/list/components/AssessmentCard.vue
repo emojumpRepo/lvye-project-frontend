@@ -4,19 +4,67 @@ import type { AssessmentTask } from '@vben/types';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { useVbenModal } from '@vben/common-ui';
 import { Copy } from '@vben/icons';
 import { getStatusColor, getStatusLabel } from '@vben/types';
 
-import { Divider, message, Progress, Tag } from 'ant-design-vue';
+import {
+  Divider,
+  DropdownButton,
+  Menu,
+  message,
+  Progress,
+  Tag,
+} from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import LyButton from '#/components/LyButton/index.vue';
+import { deleteAssessmentTask } from '#/api/psychology/assessment/index';
+import EditAssessmentDialog from '#/components/Dialog/EditAssessmentDialog/index.vue';
 
 const props = defineProps<{
   card: AssessmentTask;
 }>();
 
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
+
 const router = useRouter();
+
+// 编辑任务
+const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
+  connectedComponent: EditAssessmentDialog,
+});
+
+// 删除任务
+const [DeleteAssessmentModal, deleteAssessmentApi] = useVbenModal({
+  fullscreenButton: false,
+  header: false,
+  footerClass: '!border-t-0',
+  contentClass: '!min-h-20',
+  async onConfirm() {
+    if (!props.card.taskNo) {
+      message.error('任务编号不能为空');
+      return;
+    }
+    try {
+      const result = await deleteAssessmentTask(props.card.taskNo);
+      if (result) {
+        message.success('删除成功');
+        emit('refresh');
+        deleteAssessmentApi.close();
+      } else {
+        message.error('删除失败');
+      }
+    } catch (error) {
+      console.error('删除任务失败', error);
+    }
+  },
+});
+
+const isButtonAvailable = computed(() => {
+  return props.card.status === 1 && props.card.finishNum === 0;
+});
 
 // 计算实际完成度百分比
 const completionPercentage = computed(() => {
@@ -37,6 +85,27 @@ async function handleCopyTaskNo() {
 // 处理查看详情点击事件
 function handleViewDetail() {
   router.push(`/assessment/detail/${props.card.taskNo}`);
+}
+
+/**
+ * 编辑任务
+ */
+function handleEditTask() {
+  editAssessmentApi
+    .setData({
+      id: props.card.id,
+      targetAudience: props.card.targetAudience,
+      startline: props.card.startline,
+      taskNo: props.card.taskNo,
+      taskName: props.card.taskName,
+      deadline: props.card.deadline,
+      description: props.card.description,
+    })
+    .open();
+}
+
+function handleDeleteTask() {
+  deleteAssessmentApi.open();
 }
 </script>
 
@@ -87,10 +156,31 @@ function handleViewDetail() {
 
     <!-- 操作按钮 -->
     <div class="flex justify-end">
-      <LyButton type="success" size="middle" @click="handleViewDetail">
+      <!-- <LyButton type="success" size="middle" @click="handleViewDetail">
         查看详情
-      </LyButton>
+      </LyButton> -->
+      <DropdownButton type="primary" @click="handleViewDetail">
+        查看详情
+        <template #overlay>
+          <Menu>
+            <Menu.Item key="1" @click="handleEditTask">
+              <button :disabled="!isButtonAvailable">编辑任务</button>
+            </Menu.Item>
+            <Menu.Item key="2" @click="handleDeleteTask">
+              <button :disabled="!isButtonAvailable">删除任务</button>
+            </Menu.Item>
+            <!-- <Menu.Item key="3" @click="handleCloseTask"> 关闭任务 </Menu.Item> -->
+          </Menu>
+        </template>
+      </DropdownButton>
     </div>
+
+    <EditAssessmentModal @refresh="emit('refresh')" />
+    <DeleteAssessmentModal title="删除任务">
+      <div class="mt-5 p-2 text-sm">
+        关闭后学生将无法继续参与测评，已完成的数据保留。确定要关闭吗？
+      </div>
+    </DeleteAssessmentModal>
   </div>
 </template>
 

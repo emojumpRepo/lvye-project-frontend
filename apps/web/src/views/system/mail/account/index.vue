@@ -4,7 +4,7 @@ import type { SystemMailAccountApi } from '#/api/system/mail/account';
 
 import { ref } from 'vue';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
 import { message } from 'ant-design-vue';
@@ -119,10 +119,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 <template>
   <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="邮件配置" url="https://doc.iocoder.cn/mail" />
-    </template>
-
     <FormModal @success="onRefresh" />
     <Grid table-title="邮箱账号列表">
       <template #toolbar-tools>

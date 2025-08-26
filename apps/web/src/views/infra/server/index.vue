@@ -26,11 +26,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="服务监控" url="https://doc.iocoder.cn/server-monitor/" />
-    </template>
-
-    <IFrame v-if="!loading" v-loading="loading" :src="src" />
+  <Page auto-content-height><IFrame v-if="!loading" v-loading="loading" :src="src" />
   </Page>
 </template>

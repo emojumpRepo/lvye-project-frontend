@@ -17,7 +17,7 @@ import {
   TenantDropdown,
   UserDropdown,
 } from '@vben/layouts';
-import { preferences } from '@vben/preferences';
+import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { formatDateTime } from '@vben/utils';
 
@@ -30,6 +30,7 @@ import {
   updateNotifyMessageRead,
 } from '#/api/system/notify/message';
 import { getSimpleTenantList } from '#/api/system/tenant';
+import LyButton from '#/components/LyButton/index.vue';
 import { $t } from '#/locales';
 import { router } from '#/router';
 import { useAuthStore } from '#/store';
@@ -41,6 +42,7 @@ const accessStore = useAccessStore();
 const { hasAccessByCodes } = useAccess();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const { closeOtherTabs, refreshTab } = useTabs();
+const { sidebarCollapsed } = usePreferences();
 
 const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
@@ -232,8 +234,10 @@ watch(
       <LockScreen :avatar @to-login="handleLogout" />
     </template>
     <template #sidebar-bottom-custom>
-      <div class="p-2 text-center text-sm text-gray-500">
-        底部自定义区域: 111
+      <div class="mb-4 px-2 text-center text-sm text-gray-500">
+        <LyButton type="default" size="large" block v-if="!sidebarCollapsed">
+          <span>使用说明</span>
+        </LyButton>
       </div>
     </template>
   </BasicLayout>

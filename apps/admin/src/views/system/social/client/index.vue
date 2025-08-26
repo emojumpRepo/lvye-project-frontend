@@ -85,12 +85,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert title="三方登录" url="https://doc.iocoder.cn/social-user/" />
-    </template>
-
-    <FormModal @success="onRefresh" />
+  <Page auto-content-height><FormModal @success="onRefresh" />
     <Grid table-title="社交客户端列表">
       <template #toolbar-tools>
         <TableAction

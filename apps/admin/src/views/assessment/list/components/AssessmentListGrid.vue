@@ -43,7 +43,12 @@ defineExpose({
           <div
             class="grid flex-1 grid-cols-1 grid-rows-3 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
           >
-            <AssessmentCard v-for="card in cards" :key="card.id" :card="card" />
+            <AssessmentCard
+              v-for="card in cards"
+              :key="card.id"
+              :card="card"
+              @refresh="loadData"
+            />
           </div>
         </template>
         <template v-else>

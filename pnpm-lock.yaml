@@ -551,7 +551,7 @@ catalogs:
       version: 4.7.15
     vxe-table:
       specifier: ^4.14.4
-      version: 4.14.4
+      version: 4.15.10
     watermark-js-plus:
       specifier: ^1.6.2
       version: 1.6.2
@@ -1783,7 +1783,7 @@ importers:
         version: 4.7.15(vue@3.5.17(typescript@5.8.3))
       vxe-table:
         specifier: 'catalog:'
-        version: 4.14.4(vue@3.5.17(typescript@5.8.3))
+        version: 4.15.10(vue@3.5.17(typescript@5.8.3))
     devDependencies:
       '@types/markdown-it':
         specifier: 'catalog:'
@@ -5164,6 +5164,11 @@ packages:
 
   '@vueuse/shared@9.13.0':
     resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
+
+  '@vxe-ui/core@4.2.11':
+    resolution: {integrity: sha512-Cv0XKTGgFD+CD2MGixxM+k60Y3tFEJYErQj59tuPd0y0HuSFc7sQk0fuXdbcNgxZxtAi4zX3nsDk3kY+/HeAgQ==}
+    peerDependencies:
+      vue: ^3.5.17
 
   '@vxe-ui/core@4.2.5':
     resolution: {integrity: sha512-K/0ae1VoCaVHZTnV3rUFsQdkwCU6dKjbFVtf0bvVRCYG5v+KrKbvFBSkqdnGT7sDoeotPVjL/WjBbl64RpHs3w==}
@@ -11279,8 +11284,11 @@ packages:
   vxe-pc-ui@4.7.15:
     resolution: {integrity: sha512-kaCiBl9BdKGihVXsL69WMEILtEQVut3ogVEzExYUJaCS5NGWsVkRQo2wQB/sgJxbNjlK7zq5kmgdmxbxNUyVcg==}
 
-  vxe-table@4.14.4:
-    resolution: {integrity: sha512-h4KDw8DHZz037kNULSJD2lEiNifAtHNw5XvXSH0Ropk60WK5My1zj9Kb2rX+uU1oGfh75dmv71JzR6V2iWoSUw==}
+  vxe-pc-ui@4.8.23:
+    resolution: {integrity: sha512-DGIcG5tw7MP5Vhs3ZSRKeIijKhMa+SR7B1pqq57fFPVifWGddu6iPMqeNHjt51oji+6yd/t3n17pP6w9ypJawg==}
+
+  vxe-table@4.15.10:
+    resolution: {integrity: sha512-1bTw5PEuwpNCFZdQ326JRw5sgldv96in77RGNQYYhTtsjXIOvmLx82QBThY5UR+r3ig8c2oGz7nsRtN1wBLRAg==}
 
   wangeditor@4.7.15:
     resolution: {integrity: sha512-aPTdREd8BxXVyJ5MI+LU83FQ7u1EPd341iXIorRNYSOvoimNoZ4nPg+yn3FGbB93/owEa6buLw8wdhYnMCJQLg==}
@@ -15259,6 +15267,12 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+
+  '@vxe-ui/core@4.2.11(vue@3.5.17(typescript@5.8.3))':
+    dependencies:
+      dom-zindex: 1.0.6
+      vue: 3.5.17(typescript@5.8.3)
+      xe-utils: 3.7.8
 
   '@vxe-ui/core@4.2.5(vue@3.5.17(typescript@5.8.3))':
     dependencies:
@@ -22050,9 +22064,15 @@ snapshots:
     transitivePeerDependencies:
       - vue
 
-  vxe-table@4.14.4(vue@3.5.17(typescript@5.8.3)):
+  vxe-pc-ui@4.8.23(vue@3.5.17(typescript@5.8.3)):
     dependencies:
-      vxe-pc-ui: 4.7.15(vue@3.5.17(typescript@5.8.3))
+      '@vxe-ui/core': 4.2.11(vue@3.5.17(typescript@5.8.3))
+    transitivePeerDependencies:
+      - vue
+
+  vxe-table@4.15.10(vue@3.5.17(typescript@5.8.3)):
+    dependencies:
+      vxe-pc-ui: 4.8.23(vue@3.5.17(typescript@5.8.3))
     transitivePeerDependencies:
       - vue
 

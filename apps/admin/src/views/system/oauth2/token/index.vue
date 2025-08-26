@@ -69,15 +69,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="OAuth 2.0（SSO 单点登录）"
-        url="https://doc.iocoder.cn/oauth2/"
-      />
-    </template>
-
-    <Grid table-title="令牌列表">
+  <Page auto-content-height><Grid table-title="令牌列表">
       <template #actions="{ row }">
         <TableAction
           :actions="[
