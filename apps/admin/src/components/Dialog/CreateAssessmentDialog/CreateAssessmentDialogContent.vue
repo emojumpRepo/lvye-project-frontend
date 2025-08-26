@@ -112,7 +112,7 @@ const basicInfoFormData = ref<PsychologyAssessmentApi.BasicInfo>({
 const selectedAssessments = ref<QuestionnaireVO[]>([]);
 const selectedScenarioId = ref<number | undefined>(undefined);
 const targetSelectData = ref<PsychologyAssessmentApi.AssessmentTarget>({
-  type: 1,
+  type: 0,
   selected: [],
 });
 const canNext = ref(false);

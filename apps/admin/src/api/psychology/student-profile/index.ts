@@ -47,8 +47,8 @@ export namespace PsychologyStudentProfileApi {
   export interface StudentProfileSaveReq {
     id?: number;
     userId?: number;
-    studentNo: string;
-    name: string;
+    studentNo?: string;
+    name?: string;
     birthDate?: string;
     homeAddress?: string;
     sex?: number;
@@ -84,6 +84,17 @@ export namespace PsychologyStudentProfileApi {
     label: string;
     children?: { label: string; value: number }[];
   }
+
+  /** 学生档案时间线 */
+  export interface StudentProfileTimeline {
+    taskId: string;
+    taskNo: string;
+    taskName: string;
+    targetAudience: number;
+    status: number;
+    startline: number;
+    deadline: number;
+  }
 }
 
 /** 查询学生档案分页列表 */
@@ -113,7 +124,7 @@ export function createStudentProfile(
 export function updateStudentProfile(
   data: PsychologyStudentProfileApi.StudentProfileSaveReq,
 ) {
-  return requestClient.put('/psychology/student-profile/update', data);
+  return requestClient.post('/psychology/student-profile/update', data);
 }
 
 /** 删除学生档案 */
@@ -191,10 +202,10 @@ export function getDeptById(id: number) {
 }
 
 /** 获取学生时间线列表 */
-// export function getStudentProfileTimeline(studentProfileId: number) {
-//   return requestClient.get<
-//     PsychologyStudentProfileApi.StudentProfileTimeline[]
-//   >('/psychology/student-profile/timeline-list', {
-//     params: { studentProfileId },
-//   });
-// }
+export function getStudentProfileTimeline(studentProfileId: number) {
+  return requestClient.get<
+    PsychologyStudentProfileApi.StudentProfileTimeline[]
+  >('/psychology/student-profile/student-task-list', {
+    params: { studentProfileId },
+  });
+}

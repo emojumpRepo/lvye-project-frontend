@@ -24,14 +24,72 @@ export const TAG_TYPE = {
   },
 } as const;
 
+const STUDENT_PSYCHOLOGICAL_STATUS = {
+  success: {
+    backgroundColor: '#E4FFF0',
+    borderColor: '#8CFFC6',
+    color: '#04DC70',
+  },
+  processing: {
+    backgroundColor: '#1966FF14',
+    borderColor: '#1966FF66',
+    color: '#1966FF',
+  },
+  warning: {
+    backgroundColor: '#FF9C0514',
+    borderColor: '#FF9C0566',
+    color: '#FF9C05',
+  },
+  error: {
+    backgroundColor: '#FF08310D',
+    borderColor: '#FF083166',
+    color: '#FF0831',
+  },
+  pending: {
+    backgroundColor: '#1E96FF14',
+    borderColor: '#1E96FF66',
+    color: '#1E96FF',
+  },
+};
+
 /** 获取标签样式 */
-export function getTagByCategory(category: string, value: number | string) {
-  const dictObj = getDictObj(category, value);
+export function getTagByCategory(dictType: string, value: number | string) {
+  const dictObj = getDictObj(dictType, value);
   if (!dictObj) {
     return null;
   }
+
   return {
-    tagStyle: TAG_TYPE[dictObj.colorType as keyof typeof TAG_TYPE],
+    tagStyle:
+      STUDENT_PSYCHOLOGICAL_STATUS[
+        dictObj.colorType as keyof typeof STUDENT_PSYCHOLOGICAL_STATUS
+      ],
+    label: dictObj.label,
+    value: dictObj.value,
+  };
+}
+
+/** 学生心理状态标签 */
+export function getStudentPsychologicalStatusTag(
+  dictType: string,
+  value: number,
+) {
+  const dictObj = getDictObj(dictType, value);
+  if (!dictObj) {
+    return null;
+  }
+  const colorType =
+    STUDENT_PSYCHOLOGICAL_STATUS[
+      dictObj.colorType as keyof typeof STUDENT_PSYCHOLOGICAL_STATUS
+    ];
+  return {
+    colorConfig: {
+      style: {
+        backgroundColor: colorType.backgroundColor,
+        borderColor: colorType.borderColor,
+      },
+      color: colorType.color,
+    },
     label: dictObj.label,
     value: dictObj.value,
   };
@@ -77,4 +135,11 @@ export function getStatusTag(status: string) {
 // 获取风险等级标签
 export function getRiskLevelTag(riskLevel: string) {
   return RISK_LEVEL_TAG_MAP[riskLevel as keyof typeof RISK_LEVEL_TAG_MAP];
+}
+
+// 问卷配置计算类型
+export enum QUESTIONNAIRE_CONFIG_CALCULATE_TYPE {
+  AGE_SEX_SCORE = 2, // 年龄性别与分数区间
+  MOST_CHOOSE = 3, // 最多选择
+  SCORE = 1, // 分数区间
 }
