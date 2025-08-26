@@ -181,7 +181,7 @@ export function useQuestionConfigGridColumns() {
       showOverflow: true,
     },
     {
-      title: '是否异常',
+      title: '是否异常配置',
       field: 'isAbnormal',
       width: 100,
       slots: { default: 'isAbnormal' },

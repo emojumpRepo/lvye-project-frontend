@@ -38,7 +38,7 @@ onMounted(() => {
     sceneData.value = EVALUATION_SCENES.find((s) => s.id === sceneId) || null;
   }
 
-  iframeSrc.value = `${surveyBaseUrl}${questionnaireLink}?t=1756195405906&userId=${userInfo.value?.id}&assessmentNo=${assessmentTaskNo}&questionId=${questionnaireId}`;
+  iframeSrc.value = `${surveyBaseUrl}${questionnaireLink}&userId=${userInfo.value?.id}&assessmentNo=${assessmentTaskNo}&questionId=${questionnaireId}`;
 });
 
 function handleBack() {

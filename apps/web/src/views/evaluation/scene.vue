@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import type { EvaluationScene } from './data';
 
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import { ArrowLeft } from '@vben/icons';
 
 import { message } from 'ant-design-vue';
 
+import { startAssessment } from '#/api/psychology/assessment';
+
 import { EVALUATION_SCENES } from './data';
 
 const router = useRouter();
+const route = useRoute();
 
 // 响应式数据
 const SelectedScene = ref<any>(null);
@@ -21,16 +24,24 @@ function handleBack() {
   router.back();
 }
 
-function startEvaluation() {
+async function startEvaluation() {
   // 跳转到测评页面
   if (SelectedScene.value) {
-    router.push({
-      name: 'EvaluationQuestionnaire',
-      params: { id: SelectedScene.value.evaluation.id },
-      query: {
-        scene: SelectedScene.value.id,
-      },
-    });
+    try {
+      await startAssessment(route.query.taskNo as string);
+      router.push({
+        path: '/evaluation/questionnaire',
+        query: {
+          questionnaireId: SelectedScene.value.evaluation.id,
+          sceneId: SelectedScene.value.id,
+          assessmentTaskNo: route.query.taskNo,
+          questionnaireLink:
+            SelectedScene.value.evaluation.link.split('render/')[1],
+        },
+      });
+    } catch {
+      console.error(error);
+    }
   }
 }
 
@@ -56,6 +67,10 @@ function showSummaryReport() {
 function getNextAvailableScene() {
   return EVALUATION_SCENES.find((scene: EvaluationScene) => !scene.disabled);
 }
+
+onMounted(() => {
+  console.log(route.query);
+});
 </script>
 
 <template>

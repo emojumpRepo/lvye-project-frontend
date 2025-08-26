@@ -40,6 +40,17 @@ function handleClick() {
   if (task.status === ASSESSMENT_STATUS.ENDED) {
     message.warning('此测评任务已结束，无法答题哦');
   }
+  if (task.scenarioId) {
+    router.push({
+      path: '/evaluation/scene',
+      query: {
+        taskNo: task.taskNo,
+      },
+    });
+  } else {
+    router.push(`/evaluation/assessment/${task.taskNo}`);
+  }
+  return;
   switch (task.participantStatus) {
     case 0:
     case 1: {

@@ -16,6 +16,8 @@ import {
   InputNumber,
   message,
   Modal,
+  RadioButton,
+  RadioGroup,
   Row,
   Select,
 } from 'ant-design-vue';
@@ -245,7 +247,7 @@ function buildSavePayload() {
     calculateFormula: formatCalculateFormula(),
     teacherComment: formData.value.teacherComment,
     studentComment: formData.value.studentComment,
-    isAbnormal: 0,
+    isAbnormal: formData.value.isAbnormal,
   };
 
   payload.questionIndex =
@@ -654,6 +656,17 @@ defineExpose({ validate, resetFields });
         </Row>
 
         <Row :gutter="16">
+          <Col :span="24">
+            <Form.Item label="是否为异常因子配置" name="teacherComment">
+              <RadioGroup
+                v-model:value="formData.isAbnormal"
+                button-style="solid"
+              >
+                <RadioButton :value="1">是</RadioButton>
+                <RadioButton :value="0">否</RadioButton>
+              </RadioGroup>
+            </Form.Item>
+          </Col>
           <Col :span="24">
             <Form.Item label="教师端评语" name="teacherComment">
               <Input.TextArea
