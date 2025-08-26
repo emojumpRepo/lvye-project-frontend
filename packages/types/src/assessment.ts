@@ -23,6 +23,9 @@ export interface AssessmentTask {
   creatorName?: string;
   createTime?: Date;
   updateTime?: Date;
+  // 任务参与信息
+  progress: number; // 任务参与进度
+  participantStatus: AssessmentTaskParticipantStatus; // 任务参与状态
   // 统计字段
   totalParticipants?: number;
   completedParticipants?: number;
@@ -43,6 +46,16 @@ export const ASSESSMENT_STATUS_OPTIONS = [
   { value: 2, label: '已结束', color: 'error' },
   { value: 3, label: '已取消', color: 'warning' },
 ];
+
+/** 测评任务参与状态 */
+export enum AssessmentTaskParticipantStatus {
+  /** 已完成 */
+  COMPLETED = 2,
+  /** 进行中 */
+  IN_PROGRESS = 1,
+  /** 未开始 */
+  NOT_STARTED = 0,
+}
 
 // 测评类型枚举
 export const ASSESSMENT_TYPE = {

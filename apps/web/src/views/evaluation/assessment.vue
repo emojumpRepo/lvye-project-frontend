@@ -10,6 +10,8 @@ import { Spin } from 'ant-design-vue';
 
 import { getAssessmentTask } from '#/api/psychology/assessment';
 
+import QuestionnaireCard from './components/QuestionnaireCard.vue';
+
 const route = useRoute();
 const router = useRouter();
 
@@ -28,23 +30,33 @@ function handleBack() {
 }
 
 const totalTime = computed(() => {
-  return 0;
+  return (
+    assessmentData.value?.questionnaires?.reduce(
+      (acc, cur) => acc + (cur.estimatedDuration ?? 0),
+      0,
+    ) || 0
+  );
 });
 
 const completedCount = computed(() => {
   // 这里可以根据实际业务逻辑计算已完成数量
-  return 0;
+  return (
+    assessmentData.value?.questionnaires?.filter((q) => q.completed)?.length ||
+    0
+  );
 });
 
 const progress = computed(() => {
-  return 0;
+  const total = assessmentData.value?.questionnaires?.length ?? 0;
+  if (total === 0) return 0;
+  return (completedCount.value / total) * 100;
 });
 
 async function loadAssessmentData() {
   try {
     loading.value = true;
     const res = await getAssessmentTask(assessmentTaskNo.value || '');
-
+    console.warn('res', res);
     assessmentData.value = res;
   } catch (error) {
     console.error(error);
@@ -75,7 +87,6 @@ async function loadAssessmentData() {
           <h1 class="text-lg font-bold text-emerald-900">
             {{ assessmentData?.taskName }}
           </h1>
-          <p class="text-sm text-emerald-600">完成所有问卷获得完整评估</p>
         </div>
 
         <div class="w-20"></div>
@@ -84,7 +95,9 @@ async function loadAssessmentData() {
     </div>
 
     <!-- 主要内容 -->
-    <div class="container mx-auto flex flex-1 flex-col px-4 py-6 lg:px-6">
+    <div
+      class="container mx-auto flex flex-1 flex-col overflow-hidden px-4 py-6 lg:px-6"
+    >
       <!-- 测评概览卡片 -->
       <div
         class="mb-6 shrink-0 rounded-3xl bg-white/60 p-6 shadow backdrop-blur-sm"
@@ -123,11 +136,10 @@ async function loadAssessmentData() {
           <div
             class="flex items-center justify-between text-sm text-emerald-600"
           >
-            <span
-              >已完成 {{ completedCount }}/{{
-                assessmentData?.questionnaireIds?.length
-              }}</span
-            >
+            <span>
+              已完成 {{ completedCount }}/
+              {{ assessmentData?.questionnaireIds?.length }}
+            </span>
             <span>{{ progress }}%</span>
           </div>
           <div class="mt-2 h-2 overflow-hidden rounded-full bg-emerald-100">
@@ -136,11 +148,19 @@ async function loadAssessmentData() {
               :style="{ width: `${progress}%` }"
             ></div>
           </div>
+
+          <!-- 测评说明 -->
+          <div
+            class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 text-sm text-emerald-700"
+          >
+            <span class="font-medium">测评说明：</span>
+            <span>{{ assessmentData?.description || '暂无测评描述' }}</span>
+          </div>
         </div>
       </div>
 
       <!-- 问卷列表 -->
-      <div class="flex flex-1 flex-col space-y-4 overflow-hidden">
+      <div class="flex min-h-0 flex-1 flex-col space-y-4">
         <h2 class="shrink-0 text-xl font-bold text-emerald-900">问卷列表</h2>
 
         <div v-if="loading" class="flex flex-1 items-center justify-center">
@@ -149,18 +169,19 @@ async function loadAssessmentData() {
 
         <div
           v-else
-          class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          class="grid flex-1 auto-rows-min grid-cols-1 content-start items-start gap-4 overflow-y-auto md:grid-cols-2 lg:grid-cols-3"
         >
           <QuestionnaireCard
             v-for="questionnaire in assessmentData?.questionnaires"
-            :key="questionnaire.id"
+            :key="questionnaire.questionnaireId"
+            :assessment-task-no="assessmentTaskNo"
             :questionnaire="questionnaire"
           />
         </div>
 
         <!-- 空状态 -->
         <div
-          v-if="!loading"
+          v-if="!loading && assessmentData?.questionnaires?.length === 0"
           class="flex flex-col items-center justify-center py-12 text-center text-emerald-600"
         >
           <ClipboardList class="mb-2 h-8 w-8" />

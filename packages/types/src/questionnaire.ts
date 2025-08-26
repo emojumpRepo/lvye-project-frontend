@@ -1,7 +1,9 @@
 export interface QuestionnaireVO {
-  id: number;
+  id?: number;
+  questionnaireId?: number;
   externalId?: string;
-  title: string;
+  title?: string;
+  questionnaireTitle?: string;
   status?: number;
   description?: string;
   externalLink: string;
@@ -13,6 +15,8 @@ export interface QuestionnaireVO {
   questionCount?: number;
   completionCount?: number;
   assessmentDimension?: string[];
+  completed?: boolean;
+  accessible?: boolean;
   assessmentDimensionLabels?: string[];
   isOpen?: boolean;
   validFrom?: number;

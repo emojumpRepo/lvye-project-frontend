@@ -28,6 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<Emits>();
+const isComplete = ref(false); // 是否完成作答
 
 // iframe 通信相关
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -73,6 +74,7 @@ function handleWindowMessage(event: MessageEvent) {
     }
     case 'complete': {
       // 子页面完成作答
+      isComplete.value = true;
       const payload = (data as any).payload ?? null;
       emit('complete', payload);
       break;
@@ -92,8 +94,8 @@ function handleWindowMessage(event: MessageEvent) {
 }
 
 function handleBack() {
-  if (props.onBack) {
-    props.onBack();
+  if (isComplete.value) {
+    props.onBack?.();
   } else {
     showConfirmDialog.value = true;
   }
@@ -101,7 +103,7 @@ function handleBack() {
 
 function handleConfirm() {
   showConfirmDialog.value = false;
-  // 这里可以添加返回逻辑，比如 router.back()
+  props.onBack?.();
 }
 
 onMounted(() => {
