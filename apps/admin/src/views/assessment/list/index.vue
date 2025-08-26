@@ -54,13 +54,14 @@ watch(
       @search="handleSearch"
       @tab-change="handleTabChange"
       @reset="handleReset"
-    />
-
-    <div>
-      <LyButton type="success" size="large" @click="handleCreateAssessment">
-        创建测评
-      </LyButton>
-    </div>
+      @create-assessment="handleCreateAssessment"
+    >
+      <template #extra>
+        <LyButton type="success" size="large" @click="handleCreateAssessment">
+          创建测评
+        </LyButton>
+      </template>
+    </AssessmentListSearch>
 
     <AssessmentListGrid ref="gridRef" />
     <CreateAssessmentDialog v-model:open="isOpenCreateAssessmentDialog" />
