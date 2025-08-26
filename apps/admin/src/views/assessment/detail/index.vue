@@ -239,7 +239,7 @@ onMounted(async () => {
     </div>
 
     <!-- 年级管理区域 -->
-    <AssessmentDetailList />
+    <AssessmentDetailList :task-no="taskNo" :questionnaire-id="activeTabKey" />
   </div>
 </template>
 

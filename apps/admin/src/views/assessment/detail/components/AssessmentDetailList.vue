@@ -1,14 +1,26 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { QuestionnaireApi } from '#/api/assessment/questionnaire/index';
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import LyButton from '#/components/LyButton/index.vue';
 
+import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
+
+interface Props {
+  taskNo?: string;
+  questionnaireId?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  taskNo: '',
+  questionnaireId: '',
+});
 
 const actionButtons = ref([
   { label: '批量发送提醒', value: 'batchSendReminder' },
@@ -19,27 +31,65 @@ const actionButtons = ref([
 
 const activeButton = ref('');
 const checkedIds = ref<number[]>([]);
-function handleRowCheckboxChange({
-  records,
-}: {
-  records: QuestionnaireApi.Questionnaire[];
-}) {
-  checkedIds.value = records.map((item) => item.id);
+function handleRowCheckboxChange({ records }: { records: any[] }) {
+  checkedIds.value = records.map((item) => item.studentProfileId).filter(Boolean);
 }
 
-const [Grid] = useVbenVxeGrid({
+const queryParams = ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
+  pageNo: 1,
+  pageSize: 10,
+  taskNo: '',
+  questionnaireId: 0,
+});
+
+watch(
+  () => [props.taskNo, props.questionnaireId],
+  ([newTaskNo, newQuestionnaireId]) => {
+    if (newTaskNo && newQuestionnaireId) {
+      queryParams.value.taskNo = newTaskNo;
+      queryParams.value.questionnaireId = Number(newQuestionnaireId);
+      gridApi?.query();
+    }
+  },
+  { immediate: true },
+);
+
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     height: '400px',
+    keepSource: true,
     pagerConfig: {
       enabled: true,
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
     },
-    proxyConfig: { ajax: { query: async () => [] } },
-    rowConfig: { keyField: 'id', isHover: true },
-    toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
-  } as VxeTableGridOptions<QuestionnaireApi.Questionnaire>,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!queryParams.value.taskNo || !queryParams.value.questionnaireId) {
+            return { list: [], total: 0 };
+          }
+
+          try {
+            const requestParams = {
+              ...queryParams.value,
+              pageNo: page.currentPage,
+              pageSize: page.pageSize,
+            };
+
+            const response = await getAssessmentTaskParticipantsQuestionnairePage(requestParams);
+            return response;
+          } catch (error) {
+            console.error('Failed to load assessment participants:', error);
+            return { list: [], total: 0 };
+          }
+        },
+      },
+    },
+    rowConfig: { keyField: 'studentProfileId', isHover: true },
+    toolbarConfig: { refresh: true, search: true, custom: false, zoom: false },
+  } as VxeTableGridOptions<PsychologyAssessmentApi.AssessmentParticipant>,
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
@@ -72,7 +122,7 @@ function viewDetail(record: any) {
             {
               label: '查看报告',
               type: 'link',
-              color: '#2C68FF',
+              color: 'success',
               onClick: viewDetail.bind(null, row),
             },
           ]"

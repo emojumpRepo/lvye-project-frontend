@@ -1,6 +1,5 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { QuestionnaireApi } from '#/api/assessment/questionnaire/index';
 
 import { h } from 'vue';
 
@@ -16,45 +15,27 @@ export function useGridFormSchema(): VbenFormSchema[] {
         placeholder: '全部状态',
         options: [
           { label: '全部状态', value: '' },
-          { label: '未完成', value: '未完成' },
-          { label: '已完成', value: '已完成' },
+          { label: '未完成', value: 0 },
+          { label: '已完成', value: 1 },
         ],
       },
       defaultValue: '',
       hideLabel: true,
     },
     {
-      fieldName: 'riskLevel',
-      component: 'Select',
-      componentProps: {
-        placeholder: '全部风险等级',
-        options: [
-          { label: '全部风险等级', value: '' },
-          { label: '低风险', value: 'low' },
-          { label: '中风险', value: 'medium' },
-          { label: '高风险', value: 'high' },
-        ],
-      },
-      defaultValue: '',
-      hideLabel: true,
-    },
-    {
-      fieldName: 'class',
+      fieldName: 'className',
       component: 'Select',
       componentProps: {
         placeholder: '全部班级',
         options: [
           { label: '全部班级', value: '' },
-          { label: '1班', value: '1班' },
-          { label: '2班', value: '2班' },
-          { label: '3班', value: '3班' },
         ],
       },
       defaultValue: '',
       hideLabel: true,
     },
     {
-      fieldName: 'searchKeyword',
+      fieldName: 'studentName',
       component: 'Input',
       componentProps: {
         placeholder: '搜索学生姓名或学号',
@@ -74,11 +55,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
 }
 
 /** 列表的字段 */
-export function useGridColumns(): VxeTableGridOptions<QuestionnaireApi.Questionnaire>['columns'] {
+export function useGridColumns(): VxeTableGridOptions<any>['columns'] {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
+      field: 'studentProfileId',
       title: '编号',
       minWidth: 120,
     },
@@ -88,12 +69,17 @@ export function useGridColumns(): VxeTableGridOptions<QuestionnaireApi.Questionn
       minWidth: 120,
     },
     {
-      field: 'class',
+      field: 'gradeName',
+      title: '年级',
+      minWidth: 100,
+    },
+    {
+      field: 'className',
       title: '班级',
       minWidth: 120,
     },
     {
-      field: 'studentId',
+      field: 'studentNo',
       title: '学号',
       minWidth: 120,
     },
@@ -101,17 +87,18 @@ export function useGridColumns(): VxeTableGridOptions<QuestionnaireApi.Questionn
       field: 'status',
       title: '完成状态',
       minWidth: 120,
+      formatter: ({ cellValue }) => {
+        return cellValue === 1 ? '已完成' : '未完成';
+      },
     },
     {
-      field: 'completedTime',
+      field: 'finishTime',
       title: '完成时间',
       minWidth: 120,
-      formatter: 'formatDateTime',
-    },
-    {
-      field: 'riskLevel',
-      title: '风险等级',
-      minWidth: 120,
+      formatter: ({ cellValue }) => {
+        if (!cellValue) return '-';
+        return new Date(cellValue).toLocaleString();
+      },
     },
     {
       title: '操作',
