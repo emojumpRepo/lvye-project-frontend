@@ -169,6 +169,7 @@ function handleViewModeChange({ target }: { target: any }) {
       },
       rowConfig: {
         resizable: true,
+        isHover: true,
       },
       proxyConfig: {
         ajax: {
@@ -184,6 +185,7 @@ function handleViewModeChange({ target }: { target: any }) {
         accordion: false,
         lazy: true,
         hasChildField: 'hasChildField',
+        trigger: 'row',
         loadMethod: async ({ row }: any) => {
           return await formatDeptListToTree(row.classDeptId, row.children);
         },
@@ -197,6 +199,9 @@ function handleViewModeChange({ target }: { target: any }) {
     gridApi.setGridOptions({
       pagerConfig: { enabled: true },
       columns: useStudentProfileGridSchema(),
+      rowConfig: {
+        isHover: false,
+      },
       proxyConfig: {
         ajax: {
           query: async ({ page }: any, formValues: any) => {
@@ -450,7 +455,7 @@ onMounted(async () => {
     </div>
 
     <!-- 详情抽屉 -->
-    <Drawer />
+    <Drawer @refresh="refresh" />
     <CreateDrawer @refresh="refresh" />
     <BulkClassTransferDrawer />
     <BulkImportDrawer />

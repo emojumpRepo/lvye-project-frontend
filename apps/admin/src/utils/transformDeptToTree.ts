@@ -100,14 +100,16 @@ export async function getDeptTreeList(
     }));
   }
 
-  const allDeptList = treeData.map((dept: any) => ({
-    id: dept.value,
-    name: dept.label,
-    classDeptId: dept.value,
-    gradeDeptId: dept.parentId ?? null,
-    count: dept.count,
-    hasChildField: true,
-  }));
+  const allDeptList = treeData
+    .map((dept: any) => ({
+      id: dept.value,
+      name: dept.label,
+      classDeptId: dept.value,
+      gradeDeptId: dept.parentId ?? null,
+      count: dept.count,
+      hasChildField: true,
+    }))
+    .sort((a, b) => a.id - b.id);
 
   return allDeptList;
 }

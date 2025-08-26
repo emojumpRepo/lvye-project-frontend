@@ -5,17 +5,39 @@ import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+import { message } from 'ant-design-vue';
+
+import { importStudentProfile } from '#/api/psychology/student-profile';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import LyUpload from '#/components/LyUpload/index.vue';
 import { downloadTemplate } from '#/utils/export';
 
+const fileList = ref<UploadProps['fileList']>([]);
+
 const [Drawer] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
-});
+  onConfirm: async () => {
+    if (!fileList.value || fileList.value.length === 0) {
+      message.warning('请先选择要导入的模板文件');
+      return;
+    }
+    console.log('fileList', fileList.value);
+    try {
+      const data = await importStudentProfile(
+        fileList.value[0].originFileObj as File,
+      );
+      console.log('data', data);
 
-const fileList = ref<UploadProps['fileList']>([]);
+      // fileList.value = [];
+      // Drawer.close();
+    } catch (error) {
+      console.error(error);
+      message.error('导入失败，请检查模板或稍后重试');
+    }
+  },
+});
 </script>
 
 <template>
@@ -41,7 +63,7 @@ const fileList = ref<UploadProps['fileList']>([]);
           下载导入模板
         </LyButton>
         <div class="mt-3 text-sm text-[#979899]">
-          模板包含:学生名字、学号、性别、年级、班级、出生日期、联系电话、家庭住址等字段
+          模板包含：学生名字、学号、性别、年级、班级、出生日期、联系电话、家庭住址等字段
         </div>
       </div>
 

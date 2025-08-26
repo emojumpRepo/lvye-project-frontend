@@ -1,20 +1,26 @@
 <script lang="ts" setup>
+import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile/index';
+import type { DictDataType } from '#/utils/dict';
 
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Divider, Tabs } from 'ant-design-vue';
+import { Divider, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getStudentPsychologicalStatusTag } from '#/api/constants';
+import { getStudentParentProfile } from '#/api/psychology/student-parent-profile';
 import { getStudentProfile } from '#/api/psychology/student-profile/index';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
 import TimelineTab from '#/components/Drawer/StudentDrawer/components/TimelineTab.vue';
 import LyButton from '#/components/LyButton/index.vue';
+import { calculateAge } from '#/utils/calculateAge';
+import { getDictObj, getDictOptions } from '#/utils/dict';
 
 interface FooterButton {
   label: string;
@@ -25,7 +31,25 @@ interface FooterButton {
   class: string;
 }
 
-const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>({});
+interface PsychologicalStatusTag {
+  colorConfig: {
+    color: string;
+    style: {
+      backgroundColor: string;
+      borderColor: string;
+    };
+  };
+  label: string;
+  value: string;
+}
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
+
+const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>();
+const studentParentProfile =
+  ref<PsychologyStudentParentProfileApi.StudentParentProfile[]>();
 
 const baseInfo = ref([
   { label: '姓名', value: '', key: 'name' },
@@ -35,66 +59,11 @@ const baseInfo = ref([
   { label: '学号', value: '', key: 'studentNo' },
 ]);
 
-/**
- * 计算年龄
- * @param timestamp 时间戳
- * @returns 年龄
- */
-function calculate(timestamp: Date | number | string): number {
-  if (!timestamp) return 0;
-
-  const birthDate = dayjs(timestamp);
-  const today = dayjs();
-
-  return today.diff(birthDate, 'year');
-}
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-[800px]',
-  contentClass: 'bg-gray-50 p-0',
-  showCancelButton: false,
-  showConfirmButton: false,
-  onOpenChange: async () => {
-    const data = drawerApi.getData();
-    if (data.id) {
-      const studentProfileData = await getStudentProfile(data.id);
-      studentProfile.value = studentProfileData;
-
-      // 赋值操作：将API返回的数据匹配到baseInfo中
-      if (studentProfileData) {
-        // 性别映射
-        const sexMap: Record<number, string> = { 1: '男', 2: '女' };
-
-        // 字段映射配置
-        const fieldMappers: Record<string, (data: any) => string> = {
-          name: (data) => data.name || '',
-          sex: (data) => sexMap[data.sex] || '',
-          birthDate: (data) => data.birthDate || '',
-          className: (data) => data.className || '',
-          studentNo: (data) => data.studentNo || '',
-        };
-
-        // 统一赋值
-        baseInfo.value.forEach((item) => {
-          const mapper = fieldMappers[item.key];
-          if (mapper) {
-            item.value = mapper(studentProfileData);
-          }
-        });
-      }
-    }
-  },
-});
-
-const mentalStates = ref({
-  normal: { bg: '#E4FFF0', borderColor: '#8CFFC6', color: '#04DC70' },
-  general: { bg: '#1966FF14', borderColor: '#1966FF66', color: '#1966FF' },
-  serious: { bg: '#FF9C0514', borderColor: '#FF9C0566', color: '#FF9C05' },
-  major: { bg: '#FF08310D', borderColor: '#FF083166', color: '#FF0831' },
-  observe: { bg: '#1E96FF14', borderColor: '#1E96FF66', color: '#1E96FF' },
-});
-
-const coreProblemTags = ref(['人际关系', '情绪管理', '适应困难', '学习困难']);
+const psychologicalStatusTag = ref<PsychologicalStatusTag>();
+const coreProblemTags = ref<string[]>([]); // 核心问题标签
+const studentSpecialMark = ref<DictDataType[]>([]);
+const studentSexMap = ref<DictDataType[]>([]);
+const loading = ref(false);
 
 const footerButtons = ref<FooterButton[]>([
   {
@@ -130,6 +99,90 @@ const footerButtons = ref<FooterButton[]>([
     class: 'border-[#04DC70] bg-[#04DC70] text-white hover:bg-[#04DC70]/80',
   },
 ]);
+
+/** 获取核心问题标签 */
+const getSpecialMarkLabels = (specialMarks: string): string[] => {
+  if (
+    !specialMarks ||
+    !studentSpecialMark.value ||
+    studentSpecialMark.value.length === 0
+  ) {
+    return [];
+  }
+
+  const markValues = specialMarks.split(',').map((item) => item.trim());
+
+  const labels = markValues.map((value) => {
+    const found = studentSpecialMark.value.find((item) => item.value === value);
+    return found?.label;
+  });
+
+  return labels.filter(Boolean) as string[];
+};
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  class: 'w-[800px]',
+  contentClass: 'bg-gray-50 p-0',
+  showCancelButton: false,
+  showConfirmButton: false,
+  loading: loading.value,
+  onOpenChange: async () => {
+    const data = drawerApi.getData();
+    if (!data.id) return;
+
+    loading.value = true;
+    if (data.id) {
+      const studentProfileData = await getStudentProfile(data.id);
+      studentProfile.value = studentProfileData;
+      const studentParentProfileData = await getStudentParentProfile(data.id);
+      studentParentProfile.value = studentParentProfileData;
+
+      if (studentProfileData) {
+        const fieldMappers: Record<string, (data: any) => string> = {
+          name: (data) => data.name || '',
+          sex: (data) => getDictObj('system_user_sex', data.sex)?.label || '',
+          birthDate: (data) => String(calculateAge(data.birthDate) ?? ''),
+          className: (data) => data.className || '',
+          studentNo: (data) => data.studentNo || '',
+        };
+
+        // 学生心理状态
+        psychologicalStatusTag.value = (await getStudentPsychologicalStatusTag(
+          'student_psychological_status',
+          studentProfileData.psychologicalStatus || 1,
+        )) as PsychologicalStatusTag;
+
+        // 核心问题标签
+        coreProblemTags.value = getSpecialMarkLabels(
+          studentProfileData?.specialMarks || '',
+        );
+
+        // 基础信息
+        baseInfo.value.forEach((item) => {
+          const mapper = fieldMappers[item.key];
+          if (mapper) {
+            item.value = mapper(studentProfileData);
+          }
+        });
+      }
+    }
+
+    loading.value = false;
+  },
+});
+
+function updateLoading(value: boolean) {
+  loading.value = value;
+  if (!value) {
+    drawerApi.close();
+    emit('refresh');
+  }
+}
+
+onMounted(async () => {
+  studentSpecialMark.value = await getDictOptions('student_special_mark');
+  studentSexMap.value = await getDictOptions('system_user_sex');
+});
 </script>
 <template>
   <Drawer title="学生360°档案">
@@ -143,82 +196,100 @@ const footerButtons = ref<FooterButton[]>([
       </div>
     </template>
 
-    <!-- 基础信息 -->
-    <div class="flex h-full flex-col gap-3">
-      <div class="bg-white px-4 pb-3 pt-6">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-2.5">
-            <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
-            <span class="font-bold">基础信息</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <div v-for="item in baseInfo" :key="item.label" class="text-xs">
-              <span class="font-medium">{{ item.label }}：</span>
-              <span class="text-[#4B4B4D]">{{ item.value }}</span>
+    <Spin :spinning="loading" wrapper-class-name="h-full">
+      <!-- 基础信息 -->
+      <div class="flex h-full flex-col gap-3">
+        <div class="bg-white px-4 pb-3 pt-6">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2.5">
+              <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
+              <span class="font-bold">基础信息</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div v-for="item in baseInfo" :key="item.label" class="text-xs">
+                <span class="font-medium">{{ item.label }}：</span>
+                <span class="text-[#4B4B4D]">{{ item.value }}</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div
-          class="my-7 flex items-center justify-between rounded-lg border border-solid border-[#8CFFC6] bg-[#14E77E14] px-4 py-3"
-        >
-          <div class="flex items-center gap-1 text-sm font-bold">
-            <IconifyIcon
-              icon="solar:health-bold"
-              :color="mentalStates.normal.color"
-              class="size-5"
-            />
-            <span>心理状态：</span>
-            <span :style="{ color: mentalStates.normal.color }">正常</span>
-          </div>
-          <div class="text-xs text-[#979899]">
-            <span>张信心</span>
-            <span>老师更新于</span>
-            <span>2024-01-01 12:00:00</span>
-          </div>
-        </div>
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-3">
-            <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
-            <span class="text-sm font-bold">核心问题标签</span>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <div v-for="tag in coreProblemTags" :key="tag">
+          <div
+            class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
+            :style="psychologicalStatusTag?.colorConfig.style"
+          >
+            <div class="flex items-center gap-1 text-sm font-bold">
+              <IconifyIcon
+                icon="solar:health-bold"
+                :color="psychologicalStatusTag?.colorConfig.color"
+                class="size-5"
+              />
+              <span>心理状态：</span>
               <span
-                class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
+                :style="{ color: psychologicalStatusTag?.colorConfig.color }"
               >
-                {{ tag }}
+                {{ psychologicalStatusTag?.label }}
               </span>
             </div>
+            <div class="text-xs text-[#979899]">
+              <span>XXX</span>
+              <span>老师更新于</span>
+              <span>{{
+                dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
+              }}</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-3">
+              <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
+              <span class="text-sm font-bold">核心问题标签</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <template v-if="coreProblemTags.length > 0">
+                <div v-for="tag in coreProblemTags" :key="tag">
+                  <span
+                    class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
+                  >
+                    {{ tag }}
+                  </span>
+                </div>
+              </template>
+              <template v-else>
+                <span class="text-xs">暂无</span>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
+          <div class="relative h-full w-full">
+            <Tabs :tab-bar-gutter="24">
+              <Tabs.TabPane tab="综合时间线" key="timeline">
+                <TimelineTab />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab="测评历史" key="history">
+                <AssessmentListTab :student-profile-id="studentProfile?.id" />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab="咨询与干预记录" key="consultation">
+                <ConsultationListTab />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab="完善个人信息" key="personalInfo">
+                <PersonalInfoTab
+                  :student-info="studentProfile"
+                  :parent-info="studentParentProfile"
+                  @update-loading="updateLoading"
+                />
+              </Tabs.TabPane>
+            </Tabs>
+            <LyButton
+              type="success"
+              size="middle"
+              class="absolute right-7 top-1.5"
+            >
+              导出信息
+            </LyButton>
           </div>
         </div>
       </div>
-
-      <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
-        <div class="relative h-full w-full">
-          <Tabs :tab-bar-gutter="24">
-            <Tabs.TabPane tab="综合时间线" key="timeline">
-              <TimelineTab />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="测评历史" key="history">
-              <AssessmentListTab />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="咨询与干预记录" key="consultation">
-              <ConsultationListTab />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="完善个人信息" key="personalInfo">
-              <PersonalInfoTab />
-            </Tabs.TabPane>
-          </Tabs>
-          <LyButton
-            type="success"
-            size="middle"
-            class="absolute right-7 top-1.5"
-          >
-            导出信息
-          </LyButton>
-        </div>
-      </div>
-    </div>
+    </Spin>
 
     <template #footer>
       <div class="flex items-center justify-end gap-2">
@@ -266,5 +337,13 @@ const footerButtons = ref<FooterButton[]>([
 :deep(.ant-tabs-ink-bar) {
   height: 4px !important;
   background: #04dc70 !important;
+}
+
+:deep(.ant-spin-nested-loading) {
+  height: 100% !important;
+}
+
+:deep(.ant-spin-container) {
+  height: 100% !important;
 }
 </style>

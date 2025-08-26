@@ -119,6 +119,7 @@ function onRemove() {
     v-model:file-list="fileList"
     name="file"
     :max-count="maxCount"
+    action="http://127.0.0.1:48080/admin-api/psychology/student-profile/import"
     :accept="accept"
     :multiple="multiple"
     :progress="progress"
