@@ -45,7 +45,6 @@ const [Form, formApi] = useVbenForm({
 async function handleSearch(values: any) {
   try {
     emit('loading', true);
-    console.log('values', values);
 
     // 智能识别搜索关键词是学号还是姓名
     const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
@@ -61,8 +60,6 @@ async function handleSearch(values: any) {
       graduationStatus: values.graduationStatus || undefined,
       psychologicalStatus: values.psychologicalStatus || undefined,
     };
-
-    console.log('params', params);
 
     searchParams.value = params;
     emit('search', params);

@@ -4,10 +4,11 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { ref, watch } from 'vue';
 
-import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import LyButton from '#/components/LyButton/index.vue';
+import dayjs from 'dayjs';
 
+import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+import LyButton from '#/components/LyButton/index.vue';
 
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
@@ -26,21 +27,26 @@ const actionButtons = ref([
   { label: '批量发送提醒', value: 'batchSendReminder' },
   { label: '批量转入干预', value: 'batchTransferToIntervention' },
   { label: '批量导出', value: 'batchExport' },
-  { label: '创建测评', value: 'createAssessment' },
 ]);
 
 const activeButton = ref('');
 const checkedIds = ref<number[]>([]);
+const loading = ref(false);
+const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
+
 function handleRowCheckboxChange({ records }: { records: any[] }) {
-  checkedIds.value = records.map((item) => item.studentProfileId).filter(Boolean);
+  checkedIds.value = records
+    .map((item) => item.studentProfileId)
+    .filter(Boolean);
 }
 
-const queryParams = ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
-  pageNo: 1,
-  pageSize: 10,
-  taskNo: '',
-  questionnaireId: 0,
-});
+const queryParams =
+  ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
+    pageNo: 1,
+    pageSize: 10,
+    taskNo: '',
+    questionnaireId: 0,
+  });
 
 watch(
   () => [props.taskNo, props.questionnaireId],
@@ -78,7 +84,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
               pageSize: page.pageSize,
             };
 
-            const response = await getAssessmentTaskParticipantsQuestionnairePage(requestParams);
+            const response =
+              await getAssessmentTaskParticipantsQuestionnairePage(
+                requestParams,
+              );
             return response;
           } catch (error) {
             console.error('Failed to load assessment participants:', error);
@@ -89,13 +98,37 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: { keyField: 'studentProfileId', isHover: true },
     toolbarConfig: { refresh: true, search: true, custom: false, zoom: false },
-  } as VxeTableGridOptions<PsychologyAssessmentApi.AssessmentParticipant>,
+  } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
 });
 
+watch(
+  () => props.questionnaireId,
+  (value) => {
+    if (value) {
+      searchRef.value?.handleReset();
+      gridApi.query();
+    }
+  },
+  { immediate: true },
+);
+
+/** 处理搜索 */
+function handleSearch(
+  params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
+) {
+  gridApi.query(params);
+}
+
+/** 处理加载状态 */
+function handleLoading(isLoading: boolean) {
+  loading.value = isLoading;
+}
+
+/** 查看详情 */
 function viewDetail(record: any) {
   console.log('查看详情:', record);
 }
@@ -103,19 +136,49 @@ function viewDetail(record: any) {
 
 <template>
   <div class="mb-6">
-    <AssessmentDetailSearch />
+    <AssessmentDetailSearch
+      ref="searchRef"
+      @search="handleSearch"
+      @loading="handleLoading"
+    />
+
     <div class="my-6 flex gap-2">
       <LyButton
         v-for="item in actionButtons"
         :key="item.value"
         size="middle"
         type="default"
+        :disabled="checkedIds.length === 0"
         @click="activeButton = item.value"
       >
         {{ item.label }}
       </LyButton>
     </div>
     <Grid>
+      <template #status="{ row }">
+        <LyTag
+          :color-type="row.status === 1 ? 'success' : 'error'"
+          :tag-label="row.status === 1 ? '已完成' : '未完成'"
+        />
+      </template>
+      <template #finishTime="{ row }">
+        <span v-if="!row.finishTime">--</span>
+        <span v-else>
+          {{ dayjs(row.finishTime).format('YYYY-MM-DD HH:mm:ss') }}
+        </span>
+      </template>
+      <template #score="{ row }">
+        <span v-if="!row.score">--</span>
+        <span v-else class="text-primary font-bold">{{ row.score }}</span>
+      </template>
+      <template #riskLevel="{ row }">
+        <LyTag
+          v-if="row.riskLevel"
+          tag-category-key="questionnaire_result_risk_level"
+          :dict-value="row.riskLevel"
+        />
+        <span v-else>--</span>
+      </template>
       <template #actions="{ row }">
         <TableAction
           :actions="[

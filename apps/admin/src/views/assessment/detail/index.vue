@@ -107,8 +107,8 @@ async function loadTaskData() {
     const taskInfo = await getAssessmentTask(taskNo);
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
-        label: item.title,
-        key: item.id.toString(),
+        label: item.title || '',
+        key: item.id?.toString() || '',
       }));
       currentTaskInfo.value = {
         taskNo: taskInfo.taskNo || '',

@@ -137,6 +137,33 @@ export namespace PsychologyAssessmentApi {
     averageScore?: number;
     riskLevelDistribution?: Record<string, number>;
   }
+
+  /** 测评问卷学生参与答题记录分页查询参数 */
+  export interface ParticipantsQuestionnairePageReq {
+    taskNo?: string;
+    questionnaireId?: number;
+    name?: string;
+    studentNo?: string;
+    status?: number;
+    riskLevel?: number;
+    classId?: number[];
+    pageNo?: number;
+    pageSize?: number;
+  }
+
+  /** 测评问卷学生参与答题记录 */
+  export interface ParticipantsQuestionnairePageRes {
+    studentProfileId: number;
+    taskNo: string;
+    studentNo: string;
+    score: number;
+    riskLevel: number;
+    name: string;
+    className: string;
+    gradeName: string;
+    status: number;
+    finishTime: number;
+  }
 }
 
 // ==================== 测评任务管理 ====================
@@ -285,6 +312,15 @@ export function addAssessmentParticipants(
     '/psychology/assessment-task/add-participants',
     data,
   );
+}
+
+/** 获取测评问卷学生答题记录 */
+export function getParticipantsQuestionnairePage(
+  params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>
+  >('/psychology/assessment-task/participants-questionnaire-page', { params });
 }
 
 /** 移除测评参与者 */

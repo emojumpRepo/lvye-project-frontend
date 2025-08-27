@@ -1,12 +1,25 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { h } from 'vue';
+import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
+import { getDictOptions } from '#/utils';
+
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
+  /** 年级列表 */
+  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
+  const stored = sessionStorage.getItem('deptList');
+  if (stored) {
+    deptList.value = JSON.parse(stored);
+  }
+
+  const riskLevelOptions = getDictOptions('questionnaire_result_risk_level');
+
   return [
     {
       fieldName: 'status',
@@ -23,19 +36,43 @@ export function useGridFormSchema(): VbenFormSchema[] {
       hideLabel: true,
     },
     {
-      fieldName: 'className',
+      fieldName: 'riskLevel',
       component: 'Select',
       componentProps: {
-        placeholder: '全部班级',
-        options: [
-          { label: '全部班级', value: '' },
-        ],
+        placeholder: '全部风险等级',
+        options: [{ label: '全部风险等级', value: '' }, ...riskLevelOptions],
       },
       defaultValue: '',
       hideLabel: true,
     },
     {
-      fieldName: 'studentName',
+      fieldName: 'classId',
+      component: 'Cascader',
+      componentProps: {
+        options: [
+          { label: '全部班级', value: '', isLeaf: true },
+          ...deptList.value.map((dept) => ({
+            label: dept.label,
+            value: dept.value,
+            children:
+              dept.children?.map((cls) => ({
+                label: cls.label,
+                value: cls.value,
+                isLeaf: true,
+              })) || [],
+          })),
+        ],
+        defaultValue: [''],
+        expandTrigger: 'hover',
+        changeOnSelect: true,
+        allowClear: false,
+        showSearch: false,
+        style: { cursor: 'pointer' },
+      },
+      hideLabel: true,
+    },
+    {
+      fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
         placeholder: '搜索学生姓名或学号',
@@ -55,23 +92,13 @@ export function useGridFormSchema(): VbenFormSchema[] {
 }
 
 /** 列表的字段 */
-export function useGridColumns(): VxeTableGridOptions<any>['columns'] {
+export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>['columns'] {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'studentProfileId',
-      title: '编号',
-      minWidth: 120,
-    },
     {
       field: 'name',
       title: '学生名称',
       minWidth: 120,
-    },
-    {
-      field: 'gradeName',
-      title: '年级',
-      minWidth: 100,
     },
     {
       field: 'className',
@@ -87,18 +114,26 @@ export function useGridColumns(): VxeTableGridOptions<any>['columns'] {
       field: 'status',
       title: '完成状态',
       minWidth: 120,
-      formatter: ({ cellValue }) => {
-        return cellValue === 1 ? '已完成' : '未完成';
-      },
+      slots: { default: 'status' },
+    },
+    {
+      field: 'score',
+      title: '得分',
+      minWidth: 120,
+      slots: { default: 'score' },
     },
     {
       field: 'finishTime',
       title: '完成时间',
       minWidth: 120,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '-';
-        return new Date(cellValue).toLocaleString();
-      },
+      formatter: 'formatDateTime',
+      slots: { default: 'finishTime' },
+    },
+    {
+      field: 'riskLevel',
+      title: '风险等级',
+      minWidth: 120,
+      slots: { default: 'riskLevel' },
     },
     {
       title: '操作',
@@ -108,5 +143,3 @@ export function useGridColumns(): VxeTableGridOptions<any>['columns'] {
     },
   ];
 }
-
-

@@ -62,6 +62,9 @@ const TimePicker = defineAsyncComponent(
 const TreeSelect = defineAsyncComponent(
   () => import('ant-design-vue/es/tree-select'),
 );
+const Cascader = defineAsyncComponent(
+  () => import('ant-design-vue/es/cascader'),
+);
 const Upload = defineAsyncComponent(() => import('ant-design-vue/es/upload'));
 
 const withDefaultPlaceholder = <T extends Component>(
@@ -127,6 +130,7 @@ export type ComponentType =
   | 'Textarea'
   | 'TimePicker'
   | 'TreeSelect'
+  | 'Cascader'
   | 'Upload'
   | BaseFormComponentType;
 
@@ -196,6 +200,7 @@ async function initComponentAdapter() {
     RichTextarea,
     TimePicker,
     TreeSelect: withDefaultPlaceholder(TreeSelect, 'select'),
+    Cascader: withDefaultPlaceholder(Cascader, 'select'),
     Upload,
     FileUpload,
     ImageUpload,
