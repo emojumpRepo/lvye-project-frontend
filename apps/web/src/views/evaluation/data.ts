@@ -44,7 +44,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
       id: 12,
       name: '体能测评',
       description: '测试身体协调性和运动能力',
-      link: 'http://localhost:8080/render/rrvObpEj?t=1756211417105',
+      link: ' http://8.130.43.71:8080/render/xZXhQUIk?t=1756117154269',
     },
   },
   {
@@ -59,7 +59,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
       id: 10,
       name: '阅读理解能力',
       description: '评估阅读理解和分析能力',
-      link: 'http://localhost:8080/render/UHprKVMV?t=1756211457214',
+      link: 'http://8.130.43.71:8080/render/EfJrsrbq?t=1756117154064',
     },
     introDesc: '你将会需要思考你是如何看待你自己的',
     teacherBubble: {
@@ -88,7 +88,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
       id: 13,
       name: '社交能力测评',
       description: '评估人际交往能力',
-      link: 'http://localhost:8080/render/BWnQlCSz?t=1756211471459',
+      link: 'http://8.130.43.71:8080/render/FDrfEPjO?t=1756117154372',
     },
   },
   {
@@ -110,7 +110,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
       id: 11,
       name: '学习能力测评',
       description: '评估学习方法和效率',
-      link: 'http://localhost:8080/render/zkBhlefz?t=1756211490199',
+      link: 'http://8.130.43.71:8080/render/WYdzInPv?t=1756117154168',
     },
   },
 ];
