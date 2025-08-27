@@ -23,7 +23,7 @@ export type EvaluationScene = {
 
 export const EVALUATION_SCENES: EvaluationScene[] = [
   {
-    id: 'sports-hall',
+    id: 'gym',
     name: '体育馆',
     type: 'gym',
     icon: '⚽',
@@ -70,7 +70,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     time: 15,
   },
   {
-    id: 'activity-rooms',
+    id: 'act',
     type: 'activity',
     name: '活动室',
     icon: '🎨',
@@ -92,7 +92,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     },
   },
   {
-    id: 'teaching-building',
+    id: 'dorm',
     type: 'teaching',
     name: '宿舍楼',
     icon: '🎓',
