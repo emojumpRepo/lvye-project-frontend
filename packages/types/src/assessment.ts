@@ -1,4 +1,5 @@
 import type { QuestionnaireVO } from './questionnaire';
+import type { AssessmentScenarioDetailed } from './scenario';
 
 /** 测评任务信息 */
 export interface AssessmentTask {
@@ -24,7 +25,9 @@ export interface AssessmentTask {
   creatorName?: string;
   createTime?: number;
   updateTime?: number;
+  // 测评场景信息
   scenarioId?: number; // 场景ID
+  scenarioDetail?: AssessmentScenarioDetailed;
   // 任务参与信息
   progress: number; // 任务参与进度
   participantStatus: AssessmentTaskParticipantStatus; // 任务参与状态
