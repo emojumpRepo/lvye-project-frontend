@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { AssessmentTask } from '@vben/types';
+
 import type { EvaluationScene } from './data';
 
 import { onMounted, ref } from 'vue';
@@ -21,12 +23,15 @@ const route = useRoute();
 // 响应式数据
 const SelectedScene = ref<any>(null);
 const hasReport = ref(false);
+const currentTaskNo = ref<null | string>(null);
+const taskDetailInfo = ref<AssessmentTask | null>(null);
 
 // 方法
 function handleBack() {
   router.back();
 }
 
+// 开始问卷测评
 async function startEvaluation() {
   // 跳转到测评页面
   if (SelectedScene.value) {
@@ -42,10 +47,21 @@ async function startEvaluation() {
             SelectedScene.value.evaluation.link.split('render/')[1],
         },
       });
-    } catch {
-      console.error(error);
+    } catch (error) {
+      console.error('startEvaluation error:', error);
     }
   }
+}
+
+// 获取测评任务详情
+async function getTaskDetailInfo() {
+  const taskNo = currentTaskNo.value;
+  if (!taskNo) {
+    return;
+  }
+  const res = await getAssessmentTask(taskNo);
+  taskDetailInfo.value = res;
+  console.log('taskDetailInfo', taskDetailInfo.value);
 }
 
 function handleBuildingClick(scene: any) {
@@ -72,8 +88,8 @@ function getNextAvailableScene() {
 }
 
 onMounted(async () => {
-  const taskNo = route.query.taskNo as string;
-  const taskDetailInfo = await getAssessmentTask(taskNo);
+  currentTaskNo.value = route.query.taskNo as string;
+  await getTaskDetailInfo();
 });
 </script>
 

@@ -1,4 +1,5 @@
 import type { PageParam, PageResult } from '@vben/request';
+import type { QuestionnaireVO } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
@@ -16,6 +17,11 @@ export namespace PsychologyScenarioApi {
     updateTime?: Date;
   }
 
+  export interface AssessmentScenarioWithSlotsAndQuestionnaires
+    extends AssessmentScenario {
+    slots?: AssessmentScenarioSlotVO[];
+  }
+
   /** 测评场景槽位信息 */
   export interface AssessmentScenarioSlot {
     id?: number;
@@ -23,8 +29,14 @@ export namespace PsychologyScenarioApi {
     slotKey: string;
     slotName: string;
     slotOrder: number;
+    questionnaireId?: number;
+    metadataJson?: string;
     allowedQuestionnaireTypes?: string;
     frontendComponent?: string;
+  }
+
+  export interface AssessmentScenarioSlotVO extends AssessmentScenarioSlot {
+    questionnaire?: QuestionnaireVO;
   }
 
   /** 测评场景分页查询参数 */
@@ -60,9 +72,9 @@ export function getAssessmentScenarioPage(
 
 /** 查询测评场景列表 */
 export function getAssessmentScenarioList() {
-  return requestClient.get<PsychologyScenarioApi.AssessmentScenario[]>(
-    '/psychology/assessment-task/scenarios',
-  );
+  return requestClient.get<
+    PsychologyScenarioApi.AssessmentScenarioWithSlotsAndQuestionnaires[]
+  >('/psychology/assessment-task/scenarios');
 }
 
 /** 查询测评场景详情 */
