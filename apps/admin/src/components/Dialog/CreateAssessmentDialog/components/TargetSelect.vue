@@ -78,7 +78,7 @@ const isDataLoaded = ref(false);
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     height: '200px',
-    rowConfig: { keyField: 'id' },
+    rowConfig: { keyField: 'id', isHover: true },
     checkboxConfig: { reserve: true },
     pagerConfig: { enabled: false },
     columns: useStudentProfileGroupGridSchema(),
@@ -101,6 +101,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       transform: true,
       accordion: false,
       lazy: true,
+      trigger: 'row',
       hasChildField: 'hasChildField',
       loadMethod: async ({ row }: any) => {
         return await formatDeptListToTree(
@@ -155,6 +156,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       selectedByClass.value = new Map(
         formattedData.map((item) => [item.classId, new Set(item.studentIds)]),
       );
+
+      // 同步到父组件
+      sync();
     },
   },
 });
@@ -211,6 +215,7 @@ async function loadClassList() {
 }
 
 onMounted(async () => {
+  console.log('onMounted', props);
   start();
   await loadClassList();
 });
@@ -272,7 +277,7 @@ async function handleSearch() {
     <!-- 收件类型 -->
     <div>
       <LyLabel title="收件类型" required size="small" />
-      <ARadio.Group v-model:value="type">
+      <ARadio.Group v-model:value="type" @change="clearSelected">
         <ARadio :value="ASSESSMENT_TARGET_TYPE.STUDENT">学生本人</ARadio>
         <ARadio :value="ASSESSMENT_TARGET_TYPE.PARENT">学生家长</ARadio>
       </ARadio.Group>

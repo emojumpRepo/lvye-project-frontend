@@ -8,92 +8,6 @@ import { IconifyIcon } from '@vben/icons';
 
 import { getDictOptions } from '#/utils/dict';
 
-// 导出学生档案相关类型
-
-/** 学籍信息 */
-export function usePersonalInfoFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      fieldName: 'name',
-      component: 'Input',
-      label: '姓名',
-    },
-    {
-      fieldName: 'studentId',
-      component: 'Input',
-      label: '学号',
-    },
-    {
-      fieldName: 'class',
-      component: 'Input',
-      label: '班级',
-    },
-    {
-      fieldName: 'phone',
-      component: 'Input',
-      label: '联系电话',
-    },
-    {
-      fieldName: 'gender',
-      component: 'Input',
-      label: '性别/年龄',
-    },
-    {
-      fieldName: 'status',
-      component: 'Input',
-      label: '就读状态',
-    },
-    {
-      fieldName: 'address',
-      component: 'Input',
-      label: '家庭住址',
-      formItemClass: 'col-span-3',
-    },
-  ];
-}
-
-/** 家庭背景 */
-export function useFamilyBackgroundFormSchema(): VbenFormSchema[] {
-  return [
-    {
-      fieldName: 'fatherName',
-      component: 'Input',
-      label: '父亲姓名',
-    },
-    {
-      fieldName: 'fatherOccupation',
-      component: 'Input',
-      label: '父亲职业',
-    },
-    {
-      fieldName: 'fatherPhone',
-      component: 'Input',
-      label: '父亲联系方式',
-    },
-    {
-      fieldName: 'motherName',
-      component: 'Input',
-      label: '母亲姓名',
-    },
-    {
-      fieldName: 'motherPhone',
-      component: 'Input',
-      label: '母亲联系方式',
-    },
-    {
-      fieldName: 'parentMaritalStatus',
-      component: 'Input',
-      label: '父母婚姻情况',
-    },
-    {
-      fieldName: 'familySpecialSituation',
-      component: 'Input',
-      label: '家庭特殊情况',
-      formItemClass: 'col-span-3',
-    },
-  ];
-}
-
 /** 搜索表单 */
 export function useSearchFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
@@ -234,6 +148,7 @@ export function useStudentProfileGroupGridSchema(): VxeTableGridOptions<Psycholo
       slots: {
         default: 'name',
       },
+      className: '!pl-5',
     },
     {
       field: 'count',
@@ -241,7 +156,7 @@ export function useStudentProfileGroupGridSchema(): VxeTableGridOptions<Psycholo
       width: '80',
       slots: { default: 'count' },
     },
-    { type: 'checkbox', width: '50', align: 'center', fixed: 'right' },
+    { type: 'checkbox', width: '80', align: 'center', fixed: 'right' },
   ];
 }
 

@@ -67,10 +67,7 @@ const taskNo = String(route.params.taskNo || '');
 const loading = ref(false);
 
 const currentTaskInfo = ref<TaskInfo>();
-const activeTabKey = ref<TabItem>({
-  key: '',
-  label: '',
-});
+const activeTabKey = ref('');
 
 const taskStatusTag = computed(() => {
   if (!currentTaskInfo.value) {
@@ -108,7 +105,6 @@ async function loadTaskData() {
 
     // 获取任务基本信息
     const taskInfo = await getAssessmentTask(taskNo);
-    console.log('taskInfo', taskInfo);
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
         label: item.title,
@@ -118,14 +114,12 @@ async function loadTaskData() {
         taskNo: taskInfo.taskNo || '',
         taskName: taskInfo.taskName,
         status: taskInfo.status,
-        startline: taskInfo.startline || 0,
-        deadline: taskInfo.deadline || 0,
+        startline: Number(taskInfo.startline),
+        deadline: Number(taskInfo.deadline),
         questionnairesTabs,
       };
-      activeTabKey.value = currentTaskInfo.value?.questionnairesTabs[0] || {
-        key: '',
-        label: '',
-      };
+      activeTabKey.value =
+        currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
     }
   } catch (error) {
     console.error('Failed to load task data:', error);
@@ -147,7 +141,7 @@ onMounted(async () => {
     <div class="flex flex-wrap items-center justify-between gap-6">
       <!-- 任务信息 -->
       <div
-        class="flex flex-1 items-center justify-between rounded-xl bg-[#FFFFFF99] p-4 text-sm text-[#000000A6]"
+        class="flex flex-1 items-center justify-between rounded-xl bg-[#FFFFFF99] px-5 py-2 text-sm text-[#000000A6]"
       >
         <div class="flex flex-nowrap items-center gap-2">
           <IconifyIcon
@@ -161,7 +155,13 @@ onMounted(async () => {
           <ADivider type="vertical" class="h-4" />
           <span class="truncate"> 任务：{{ currentTaskInfo?.taskNo }} </span>
           <ADivider type="vertical" class="h-4" />
-          <span class="truncate"> 测评量表：{{ activeTabKey?.label }} </span>
+          <span class="truncate">
+            测评量表：{{
+              currentTaskInfo?.questionnairesTabs.find(
+                (item) => item.key === activeTabKey,
+              )?.label
+            }}
+          </span>
           <ADivider type="vertical" class="h-4" />
           <span class="truncate">
             创建时间：{{
@@ -182,10 +182,10 @@ onMounted(async () => {
       <!-- 操作按钮 -->
       <div class="space-x-2">
         <LyButton
+          size="middle"
+          :type="item.value === 'export' ? 'success' : 'default'"
           v-for="item in actionButtons"
           :key="item.value"
-          size="middle"
-          type="default"
           @click="activeButton = item.value"
         >
           {{ item.label }}
@@ -194,7 +194,7 @@ onMounted(async () => {
     </div>
 
     <!-- 问卷Tabs -->
-    <ATabs v-model:active-key="activeTabKey.key">
+    <ATabs v-model:active-key="activeTabKey" :tab-bar-gutter="10">
       <ATabs.TabPane
         v-for="tab in currentTaskInfo?.questionnairesTabs"
         :key="tab.key"
@@ -203,20 +203,20 @@ onMounted(async () => {
           <span
             class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
             :class="{
-              '!bg-primary !text-white': activeTabKey?.key === tab.key,
+              '!bg-primary !text-white': activeTabKey === tab.key,
             }"
           >
             {{ tab.label }}
           </span>
         </template>
       </ATabs.TabPane>
-      <!-- <template #leftExtra>
+      <template #leftExtra>
         <div class="mr-6">
           <LyButton size="middle" type="default" @click="router.back()">
             返回
           </LyButton>
         </div>
-      </template> -->
+      </template>
       <template #rightExtra>
         <ARadio.Group v-model:value="activeType">
           <ARadio.Button
@@ -239,7 +239,7 @@ onMounted(async () => {
     </div>
 
     <!-- 年级管理区域 -->
-    <AssessmentDetailList />
+    <AssessmentDetailList :task-no="taskNo" :questionnaire-id="activeTabKey" />
   </div>
 </template>
 
@@ -258,8 +258,7 @@ onMounted(async () => {
 
 :deep(.ant-btn-default) {
   height: 100% !important;
-  padding: 12px 15px !important;
-  // font-size: 12px !important;
+  padding: 6px 15px !important;
   border: none !important;
   box-shadow: none !important;
 }

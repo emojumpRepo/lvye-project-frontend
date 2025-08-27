@@ -50,27 +50,27 @@ function handleClick() {
   } else {
     router.push(`/evaluation/assessment/${task.taskNo}`);
   }
-  return;
-  switch (task.participantStatus) {
-    case 0:
-    case 1: {
-      if (task.scenarioId) {
-        router.push({
-          path: '/evaluation/scene',
-          query: {
-            taskNo: task.taskNo,
-          },
-        });
-      } else {
-        router.push(`/evaluation/assessment/${task.taskNo}`);
-      }
-      break;
-    }
-    case 2: {
-      router.push('/evaluation/result');
-      break;
-    }
-  }
+
+  // switch (task.participantStatus) {
+  //   case 0:
+  //   case 1: {
+  //     if (task.scenarioId) {
+  //       router.push({
+  //         path: '/evaluation/scene',
+  //         query: {
+  //           taskNo: task.taskNo,
+  //         },
+  //       });
+  //     } else {
+  //       router.push(`/evaluation/assessment/${task.taskNo}`);
+  //     }
+  //     break;
+  //   }
+  //   case 2: {
+  //     router.push('/evaluation/result');
+  //     break;
+  //   }
+  // }
 }
 </script>
 
@@ -86,7 +86,7 @@ function handleClick() {
           </div>
         </div>
         <div class="mb-2 text-xs text-emerald-900/70">
-          截止：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}
+          截止于：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}
         </div>
         <div class="h-2 w-full rounded-full bg-emerald-100/60">
           <div

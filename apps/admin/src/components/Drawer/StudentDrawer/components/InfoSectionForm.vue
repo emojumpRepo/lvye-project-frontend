@@ -1,77 +1,259 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import type { ConfigOptions } from '../data';
+
+import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
 import { Divider } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
+import { updateStudentProfile } from '#/api/psychology/student-profile';
+import { getDictObj, getDictOptions } from '#/utils/dict';
+import { loadDeptList } from '#/utils/transformDeptToTree';
 
-interface PersonalInfo {
-  address: string;
-  class: string;
-  gender: string;
-  name: string;
-  phone: string;
-  status: string;
-  studentId: string;
-}
-
-interface FamilyBackground {
-  fatherName: string;
-  fatherOccupation: string;
-  fatherPhone: string;
-  motherName: string;
-  motherPhone: string;
-  parentMaritalStatus: string;
-  familySpecialSituation: string;
-}
+import {
+  useFamilyBackgroundFormSchema,
+  usePersonalInfoFormSchema,
+} from '../data';
 
 const props = defineProps<{
-  formInfo: FamilyBackground | PersonalInfo;
-  schema: any;
+  parentInfo?: PsychologyStudentParentProfileApi.StudentParentProfile[];
+  schemaType: 'familyBackground' | 'personalInfo';
+  studentInfo?: PsychologyStudentProfileApi.StudentProfile;
   title: string;
 }>();
 
+const emit = defineEmits<{
+  (e: 'updateLoading', value: boolean): void;
+}>();
+
 const edit = ref(false);
+const configOptions = ref<ConfigOptions>({
+  classList: [],
+  graduationStatusMap: [],
+  sexMap: [],
+});
+const studentFormInfo = ref<Record<string, any>>({});
+const parentFormInfo =
+  ref<PsychologyStudentParentProfileApi.StudentParentProfilePageReq>();
+
+// 使用计算属性动态生成表单schema
+const formSchema = computed(() =>
+  props.schemaType === 'personalInfo'
+    ? usePersonalInfoFormSchema(edit.value, configOptions.value)
+    : useFamilyBackgroundFormSchema(edit.value),
+);
 
 const [InfoForm, InfoFormApi] = useVbenForm({
   commonConfig: {
     componentProps: {
       class: 'w-full',
+      hideRequiredMark: true,
     },
     labelClass: 'justify-start pb-1.5 font-normal',
     disabled: true,
   },
   layout: 'horizontal',
-  schema: props.schema,
-  wrapperClass: 'grid-cols-3 gap-5',
+  schema: formSchema.value,
+  wrapperClass: 'grid-cols-4 gap-4',
   showDefaultActions: false,
 });
 
+// 监听编辑状态变化，重新设置表单schema
+watch(edit, (newEdit) => {
+  InfoFormApi.setState({
+    schema: formSchema.value,
+    commonConfig: { disabled: !newEdit },
+  });
+});
+
+/** 开始编辑 */
 function handleEdit() {
   edit.value = true;
-  InfoFormApi.setState({
-    commonConfig: { disabled: false },
-  });
+  if (props.schemaType === 'personalInfo') {
+    InfoFormApi.setFieldValue(
+      'classDeptId',
+      (
+        props.studentInfo as
+          | PsychologyStudentProfileApi.StudentProfile
+          | undefined
+      )?.classDeptId,
+    );
+    InfoFormApi.setFieldValue(
+      'graduationStatus',
+      String(
+        (
+          props.studentInfo as
+            | PsychologyStudentProfileApi.StudentProfile
+            | undefined
+        )?.graduationStatus,
+      ),
+    );
+    InfoFormApi.setFieldValue(
+      'birthDate',
+      dayjs(
+        (
+          props.studentInfo as
+            | PsychologyStudentProfileApi.StudentProfile
+            | undefined
+        )?.birthDate,
+      ),
+    );
+    InfoFormApi.setFieldValue(
+      'sex',
+      getDictObj(
+        'system_user_sex',
+        Number(
+          (
+            props.studentInfo as
+              | PsychologyStudentProfileApi.StudentProfile
+              | undefined
+          )?.sex,
+        ),
+      )?.value,
+    );
+  }
 }
 
-function handleSave() {
+/** 保存 */
+async function handleSave() {
+  emit('updateLoading', true);
+  const values = await InfoFormApi.getValues();
+
+  values.classDeptId = Number(values.classDeptId);
+  values.graduationStatus = Number(values.graduationStatus);
   edit.value = false;
-  InfoFormApi.setState({
-    commonConfig: { disabled: true },
-  });
+  if (props.schemaType === 'personalInfo') {
+    InfoFormApi.setFieldValue(
+      'classDeptId',
+      configOptions.value?.classList.find(
+        (item) => item.value === values.classDeptId,
+      )?.label,
+    );
+    InfoFormApi.setFieldValue(
+      'graduationStatus',
+      getDictObj('student_graduation_status', Number(values.graduationStatus))
+        ?.label,
+    );
+
+    values.birthDate = dayjs(values.birthDate).valueOf().toString();
+
+    try {
+      await updateStudentProfile({
+        ...values,
+        id: (
+          props.studentInfo as
+            | PsychologyStudentProfileApi.StudentProfile
+            | undefined
+        )?.id,
+        gradeDeptId: (
+          props.studentInfo as
+            | PsychologyStudentProfileApi.StudentProfile
+            | undefined
+        )?.gradeDeptId,
+      });
+    } catch (error) {
+      console.warn('updateStudentProfile failed', error);
+    }
+  }
+  emit('updateLoading', false);
 }
 
+/** 取消 */
 function handleCancel() {
   edit.value = false;
-  InfoFormApi.setState({
-    commonConfig: { disabled: true },
-  });
+  if (props.studentInfo && props.schemaType === 'personalInfo') {
+    InfoFormApi.setValues(
+      formatFormData(
+        props.studentInfo as PsychologyStudentProfileApi.StudentProfile,
+      ),
+    );
+  }
 }
 
-onMounted(() => {
-  InfoFormApi.setValues(props.formInfo);
+// 获取类型字典
+async function getDictTypeOptions() {
+  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
+  const stored = sessionStorage.getItem('deptList');
+
+  // 获取班级选项
+  if (stored) {
+    deptList.value = JSON.parse(stored);
+  } else {
+    try {
+      const treeData = await loadDeptList();
+      deptList.value = treeData;
+    } catch (error) {
+      console.error('加载部门列表失败:', error);
+      return;
+    }
+  }
+
+  const gradeDept = deptList.value.find((item) => {
+    const base = props.studentInfo as
+      | PsychologyStudentProfileApi.StudentProfile
+      | undefined;
+    return item.value === base?.gradeDeptId;
+  });
+
+  if (!gradeDept) return [];
+
+  configOptions.value.classList = gradeDept.children ?? [];
+
+  // 获取性别字典
+  const sexMap = await getDictOptions('system_user_sex');
+  configOptions.value.sexMap = sexMap.map((item) => ({
+    label: item.label,
+    value: item.value,
+  }));
+
+  // 获取毕业状态字典
+  const studentGraduationStatus = await getDictOptions(
+    'student_graduation_status',
+  );
+  configOptions.value.graduationStatusMap =
+    studentGraduationStatus.map((item) => ({
+      label: item.label,
+      value: item.value,
+    })) ?? [];
+}
+
+// 格式化表单
+function formatFormData(info: PsychologyStudentProfileApi.StudentProfile) {
+  const studentFormInfo = {
+    ...info,
+    sex: getDictObj('system_user_sex', info.sex)?.label,
+    birthDate: dayjs(info.birthDate).format('YYYY-MM-DD'),
+    graduationStatus: getDictObj(
+      'student_graduation_status',
+      info.graduationStatus,
+    )?.label,
+    classDeptId: configOptions.value?.classList.find(
+      (item) => item.value === info.classDeptId,
+    )?.label,
+  };
+  return studentFormInfo;
+}
+
+onMounted(async () => {
+  if (!props.studentInfo) return;
+  if (props.schemaType === 'personalInfo') {
+    await getDictTypeOptions();
+    const info =
+      props.studentInfo as PsychologyStudentProfileApi.StudentProfile;
+    studentFormInfo.value = formatFormData(info);
+    InfoFormApi.setValues(studentFormInfo.value as Record<string, any>);
+  } else if (props.schemaType === 'familyBackground') {
+    parentFormInfo.value = props.parentInfo as
+      | PsychologyStudentParentProfileApi.StudentParentProfilePageReq
+      | undefined;
+    InfoFormApi.setValues(parentFormInfo.value as Record<string, any>);
+  }
 });
 </script>
 
@@ -116,11 +298,12 @@ onMounted(() => {
           </div>
         </div>
       </div>
+
       <!-- 信息表单 -->
       <InfoForm />
     </div>
   </div>
-  </template>
+</template>
 
 <style lang="scss" scoped>
 :deep(.form-item) {
@@ -132,7 +315,8 @@ onMounted(() => {
 :deep(.custom-input-wrapper) {
   width: 100% !important;
 }
+
+:deep(.custom-error) {
+  bottom: -15px !important;
+}
 </style>
-
-
-

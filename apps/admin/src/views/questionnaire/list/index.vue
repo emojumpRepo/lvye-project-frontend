@@ -269,9 +269,9 @@ onMounted(() => {
               <Button type="text" size="small" @click="cancelRowEvent(row)">
                 取消
               </Button>
-              <Button type="link" size="small" danger @click="onDelete(row)">
+              <!-- <Button type="link" size="small" danger @click="onDelete(row)">
                 删除
-              </Button>
+              </Button> -->
             </div>
             <div v-else class="flex w-full items-center">
               <Button

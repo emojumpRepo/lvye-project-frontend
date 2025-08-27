@@ -11,7 +11,6 @@ import {
   Table as ATable,
 } from 'ant-design-vue';
 
-import { getDeptSimpleList } from '#/api/psychology/student-profile/index';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -60,28 +59,28 @@ const rules = ref({
 /**
  * 获取年级选项
  */
-async function getGradeOptions() {
-  try {
-    const data = await getDeptSimpleList();
-    if (data.length > 0) {
-      const filteredData = data.filter((dept) => dept.parentId !== 110);
-      const allIds = new Set(filteredData.map((dept) => dept.id));
-      const parentData = filteredData.filter(
-        (dept) => !allIds.has(dept.parentId),
-      );
-      gradeOptions.value =
-        parentData.map((dept) => ({
-          value: dept.id,
-          label: dept.name,
-        })) || [];
-    }
-  } catch (error) {
-    console.error('获取年级选项失败', error);
-  }
-}
+// async function getGradeOptions() {
+//   try {
+//     const data = await getDeptSimpleList();
+//     if (data.length > 0) {
+//       const filteredData = data.filter((dept) => dept.parentId !== 110);
+//       const allIds = new Set(filteredData.map((dept) => dept.id));
+//       const parentData = filteredData.filter(
+//         (dept) => !allIds.has(dept.parentId),
+//       );
+//       gradeOptions.value =
+//         parentData.map((dept) => ({
+//           value: dept.id,
+//           label: dept.name,
+//         })) || [];
+//     }
+//   } catch (error) {
+//     console.error('获取年级选项失败', error);
+//   }
+// }
 
 onMounted(async () => {
-  await getGradeOptions();
+  // await getGradeOptions();
 });
 </script>
 

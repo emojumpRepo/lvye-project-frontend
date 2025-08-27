@@ -121,9 +121,9 @@ const abnormalColor = computed(() => {
           <div v-if="formulaInfo.type === '最多选择'" class="formula-detail">
             <div class="detail-item">
               <span class="label">分数值：</span>
-              <span class="value"
-                >{{ formulaInfo.config.questionScore }} 分</span
-              >
+              <span class="value">
+                {{ formulaInfo.config.questionScore }} 分
+              </span>
             </div>
             <div class="detail-item">
               <span class="label">次数阈值：</span>
