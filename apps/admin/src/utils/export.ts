@@ -1,3 +1,4 @@
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { message } from 'ant-design-vue';
@@ -59,7 +60,7 @@ function formatStudentDataForExport(
           break;
         }
         case 'graduationStatus': {
-          value = value === 1 ? '已毕业' : '未毕业';
+          value = getDictLabel('student_graduation_status', value);
           break;
         }
         case 'homeAddress':
@@ -72,26 +73,7 @@ function formatStudentDataForExport(
           break;
         }
         case 'psychologicalStatus': {
-          switch (value) {
-            case 0: {
-              value = '一般';
-
-              break;
-            }
-            case 1: {
-              value = '良好';
-
-              break;
-            }
-            case 2: {
-              value = '较差';
-
-              break;
-            }
-            default: {
-              value = '未知';
-            }
-          }
+          value = getDictLabel('student_psychological_status', value);
           break;
         }
         case 'sex': {
@@ -99,7 +81,6 @@ function formatStudentDataForExport(
           break;
         }
         default: {
-          // 保持原值
           break;
         }
       }
@@ -139,29 +120,29 @@ export function exportStudentsToExcel(
     const columnWidths = STUDENT_EXPORT_COLUMNS.map((column) => {
       switch (column.key) {
         case 'birthDate': {
-          return { wch: 12 };
+          return { wch: 20 };
         }
         case 'className':
         case 'gradeName':
         case 'sex': {
-          return { wch: 8 };
+          return { wch: 10 };
         }
         case 'graduationStatus':
         case 'psychologicalStatus': {
           return { wch: 10 };
         }
         case 'homeAddress': {
-          return { wch: 25 };
+          return { wch: 35 };
         }
         case 'mobile': {
-          return { wch: 15 };
+          return { wch: 20 };
         }
         case 'name':
         case 'studentNo': {
-          return { wch: 12 };
+          return { wch: 15 };
         }
         case 'remark': {
-          return { wch: 20 };
+          return { wch: 30 };
         }
         default: {
           return { wch: 10 };
@@ -182,6 +163,65 @@ export function exportStudentsToExcel(
     XLSX.writeFile(workbook, finalFilename);
 
     message.success(`已导出 ${data.length} 条学生档案数据`);
+  } catch (error) {
+    console.error('导出失败:', error);
+    message.error('导出失败，请重试');
+  }
+}
+
+/**
+ * 将测评任务中选中的学生问卷结果导出为 Excel
+ * @param data 学生问卷结果数据（来自测评任务列表勾选项）
+ * @param filename 可选的文件名
+ */
+export function exportAssessmentParticipantsToExcel(
+  data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
+  filename?: string,
+): void {
+  try {
+    if (!data || data.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+
+    const formattedData = data.map((item) => {
+      return {
+        学生姓名: item.name || '---',
+        学号: item.studentNo || '---',
+        班级: item.className || '---',
+        完成状态: item.status === 1 ? '已完成' : '未完成',
+        分数: item.score ?? '--',
+        风险等级: item.riskLevel
+          ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+          : '--',
+        完成时间: item.finishTime
+          ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
+          : '--',
+        任务编号: item.taskNo || '---',
+      } as Record<string, any>;
+    });
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    // 列宽设置
+    worksheet['!cols'] = [
+      { wch: 12 }, // 学生姓名
+      { wch: 16 }, // 学号
+      { wch: 20 }, // 班级
+      { wch: 10 }, // 完成状态
+      { wch: 10 }, // 分数
+      { wch: 12 }, // 风险等级
+      { wch: 25 }, // 完成时间
+      { wch: 30 }, // 任务编号
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, '问卷结果');
+
+    const defaultFilename = `测评问卷结果.xlsx`;
+    const finalFilename = filename || defaultFilename;
+    XLSX.writeFile(workbook, finalFilename);
+    message.success(`已导出 ${data.length} 条问卷结果`);
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
@@ -292,6 +332,7 @@ export function downloadTemplate() {
   XLSX.writeFile(wb, fileName);
 }
 
+/** 下载心理评估报告模板 */
 export async function downloadPsychologicalReportTemplate() {
   // 创建文档
   const doc = new Document({

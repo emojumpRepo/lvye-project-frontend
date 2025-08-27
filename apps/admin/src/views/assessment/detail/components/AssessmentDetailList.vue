@@ -4,12 +4,14 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { ref, watch } from 'vue';
 
+import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
+import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
@@ -27,11 +29,10 @@ const props = withDefaults(defineProps<Props>(), {
 const actionButtons = ref([
   { label: '批量发送提醒', value: 'batchSendReminder' },
   { label: '批量转入干预', value: 'batchTransferToIntervention' },
-  { label: '批量导出', value: 'batchExport' },
+  { label: '批量导出', value: 'batchExport', onClick: handleExport },
 ]);
 
-const activeButton = ref('');
-const checkedIds = ref<number[]>([]);
+const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
 const queryParams =
@@ -44,7 +45,7 @@ const queryParams =
 
 /** 处理行选中 */
 function handleRowCheckboxChange({ records }: { records: any[] }) {
-  checkedIds.value = records
+  selectedRowKeys.value = records
     .map((item) => item.studentProfileId)
     .filter(Boolean);
 }
@@ -90,7 +91,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       },
     },
     rowConfig: { keyField: 'seq', isHover: true },
-    toolbarConfig: { refresh: true, search: true, custom: false, zoom: false },
+    toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
@@ -100,16 +101,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 watch(
   () => [props.taskNo, props.questionnaireId],
-  ([newTaskNo, newQuestionnaireId]) => {
-    if (newTaskNo || (newTaskNo && newQuestionnaireId)) {
-      queryParams.value.taskNo = newTaskNo;
+  async ([newTaskNo, newQuestionnaireId]) => {
+    if (newTaskNo || newQuestionnaireId) {
+      queryParams.value.taskNo = newTaskNo!;
       queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
       searchRef.value?.handleReset();
-      checkedIds.value = [];
-      gridApi?.query();
+      selectedRowKeys.value = [];
+      if ((gridApi as any)?.grid?.commitProxy) {
+        await gridApi.query();
+      }
     }
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 );
 
 /** 处理搜索 */
@@ -125,8 +128,28 @@ function handleLoading(isLoading: boolean) {
 }
 
 /** 查看详情 */
-function viewDetail(record: any) {
-  console.log('查看详情:', record);
+function viewDetail(_record: any) {}
+
+// 导出数据
+async function handleExport() {
+  try {
+    loading.value = true;
+
+    if (selectedRowKeys.value.length === 0) {
+      message.warning('请先选择要导出的学生数据');
+      return;
+    }
+
+    const selectedStudents = gridApi.grid.getCheckboxRecords();
+    if (selectedStudents && selectedStudents.length > 0) {
+      exportAssessmentParticipantsToExcel(selectedStudents);
+    }
+  } catch (error) {
+    console.error(error);
+    message.error('导出失败，请重试');
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -144,8 +167,8 @@ function viewDetail(record: any) {
         :key="item.value"
         size="middle"
         type="default"
-        :disabled="checkedIds.length === 0"
-        @click="activeButton = item.value"
+        :disabled="selectedRowKeys.length === 0"
+        @click="item.onClick && item.onClick()"
       >
         {{ item.label }}
       </LyButton>
