@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { EvaluationScene } from '../data';
 
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { ArrowRight, Check } from '@vben/icons';
 
@@ -66,6 +66,13 @@ function handleContinue() {
 function handleBack() {
   emit('back');
 }
+
+watch(
+  () => props.hasIntro,
+  (newVal) => {
+    showIntro.value = newVal;
+  },
+);
 </script>
 
 <template>
