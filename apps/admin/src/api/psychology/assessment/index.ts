@@ -88,6 +88,18 @@ export namespace PsychologyAssessmentApi {
     isParent?: boolean;
   }
 
+  /** 测评任务参与者问卷分页查询参数 */
+  export interface AssessmentTaskParticipantsQuestionnairePageReq
+    extends PageParam {
+    taskNo: string;
+    questionnaireId: number;
+    studentName?: string;
+    studentNo?: string;
+    status?: number;
+    riskLevel?: string;
+    className?: string;
+  }
+
   /** 测评参与者请求参数 */
   export interface AssessmentTaskParticipantsReq {
     taskNo: string;
@@ -233,6 +245,15 @@ export function getAssessmentParticipantPage(
   return requestClient.get<
     PageResult<PsychologyAssessmentApi.AssessmentParticipant>
   >('/psychology/assessment-participant/page', { params });
+}
+
+/** 查询测评任务参与者问卷分页列表 */
+export function getAssessmentTaskParticipantsQuestionnairePage(
+  params: PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyAssessmentApi.AssessmentParticipant>
+  >('/psychology/assessment-task/participants-questionnaire-page', { params });
 }
 
 /** 获取测评参与者详情 */

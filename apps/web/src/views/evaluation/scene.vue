@@ -8,7 +8,10 @@ import { ArrowLeft } from '@vben/icons';
 
 import { message } from 'ant-design-vue';
 
-import { startAssessment } from '#/api/psychology/assessment';
+import {
+  getAssessmentTask,
+  startAssessment,
+} from '#/api/psychology/assessment';
 
 import { EVALUATION_SCENES } from './data';
 
@@ -68,8 +71,9 @@ function getNextAvailableScene() {
   return EVALUATION_SCENES.find((scene: EvaluationScene) => !scene.disabled);
 }
 
-onMounted(() => {
-  console.log(route.query);
+onMounted(async () => {
+  const taskNo = route.query.taskNo as string;
+  const taskDetailInfo = await getAssessmentTask(taskNo);
 });
 </script>
 

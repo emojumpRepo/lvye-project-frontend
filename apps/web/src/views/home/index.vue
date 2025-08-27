@@ -78,7 +78,8 @@ function onTaskAction(task: AssessmentTask) {
             >
               <span
                 class="bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent"
-                >我的测评任务</span>
+                >我的测评任务
+              </span>
             </div>
             <div
               v-if="tasksLoading"
