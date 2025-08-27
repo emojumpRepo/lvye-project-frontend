@@ -156,7 +156,7 @@ watch(selectedScenarioId, async (id) => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col">
+  <div class="flex max-h-[435px] flex-col overflow-hidden">
     <div
       class="mb-2 flex w-full justify-center"
       v-if="selectedScenarioId !== undefined && stepsItems.length > 0"
@@ -185,7 +185,7 @@ watch(selectedScenarioId, async (id) => {
       </div>
     </div>
 
-    <div class="h-[381px] overflow-y-auto p-1">
+    <div class="flex-1 overflow-y-auto p-1">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div
           v-for="assessment in assessmentList"
