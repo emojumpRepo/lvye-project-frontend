@@ -1,6 +1,8 @@
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { message } from 'ant-design-vue';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import {
   AlignmentType,
   Document,
@@ -16,6 +18,9 @@ import {
 import * as XLSX from 'xlsx';
 
 import { getDictLabel } from '#/utils';
+
+// 配置dayjs插件
+dayjs.extend(customParseFormat);
 
 /**
  * 学生档案导出字段映射
@@ -193,6 +198,7 @@ export function downloadTemplate() {
   // 创建填写说明工作表
   const instructionData = [
     ['字段名称', '格式要求', '是否必填', '说明', '示例'],
+    ['学生名字', '不超过20个字符', '是', '学生的真实姓名', '张三'],
     [
       '学号',
       '数字或字母数字组合，不超过20位',
@@ -200,8 +206,11 @@ export function downloadTemplate() {
       '学生的唯一标识',
       '2024001',
     ],
-    ['姓名', '2-10个字符', '是', '学生的真实姓名', '张三'],
+    ['性别', '男/女', '是', '只能填写"男"或"女"', '男'],
+    ['年级', '数字', '是', '学生所在年级（1-12）', '9'],
+    ['班级', '不超过10个字符', '是', '学生所在班级', '1班'],
     ['出生日期', 'YYYY-MM-DD', '是', '日期格式必须为年-月-日', '2008-01-01'],
+    ['联系电话', '11位数字', '否', '学生或家长的联系电话', '13800138000'],
     [
       '家庭住址',
       '不超过100个字符',
@@ -209,20 +218,6 @@ export function downloadTemplate() {
       '学生的详细家庭地址',
       '北京市朝阳区XX街道XX号',
     ],
-    ['性别', '男/女', '是', '只能填写"男"或"女"', '男'],
-    ['手机号', '11位数字', '否', '学生的联系电话', '13800138000'],
-    ['年级', '数字', '是', '学生所在年级,如一年级', '一年级'],
-    [
-      '班级',
-      '不超过10个字符',
-      '是',
-      '学生所在班级，如一年级(1)班',
-      '一年级(1)班',
-    ],
-    ['家长', '不超过10个字符', '否', '学生家长姓名', '张三'],
-    ['关系', '如父亲、母亲、监护人', '否', '学生与家长的关系', '父亲'],
-    ['家长手机号码', '11位数字', '否', '家长联系电话', '13800138000'],
-    ['备注', '不超过100个字符', '否', '其他说明', '无'],
   ];
 
   const instructionWs = XLSX.utils.aoa_to_sheet(instructionData);
@@ -253,18 +248,14 @@ export function downloadTemplate() {
   // 创建学生信息工作表
   const studentData = [
     [
-      '学号*',
-      '姓名*',
-      '出生日期*',
-      '家庭住址',
-      '性别*',
-      '手机号',
-      '年级*',
-      '班级*',
-      '家长',
-      '关系',
-      '家长手机号码',
-      '备注',
+      '学生名字(必填)',
+      '学号(必填)',
+      '性别(必填)',
+      '年级(必填)',
+      '班级(必填)',
+      '出生日期(必填)',
+      '联系电话(选填)',
+      '家庭住址(选填)',
     ],
   ];
 
@@ -708,4 +699,247 @@ export async function downloadPsychologicalReportTemplate() {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+}
+
+/**
+ * 格式化日期为 YYYY-MM-DD 格式
+ * @param value 日期值
+ * @returns 格式化后的日期字符串
+ */
+function formatDate(value: any): string {
+  if (!value) return '';
+
+  try {
+    // 如果是字符串，尝试解析
+    if (typeof value === 'string') {
+      const trimmedValue = value.trim();
+      if (!trimmedValue) return '';
+
+      // 专门处理 YYYY/M/D 格式（如：2000/1/15）
+      const ymdPattern = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/;
+      const ymdMatch = trimmedValue.match(ymdPattern);
+      if (ymdMatch && ymdMatch[1] && ymdMatch[2] && ymdMatch[3]) {
+        const year = Number.parseInt(ymdMatch[1]);
+        const month = Number.parseInt(ymdMatch[2]);
+        const day = Number.parseInt(ymdMatch[3]);
+
+        // 使用dayjs验证日期有效性
+        const date = dayjs(`${year}-${month}-${day}`);
+        if (date.isValid()) {
+          return date.format('YYYY-MM-DD');
+        }
+      }
+
+      // 尝试多种日期格式
+      const dateFormats = [
+        'YYYY/M/D',
+        'YYYY/MM/DD',
+        'YYYY-M-D',
+        'YYYY-MM-DD',
+        'M/D/YYYY',
+        'MM/DD/YYYY',
+        'M-D-YYYY',
+        'MM-DD-YYYY',
+        'YYYY年M月D日',
+        'YYYY年MM月DD日',
+      ];
+
+      for (const format of dateFormats) {
+        const date = dayjs(trimmedValue, format);
+        if (date.isValid()) {
+          return date.format('YYYY-MM-DD');
+        }
+      }
+
+      // 如果解析失败，返回原值
+      return trimmedValue;
+    }
+
+    // 如果是数字（Excel日期序列号）
+    if (typeof value === 'number') {
+      // Excel日期从1900年1月1日开始，需要转换
+      // dayjs可以处理Excel日期序列号
+      const date = dayjs('1900-01-01').add(value - 2, 'day');
+      if (date.isValid()) {
+        return date.format('YYYY-MM-DD');
+      }
+      return String(value);
+    }
+
+    // 如果是Date对象
+    if (value instanceof Date) {
+      const date = dayjs(value);
+      if (date.isValid()) {
+        return date.format('YYYY-MM-DD');
+      }
+      return String(value);
+    }
+
+    return String(value);
+  } catch (error) {
+    console.warn('日期格式化失败:', value, error);
+    return String(value);
+  }
+}
+
+/**
+ * 解析Excel文件
+ * @param file 文件
+ * @param options 选项
+ * @returns 解析后的数据
+ */
+export async function parseExcel(
+  file: File,
+  options: {
+    filterEmptyRows?: boolean; // 是否过滤空行
+    formatDates?: boolean; // 是否格式化日期字段，默认true
+    hasHeader?: boolean; // 是否有表头
+    maxRows?: number; // 最大读取行数
+    sheetIndex?: number; // 工作表索引，默认0
+  } = {},
+): Promise<{
+  data: any[][];
+  headers: string[];
+  sheetName: string;
+  totalRows: number;
+}> {
+  const {
+    filterEmptyRows = true,
+    formatDates = true,
+    hasHeader = true,
+    maxRows,
+    sheetIndex = 0,
+  } = options;
+
+  // 默认返回的空结果
+  const emptyResult = {
+    data: [],
+    headers: [],
+    sheetName: '',
+    totalRows: 0,
+  };
+
+  try {
+    // 读取文件内容
+    const arrayBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    // 验证工作表索引
+    if (sheetIndex >= workbook.SheetNames.length) {
+      message.error(
+        `工作表索引 ${sheetIndex} 超出范围，文件只有 ${workbook.SheetNames.length} 个工作表`,
+      );
+      return emptyResult;
+    }
+
+    const sheetName = workbook.SheetNames[sheetIndex];
+    if (!sheetName) {
+      message.error('工作表名称为空');
+      return emptyResult;
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+    if (!worksheet) {
+      message.error(`无法读取工作表: ${sheetName}`);
+      return emptyResult;
+    }
+
+    // 将工作表转换为JSON数组
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
+      defval: '',
+    }) as any[][];
+
+    if (!jsonData || jsonData.length === 0) {
+      message.warning('工作表为空，没有数据可读取');
+      return emptyResult;
+    }
+
+    let processedData = jsonData;
+
+    // 过滤空行
+    if (filterEmptyRows) {
+      processedData = processedData.filter((row: any[]) => {
+        if (!row || row.length === 0) return false;
+
+        return row.some((cell: any) => {
+          if (cell === null || cell === undefined) return false;
+          if (typeof cell === 'string') return cell.trim() !== '';
+          return true;
+        });
+      });
+    }
+
+    // 限制最大行数
+    if (maxRows && processedData.length > maxRows) {
+      processedData = processedData.slice(0, maxRows);
+      console.warn(`数据行数超过限制，只读取前 ${maxRows} 行`);
+    }
+
+    // 分离表头和数据
+    let headers: string[] = [];
+    let dataRows: any[][] = [];
+
+    if (hasHeader && processedData.length > 0) {
+      const firstRow = processedData[0];
+      if (firstRow && firstRow.length > 0) {
+        headers = firstRow.map((cell: any) => String(cell || ''));
+        dataRows = processedData.slice(1);
+      }
+    } else {
+      // 没有表头，生成默认列名
+      if (processedData.length > 0) {
+        const maxCols = Math.max(
+          ...processedData.map((row: any[]) => row?.length || 0),
+        );
+        headers = Array.from({ length: maxCols }, (_, i) => `列${i + 1}`);
+        dataRows = processedData;
+      }
+    }
+
+    // 日期字段检测和格式化
+    if (formatDates && dataRows.length > 0 && headers.length > 0) {
+      // 预计算日期字段索引，避免重复查找
+      const dateFieldIndices = headers
+        .map((header, index) =>
+          header.toLowerCase().includes('出生日期') ? index : -1,
+        )
+        .filter((index) => index !== -1);
+
+      if (dateFieldIndices.length > 0) {
+        // 检测并格式化日期字段
+        const formattedDataRows = dataRows.map((row, rowIndex) => {
+          return row.map((cell: any, colIndex: number) => {
+            // 只处理已知的日期字段
+            if (dateFieldIndices.includes(colIndex)) {
+              const formattedDate = formatDate(cell);
+              if (formattedDate !== cell) {
+                console.warn(
+                  `第${rowIndex + 1}行，字段"${headers[colIndex]}"：${cell} → ${formattedDate}`,
+                );
+              }
+              return formattedDate;
+            }
+            return cell;
+          });
+        });
+
+        dataRows = formattedDataRows;
+      }
+    }
+
+    const result = {
+      data: dataRows,
+      headers,
+      sheetName,
+      totalRows: dataRows.length,
+    };
+    return result;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    console.error('Excel解析失败:', error);
+    message.error(`Excel解析失败：${errorMessage}`);
+    return emptyResult;
+  }
 }
