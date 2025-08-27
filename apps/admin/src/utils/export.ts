@@ -26,7 +26,7 @@ dayjs.extend(customParseFormat);
 /**
  * 学生档案导出字段映射
  */
-const STUDENT_EXPORT_COLUMNS = [
+export const STUDENT_EXPORT_COLUMNS = [
   { key: 'name', label: '学生姓名' },
   { key: 'studentNo', label: '学号' },
   { key: 'sex', label: '性别' },
