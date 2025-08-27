@@ -34,13 +34,6 @@ const activeButton = ref('');
 const checkedIds = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
-
-function handleRowCheckboxChange({ records }: { records: any[] }) {
-  checkedIds.value = records
-    .map((item) => item.studentProfileId)
-    .filter(Boolean);
-}
-
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
     pageNo: 1,
@@ -49,17 +42,12 @@ const queryParams =
     questionnaireId: 0,
   });
 
-watch(
-  () => [props.taskNo, props.questionnaireId],
-  ([newTaskNo, newQuestionnaireId]) => {
-    if (newTaskNo && newQuestionnaireId) {
-      queryParams.value.taskNo = newTaskNo;
-      queryParams.value.questionnaireId = Number(newQuestionnaireId);
-      gridApi?.query();
-    }
-  },
-  { immediate: true },
-);
+/** 处理行选中 */
+function handleRowCheckboxChange({ records }: { records: any[] }) {
+  checkedIds.value = records
+    .map((item) => item.studentProfileId)
+    .filter(Boolean);
+}
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -73,8 +61,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
-          if (!queryParams.value.taskNo || !queryParams.value.questionnaireId) {
+        query: async ({ page }, formValues) => {
+          if (
+            !queryParams.value.taskNo ||
+            (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
+          ) {
             return { list: [], total: 0 };
           }
 
@@ -83,6 +74,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               ...queryParams.value,
               pageNo: page.currentPage,
               pageSize: page.pageSize,
+              ...formValues,
             };
 
             const response =
@@ -97,7 +89,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         },
       },
     },
-    rowConfig: { keyField: 'studentProfileId', isHover: true },
+    rowConfig: { keyField: 'seq', isHover: true },
     toolbarConfig: { refresh: true, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {
@@ -107,11 +99,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(
-  () => props.questionnaireId,
-  (value) => {
-    if (value) {
+  () => [props.taskNo, props.questionnaireId],
+  ([newTaskNo, newQuestionnaireId]) => {
+    if (newTaskNo || (newTaskNo && newQuestionnaireId)) {
+      queryParams.value.taskNo = newTaskNo;
+      queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
       searchRef.value?.handleReset();
-      gridApi.query();
+      checkedIds.value = [];
+      gridApi?.query();
     }
   },
   { immediate: true },
@@ -208,18 +203,13 @@ function viewDetail(record: any) {
 }
 
 :deep(.vxe-grid) {
-  padding-top: 0 !important;
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  // padding-top: 0 !important;
+  // padding-right: 0 !important;
+  // padding-left: 0 !important;
 }
 
 :deep(.vxe-pager) {
   background: transparent !important;
-}
-
-:deep(.vxe-pager--goto) {
-  width: 2.4em !important;
-  margin: 0 4px !important;
 }
 
 :deep(.vxe-pager--wrapper) {
@@ -229,13 +219,5 @@ function viewDetail(record: any) {
 :deep(.vxe-pager--sizes) {
   width: 8em !important;
   margin-right: 0 !important;
-}
-
-:deep(.vxe-icon-caret-down) {
-  margin-top: 3px !important;
-}
-
-:deep(.vxe-input--inner) {
-  padding-right: 0 !important;
 }
 </style>

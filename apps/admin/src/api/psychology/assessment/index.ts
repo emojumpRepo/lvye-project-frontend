@@ -274,15 +274,6 @@ export function getAssessmentParticipantPage(
   >('/psychology/assessment-participant/page', { params });
 }
 
-/** 查询测评任务参与者问卷分页列表 */
-export function getAssessmentTaskParticipantsQuestionnairePage(
-  params: PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq,
-) {
-  return requestClient.get<
-    PageResult<PsychologyAssessmentApi.AssessmentParticipant>
-  >('/psychology/assessment-task/participants-questionnaire-page', { params });
-}
-
 /** 获取测评参与者详情 */
 export function getAssessmentParticipant(id: number) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentParticipant>(
@@ -315,7 +306,7 @@ export function addAssessmentParticipants(
 }
 
 /** 获取测评问卷学生答题记录 */
-export function getParticipantsQuestionnairePage(
+export function getAssessmentTaskParticipantsQuestionnairePage(
   params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
 ) {
   return requestClient.get<
