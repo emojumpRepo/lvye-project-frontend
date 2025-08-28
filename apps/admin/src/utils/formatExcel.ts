@@ -4,7 +4,6 @@ import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 
-import { getDictOptions } from './dict';
 import { STUDENT_EXPORT_COLUMNS } from './export';
 import { loadDeptList } from './transformDeptToTree';
 
@@ -24,6 +23,8 @@ export interface StudentRecord {
   errorMessage?: string;
   mobile?: string;
   homeAddress?: string;
+  rowNumber?: number;
+  remark?: string;
 }
 
 /** 学生数据结果类型 */
@@ -48,8 +49,6 @@ export interface ValidationRecordResult {
 
 // 部门列表缓存
 const deptList = ref<any[]>();
-// 用户性别字典
-const userSexMap = ref();
 
 // 计算字符串长度（支持中文字符）
 function getStringLength(value: string): number {
@@ -69,15 +68,6 @@ async function getDeptList(): Promise<void> {
     }
   } catch (error) {
     console.error('获取部门列表失败:', error);
-  }
-}
-
-// 获取字典列表
-async function getSystemUserSexDict(): Promise<void> {
-  try {
-    userSexMap.value = await getDictOptions('system_user_sex');
-  } catch (error) {
-    console.error('获取用户性别字典失败:', error);
   }
 }
 
@@ -189,6 +179,8 @@ export async function validateStudentRecord(
         errorMessage: '',
         mobile: '',
         homeAddress: '',
+        rowNumber: '',
+        remark: '',
       };
       errors.push({ field, message: `${fieldNames[field]}为必填项` });
     }
@@ -503,21 +495,20 @@ export async function parseExcel(
     }
 
     // 转换为对象格式
-    const objectData: StudentRecord[] = dataRows.map((row) => {
-      const rowObject: Record<string, any> = {};
-      headers.forEach((header, index) => {
+    const objectData: StudentRecord[] = dataRows.map((row, index) => {
+      const rowObject: Partial<StudentRecord> = {};
+      headers.forEach((header, headerIndex) => {
         const matchedColumn = STUDENT_EXPORT_COLUMNS.find(
           (col) => col.label === header.trim(),
         );
         const key = matchedColumn ? matchedColumn.key : header;
-        rowObject[key] = row[index] || '';
+        rowObject[key as keyof StudentRecord] = row[headerIndex] || '';
       });
-      return rowObject as StudentRecord;
+      return { ...rowObject, rowNumber: index + 2 } as StudentRecord;
     });
 
     // 验证数据
     const { failed, success } = await validateStudentRecords(objectData);
-    await getSystemUserSexDict();
 
     // 为成功记录添加部门ID
     const formatSuccess = success.map((item) => {
@@ -527,16 +518,12 @@ export async function parseExcel(
       const classDept = gradeDept?.children?.find(
         (c: any) => c?.label === item.className,
       );
-      const sex = userSexMap.value?.find(
-        (s: any) => s?.label === item.sex,
-      )?.value;
 
       return {
         ...item,
         gradeDeptId: gradeDept?.value,
         classDeptId: classDept?.value,
-        sex,
-        birthDate: dayjs(item.birthDate).valueOf().toString(),
+        birthDate: item.birthDate,
       };
     });
 
