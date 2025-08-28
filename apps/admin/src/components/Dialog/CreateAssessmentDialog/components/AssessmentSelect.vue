@@ -146,6 +146,44 @@ async function getScenarios() {
   }
 }
 
+const activeScenarioPopoverId = ref<null | number>(null);
+const scenarioQuestionnaires = ref<QuestionnaireVO[]>([]);
+const scenarioLoading = ref(false);
+
+async function handleViewScenarioQuestionnaires(scenarioId: number) {
+  try {
+    scenarioLoading.value = true;
+    activeScenarioPopoverId.value = scenarioId;
+
+    // 从本地scenarioList中获取场景数据
+    const scenario = scenarioList.value.find((s) => s.id === scenarioId);
+
+    if (scenario && (scenario as any).slots) {
+      const questionnaires = (scenario as any).slots
+        .map((slot: any) => slot?.questionnaire)
+        .filter((q: any) => !!q && typeof q.id === 'number');
+      scenarioQuestionnaires.value = questionnaires;
+    } else {
+      scenarioQuestionnaires.value = [];
+    }
+  } catch (error) {
+    console.error('查询场景关联问卷失败:', error);
+    message.error('查询场景关联问卷失败');
+    scenarioQuestionnaires.value = [];
+  } finally {
+    scenarioLoading.value = false;
+  }
+}
+
+function closeScenarioPopover() {
+  activeScenarioPopoverId.value = null;
+  scenarioLoading.value = false;
+  // 延迟清空数据，避免关闭时的闪烁
+  setTimeout(() => {
+    scenarioQuestionnaires.value = [];
+  }, 200);
+}
+
 onMounted(async () => {
   start();
   await Promise.all([getAssessmentList(), getScenarios()]);
@@ -158,7 +196,12 @@ onMounted(async () => {
     <div
       class="mb-2 flex items-center justify-between text-[12px] text-[#6b7280]"
     >
-      <span v-if="selectedScenarioId !== undefined" class="text-[#00BE5F]">已选场景：{{ selectedScenario?.name }}</span>
+      <span v-if="selectedScenarioId !== undefined" class="text-[#00BE5F]">
+        <span>已选场景：{{ selectedScenario?.name }}</span>
+        <span class="text-gray-400">
+          (关联 {{ selectedScenario?.maxQuestionnaireCount }} 个量表)
+        </span>
+      </span>
       <span v-else> 已选择：{{ selectedIdsForUI.length }} 个量表 </span>
     </div>
 
@@ -194,7 +237,12 @@ onMounted(async () => {
               </span>
             </template>
             <template v-else>
-              <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">场景</span>
+              <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
+                场景
+              </span>
+              <span class="tag border-[#6B7280] bg-[#6B72800D] text-[#6B7280]">
+                仅支持单独下发
+              </span>
             </template>
           </div>
           <div
@@ -208,6 +256,70 @@ onMounted(async () => {
             @click.stop="handleViewDetail(card.id as number)"
           >
             查看详情
+          </div>
+          <div v-else>
+            <a-popover
+              placement="right"
+              :open="activeScenarioPopoverId === Number(card.id)"
+              @open-change="(open: boolean) => !open && closeScenarioPopover()"
+            >
+              <template #content>
+                <div class="max-w-xs">
+                  <div
+                    v-if="scenarioLoading"
+                    class="flex items-center justify-center py-4"
+                  >
+                    <a-spin size="small" />
+                    <span class="ml-2 text-gray-500">加载中...</span>
+                  </div>
+                  <div
+                    v-else-if="scenarioQuestionnaires.length === 0"
+                    class="text-gray-500"
+                  >
+                    暂无关联问卷
+                  </div>
+                  <div v-else class="space-y-3">
+                    <div
+                      v-for="questionnaire in scenarioQuestionnaires"
+                      :key="questionnaire.id"
+                      class="rounded-lg border border-gray-200 bg-gray-50 p-3 last:mb-0"
+                    >
+                      <div class="mb-2 flex items-start justify-between">
+                        <div class="line-clamp-1 font-medium text-gray-900">
+                          {{ questionnaire.title }}
+                        </div>
+                        <div class="ml-2 flex shrink-0 gap-1">
+                          <span
+                            class="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-600"
+                          >
+                            {{ questionnaire.questionCount }}题
+                          </span>
+                          <span
+                            class="rounded bg-green-100 px-2 py-0.5 text-xs text-green-600"
+                          >
+                            {{ questionnaire.estimatedDuration }}分钟
+                          </span>
+                        </div>
+                      </div>
+                      <div class="line-clamp-2 text-sm text-gray-600">
+                        {{ questionnaire.description || '暂无描述' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template #title>
+                <span>关联问卷列表</span>
+              </template>
+              <div
+                class="mt-2 w-fit text-[14px] text-[#0060FF] underline"
+                @click.stop="
+                  handleViewScenarioQuestionnaires(card.id as number)
+                "
+              >
+                查看关联问卷
+              </div>
+            </a-popover>
           </div>
         </div>
       </div>
