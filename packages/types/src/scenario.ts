@@ -50,6 +50,7 @@ export interface SlotMetadata {
     top?: number | string;
   };
   introConfig: {
+    backgroundImageUrl: string;
     characterConfig: {
       description: string;
       imageUrl: string;

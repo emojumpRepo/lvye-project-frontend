@@ -1,69 +1,49 @@
 <script lang="ts" setup>
-import type { AssessmentTask } from '@vben/types';
-
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { AlarmClockCheck, ArrowLeft, ClipboardList } from '@vben/icons';
 
 import { Spin } from 'ant-design-vue';
+import { storeToRefs } from 'pinia';
 
-import { getAssessmentTask } from '#/api/psychology/assessment';
+import { useEvaluationStore } from '#/store/evaluation';
 
 import QuestionnaireCard from './components/QuestionnaireCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 
-const assessmentTaskNo = ref<string>('');
-const assessmentData = ref<AssessmentTask | null>(null);
-const loading = ref(false);
+const evaluationStore = useEvaluationStore();
+const { loading, taskDetailInfo } = storeToRefs(evaluationStore);
+const { loadTaskDetail } = evaluationStore;
 
-onMounted(() => {
-  // 从路由参数获取测评ID，这里暂时使用所有场景作为示例
-  assessmentTaskNo.value = (route.params.id as string) || 'default';
-  loadAssessmentData();
+const { progress, totalDuration, completedQuestionnaires } =
+  storeToRefs(evaluationStore);
+
+// 从路由参数获取测评ID
+const assessmentTaskNo = computed(() => route.params.id as string);
+
+onMounted(async () => {
+  if (assessmentTaskNo.value) {
+    try {
+      await loadTaskDetail(assessmentTaskNo.value);
+    } catch (error_) {
+      console.error('Failed to load assessment data:', error_);
+    }
+  }
 });
 
 function handleBack() {
   router.back();
 }
 
-const totalTime = computed(() => {
-  return (
-    assessmentData.value?.questionnaires?.reduce(
-      (acc, cur) => acc + (cur.estimatedDuration ?? 0),
-      0,
-    ) || 0
-  );
-});
-
-const completedCount = computed(() => {
-  // 这里可以根据实际业务逻辑计算已完成数量
-  return (
-    assessmentData.value?.questionnaires?.filter((q) => q.completed)?.length ||
-    0
-  );
-});
-
-const progress = computed(() => {
-  const total = assessmentData.value?.questionnaires?.length ?? 0;
-  if (total === 0) return 0;
-  return (completedCount.value / total) * 100;
-});
-
-async function loadAssessmentData() {
-  try {
-    loading.value = true;
-    const res = await getAssessmentTask(assessmentTaskNo.value || '');
-    console.warn('res', res);
-    assessmentData.value = res;
-  } catch (error) {
-    console.error(error);
-  } finally {
-    loading.value = false;
-  }
-}
+// 格式化显示
+const progressPercentage = computed(() => `${Math.round(progress.value)}%`);
+const totalTimeFormatted = computed(() => `${totalDuration.value}分钟`);
+const totalQuestionnaires = computed(
+  () => taskDetailInfo.value?.questionnaires?.length || 0,
+);
 </script>
 
 <template>
@@ -85,7 +65,7 @@ async function loadAssessmentData() {
 
         <div class="text-center">
           <h1 class="text-lg font-bold text-emerald-900">
-            {{ assessmentData?.taskName }}
+            {{ taskDetailInfo?.taskName }}
           </h1>
         </div>
 
@@ -106,7 +86,7 @@ async function loadAssessmentData() {
           <!-- 总问卷数 -->
           <div class="text-center">
             <div class="text-2xl font-bold text-emerald-700">
-              {{ assessmentData?.questionnaireIds?.length }}
+              {{ totalQuestionnaires }}
             </div>
             <div class="text-sm text-emerald-600">总问卷数</div>
           </div>
@@ -117,7 +97,7 @@ async function loadAssessmentData() {
               class="flex items-center justify-center gap-2 text-2xl font-bold text-emerald-700"
             >
               <AlarmClockCheck class="h-6 w-6" />
-              <span>{{ totalTime }}分钟</span>
+              <span>{{ totalTimeFormatted }}</span>
             </div>
             <div class="text-sm text-emerald-600">预计用时</div>
           </div>
@@ -125,7 +105,7 @@ async function loadAssessmentData() {
           <!-- 完成进度 -->
           <div class="text-center">
             <div class="text-2xl font-bold text-emerald-700">
-              {{ progress }}%
+              {{ progressPercentage }}
             </div>
             <div class="text-sm text-emerald-600">完成进度</div>
           </div>
@@ -137,10 +117,9 @@ async function loadAssessmentData() {
             class="flex items-center justify-between text-sm text-emerald-600"
           >
             <span>
-              已完成 {{ completedCount }}/
-              {{ assessmentData?.questionnaireIds?.length }}
+              已完成 {{ completedQuestionnaires }}/{{ totalQuestionnaires }}
             </span>
-            <span>{{ progress }}%</span>
+            <span>{{ progressPercentage }}</span>
           </div>
           <div class="mt-2 h-2 overflow-hidden rounded-full bg-emerald-100">
             <div
@@ -154,7 +133,7 @@ async function loadAssessmentData() {
             class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 text-sm text-emerald-700"
           >
             <span class="font-medium">测评说明：</span>
-            <span>{{ assessmentData?.description || '暂无测评描述' }}</span>
+            <span>{{ taskDetailInfo?.description || '暂无测评描述' }}</span>
           </div>
         </div>
       </div>
@@ -172,7 +151,7 @@ async function loadAssessmentData() {
           class="grid flex-1 auto-rows-min grid-cols-1 content-start items-start gap-4 overflow-y-auto md:grid-cols-2 lg:grid-cols-3"
         >
           <QuestionnaireCard
-            v-for="questionnaire in assessmentData?.questionnaires"
+            v-for="questionnaire in taskDetailInfo?.questionnaires"
             :key="questionnaire.questionnaireId"
             :assessment-task-no="assessmentTaskNo"
             :questionnaire="questionnaire"
@@ -181,7 +160,7 @@ async function loadAssessmentData() {
 
         <!-- 空状态 -->
         <div
-          v-if="!loading && assessmentData?.questionnaires?.length === 0"
+          v-if="!loading && taskDetailInfo?.questionnaires?.length === 0"
           class="flex flex-col items-center justify-center py-12 text-center text-emerald-600"
         >
           <ClipboardList class="mb-2 h-8 w-8" />
