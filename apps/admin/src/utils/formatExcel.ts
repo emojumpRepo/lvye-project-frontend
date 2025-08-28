@@ -177,10 +177,10 @@ export async function validateStudentRecord(
         gradeDeptId: '',
         classDeptId: '',
         errorMessage: '',
-        mobile: '',
-        homeAddress: '',
+        mobile: '手机号码',
+        homeAddress: '家庭住址',
         rowNumber: '',
-        remark: '',
+        remark: '备注',
       };
       errors.push({ field, message: `${fieldNames[field]}为必填项` });
     }
@@ -371,15 +371,14 @@ export async function parseExcel(
 
     // 验证工作表索引
     if (sheetIndex >= workbook.SheetNames.length) {
-      const errorMsg = `工作表索引 ${sheetIndex} 超出范围，文件只有 ${workbook.SheetNames.length} 个工作表`;
-      message.error(errorMsg);
       return {
         ...emptyResult,
         failed: [
           {
             studentNo: '',
             name: '',
-            errorMessage: errorMsg,
+            errorMessage: `工作表索引 ${sheetIndex} 超出范围，文件只有 ${workbook.SheetNames.length} 个工作表`,
+            rowNumber: 1,
           },
         ],
       };
@@ -396,6 +395,7 @@ export async function parseExcel(
             studentNo: '',
             name: '',
             errorMessage: errorMsg,
+            rowNumber: 1,
           },
         ],
       };
@@ -403,15 +403,14 @@ export async function parseExcel(
 
     const worksheet = workbook.Sheets[sheetName];
     if (!worksheet) {
-      const errorMsg = `无法读取工作表: ${sheetName}`;
-      message.error(errorMsg);
       return {
         ...emptyResult,
         failed: [
           {
             studentNo: '',
             name: '',
-            errorMessage: errorMsg,
+            errorMessage: `无法读取工作表`,
+            rowNumber: 1,
           },
         ],
       };
@@ -424,15 +423,14 @@ export async function parseExcel(
     }) as any[][];
 
     if (!jsonData || jsonData.length === 0) {
-      const errorMsg = '工作表为空，没有数据可读取';
-      message.warning(errorMsg);
       return {
         ...emptyResult,
         failed: [
           {
             studentNo: '',
             name: '',
-            errorMessage: errorMsg,
+            errorMessage: '工作表为空，没有数据可读取',
+            rowNumber: 1,
           },
         ],
       };
@@ -451,7 +449,7 @@ export async function parseExcel(
     // 限制最大行数
     if (maxRows && processedData.length > maxRows) {
       processedData = processedData.slice(0, maxRows);
-      message.warning(`数据行数超过限制，只读取前 ${maxRows} 行`);
+      console.warn(`数据行数超过限制，只读取前 ${maxRows} 行`);
     }
 
     // 分离表头和数据
@@ -471,6 +469,46 @@ export async function parseExcel(
         headers = Array.from({ length: maxCols }, (_, i) => `列${i + 1}`);
         dataRows = processedData;
       }
+    }
+
+    // 检查是否有数据行（去除表头后）
+    if (dataRows.length === 0) {
+      return {
+        ...emptyResult,
+        failed: [
+          {
+            studentNo: '',
+            name: '',
+            errorMessage: '工作表为空，没有数据可读取',
+            rowNumber: 1,
+          },
+        ],
+      };
+    }
+
+    // 验证必需的表头字段
+    const requiredHeaders = STUDENT_EXPORT_COLUMNS.map((item) => item.label);
+    const missingHeaders = requiredHeaders.filter(
+      (requiredHeader) =>
+        !headers.some(
+          (header) =>
+            header.trim() === requiredHeader ||
+            header.toLowerCase().includes(requiredHeader.toLowerCase()),
+        ),
+    );
+
+    if (missingHeaders.length > 0) {
+      return {
+        ...emptyResult,
+        failed: [
+          {
+            studentNo: '',
+            name: '',
+            errorMessage: `缺少必需的表头字段：${missingHeaders.join('、')}。请确保Excel文件包含这些列。`,
+            rowNumber: 1,
+          },
+        ],
+      };
     }
 
     // 日期字段检测和格式化
@@ -536,7 +574,6 @@ export async function parseExcel(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : '未知错误';
     console.error('Excel解析失败:', error);
-    message.error(`Excel解析失败：${errorMessage}`);
 
     return {
       ...emptyResult,
@@ -545,6 +582,7 @@ export async function parseExcel(
           studentNo: '',
           name: '',
           errorMessage: `Excel解析失败：${errorMessage}`,
+          rowNumber: 1,
         },
       ],
     };
