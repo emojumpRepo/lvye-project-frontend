@@ -32,6 +32,7 @@ export async function loadDeptList() {
           label: dept.name,
           parentId,
           count: dept.count || 0,
+          isClass: true,
         }));
 
       return children.length > 0 ? children : undefined;
@@ -44,6 +45,7 @@ export async function loadDeptList() {
       parentId: dept.parentId,
       children: buildTree(dept.id),
       count: dept.count || 0,
+      isGrade: true,
     }));
 
     sessionStorage.setItem('deptList', JSON.stringify(treeData));
@@ -97,6 +99,7 @@ export async function getDeptTreeList(
       gradeDeptId: classDeptId,
       count: child.count,
       hasChildField: true,
+      isClass: true,
     }));
   }
 
@@ -108,6 +111,7 @@ export async function getDeptTreeList(
       gradeDeptId: dept.parentId ?? null,
       count: dept.count,
       hasChildField: true,
+      isGrade: true,
     }))
     .sort((a, b) => a.id - b.id);
 

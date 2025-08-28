@@ -1,12 +1,18 @@
 <script setup lang="ts">
+import type {
+  AssessmentTask,
+  ScenarioMetadata,
+  SlotMetadata,
+} from '@vben/types';
+
 import type { EvaluationScene } from './data';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { ArrowLeft } from '@vben/icons';
 
-import { message } from 'ant-design-vue';
+import { message, Spin } from 'ant-design-vue';
 
 import {
   getAssessmentTask,
@@ -18,15 +24,32 @@ import { EVALUATION_SCENES } from './data';
 const router = useRouter();
 const route = useRoute();
 
-// 响应式数据
+const loading = ref(false);
 const SelectedScene = ref<any>(null);
 const hasReport = ref(false);
+const currentTaskNo = ref<null | string>(null);
+const taskDetailInfo = ref<AssessmentTask | null>(null);
+const scenarioData = computed(() => {
+  const scenarioDetail = taskDetailInfo.value?.scenarioDetail;
+  if (!scenarioDetail) {
+    return [];
+  }
+  scenarioDetail.metadata = JSON.parse(
+    scenarioDetail.metadataJson || '{}',
+  ) as ScenarioMetadata;
+  scenarioDetail.slots = scenarioDetail.slots?.map((slot) => {
+    slot.metadata = JSON.parse(slot.metadataJson || '{}') as SlotMetadata;
+    return slot;
+  });
+  return scenarioDetail;
+});
 
 // 方法
 function handleBack() {
   router.back();
 }
 
+// 开始问卷测评
 async function startEvaluation() {
   // 跳转到测评页面
   if (SelectedScene.value) {
@@ -42,9 +65,28 @@ async function startEvaluation() {
             SelectedScene.value.evaluation.link.split('render/')[1],
         },
       });
-    } catch {
-      console.error(error);
+    } catch (error) {
+      console.error('startEvaluation error:', error);
     }
+  }
+}
+
+// 获取测评任务详情
+async function getTaskDetailInfo() {
+  loading.value = true;
+  const taskNo = currentTaskNo.value;
+  if (!taskNo) {
+    return;
+  }
+  try {
+    const res = await getAssessmentTask(taskNo);
+    taskDetailInfo.value = res;
+    console.log('taskDetailInfo', taskDetailInfo.value);
+    console.log('scenarioData', scenarioData.value);
+  } catch (error) {
+    console.error('getTaskDetailInfo error:', error);
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -72,95 +114,104 @@ function getNextAvailableScene() {
 }
 
 onMounted(async () => {
-  const taskNo = route.query.taskNo as string;
-  const taskDetailInfo = await getAssessmentTask(taskNo);
+  currentTaskNo.value = route.query.taskNo as string;
+  await getTaskDetailInfo();
 });
 </script>
 
 <template>
   <div class="evaluation-map">
-    <!-- 地图主体 -->
-    <div class="map-content">
-      <!-- 背景地图 -->
-      <div class="map-background"></div>
-
-      <!-- 返回按钮 - 左上角 -->
-      <div class="back-button" @click="handleBack">
-        <div class="back-icon">
-          <ArrowLeft />
+    <Transition name="fade" mode="out-in">
+      <template v-if="loading">
+        <div class="flex h-full items-center justify-center">
+          <Spin spinning size="large" />
         </div>
-        <span class="back-text">返回</span>
-      </div>
+      </template>
+      <template v-else>
+        <!-- 地图主体 -->
+        <div class="map-content">
+          <!-- 背景地图 -->
+          <div class="map-background"></div>
 
-      <!-- 学校Logo - 右上角 -->
-      <div class="school-logo">
-        <div class="logo-content">
-          <h2>曼朗小学</h2>
-          <p>MindTrip 曼朗心之旅</p>
-        </div>
-      </div>
+          <!-- 返回按钮 - 左上角 -->
+          <div class="back-button" @click="handleBack">
+            <div class="back-icon">
+              <ArrowLeft />
+            </div>
+            <span class="back-text">返回</span>
+          </div>
 
-      <!-- 汇总报告 - 右下角 -->
-      <div
-        class="summary-report"
-        @click="showSummaryReport"
-        :class="{ disabled: !hasReport }"
-      >
-        <img
-          src="../../static/icons/report.svg"
-          alt=""
-          width="64"
-          class="report-icon"
-        />
-        <span class="report-text">汇总报告</span>
-      </div>
+          <!-- 学校Logo - 右上角 -->
+          <div class="school-logo">
+            <div class="logo-content">
+              <h2>曼朗小学</h2>
+              <p>MindTrip 曼朗心之旅</p>
+            </div>
+          </div>
 
-      <!-- 可点击建筑 -->
-      <div class="buildings">
-        <div
-          v-for="scene in EVALUATION_SCENES"
-          :key="scene.id"
-          class="building-button"
-          :class="{ disabled: scene.disabled }"
-          :style="scene.position"
-          @click="handleBuildingClick(scene)"
-        >
-          <div class="building-glow"></div>
+          <!-- 汇总报告 - 右下角 -->
+          <div
+            class="summary-report"
+            @click="showSummaryReport"
+            :class="{ disabled: !hasReport }"
+          >
+            <img
+              src="../../static/icons/report.svg"
+              alt=""
+              width="64"
+              class="report-icon"
+            />
+            <span class="report-text">汇总报告</span>
+          </div>
 
-          <div class="relative">
-            <!-- 引导动画 - 显示在下一个可点击的建筑上 -->
+          <!-- 可点击建筑 -->
+          <div class="buildings">
             <div
-              v-if="
-                !scene.disabled &&
-                scene.order === getNextAvailableScene()?.order
-              "
-              class="guide-wave"
+              v-for="scene in EVALUATION_SCENES"
+              :key="scene.id"
+              class="building-button"
+              :class="{ disabled: scene.disabled }"
+              :style="scene.position"
+              @click="handleBuildingClick(scene)"
             >
-              <img
-                src="../../static/images/evaluation/questionnaire/wave.gif"
-                alt="引导动画"
-                class="wave-gif"
-              />
-              <div
-                class="absolute right-[-30px] top-[-40px] rounded bg-[#4caf50] px-2 py-1 text-xs text-white"
-              >
-                点击这里哦
-              </div>
-            </div>
-            <div class="building-icon">
-              <span class="building-emoji">{{ scene.icon }}</span>
-              <div v-if="scene.disabled" class="lock-icon">🔒</div>
-            </div>
-          </div>
+              <div class="building-glow"></div>
 
-          <div class="building-label">
-            {{ scene.name }}
-            <span v-if="scene.disabled" class="disabled-text">(未开放)</span>
+              <div class="relative">
+                <!-- 引导动画 - 显示在下一个可点击的建筑上 -->
+                <div
+                  v-if="
+                    !scene.disabled &&
+                    scene.order === getNextAvailableScene()?.order
+                  "
+                  class="guide-wave"
+                >
+                  <img
+                    src="../../static/images/evaluation/questionnaire/wave.gif"
+                    alt="引导动画"
+                    class="wave-gif"
+                  />
+                  <div
+                    class="absolute right-[-30px] top-[-40px] rounded bg-[#4caf50] px-2 py-1 text-xs text-white"
+                  >
+                    点击这里哦
+                  </div>
+                </div>
+                <div class="building-icon">
+                  <span class="building-emoji">{{ scene.icon }}</span>
+                  <div v-if="scene.disabled" class="lock-icon">🔒</div>
+                </div>
+              </div>
+
+              <div class="building-label">
+                {{ scene.name }}
+                <span v-if="scene.disabled" class="disabled-text">(未开放)</span>
+              </div>
+              <div class="building-pulse"></div>
+            </div>
           </div>
-          <div class="building-pulse"></div>
         </div>
-      </div>
-    </div>
+      </template>
+    </Transition>
   </div>
 </template>
 

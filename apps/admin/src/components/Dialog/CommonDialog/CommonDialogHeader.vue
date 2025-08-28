@@ -48,7 +48,7 @@ const items = computed(() =>
   <div>
     <!-- 顶部返回与标题 -->
     <div
-      class="to-[rgba(255, 255, 255, 0.8)] mb-12 flex w-full items-center gap-4 bg-gradient-to-r from-[#FFFFFF] px-6 py-3"
+      class="to-[rgba(255, 255, 255, 0.8)] mb-8 flex w-full items-center gap-4 bg-gradient-to-r from-[#FFFFFF] px-6 py-3"
     >
       <LyButton
         v-if="showBack"

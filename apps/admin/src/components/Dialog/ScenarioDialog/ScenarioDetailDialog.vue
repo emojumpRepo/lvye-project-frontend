@@ -85,7 +85,7 @@ onMounted(() => {
 const [Modal, modalApi] = useVbenModal({
   fullscreenButton: false,
   centered: true,
-  contentClass: 'w-[880px] max-w-[95vw]',
+  contentClass: ' max-w-[95vw]',
   onOpenChange(isOpen: boolean) {
     if (isOpen) {
       // 获取最新数据并刷新

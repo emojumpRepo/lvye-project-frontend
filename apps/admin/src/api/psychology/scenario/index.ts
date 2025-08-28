@@ -1,32 +1,13 @@
 import type { PageParam, PageResult } from '@vben/request';
+import type {
+  AssessmentScenario,
+  AssessmentScenarioDetailed,
+  AssessmentScenarioSlot,
+} from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
 export namespace PsychologyScenarioApi {
-  /** 测评场景信息 */
-  export interface AssessmentScenario {
-    id?: number;
-    code: string;
-    name: string;
-    maxQuestionnaireCount?: number;
-    frontendRoute?: string;
-    isActive: boolean; // 修改为boolean类型，与后端保持一致
-    metadataJson?: string;
-    createTime?: Date;
-    updateTime?: Date;
-  }
-
-  /** 测评场景槽位信息 */
-  export interface AssessmentScenarioSlot {
-    id?: number;
-    scenarioId: number;
-    slotKey: string;
-    slotName: string;
-    slotOrder: number;
-    allowedQuestionnaireTypes?: string;
-    frontendComponent?: string;
-  }
-
   /** 测评场景分页查询参数 */
   export interface AssessmentScenarioPageReq extends PageParam {
     code?: string;
@@ -53,21 +34,22 @@ export namespace PsychologyScenarioApi {
 export function getAssessmentScenarioPage(
   params: PsychologyScenarioApi.AssessmentScenarioPageReq,
 ) {
-  return requestClient.get<
-    PageResult<PsychologyScenarioApi.AssessmentScenario>
-  >('/psychology/assessment-task/scenarios/page', { params });
+  return requestClient.get<PageResult<AssessmentScenario>>(
+    '/psychology/assessment-task/scenarios/page',
+    { params },
+  );
 }
 
 /** 查询测评场景列表 */
 export function getAssessmentScenarioList() {
-  return requestClient.get<PsychologyScenarioApi.AssessmentScenario[]>(
+  return requestClient.get<AssessmentScenarioDetailed[]>(
     '/psychology/assessment-task/scenarios',
   );
 }
 
 /** 查询测评场景详情 */
 export function getAssessmentScenario(id: number) {
-  return requestClient.get<PsychologyScenarioApi.AssessmentScenario>(
+  return requestClient.get<AssessmentScenario>(
     `/psychology/assessment-task/scenarios/${id}`,
   );
 }
@@ -93,7 +75,7 @@ export function deleteAssessmentScenario(id: number) {
 
 /** 获取场景槽位列表 */
 export function getAssessmentScenarioSlots(scenarioId: number) {
-  return requestClient.get<PsychologyScenarioApi.AssessmentScenarioSlot[]>(
+  return requestClient.get<AssessmentScenarioSlot[]>(
     `/psychology/assessment-task/scenarios/${scenarioId}/slots`,
   );
 }

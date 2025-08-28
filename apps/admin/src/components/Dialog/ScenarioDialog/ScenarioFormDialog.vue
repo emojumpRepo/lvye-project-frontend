@@ -11,9 +11,11 @@ import {
   InputNumber,
   message,
   Popconfirm,
+  Select,
   Table,
 } from 'ant-design-vue';
 
+import { getQuestionnaireListSimple } from '#/api/psychology/questionnaire';
 import {
   createAssessmentScenario,
   getAssessmentScenario,
@@ -63,6 +65,32 @@ const currentRecord = ref<PsychologyScenarioApi.AssessmentScenario | undefined>(
 );
 const slotsRef = ref<PsychologyScenarioApi.AssessmentScenarioSlot[]>([]);
 const maxQuestionnaireCountRef = ref<number | undefined>(undefined);
+const questionnaireOptions = ref<{ label: string; value: number }[]>([]);
+const loadingQuestionnaires = ref(false);
+
+async function loadQuestionnaireOptions() {
+  try {
+    loadingQuestionnaires.value = true;
+    const list = await getQuestionnaireListSimple();
+    const arr = Array.isArray(list) ? list : [];
+    questionnaireOptions.value = arr
+      .map((q: any) => ({
+        label: String(q.title ?? q.name ?? q.questionnaireTitle ?? q.id),
+        value: Number(q.id),
+      }))
+      .filter((opt) => !!opt.value && !!opt.label);
+  } catch (error) {
+    console.error('加载问卷列表失败:', error);
+    questionnaireOptions.value = [];
+  } finally {
+    loadingQuestionnaires.value = false;
+  }
+}
+
+function filterQuestionnaireOption(input: string, option?: { label?: string }) {
+  if (!option?.label) return false;
+  return option.label.toLowerCase().includes(input.toLowerCase());
+}
 const isAddDisabled = computed(() => {
   const max = maxQuestionnaireCountRef.value;
   if (!max || max <= 0) return false;
@@ -76,8 +104,20 @@ const slotColumns = [
     title: '允许类型',
     dataIndex: 'allowedQuestionnaireTypes',
     key: 'allowedQuestionnaireTypes',
+    width: 180,
   },
-  { title: '操作', key: 'actions', width: 100 },
+  {
+    title: '扩展配置',
+    dataIndex: 'metadataJson',
+    key: 'metadataJson',
+  },
+  {
+    title: '关联问卷',
+    dataIndex: 'questionnaire',
+    key: 'questionnaire',
+    width: 240,
+  },
+  { title: '操作', key: 'actions', width: 80 },
 ];
 
 // ============== 表单处理 ==============
@@ -237,6 +277,10 @@ const [Modal, modalApi] = useVbenModal({
   },
   async onOpenChange(isOpen: boolean) {
     if (isOpen) {
+      // 打开弹窗时加载问卷选项
+      if (questionnaireOptions.value.length === 0) {
+        await loadQuestionnaireOptions();
+      }
       const data = modalApi.getData<Record<string, any>>() || {};
       isEditRef.value = !!(data.isEdit ?? props.isEdit ?? false);
       const incomingRecord = data.record as
@@ -341,6 +385,24 @@ const [Modal, modalApi] = useVbenModal({
               placeholder="允许类型，如：ANXIETY,DEPRESSION"
             />
           </template>
+          <template v-else-if="column.key === 'metadataJson'">
+            <Input.TextArea
+              v-model:value="rowItem.metadataJson"
+              :rows="1"
+              placeholder="请输入JSON格式的扩展配置（可选）"
+            />
+          </template>
+          <template v-else-if="column.key === 'questionnaire'">
+            <Select
+              style="width: 100%"
+              v-model:value="rowItem.questionnaireId"
+              placeholder="请选择关联问卷"
+              :options="questionnaireOptions"
+              :loading="loadingQuestionnaires"
+              show-search
+              :filter-option="filterQuestionnaireOption as any"
+            />
+          </template>
           <template v-else-if="column.key === 'actions'">
             <Popconfirm
               title="确定删除该槽位？"
@@ -360,7 +422,7 @@ const [Modal, modalApi] = useVbenModal({
 
 <style lang="scss">
 .scenario-form-dialog {
-  width: 720px !important;
+  width: 90vw !important;
   max-width: 95vw !important;
 }
 </style>

@@ -95,7 +95,7 @@ export const EVALUATION_SCENES: EvaluationScene[] = [
     id: 'dorm',
     type: 'teaching',
     name: '宿舍楼',
-    icon: '🎓',
+    icon: '🏢',
     order: 4,
     position: { right: '20%', top: '35%' },
     introDesc: '你将会需要回答关于过去1个月睡眠与作息的问题',

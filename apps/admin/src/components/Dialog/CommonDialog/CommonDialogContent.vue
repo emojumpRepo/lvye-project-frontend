@@ -94,9 +94,7 @@ defineExpose({
 </script>
 
 <template>
-  <div
-    class="mx-auto box-border max-h-[608px] w-full max-w-[1049px] rounded-xl bg-white p-8"
-  >
+  <div class="mx-auto box-border w-full max-w-[1049px] rounded-xl bg-white p-8">
     <div
       v-if="hasTitle || hasDescription"
       class="mb-6 flex flex-col items-center justify-center gap-1"
@@ -111,7 +109,7 @@ defineExpose({
 
     <div
       class="box-border overflow-y-auto"
-      :class="hasDescription ? 'max-h-[382px]' : 'max-h-[408px]'"
+      :class="hasDescription ? 'max-h-[408px]' : 'max-h-[435px]'"
     >
       <ASpin :spinning="spinning" tip="加载中...">
         <KeepAlive>

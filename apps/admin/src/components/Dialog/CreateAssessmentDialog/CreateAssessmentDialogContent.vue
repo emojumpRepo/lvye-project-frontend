@@ -128,13 +128,15 @@ const isCommiting = ref(false); // 是否正在提交
 const taskId = ref<null | number>(null);
 const selectedStudentCount = computed(() =>
   targetSelectData.value.selected.reduce(
-    (acc, cur) => acc + (cur.studentIds?.length || 0),
+    (acc, cur) =>
+      acc +
+      (cur.studentIds.length > 0 ? cur.studentIds.length : cur.totalStudent),
     0,
   ),
 );
 
 function onTargetUpdate(v: PsychologyAssessmentApi.AssessmentTarget) {
-  canNext.value = v.selected.reduce((n, i) => n + i.studentIds.length, 0) > 0;
+  canNext.value = v.selected.length > 0;
 }
 const expectedFinishDate = computed(() =>
   basicInfoFormData.value.timeRange?.[1]
@@ -253,6 +255,7 @@ async function handleCommit(publish: boolean) {
       deadline: basicInfoFormData.value.timeRange?.[1]?.valueOf?.() ?? undefined,
       questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
+      deptIdList: targetSelectData.value.selected.flatMap((i) => i.classId),
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
       scenarioId: selectedScenarioId.value,
       isPublish: publish,

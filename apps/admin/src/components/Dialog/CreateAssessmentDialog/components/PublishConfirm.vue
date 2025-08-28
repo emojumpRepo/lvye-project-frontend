@@ -26,14 +26,19 @@ const classStats = computed(() => {
   // 汇总每个已选择班级中的学生人数
   return props.target.selected.map((sel) => ({
     name: sel.className,
-    count: sel.studentIds.length,
+    count: sel.studentIds.length > 0 ? sel.studentIds.length : sel.totalStudent,
   }));
 });
 
 const involvedClassCount = computed(() => classStats.value.length);
-const selectedStudentCount = computed(() =>
-  props.target.selected.reduce((acc, cur) => acc + cur.studentIds.length, 0),
-);
+const selectedStudentCount = computed(() => {
+  return props.target.selected.reduce(
+    (acc, cur) =>
+      acc +
+      (cur.studentIds.length > 0 ? cur.studentIds.length : cur.totalStudent),
+    0,
+  );
+});
 
 const dateRange = computed(() => {
   const [start, end] = props.basic.timeRange || [];

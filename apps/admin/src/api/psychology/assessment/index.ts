@@ -16,6 +16,7 @@ export namespace PsychologyAssessmentApi {
     classId: number;
     className: string;
     studentIds: number[];
+    totalStudent: number; // 班级人数
   }
 
   /** 选择量表 */
