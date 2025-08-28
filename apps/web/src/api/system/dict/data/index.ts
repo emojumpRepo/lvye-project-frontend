@@ -1,6 +1,4 @@
-import type { PageParam } from '@vben/request';
-
-import { appRequestClient, requestClient } from '#/api/request';
+import { appRequestClient } from '#/api/request';
 
 export namespace SystemDictDataApi {
   /** 字典数据 */
@@ -19,43 +17,12 @@ export namespace SystemDictDataApi {
 }
 
 // 查询字典数据（精简)列表
+/**
+ * 获取简单字典数据列表
+ * 该函数用于从服务器获取简化的字典数据列表，通常用于下拉框或选择器等场景
+ * @returns {Promise} 返回一个Promise对象，包含从服务器获取的简单字典数据列表
+ */
 export function getSimpleDictDataList() {
+  // 使用appRequestClient发送GET请求到'/system/dict-data/simple-list'接口
   return appRequestClient.get('/system/dict-data/simple-list');
-}
-
-// 查询字典数据列表
-export function getDictDataPage(params: PageParam) {
-  return requestClient.get('/system/dict-data/page', { params });
-}
-
-// 查询字典数据详情
-export function getDictData(id: number) {
-  return requestClient.get(`/system/dict-data/get?id=${id}`);
-}
-
-// 新增字典数据
-export function createDictData(data: SystemDictDataApi.DictData) {
-  return requestClient.post('/system/dict-data/create', data);
-}
-
-// 修改字典数据
-export function updateDictData(data: SystemDictDataApi.DictData) {
-  return requestClient.put('/system/dict-data/update', data);
-}
-
-// 删除字典数据
-export function deleteDictData(id: number) {
-  return requestClient.delete(`/system/dict-data/delete?id=${id}`);
-}
-
-// 批量删除字典数据
-export function deleteDictDataList(ids: number[]) {
-  return requestClient.delete(
-    `/system/dict-data/delete-list?ids=${ids.join(',')}`,
-  );
-}
-
-// 导出字典类型数据
-export function exportDictData(params: any) {
-  return requestClient.download('/system/dict-data/export-excel', { params });
 }

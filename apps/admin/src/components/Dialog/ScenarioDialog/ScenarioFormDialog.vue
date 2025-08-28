@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { AssessmentScenario, AssessmentScenarioSlot } from '@vben/types';
+
 import type { PsychologyScenarioApi } from '#/api/psychology/scenario';
 
 import { computed, reactive, ref, watch } from 'vue';
@@ -26,7 +28,7 @@ import { useScenarioFormSchema } from '#/views/assessment/scenario/data';
 
 interface Props {
   isEdit?: boolean;
-  record?: PsychologyScenarioApi.AssessmentScenario;
+  record?: AssessmentScenario;
 }
 
 interface Emits {
@@ -60,10 +62,8 @@ const [BaseForm, formApi] = useVbenForm({
 // ============== 数据状态 ==============
 const loading = ref(false);
 const isEditRef = ref(!!props.isEdit);
-const currentRecord = ref<PsychologyScenarioApi.AssessmentScenario | undefined>(
-  undefined,
-);
-const slotsRef = ref<PsychologyScenarioApi.AssessmentScenarioSlot[]>([]);
+const currentRecord = ref<AssessmentScenario | undefined>(undefined);
+const slotsRef = ref<AssessmentScenarioSlot[]>([]);
 const maxQuestionnaireCountRef = ref<number | undefined>(undefined);
 const questionnaireOptions = ref<{ label: string; value: number }[]>([]);
 const loadingQuestionnaires = ref(false);
@@ -283,9 +283,7 @@ const [Modal, modalApi] = useVbenModal({
       }
       const data = modalApi.getData<Record<string, any>>() || {};
       isEditRef.value = !!(data.isEdit ?? props.isEdit ?? false);
-      const incomingRecord = data.record as
-        | PsychologyScenarioApi.AssessmentScenario
-        | undefined;
+      const incomingRecord = data.record as AssessmentScenario | undefined;
       if (incomingRecord) {
         let detailAny: any = incomingRecord as any;
         // 若缺少完整详情或 slots，进行兜底加载
@@ -300,8 +298,7 @@ const [Modal, modalApi] = useVbenModal({
           }
         } catch {}
 
-        currentRecord.value =
-          detailAny as PsychologyScenarioApi.AssessmentScenario;
+        currentRecord.value = detailAny as AssessmentScenario;
         formApi.setValues({
           code: detailAny.code,
           name: detailAny.name,
