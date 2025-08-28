@@ -135,7 +135,7 @@ function onRemove() {
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-upload) {
-  padding: 15px !important;
-}
+// :deep(.ant-upload) {
+//   //padding: 15px !important;
+// }
 </style>
