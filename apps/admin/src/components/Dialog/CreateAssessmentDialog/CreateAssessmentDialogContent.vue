@@ -249,8 +249,8 @@ async function handleCommit(publish: boolean) {
     isPublish.value = publish;
     const res = await createAssessmentTask({
       taskName: basicInfoFormData.value.name,
-      startline: basicInfoFormData.value.timeRange?.[0].toISOString(),
-      deadline: basicInfoFormData.value.timeRange?.[1].toISOString(),
+      startline: basicInfoFormData.value.timeRange?.[0]?.valueOf?.() ?? undefined,
+      deadline: basicInfoFormData.value.timeRange?.[1]?.valueOf?.() ?? undefined,
       questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
       userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),

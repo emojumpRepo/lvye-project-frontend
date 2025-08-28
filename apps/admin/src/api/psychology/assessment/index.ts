@@ -43,8 +43,8 @@ export namespace PsychologyAssessmentApi {
     taskName: string;
     questionnaireIds: number[];
     targetAudience: number; // 0-学生，1-家长
-    startline?: Date | string;
-    deadline?: Date | string;
+    startline?: number; // 毫秒时间戳
+    deadline?: number; // 毫秒时间戳
     deptIdList?: number[];
     userIdList?: number[];
     isPublish?: boolean; // 是否发布
@@ -194,10 +194,10 @@ export function createAssessmentTask(
 
 /** 更新测评任务 */
 export function updateAssessmentTask(data: {
-  deadline: string;
+  deadline: number; // 毫秒时间戳
   description: string;
   id: string;
-  startline: string;
+  startline: number; // 毫秒时间戳
   targetAudience: string;
   taskName: string;
   taskNo: string;
