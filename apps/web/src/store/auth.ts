@@ -1,7 +1,5 @@
 import type { AuthPermissionInfo, Recordable, UserInfo } from '@vben/types';
 
-import type { AuthApi } from '#/api';
-
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -12,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
-import { loginApi, logoutApi, register, smsLogin, socialLogin } from '#/api';
+import { loginApi, logoutApi } from '#/api';
 import { getAuthPermissionInfoApi } from '#/api/core/auth';
 import { $t } from '#/locales';
 
@@ -38,25 +36,8 @@ export const useAuthStore = defineStore('auth', () => {
     // 异步处理用户登录操作并获取 accessToken
     let userInfo: null | UserInfo = null;
     try {
-      let loginResult: AuthApi.LoginResult;
       loginLoading.value = true;
-      switch (type) {
-        case 'mobile': {
-          loginResult = await smsLogin(params as AuthApi.SmsLoginParams);
-          break;
-        }
-        case 'register': {
-          loginResult = await register(params as AuthApi.RegisterParams);
-          break;
-        }
-        case 'social': {
-          loginResult = await socialLogin(params as AuthApi.SocialLoginParams);
-          break;
-        }
-        default: {
-          loginResult = await loginApi(params);
-        }
-      }
+      const loginResult = await loginApi(params);
       const { accessToken, refreshToken } = loginResult;
 
       // 如果成功获取到 accessToken

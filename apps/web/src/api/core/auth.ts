@@ -3,7 +3,6 @@ import type { AuthPermissionInfo } from '@vben/types';
 import {
   appBaseRequestClient,
   appRequestClient,
-  baseRequestClient,
   requestClient,
 } from '#/api/request';
 
@@ -114,53 +113,5 @@ export async function getTenantSimpleList() {
 export async function getTenantByWebsite(website: string) {
   return requestClient.get<AuthApi.TenantResult>(
     `/system/tenant/get-by-website?website=${website}`,
-  );
-}
-
-/** 获取验证码 */
-export async function getCaptcha(data: any) {
-  return baseRequestClient.post('/system/captcha/get', data);
-}
-
-/** 校验验证码 */
-export async function checkCaptcha(data: any) {
-  return baseRequestClient.post('/system/captcha/check', data);
-}
-
-/** 获取登录验证码 */
-export async function sendSmsCode(data: AuthApi.SmsCodeParams) {
-  return requestClient.post('/system/auth/send-sms-code', data);
-}
-
-/** 短信验证码登录 */
-export async function smsLogin(data: AuthApi.SmsLoginParams) {
-  return requestClient.post('/system/auth/sms-login', data);
-}
-
-/** 注册 */
-export async function register(data: AuthApi.RegisterParams) {
-  return requestClient.post('/system/auth/register', data);
-}
-
-/** 通过短信重置密码 */
-export async function smsResetPassword(data: AuthApi.ResetPasswordParams) {
-  return requestClient.post('/system/auth/reset-password', data);
-}
-
-/** 社交授权的跳转 */
-export async function socialAuthRedirect(type: number, redirectUri: string) {
-  return requestClient.get('/system/auth/social-auth-redirect', {
-    params: {
-      type,
-      redirectUri,
-    },
-  });
-}
-
-/** 社交快捷登录 */
-export async function socialLogin(data: AuthApi.SocialLoginParams) {
-  return requestClient.post<AuthApi.LoginResult>(
-    '/system/auth/social-login',
-    data,
   );
 }
