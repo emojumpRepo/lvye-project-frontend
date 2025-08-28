@@ -8,15 +8,14 @@ import { h, ref } from 'vue';
 import { IconifyIcon } from '@vben/icons';
 
 import { getDictOptions } from '#/utils';
+import { loadDeptList } from '#/utils/transformDeptToTree.js';
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
   const stored = sessionStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  }
+  deptList.value = stored ? JSON.parse(stored) : loadDeptList();
 
   const riskLevelOptions = getDictOptions('questionnaire_result_risk_level');
 
@@ -101,6 +100,12 @@ export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.Pa
       minWidth: 120,
     },
     {
+      type: 'seq',
+      title: '序号',
+      minWidth: 40,
+      visible: false,
+    },
+    {
       field: 'className',
       title: '班级',
       minWidth: 120,
@@ -115,6 +120,11 @@ export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.Pa
       title: '完成状态',
       minWidth: 120,
       slots: { default: 'status' },
+    },
+    {
+      field: 'questionnaireName',
+      title: '问卷名称',
+      minWidth: 120,
     },
     {
       field: 'score',

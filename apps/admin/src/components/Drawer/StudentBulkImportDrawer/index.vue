@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { UploadProps } from 'ant-design-vue';
 
+import type { StudentRecordResult } from '#/utils/formatExcel';
+
 import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -10,33 +12,19 @@ import { message } from 'ant-design-vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import LyUpload from '#/components/LyUpload/index.vue';
-import { downloadTemplate, parseExcel } from '#/utils/export';
+import { downloadTemplate } from '#/utils/export';
+import { parseExcel } from '#/utils/formatExcel';
 
 const fileList = ref<UploadProps['fileList']>([]);
-const parseData = ref<null | {
-  data: any[][];
-  headers: string[];
-  sheetName: string;
-  totalRows: number;
-}>(null);
+const parseData = ref<null | StudentRecordResult>(null);
 const isLoading = ref(false);
 
 const [Drawer] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
   onConfirm: async () => {
-    if (!fileList.value || fileList.value.length === 0) {
-      message.warning('请先选择要导入的模板文件');
-      return;
-    }
-
-    if (!parseData.value || parseData.value.data.length === 0) {
-      message.warning('请先选择有效的Excel文件');
-      return;
-    }
-
-    console.warn('fileList', fileList.value);
-    console.warn('parseData', parseData.value);
+    console.log('fileList', fileList.value);
+    console.log('parseData', parseData.value);
 
     // try {
     //   const data = await importStudentProfile(
@@ -54,7 +42,7 @@ const [Drawer] = useVbenDrawer({
 });
 
 // 处理文件上传
-async function handleFileUpload() {
+async function parseStudentProfileExcel() {
   try {
     isLoading.value = true;
 
@@ -64,14 +52,13 @@ async function handleFileUpload() {
       return;
     }
 
-    const data = await parseExcel(fileList.value[0].originFileObj);
-    parseData.value = data;
-    console.warn('parseData', parseData.value);
+    parseData.value = await parseExcel(fileList.value[0].originFileObj);
+    console.log('parseData', parseData.value);
 
-    message.success(`文件读取成功，共 ${data.data.length} 条数据`);
+    message.success(`文件读取成功，共 ${parseData.value.total} 条数据`);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : '未知错误';
-    message.error(`文件读取失败：${errorMessage}`);
+    console.error('文件读取失败', error);
+    message.error('文件读取失败');
   } finally {
     isLoading.value = false;
   }
@@ -116,7 +103,7 @@ function handleFileRemove() {
         <LyUpload
           v-model:file-list="fileList"
           accept=".xlsx,.xls"
-          @file-ready="handleFileUpload"
+          @parse="parseStudentProfileExcel"
           @remove="handleFileRemove"
         >
           <template #upload-text>
@@ -128,22 +115,22 @@ function handleFileRemove() {
         </LyUpload>
 
         <!-- 数据预览 -->
-        <div v-if="parseData && parseData.data.length > 0" class="mt-12">
+        <div v-if="parseData && parseData.success.length > 0" class="mt-12">
           <LyLabel has-indicator title="第三步：数据预览" />
           <div class="mt-2 rounded border bg-gray-50 p-3">
             <div class="text-xs text-gray-600">
-              <div v-if="parseData.headers.length > 0" class="mb-2">
-                <strong>表头：</strong>{{ parseData.headers.join(' | ') }}
+              <div v-if="parseData.success.length > 0" class="mb-2">
+                <!-- <strong>表头：</strong>{{ parseData.success.join(' | ') }} -->
               </div>
-              <div v-if="parseData.data.length > 0">
+              <div v-if="parseData.success.length > 0">
                 <strong>数据预览（前3条）：</strong>
-                <div
+                <!-- <div
                   v-for="(row, index) in parseData.data.slice(0, 3)"
                   :key="index"
                   class="mt-1 text-gray-500"
                 >
                   {{ row.join(' | ') }}
-                </div>
+                </div> -->
               </div>
             </div>
           </div>

@@ -4,12 +4,14 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { ref, watch } from 'vue';
 
+import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
+import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
@@ -27,20 +29,12 @@ const props = withDefaults(defineProps<Props>(), {
 const actionButtons = ref([
   { label: '批量发送提醒', value: 'batchSendReminder' },
   { label: '批量转入干预', value: 'batchTransferToIntervention' },
-  { label: '批量导出', value: 'batchExport' },
+  { label: '批量导出', value: 'batchExport', onClick: handleExport },
 ]);
 
-const activeButton = ref('');
-const checkedIds = ref<number[]>([]);
+const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
-
-function handleRowCheckboxChange({ records }: { records: any[] }) {
-  checkedIds.value = records
-    .map((item) => item.studentProfileId)
-    .filter(Boolean);
-}
-
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
     pageNo: 1,
@@ -49,17 +43,12 @@ const queryParams =
     questionnaireId: 0,
   });
 
-watch(
-  () => [props.taskNo, props.questionnaireId],
-  ([newTaskNo, newQuestionnaireId]) => {
-    if (newTaskNo && newQuestionnaireId) {
-      queryParams.value.taskNo = newTaskNo;
-      queryParams.value.questionnaireId = Number(newQuestionnaireId);
-      gridApi?.query();
-    }
-  },
-  { immediate: true },
-);
+/** 处理行选中 */
+function handleRowCheckboxChange({ records }: { records: any[] }) {
+  selectedRowKeys.value = records
+    .map((item) => item.studentProfileId)
+    .filter(Boolean);
+}
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -73,8 +62,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
-          if (!queryParams.value.taskNo || !queryParams.value.questionnaireId) {
+        query: async ({ page }, formValues) => {
+          if (
+            !queryParams.value.taskNo ||
+            (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
+          ) {
             return { list: [], total: 0 };
           }
 
@@ -83,6 +75,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               ...queryParams.value,
               pageNo: page.currentPage,
               pageSize: page.pageSize,
+              ...formValues,
             };
 
             const response =
@@ -97,8 +90,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
         },
       },
     },
-    rowConfig: { keyField: 'studentProfileId', isHover: true },
-    toolbarConfig: { refresh: true, search: true, custom: false, zoom: false },
+    rowConfig: { keyField: 'seq', isHover: true },
+    toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
@@ -107,14 +100,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(
-  () => props.questionnaireId,
-  (value) => {
-    if (value) {
+  () => [props.taskNo, props.questionnaireId],
+  async ([newTaskNo, newQuestionnaireId]) => {
+    if (newTaskNo || newQuestionnaireId) {
+      queryParams.value.taskNo = newTaskNo!;
+      queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
       searchRef.value?.handleReset();
-      gridApi.query();
+      selectedRowKeys.value = [];
+      if ((gridApi as any)?.grid?.commitProxy) {
+        await gridApi.query();
+      }
     }
   },
-  { immediate: true },
+  { immediate: true, flush: 'post' },
 );
 
 /** 处理搜索 */
@@ -130,8 +128,28 @@ function handleLoading(isLoading: boolean) {
 }
 
 /** 查看详情 */
-function viewDetail(record: any) {
-  console.log('查看详情:', record);
+function viewDetail(_record: any) {}
+
+// 导出数据
+async function handleExport() {
+  try {
+    loading.value = true;
+
+    if (selectedRowKeys.value.length === 0) {
+      message.warning('请先选择要导出的学生数据');
+      return;
+    }
+
+    const selectedStudents = gridApi.grid.getCheckboxRecords();
+    if (selectedStudents && selectedStudents.length > 0) {
+      exportAssessmentParticipantsToExcel(selectedStudents);
+    }
+  } catch (error) {
+    console.error(error);
+    message.error('导出失败，请重试');
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -149,8 +167,8 @@ function viewDetail(record: any) {
         :key="item.value"
         size="middle"
         type="default"
-        :disabled="checkedIds.length === 0"
-        @click="activeButton = item.value"
+        :disabled="selectedRowKeys.length === 0"
+        @click="item.onClick && item.onClick()"
       >
         {{ item.label }}
       </LyButton>
@@ -208,18 +226,13 @@ function viewDetail(record: any) {
 }
 
 :deep(.vxe-grid) {
-  padding-top: 0 !important;
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  // padding-top: 0 !important;
+  // padding-right: 0 !important;
+  // padding-left: 0 !important;
 }
 
 :deep(.vxe-pager) {
   background: transparent !important;
-}
-
-:deep(.vxe-pager--goto) {
-  width: 2.4em !important;
-  margin: 0 4px !important;
 }
 
 :deep(.vxe-pager--wrapper) {
@@ -229,13 +242,5 @@ function viewDetail(record: any) {
 :deep(.vxe-pager--sizes) {
   width: 8em !important;
   margin-right: 0 !important;
-}
-
-:deep(.vxe-icon-caret-down) {
-  margin-top: 3px !important;
-}
-
-:deep(.vxe-input--inner) {
-  padding-right: 0 !important;
 }
 </style>
