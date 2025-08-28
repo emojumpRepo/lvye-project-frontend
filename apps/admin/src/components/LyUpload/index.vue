@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UploadChangeParam, UploadProps } from 'ant-design-vue';
+import type { UploadProps } from 'ant-design-vue';
 
 import { Upload as AUpload, message } from 'ant-design-vue';
 
@@ -24,7 +24,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'sync'): void;
-  (e: 'fileReady'): void;
+  (e: 'parse'): void;
   (e: 'remove'): void;
 }>();
 
@@ -95,20 +95,10 @@ function beforeUpload(file: File) {
     } as any,
   ];
   fileList.value = newFileList;
+  emit('parse');
   emit('sync');
 
   return false;
-}
-
-function onChange(info: UploadChangeParam) {
-  const status = info.file.status;
-  if (status === 'done') {
-    message.success(`${info.file.name} 文件选择成功`);
-  } else if (status === 'error') {
-    message.error(`${info.file.name} 文件选择失败`);
-  }
-
-  emit('fileReady');
 }
 
 function onRemove() {
@@ -126,7 +116,6 @@ function onRemove() {
     :accept="accept"
     :multiple="multiple"
     :progress="progress"
-    @change="onChange"
     @remove="onRemove"
   >
     <div class="flex flex-col items-center justify-center">

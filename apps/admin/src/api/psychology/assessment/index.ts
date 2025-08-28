@@ -164,6 +164,24 @@ export namespace PsychologyAssessmentApi {
     status: number;
     finishTime: number;
   }
+
+  export interface DeptTree {
+    deptId: number;
+    deptName: string;
+    totalParticipants: number;
+    completedParticipants: number;
+    completionRate: number;
+    children: DeptTree[] | null;
+  }
+
+  export interface AssessmentStatistics {
+    totalParticipants: number;
+    completedParticipants: number;
+    inProgressParticipants: number;
+    notStartedParticipants: number;
+    completionRate: number;
+    deptTree?: DeptTree[];
+  }
 }
 
 // ==================== 测评任务管理 ====================
@@ -274,15 +292,6 @@ export function getAssessmentParticipantPage(
   >('/psychology/assessment-participant/page', { params });
 }
 
-/** 查询测评任务参与者问卷分页列表 */
-export function getAssessmentTaskParticipantsQuestionnairePage(
-  params: PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq,
-) {
-  return requestClient.get<
-    PageResult<PsychologyAssessmentApi.AssessmentParticipant>
-  >('/psychology/assessment-task/participants-questionnaire-page', { params });
-}
-
 /** 获取测评参与者详情 */
 export function getAssessmentParticipant(id: number) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentParticipant>(
@@ -315,7 +324,7 @@ export function addAssessmentParticipants(
 }
 
 /** 获取测评问卷学生答题记录 */
-export function getParticipantsQuestionnairePage(
+export function getAssessmentTaskParticipantsQuestionnairePage(
   params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
 ) {
   return requestClient.get<
@@ -336,9 +345,13 @@ export function removeAssessmentParticipants(
 // ==================== 测评统计分析 ====================
 
 /** 获取测评任务统计信息 */
-export function getAssessmentStatistics(taskNo: string) {
+export function getAssessmentStatistics(params: {
+  includeDeptTree?: number;
+  taskNo: string;
+}) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentStatistics>(
-    `/psychology/assessment-task/statistics/${taskNo}`,
+    `/psychology/assessment-task/statistics`,
+    { params },
   );
 }
 

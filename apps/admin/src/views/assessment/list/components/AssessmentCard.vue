@@ -93,6 +93,10 @@ function handleViewDetail() {
  * 编辑任务
  */
 function handleEditTask() {
+  if (!isButtonAvailable.value) {
+    message.error('任务进行中或已有学生完成，无法编辑');
+    return;
+  }
   editAssessmentApi
     .setData({
       id: props.card.id,
@@ -107,6 +111,10 @@ function handleEditTask() {
 }
 
 function handleDeleteTask() {
+  if (!isButtonAvailable.value) {
+    message.error('已有学生参与的任务不能删除，可选择关闭任务');
+    return;
+  }
   deleteAssessmentApi.open();
 }
 </script>
@@ -119,7 +127,8 @@ function handleDeleteTask() {
     <div class="mb-3 flex items-center justify-between">
       <div class="flex items-center gap-2 text-gray-800">
         <span class="text-lg font-semibold">{{
-          card.taskNo?.split('_')[1] ?? ''
+          // card.taskNo?.split('_')[1] ?? ''
+          card.taskName ?? ''
         }}</span>
         <Copy
           class="size-3 cursor-pointer text-gray-300 transition-all duration-200 hover:text-gray-500"
@@ -156,25 +165,31 @@ function handleDeleteTask() {
       }}%)
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="flex justify-end">
-      <!-- <LyButton type="success" size="middle" @click="handleViewDetail">
+    <div class="flex items-center justify-between">
+      <span class="text-xs text-gray-500">
+        {{ card.taskNo }}
+      </span>
+
+      <!-- 操作按钮 -->
+      <div class="flex justify-end">
+        <!-- <LyButton type="success" size="middle" @click="handleViewDetail">
         查看详情
       </LyButton> -->
-      <DropdownButton @click="handleViewDetail" ghost>
-        查看详情
-        <template #overlay>
-          <Menu>
-            <Menu.Item key="1" @click="handleEditTask">
-              <button :disabled="!isButtonAvailable">编辑任务</button>
-            </Menu.Item>
-            <Menu.Item key="2" @click="handleDeleteTask">
-              <button :disabled="!isButtonAvailable">删除任务</button>
-            </Menu.Item>
-            <!-- <Menu.Item key="3" @click="handleCloseTask"> 关闭任务 </Menu.Item> -->
-          </Menu>
-        </template>
-      </DropdownButton>
+        <DropdownButton @click="handleViewDetail" ghost>
+          查看详情
+          <template #overlay>
+            <Menu>
+              <Menu.Item key="1" @click="handleEditTask">
+                <button>编辑任务</button>
+              </Menu.Item>
+              <Menu.Item key="2" @click="handleDeleteTask">
+                <button class="text-[#FF0831]">删除任务</button>
+              </Menu.Item>
+              <!-- <Menu.Item key="3" @click="handleCloseTask"> 关闭任务 </Menu.Item> -->
+            </Menu>
+          </template>
+        </DropdownButton>
+      </div>
     </div>
 
     <EditAssessmentModal @refresh="emit('refresh')" />
