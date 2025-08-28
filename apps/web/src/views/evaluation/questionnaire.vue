@@ -1,70 +1,113 @@
 <script lang="ts" setup>
-import type { EvaluationScene } from './data';
-
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { useUserStore } from '@vben/stores';
-
+import { Spin } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 
+import { useEvaluation } from '#/composables/useEvaluation';
+import { useEvaluationStore } from '#/store/evaluation';
+
 import QuestionnaireContainer from './components/QuestionnaireContainer.vue';
-import { EVALUATION_SCENES } from './data';
 
 const route = useRoute();
 const router = useRouter();
 
-const surveyBaseUrl = import.meta.env.VITE_SURVEY_URL;
+const evaluationStore = useEvaluationStore();
+const {
+  loading,
+  isLastScene,
+  selectedSlot,
+  currentTaskNo,
+  hasScenario,
+  getNextIncompleteQuestionnaire,
+} = storeToRefs(evaluationStore);
+const {
+  selectSlot,
+  getNextSlot,
+  startEvaluation,
+  startEvaluationWithoutScenario,
+  loadTaskDetail,
+} = evaluationStore;
 
-const userStore = useUserStore();
-const { userInfo } = storeToRefs(userStore);
-
-const sceneData = ref<EvaluationScene | null>(null);
+const { generateIframeSrc } = useEvaluation();
 
 const hasIntro = ref(false); // 是否需要介绍
 const hasScene = ref(false); // 是否需要场景
 
 const iframeSrc = ref('');
 
-onMounted(() => {
-  const questionnaireId = route.query.questionnaireId as string;
+onMounted(async () => {
   const sceneId = route.query.sceneId as string;
-  const questionnaireLink = route.query.questionnaireLink as string;
   const assessmentTaskNo = route.query.assessmentTaskNo as string;
+
+  // 确保任务数据已加载
+  if (assessmentTaskNo) {
+    await loadTaskDetail(assessmentTaskNo);
+  }
 
   if (sceneId) {
     hasScene.value = true;
     hasIntro.value = true;
-    sceneData.value = EVALUATION_SCENES.find((s) => s.id === sceneId) || null;
+    selectSlot(sceneId);
   }
 
-  iframeSrc.value = `${surveyBaseUrl}${questionnaireLink}&userId=${userInfo.value?.id}&assessmentNo=${assessmentTaskNo}&questionId=${questionnaireId}`;
+  // 从 URL 参数获取问卷信息（无场景模式使用）
+  const questionnaireId = route.query.questionnaireId as string;
+  const questionnaireLink = route.query.questionnaireLink as string;
+
+  iframeSrc.value = generateIframeSrc(questionnaireId, questionnaireLink);
 });
 
 function handleBack() {
   router.back();
 }
 
-function handleContinue() {
-  // 如果当前是最后一个场景，则不进行跳转，直接提交回答
-  if (sceneData.value?.order === EVALUATION_SCENES.length) {
-    console.warn('last scene');
-    return;
-  }
-  const nextScene = EVALUATION_SCENES.find(
-    (s) => s.order === (sceneData.value?.order ?? 0) + 1,
-  );
-  if (nextScene) {
-    router.replace({
-      path: '/evaluation/questionnaire',
-      query: {
-        scene: nextScene.id,
-      },
-    });
-
-    router.afterEach(() => {
-      window.location.reload();
-    });
+async function handleContinue() {
+  // 有测试场景的模式
+  if (hasScenario.value) {
+    // 如果当前是最后一个场景，则不进行跳转，直接提交回答
+    if (isLastScene.value) {
+      console.warn('last scene');
+      router.replace({
+        path: '/evaluation/scene',
+        query: {
+          taskNo: currentTaskNo.value,
+        },
+      });
+      return;
+    }
+    const nextScene = getNextSlot();
+    console.warn(nextScene);
+    if (nextScene) {
+      // 先切换到下一个插槽
+      selectSlot(nextScene.id || 0);
+      // 然后跳转到下一个插槽的问卷页面
+      await startEvaluation(currentTaskNo.value || '', router);
+      router.afterEach(() => {
+        window.location.reload();
+      });
+    }
+  } else {
+    // 无测试场景的模式
+    const nextQuestionnaire = getNextIncompleteQuestionnaire.value;
+    if (nextQuestionnaire) {
+      // 跳转到下一个未完成的问卷
+      await startEvaluationWithoutScenario(
+        currentTaskNo.value || '',
+        nextQuestionnaire,
+        router,
+      );
+      router.afterEach(() => {
+        window.location.reload();
+      });
+    } else {
+      // 所有问卷都已完成，跳转到测评详情页面
+      console.warn('all questionnaires completed');
+      router.replace({
+        path: `/evaluation/assessment/${currentTaskNo.value}`,
+      });
+    }
   }
 }
 
@@ -72,20 +115,27 @@ function handleComplete(payload: null | Record<string, unknown>) {
   // 处理问卷完成逻辑
   console.warn('Questionnaire completed:', payload);
 }
-
-const isLastScene = computed(
-  () => sceneData.value?.order === EVALUATION_SCENES.length,
-);
 </script>
 
 <template>
-  <QuestionnaireContainer
-    :scene-data="sceneData"
-    :iframe-src="iframeSrc"
-    :has-intro="hasIntro"
-    :is-last-scene="isLastScene"
-    @continue="handleContinue"
-    @back="handleBack"
-    @complete="handleComplete"
-  />
+  <Transition>
+    <template v-if="loading">
+      <div class="flex h-full items-center justify-center">
+        <Spin size="large" />
+      </div>
+    </template>
+    <template v-else>
+      <QuestionnaireContainer
+        :scene-data="selectedSlot"
+        :iframe-src="iframeSrc"
+        :has-intro="hasIntro"
+        :is-last-scene="isLastScene"
+        :has-scenario="hasScenario"
+        :is-all-questionnaires-completed="!getNextIncompleteQuestionnaire"
+        @continue="handleContinue"
+        @back="handleBack"
+        @complete="handleComplete"
+      />
+    </template>
+  </Transition>
 </template>

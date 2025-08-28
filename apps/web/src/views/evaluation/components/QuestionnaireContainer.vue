@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { EvaluationScene } from '../data';
+import type { AssessmentScenarioSlotVO } from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
@@ -11,11 +11,13 @@ import QuestionnaireIframe from './QuestionnaireIframe.vue';
 import QuestionnaireIntro from './QuestionnaireIntro.vue';
 
 interface Props {
-  sceneData: EvaluationScene | null;
+  sceneData: AssessmentScenarioSlotVO | null;
   iframeSrc: string;
   hasIntro?: boolean;
   showContinueButton?: boolean;
   isLastScene?: boolean;
+  hasScenario?: boolean;
+  isAllQuestionnairesCompleted?: boolean;
 }
 
 interface Emits {
@@ -29,6 +31,8 @@ const props = withDefaults(defineProps<Props>(), {
   hasIntro: false,
   showContinueButton: true,
   isLastScene: false,
+  hasScenario: true,
+  isAllQuestionnairesCompleted: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -39,11 +43,18 @@ const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 
 const imgBaseUrl = '../../../static/images/evaluation/questionnaire/';
 
-const bgUrl = computed(() =>
-  showIntro.value
-    ? new URL(`${imgBaseUrl}${props.sceneData?.type}.png`, import.meta.url).href
-    : new URL(`${imgBaseUrl}answer_page_bg.png`, import.meta.url).href,
-);
+const bgUrl = computed(() => {
+  console.warn(props.sceneData);
+  const introBgImgUrl =
+    props.sceneData?.metadata?.introConfig.backgroundImageUrl;
+  return showIntro.value
+    ? introBgImgUrl ||
+        new URL(
+          `${imgBaseUrl}/${props.sceneData?.slotKey}.png`,
+          import.meta.url,
+        ).href
+    : new URL(`${imgBaseUrl}answer_page_bg.png`, import.meta.url).href;
+});
 
 function handleIntroClose() {
   emit('back');
@@ -103,27 +114,55 @@ watch(
 
       <!-- 继续/提交按钮 -->
       <template v-if="showContinueButton && isIframeCompleted">
-        <template v-if="!isLastScene">
-          <LyButton
-            type="success"
-            size="middle"
-            class="continue-button"
-            @click="handleContinue"
-          >
-            继续答题
-            <ArrowRight class="ml-2 size-5" />
-          </LyButton>
+        <!-- 有场景模式 -->
+        <template v-if="hasScenario">
+          <template v-if="!isLastScene">
+            <LyButton
+              type="success"
+              size="middle"
+              class="continue-button"
+              @click="handleContinue"
+            >
+              继续答题
+              <ArrowRight class="ml-2 size-5" />
+            </LyButton>
+          </template>
+          <template v-else>
+            <LyButton
+              type="success"
+              size="middle"
+              class="continue-button"
+              @click="handleContinue"
+            >
+              提交回答
+              <Check class="ml-2 size-5" />
+            </LyButton>
+          </template>
         </template>
+        <!-- 无场景模式 -->
         <template v-else>
-          <LyButton
-            type="success"
-            size="middle"
-            class="continue-button"
-            @click="handleContinue"
-          >
-            提交回答
-            <Check class="ml-2 size-5" />
-          </LyButton>
+          <template v-if="!isAllQuestionnairesCompleted">
+            <LyButton
+              type="success"
+              size="middle"
+              class="continue-button"
+              @click="handleContinue"
+            >
+              继续答题
+              <ArrowRight class="ml-2 size-5" />
+            </LyButton>
+          </template>
+          <template v-else>
+            <LyButton
+              type="success"
+              size="middle"
+              class="continue-button"
+              @click="handleContinue"
+            >
+              提交回答
+              <Check class="ml-2 size-5" />
+            </LyButton>
+          </template>
         </template>
       </template>
     </div>

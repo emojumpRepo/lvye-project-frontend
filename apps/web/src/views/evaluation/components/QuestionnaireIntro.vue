@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import type { EvaluationScene } from '../data';
+import type { AssessmentScenarioSlotVO } from '@vben/types';
 
 import { computed, ref } from 'vue';
 
 import { ArrowRight, X } from '@vben/icons';
 
 interface Props {
-  sceneData: EvaluationScene | null;
+  sceneData: AssessmentScenarioSlotVO | null;
   show: boolean;
 }
 
@@ -28,13 +28,17 @@ const imgBaseUrl = '../../../static/images/evaluation/questionnaire/';
 // );
 
 // 对话任务图片（对话气泡阶段）
-const koalaUrl = computed(
-  () =>
-    new URL(
-      `${imgBaseUrl}${props.sceneData?.type}_teacher.png`,
-      import.meta.url,
-    ).href,
-);
+const koalaUrl = computed(() => {
+  const url = props.sceneData?.metadata?.introConfig.characterConfig.imageUrl;
+  console.log('url', url);
+  if (url) {
+    return url;
+  }
+  return new URL(
+    `${imgBaseUrl}${props.sceneData?.slotKey}_teacher.png`,
+    import.meta.url,
+  ).href;
+});
 
 function handleIntroNext() {
   showTips.value = true;
@@ -74,8 +78,11 @@ function handleStart() {
             <div class="intro-badge">指引</div>
             <h3 class="intro-title">欢迎来到本模块</h3>
             <ul class="intro-points">
-              <li>{{ sceneData?.introDesc }}</li>
-              <li>预计用时约 {{ sceneData?.time }} 分钟</li>
+              <li>{{ sceneData?.metadata?.introConfig.description }}</li>
+              <li>
+                预计用时约
+                {{ sceneData?.questionnaire?.estimatedDuration }} 分钟
+              </li>
               <li>请在安静环境下作答，确保网络稳定</li>
             </ul>
             <p class="intro-text subtle">
@@ -94,10 +101,12 @@ function handleStart() {
             <img class="coach-figure" :src="koalaUrl" alt="考拉老师" />
             <div class="coach-bubble">
               <div class="bubble-header">
-                {{ sceneData?.teacherBubble.name }}
+                {{ sceneData?.metadata?.introConfig.characterConfig.name }}
               </div>
               <div class="bubble-content">
-                {{ sceneData?.teacherBubble.description }}
+                {{
+                  sceneData?.metadata?.introConfig.characterConfig.description
+                }}
               </div>
               <div class="bubble-actions">
                 <button class="btn-start" @click="handleStart">

@@ -1,4 +1,7 @@
-import type { AssessmentTask } from '@vben/types';
+import type {
+  AssessmentTask,
+  AssessmentTaskParticipantStatus,
+} from '@vben/types';
 
 import { appRequestClient } from '#/api/request';
 
@@ -22,5 +25,12 @@ export function getAssessmentTask(taskNo: string) {
 export function startAssessment(taskNo: string) {
   return appRequestClient.post<AssessmentTask>(
     `/psychology/assessment-participant/start?taskNo=${taskNo}`,
+  );
+}
+
+/** 获取测评参与状态 */
+export function getAssessmentParticipantStatus(taskNo: string) {
+  return appRequestClient.get<AssessmentTaskParticipantStatus>(
+    `/psychology/assessment-participant/status?taskNo=${taskNo}`,
   );
 }

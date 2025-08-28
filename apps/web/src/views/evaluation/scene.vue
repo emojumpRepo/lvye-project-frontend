@@ -1,102 +1,89 @@
 <script setup lang="ts">
-import type {
-  AssessmentTask,
-  ScenarioMetadata,
-  SlotMetadata,
-} from '@vben/types';
-
-import type { EvaluationScene } from './data';
-
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { ArrowLeft } from '@vben/icons';
+import { ArrowLeft, CircleCheckBig, LockKeyhole } from '@vben/icons';
+import { AssessmentTaskParticipantStatus } from '@vben/types';
 
 import { message, Spin } from 'ant-design-vue';
+import { storeToRefs } from 'pinia';
 
-import {
-  getAssessmentTask,
-  startAssessment,
-} from '#/api/psychology/assessment';
+import { getAssessmentParticipantStatus } from '#/api/psychology/assessment';
+import { useEvaluationStore } from '#/store/evaluation';
 
-import { EVALUATION_SCENES } from './data';
+// 导入背景图片
+import defaultSceneMapUrl from '../../static/images/evaluation/junior_evaluation_map.png';
 
 const router = useRouter();
 const route = useRoute();
 
-const loading = ref(false);
-const SelectedScene = ref<any>(null);
+const evaluationStore = useEvaluationStore();
+const {
+  getSlotStatus,
+  isSlotClickable,
+  getNextAvailableSlot,
+  loadTaskDetail,
+  selectSlot,
+  startEvaluation,
+} = evaluationStore;
+const { loading, scenarioData, currentTaskNo } = storeToRefs(evaluationStore);
 const hasReport = ref(false);
-const currentTaskNo = ref<null | string>(null);
-const taskDetailInfo = ref<AssessmentTask | null>(null);
-const scenarioData = computed(() => {
-  const scenarioDetail = taskDetailInfo.value?.scenarioDetail;
-  if (!scenarioDetail) {
-    return [];
-  }
-  scenarioDetail.metadata = JSON.parse(
-    scenarioDetail.metadataJson || '{}',
-  ) as ScenarioMetadata;
-  scenarioDetail.slots = scenarioDetail.slots?.map((slot) => {
-    slot.metadata = JSON.parse(slot.metadataJson || '{}') as SlotMetadata;
-    return slot;
-  });
-  return scenarioDetail;
-});
 
 // 方法
 function handleBack() {
-  router.back();
+  router.replace({
+    path: '/home',
+  });
 }
 
 // 开始问卷测评
-async function startEvaluation() {
-  // 跳转到测评页面
-  if (SelectedScene.value) {
-    try {
-      await startAssessment(route.query.taskNo as string);
-      router.push({
-        path: '/evaluation/questionnaire',
-        query: {
-          questionnaireId: SelectedScene.value.evaluation.id,
-          sceneId: SelectedScene.value.id,
-          assessmentTaskNo: route.query.taskNo,
-          questionnaireLink:
-            SelectedScene.value.evaluation.link.split('render/')[1],
-        },
-      });
-    } catch (error) {
-      console.error('startEvaluation error:', error);
-    }
+async function handleStartEvaluation() {
+  try {
+    await startEvaluation(currentTaskNo.value || '', router);
+  } catch (error) {
+    console.error('handleStartEvaluation error:', error);
   }
 }
 
-// 获取测评任务详情
-async function getTaskDetailInfo() {
-  loading.value = true;
-  const taskNo = currentTaskNo.value;
-  if (!taskNo) {
+function handleSlotClick(slot: any) {
+  // 检查场景是否可点击
+  if (!isSlotClickable(slot.id)) {
+    const status = getSlotStatus(slot.id);
+    if (status === 'locked') {
+      const previousSlot = scenarioData.value?.slots?.find(
+        (s) => s.slotOrder === slot.slotOrder - 1,
+      );
+      message.info(
+        `${slot.slotName}未解锁，请先前往${previousSlot?.slotName || '前一个场景'}吧~`,
+      );
+      return;
+    } else if (status === 'completed') {
+      const nextSlot = scenarioData.value?.slots?.find(
+        (s) => s.slotOrder === slot.slotOrder + 1,
+      );
+      const tipText = nextSlot
+        ? `${slot.slotName}已完成，前往${nextSlot.slotName}吧~`
+        : '本次测试已结束，请前往汇总报告查看结果';
+      message.success(tipText);
+      return;
+    }
+  }
+  selectSlot(slot.id);
+  handleStartEvaluation();
+}
+
+async function getParticipantStatus() {
+  if (!currentTaskNo.value) {
     return;
   }
   try {
-    const res = await getAssessmentTask(taskNo);
-    taskDetailInfo.value = res;
-    console.log('taskDetailInfo', taskDetailInfo.value);
-    console.log('scenarioData', scenarioData.value);
+    const res = await getAssessmentParticipantStatus(currentTaskNo.value);
+    if (res === AssessmentTaskParticipantStatus.COMPLETED) {
+      hasReport.value = true;
+    }
   } catch (error) {
-    console.error('getTaskDetailInfo error:', error);
-  } finally {
-    loading.value = false;
+    console.error('getParticipantStatus error:', error);
   }
-}
-
-function handleBuildingClick(scene: any) {
-  if (scene.disabled) {
-    // 禁用状态：仅返回，不弹窗
-    return;
-  }
-  SelectedScene.value = scene;
-  startEvaluation();
 }
 
 function showSummaryReport() {
@@ -108,14 +95,10 @@ function showSummaryReport() {
   router.push('/evaluation/summary');
 }
 
-// 获取下一个可点击的场景
-function getNextAvailableScene() {
-  return EVALUATION_SCENES.find((scene: EvaluationScene) => !scene.disabled);
-}
-
 onMounted(async () => {
-  currentTaskNo.value = route.query.taskNo as string;
-  await getTaskDetailInfo();
+  const taskNo = route.query.taskNo as string;
+  await loadTaskDetail(taskNo, true);
+  await getParticipantStatus();
 });
 </script>
 
@@ -128,10 +111,15 @@ onMounted(async () => {
         </div>
       </template>
       <template v-else>
-        <!-- 地图主体 -->
+        <!-- 场景主体 -->
         <div class="map-content">
-          <!-- 背景地图 -->
-          <div class="map-background"></div>
+          <!-- 场景背景 -->
+          <div
+            class="map-background"
+            :style="{
+              backgroundImage: `url(${defaultSceneMapUrl})`,
+            }"
+          ></div>
 
           <!-- 返回按钮 - 左上角 -->
           <div class="back-button" @click="handleBack">
@@ -164,15 +152,20 @@ onMounted(async () => {
             <span class="report-text">汇总报告</span>
           </div>
 
-          <!-- 可点击建筑 -->
+          <!-- 可点击插槽 -->
           <div class="buildings">
             <div
-              v-for="scene in EVALUATION_SCENES"
-              :key="scene.id"
+              v-for="slot in evaluationStore.scenarioData?.slots"
+              :key="slot.id"
               class="building-button"
-              :class="{ disabled: scene.disabled }"
-              :style="scene.position"
-              @click="handleBuildingClick(scene)"
+              :class="{
+                disabled:
+                  evaluationStore.getSlotStatus(slot.id || 0) === 'locked',
+                completed:
+                  evaluationStore.getSlotStatus(slot.id || 0) === 'completed',
+              }"
+              :style="slot.metadata?.position"
+              @click="handleSlotClick(slot)"
             >
               <div class="building-glow"></div>
 
@@ -180,8 +173,8 @@ onMounted(async () => {
                 <!-- 引导动画 - 显示在下一个可点击的建筑上 -->
                 <div
                   v-if="
-                    !scene.disabled &&
-                    scene.order === getNextAvailableScene()?.order
+                    isSlotClickable(slot.id || 0) &&
+                    slot.id === getNextAvailableSlot()?.id
                   "
                   class="guide-wave"
                 >
@@ -197,14 +190,34 @@ onMounted(async () => {
                   </div>
                 </div>
                 <div class="building-icon">
-                  <span class="building-emoji">{{ scene.icon }}</span>
-                  <div v-if="scene.disabled" class="lock-icon">🔒</div>
+                  <span class="building-emoji">{{
+                    slot.metadata?.icon || '🏢'
+                  }}</span>
+                  <div
+                    v-if="getSlotStatus(slot.id || 0) === 'locked'"
+                    class="lock-icon"
+                  >
+                    <LockKeyhole class="size-3 text-white" />
+                  </div>
+                  <div
+                    v-if="getSlotStatus(slot.id || 0) === 'completed'"
+                    class="completed-icon"
+                  >
+                    <CircleCheckBig class="size-3 text-white" />
+                  </div>
                 </div>
               </div>
 
               <div class="building-label">
-                {{ scene.name }}
-                <span v-if="scene.disabled" class="disabled-text">(未开放)</span>
+                {{ slot.slotName }}
+                <span
+                  v-if="getSlotStatus(slot.id || 0) === 'locked'"
+                  class="locked-text"
+                  >(未解锁)</span>
+                <span
+                  v-if="getSlotStatus(slot.id || 0) === 'completed'"
+                  class="completed-text"
+                  >(已完成)</span>
               </div>
               <div class="building-pulse"></div>
             </div>
@@ -335,7 +348,6 @@ onMounted(async () => {
     .map-background {
       width: 100%;
       height: 100%;
-      background: url('../../static/images/evaluation/junior_evaluation_map.png');
       background-repeat: no-repeat;
       background-position: center;
       background-size: cover;
@@ -482,16 +494,17 @@ onMounted(async () => {
           .building-icon {
             background: linear-gradient(
               135deg,
-              rgb(200 200 200 / 95%) 0%,
-              rgb(180 180 180 / 85%) 100%
+              rgb(245 245 245 / 95%) 0%,
+              rgb(235 235 235 / 85%) 100%
             );
             box-shadow:
-              0 4px 15px rgb(0 0 0 / 15%),
-              0 0 0 2px rgb(150 150 150 / 20%),
-              inset 0 1px 0 rgb(220 220 220 / 80%);
+              0 4px 15px rgb(0 0 0 / 8%),
+              0 0 0 2px rgb(200 200 200 / 30%),
+              inset 0 1px 0 rgb(255 255 255 / 80%);
 
             .building-emoji {
-              filter: grayscale(100%);
+              opacity: 0.7;
+              filter: grayscale(60%);
             }
 
             .lock-icon {
@@ -501,10 +514,11 @@ onMounted(async () => {
               display: flex;
               align-items: center;
               justify-content: center;
-              width: 20px;
-              height: 20px;
-              font-size: 12px;
-              background: rgb(255 193 7 / 90%);
+              width: 24px;
+              height: 24px;
+              font-size: 16px;
+              background-color: #ffc107;
+              border: 2px solid white;
               border-radius: 50%;
               box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
               animation: shake 2s ease-in-out infinite;
@@ -512,14 +526,14 @@ onMounted(async () => {
           }
 
           .building-label {
-            color: #999;
+            color: #888;
             background: linear-gradient(
               135deg,
-              rgb(200 200 200 / 95%) 0%,
-              rgb(180 180 180 / 85%) 100%
+              rgb(245 245 245 / 95%) 0%,
+              rgb(235 235 235 / 85%) 100%
             );
 
-            .disabled-text {
+            .locked-text {
               font-size: 10px;
               font-weight: normal;
               color: #ff9800;
@@ -527,23 +541,87 @@ onMounted(async () => {
           }
 
           .building-glow {
-            background: radial-gradient(
-              circle,
-              rgb(150 150 150 / 20%) 0%,
-              transparent 70%
-            );
+            display: none;
           }
 
           .building-pulse {
-            border-color: rgb(150 150 150 / 40%);
+            display: none;
           }
 
           &:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
 
             .building-icon {
-              transform: scale(1.05);
+              transform: scale(1.02);
               animation: shake 1s ease-in-out;
+            }
+          }
+        }
+
+        &.completed {
+          cursor: default;
+
+          .building-icon {
+            background: linear-gradient(
+              135deg,
+              rgb(255 255 255 / 95%) 0%,
+              rgb(255 255 255 / 85%) 100%
+            );
+            box-shadow:
+              0 4px 15px rgb(0 0 0 / 10%),
+              0 0 0 2px rgb(76 175 80 / 30%),
+              inset 0 1px 0 rgb(255 255 255 / 80%);
+
+            .building-emoji {
+              opacity: 0.8;
+              filter: grayscale(30%);
+            }
+
+            .completed-icon {
+              position: absolute;
+              top: -3px;
+              right: -3px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 24px;
+              height: 24px;
+              font-size: 16px;
+              background: #4caf50;
+              border: 2px solid white;
+              border-radius: 50%;
+              box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+            }
+          }
+
+          .building-label {
+            color: #666;
+            background: linear-gradient(
+              135deg,
+              rgb(255 255 255 / 95%) 0%,
+              rgb(255 255 255 / 85%) 100%
+            );
+
+            .completed-text {
+              font-size: 10px;
+              font-weight: normal;
+              color: #4caf50;
+            }
+          }
+
+          .building-glow {
+            display: none;
+          }
+
+          .building-pulse {
+            display: none;
+          }
+
+          &:hover {
+            transform: none;
+
+            .building-icon {
+              transform: none;
             }
           }
         }
