@@ -93,6 +93,10 @@ function handleViewDetail() {
  * 编辑任务
  */
 function handleEditTask() {
+  if (!isButtonAvailable.value) {
+    message.error('任务进行中或已有学生完成，无法编辑');
+    return;
+  }
   editAssessmentApi
     .setData({
       id: props.card.id,
@@ -107,6 +111,10 @@ function handleEditTask() {
 }
 
 function handleDeleteTask() {
+  if (!isButtonAvailable.value) {
+    message.error('已有学生参与的任务不能删除，可选择关闭任务');
+    return;
+  }
   deleteAssessmentApi.open();
 }
 </script>
@@ -172,10 +180,10 @@ function handleDeleteTask() {
           <template #overlay>
             <Menu>
               <Menu.Item key="1" @click="handleEditTask">
-                <button :disabled="!isButtonAvailable">编辑任务</button>
+                <button>编辑任务</button>
               </Menu.Item>
               <Menu.Item key="2" @click="handleDeleteTask">
-                <button :disabled="!isButtonAvailable">删除任务</button>
+                <button class="text-[#FF0831]">删除任务</button>
               </Menu.Item>
               <!-- <Menu.Item key="3" @click="handleCloseTask"> 关闭任务 </Menu.Item> -->
             </Menu>
