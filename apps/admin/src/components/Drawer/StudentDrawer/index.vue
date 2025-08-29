@@ -169,6 +169,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
     loading.value = false;
   },
+  onClosed: () => {
+    studentProfile.value = undefined;
+    studentParentProfile.value = undefined;
+    baseInfo.value = [];
+    psychologicalStatusTag.value = undefined;
+    coreProblemTags.value = [];
+    studentSpecialMark.value = [];
+    drawerApi.close();
+  },
 });
 
 function updateLoading(value: boolean) {
