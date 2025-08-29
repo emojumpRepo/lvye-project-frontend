@@ -10,12 +10,6 @@ import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 import { message, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteDictData,
-  deleteDictDataList,
-  exportDictData,
-  getDictDataPage,
-} from '#/api/system/dict/data';
 import { $t } from '#/locales';
 
 import { useDataGridColumns, useDataGridFormSchema } from '../data';
@@ -40,7 +34,7 @@ function onRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const data = await exportDictData(await gridApi.formApi.getValues());
+  // const data = await exportDictData(await gridApi.formApi.getValues());
   downloadFileFromBlobPart({ fileName: '字典数据.xls', source: data });
 }
 
@@ -61,7 +55,7 @@ async function handleDelete(row: SystemDictDataApi.DictData) {
     key: 'action_key_msg',
   });
   try {
-    await deleteDictData(row.id as number);
+    // await deleteDictData(row.id as number);
     message.success({
       content: $t('ui.actionMessage.deleteSuccess', [row.label]),
       key: 'action_key_msg',
@@ -89,7 +83,7 @@ async function handleDeleteBatch() {
     key: 'action_process_msg',
   });
   try {
-    await deleteDictDataList(checkedIds.value);
+    // await deleteDictDataList(checkedIds.value);
     message.success($t('ui.actionMessage.deleteSuccess'));
     onRefresh();
   } finally {
@@ -108,12 +102,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getDictDataPage({
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-            dictType: props.dictType,
-            ...formValues,
-          });
+          // return await getDictDataPage({
+          //   pageNo: page.currentPage,
+          //   pageSize: page.pageSize,
+          //   dictType: props.dictType,
+          //   ...formValues,
+          // });
+          return {
+            data: [],
+            total: 0,
+          };
         },
       },
     },

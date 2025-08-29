@@ -11,7 +11,7 @@ import { getUrlValue } from '@vben/utils';
 import { Button, Card, Image, message } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { socialAuthRedirect } from '#/api/core/auth';
+// import { socialAuthRedirect } from '#/api/core/auth';
 import {
   getBindSocialUserList,
   socialBind,
@@ -126,7 +126,7 @@ async function onBind(bind: any) {
     const redirectUri = `${location.origin}/profile?${encodeURIComponent(`type=${type}`)}`;
 
     // 进行跳转
-    window.location.href = await socialAuthRedirect(type, redirectUri);
+    // window.location.href = await socialAuthRedirect(type, redirectUri);
   } catch (error) {
     console.error('社交绑定处理失败:', error);
   }
