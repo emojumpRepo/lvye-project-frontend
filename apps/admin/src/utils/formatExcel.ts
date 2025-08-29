@@ -487,7 +487,17 @@ export async function parseExcel(
     }
 
     // 验证必需的表头字段
-    const requiredHeaders = STUDENT_EXPORT_COLUMNS.map((item) => item.label);
+    const requiredHeaders = [
+      '学号',
+      '学生姓名',
+      '出生日期',
+      '性别',
+      '年级',
+      '班级',
+      '联系电话',
+      '家庭住址',
+      '备注',
+    ];
     const missingHeaders = requiredHeaders.filter(
       (requiredHeader) =>
         !headers.some(

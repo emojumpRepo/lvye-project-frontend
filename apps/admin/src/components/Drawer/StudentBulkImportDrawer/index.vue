@@ -85,6 +85,11 @@ async function startImport() {
     isLoading.value = true;
     openImportProgress.value = true;
 
+    if (parseData.value?.success.length === 0) {
+      message.warning('没有可导入的数据');
+      return;
+    }
+
     // 逐个处理每条数据
     for (const item of parseData.value!.success) {
       if (isCancelled.value) {
@@ -168,7 +173,6 @@ async function parseStudentProfileExcel() {
     }
 
     importResult.value.summary.total = parseData.value?.success.length || 0;
-    message.success(`文件读取成功，共 ${parseData.value.total} 条数据`);
   } catch (error) {
     console.error('文件读取失败', error);
     message.error('文件读取失败');
@@ -272,10 +276,12 @@ onMounted(async () => {
           </LyUpload>
 
           <!-- 校验结果 -->
-          <div v-if="parseData?.failed.length" class="mt-12 space-y-4">
+          <div v-if="parseData?.failed.length" class="mt-8 space-y-4">
             <LyLabel has-indicator title="第三步：校验结果" />
             <div class="text-sm text-[#979899]">
-              失败{{ parseData.failed.length }}条，请根据提示修改后重新导入
+              成功{{ parseData.success.length }}条，失败{{
+                parseData.failed.length
+              }}条，请根据提示修改后重新导入
             </div>
             <ImportTable
               :columns="studentBulkImportFailedColumns"
