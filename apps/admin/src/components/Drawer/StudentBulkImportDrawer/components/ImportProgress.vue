@@ -5,6 +5,7 @@ import { Button as AButton, Progress as AProgress } from 'ant-design-vue';
 
 const props = defineProps<{
   pendingCount: number;
+  successCount: number;
   total: number;
 }>();
 
@@ -54,7 +55,7 @@ function handleAction() {
           <span class="ml-2 text-blue-600">({{ percent }}%)</span>
         </div>
         <div v-else class="text-primary text-center text-sm">
-          成功导入 {{ pendingCount }} 条
+          成功导入 {{ successCount }} 条
         </div>
       </div>
     </div>

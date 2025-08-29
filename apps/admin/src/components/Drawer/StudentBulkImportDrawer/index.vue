@@ -136,6 +136,8 @@ async function startImport() {
   } catch (error) {
     console.error('导入过程发生错误:', error);
     message.error('导入过程发生错误，请稍后重试');
+    openImportProgress.value = false;
+    isLoading.value = false;
   }
 }
 
@@ -404,6 +406,7 @@ onMounted(async () => {
       class="absolute right-1/2 top-40 translate-x-1/2"
       :pending-count="importResult.summary.pendingCount"
       :total="importResult.summary.total"
+      :success-count="importResult.summary.successCount"
       @cancel="cancelImport"
       @complete="completeImport"
     />
