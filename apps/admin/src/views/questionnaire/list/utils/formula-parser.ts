@@ -1,3 +1,5 @@
+import { GenderEnum } from '@vben/types';
+
 import { QUESTIONNAIRE_CONFIG_CALCULATE_TYPE } from '#/api/constants';
 
 /**
@@ -20,7 +22,7 @@ export function parseCalculateFormula(
         // 年龄性别与分数区间: [{"sex": 1,"minAge": 8,"maxAge": 12,"minScore": 0,"maxScore": 10},...]
         if (Array.isArray(formula)) {
           const rules = formula.map((rule: any) => ({
-            sex: rule.sex === 1 ? '男生' : '女生',
+            sex: rule.sex === GenderEnum.MALE ? '男生' : '女生',
             ageRange: `${rule.minAge} - ${rule.maxAge} 岁`,
             scoreRange: `${rule.minScore} - ${rule.maxScore} 分`,
           }));

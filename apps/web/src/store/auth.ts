@@ -54,6 +54,10 @@ export const useAuthStore = defineStore('auth', () => {
         const fetchUserInfoResult = await fetchUserInfo();
 
         userInfo = fetchUserInfoResult?.user || null;
+        userStore.setUserInfo({
+          ...userInfo,
+          isParent: Boolean(fetchUserInfoResult?.isParent) || false,
+        });
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -110,7 +114,10 @@ export const useAuthStore = defineStore('auth', () => {
     let authPermissionInfo: AuthPermissionInfo | null = null;
     authPermissionInfo = await getAuthPermissionInfoApi();
     // userStore
-    userStore.setUserInfo(authPermissionInfo.user);
+    userStore.setUserInfo({
+      ...authPermissionInfo.user,
+      isParent: Boolean(authPermissionInfo.isParent) || false,
+    });
     userStore.setUserRoles(authPermissionInfo.roles);
     // accessStore
     accessStore.setAccessMenus(authPermissionInfo.menus);

@@ -20,7 +20,7 @@ const emit = defineEmits<Emits>();
 
 const showTips = ref(false);
 
-const imgBaseUrl = '../../../static/images/evaluation/questionnaire/';
+const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
 
 // const bgUrl = computed(
 //   () =>
@@ -30,7 +30,6 @@ const imgBaseUrl = '../../../static/images/evaluation/questionnaire/';
 // 对话任务图片（对话气泡阶段）
 const koalaUrl = computed(() => {
   const url = props.sceneData?.metadata?.introConfig.characterConfig.imageUrl;
-  console.log('url', url);
   if (url) {
     return url;
   }
@@ -69,7 +68,7 @@ function handleStart() {
           <!-- 背后的考拉医生 -->
           <div class="koala-figure">
             <img
-              src="../../../static/images/evaluation/questionnaire/kaola_doctor.png"
+              src="../../../../static/images/evaluation/questionnaire/kaola_doctor.png"
               alt="考拉医生"
             />
           </div>

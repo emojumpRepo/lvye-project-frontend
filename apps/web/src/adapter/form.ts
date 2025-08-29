@@ -27,21 +27,21 @@ async function initSetupVbenForm() {
     },
     defineRules: {
       // 输入项目必填国际化适配
-      required: (value, _params, ctx) => {
+      required: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value.length === 0) {
           return $t('ui.formRules.required', [ctx.label]);
         }
         return true;
       },
       // 选择项目必填国际化适配
-      selectRequired: (value, _params, ctx) => {
+      selectRequired: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null) {
           return $t('ui.formRules.selectRequired', [ctx.label]);
         }
         return true;
       },
       // 手机号非必填
-      mobile: (value, _params, ctx) => {
+      mobile: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value.length === 0) {
           return true;
         } else if (!MOBILE_REGEX.test(value)) {
@@ -50,7 +50,7 @@ async function initSetupVbenForm() {
         return true;
       },
       // 手机号必填
-      mobileRequired: (value, _params, ctx) => {
+      mobileRequired: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value.length === 0) {
           return $t('ui.formRules.required', [ctx.label]);
         }
@@ -59,7 +59,40 @@ async function initSetupVbenForm() {
         }
         return true;
       },
-    },
+      // 小学生年龄验证（6-16岁）
+      studentAge: (value: any, _params: any, ctx: any) => {
+        if (value === undefined || value === null || value === '') {
+          return $t('ui.formRules.required', [ctx.label]);
+        }
+        const age = Number(value);
+        if (Number.isNaN(age) || age < 6 || age > 16) {
+          return `${ctx.label}必须是6-16岁之间的有效年龄`;
+        }
+        return true;
+      },
+      // 小学生身高验证（80-200cm）
+      studentHeight: (value: any, _params: any, ctx: any) => {
+        if (value === undefined || value === null || value === '') {
+          return $t('ui.formRules.required', [ctx.label]);
+        }
+        const height = Number(value);
+        if (Number.isNaN(height) || height < 80 || height > 200) {
+          return `${ctx.label}必须是80-200cm之间的有效身高`;
+        }
+        return true;
+      },
+      // 小学生体重验证（20-100kg）
+      studentWeight: (value: any, _params: any, ctx: any) => {
+        if (value === undefined || value === null || value === '') {
+          return $t('ui.formRules.required', [ctx.label]);
+        }
+        const weight = Number(value);
+        if (Number.isNaN(weight) || weight < 20 || weight > 100) {
+          return `${ctx.label}必须是20-100kg之间的有效体重`;
+        }
+        return true;
+      },
+    } as any,
   });
 }
 

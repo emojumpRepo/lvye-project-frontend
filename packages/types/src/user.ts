@@ -6,6 +6,11 @@ interface UserInfo extends BasicUserInfo {
    * 首页地址
    */
   homePath: string;
+
+  /**
+   * 家长学生端 标识
+   */
+  isParent?: boolean;
 }
 
 /** 权限信息 */
@@ -14,6 +19,13 @@ interface AuthPermissionInfo {
   roles: string[];
   permissions: string[];
   menus: AppRouteRecordRaw[];
+  isParent: boolean;
+}
+
+/** 性别枚举 */
+export enum GenderEnum {
+  FEMALE = 2,
+  MALE = 1,
 }
 
 export type { AuthPermissionInfo, UserInfo };

@@ -244,7 +244,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     }
   }
 
-  // 开始测评（无场景模式）
+  // 开始测评（无场景模式 / 继续答题跳转）
   async function startEvaluationWithoutScenario(
     taskNo: string,
     questionnaire: any,
@@ -252,10 +252,10 @@ export const useEvaluationStore = defineStore('evaluation', () => {
   ) {
     try {
       await startAssessment(taskNo);
-      router.replace({
+      router.push({
         path: '/evaluation/questionnaire',
         query: {
-          questionnaireId: questionnaire.id,
+          questionnaireId: questionnaire.questionnaireId,
           assessmentTaskNo: taskNo,
           questionnaireLink:
             questionnaire.externalLink?.split('render/')[1] || '',

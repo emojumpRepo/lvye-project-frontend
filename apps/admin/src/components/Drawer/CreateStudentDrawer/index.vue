@@ -7,6 +7,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
+import { GenderEnum } from '@vben/types';
 
 import {
   DatePicker as ADatePicker,
@@ -237,8 +238,8 @@ onMounted(() => {
           <LyLabel title="性别" required custom-title-class="font-normal" />
           <AForm.Item name="sex">
             <ARadio.Group v-model:value="studentForm.sex">
-              <ARadio value="1">男</ARadio>
-              <ARadio value="2">女</ARadio>
+              <ARadio :value="GenderEnum.MALE">男</ARadio>
+              <ARadio :value="GenderEnum.FEMALE">女</ARadio>
             </ARadio.Group>
           </AForm.Item>
         </div>
