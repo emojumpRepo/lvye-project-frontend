@@ -4,12 +4,13 @@ import type { ConfigOptions } from '../data';
 import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, unref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
 import { Divider } from 'ant-design-vue';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 import { useVbenForm } from '#/adapter/form';
 import { updateStudentProfile } from '#/api/psychology/student-profile';
@@ -31,6 +32,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'updateLoading', value: boolean): void;
 }>();
+
+dayjs.extend(customParseFormat);
+const isYYYYMMDD = (val: unknown) =>
+  typeof val === 'string' && dayjs(val, 'YYYY-MM-DD', true).isValid();
 
 const edit = ref(false);
 const configOptions = ref<ConfigOptions>({
@@ -129,6 +134,7 @@ async function handleSave() {
   values.graduationStatus = Number(values.graduationStatus);
   edit.value = false;
   if (props.schemaType === 'personalInfo') {
+    const data = values;
     InfoFormApi.setFieldValue(
       'classDeptId',
       configOptions.value?.classList.find(
@@ -140,12 +146,20 @@ async function handleSave() {
       getDictObj('student_graduation_status', Number(values.graduationStatus))
         ?.label,
     );
-
-    values.birthDate = dayjs(values.birthDate).valueOf().toString();
+    InfoFormApi.setFieldValue(
+      'sex',
+      configOptions.value?.sexMap.find((item) => item.value === values.sex)
+        ?.label,
+    );
+    InfoFormApi.setFieldValue(
+      'birthDate',
+      dayjs(unref(values.birthDate)).format('YYYY-MM-DD'),
+    );
 
     try {
       await updateStudentProfile({
-        ...values,
+        ...data,
+        birthDate: dayjs(values.birthDate).valueOf().toString(),
         id: (
           props.studentInfo as
             | PsychologyStudentProfileApi.StudentProfile
@@ -228,7 +242,9 @@ function formatFormData(info: PsychologyStudentProfileApi.StudentProfile) {
   const studentFormInfo = {
     ...info,
     sex: getDictObj('system_user_sex', info.sex)?.label,
-    birthDate: dayjs(info.birthDate).format('YYYY-MM-DD'),
+    birthDate: isYYYYMMDD(info.birthDate)
+      ? dayjs(info.birthDate).format('YYYY-MM-DD')
+      : info.birthDate,
     graduationStatus: getDictObj(
       'student_graduation_status',
       info.graduationStatus,

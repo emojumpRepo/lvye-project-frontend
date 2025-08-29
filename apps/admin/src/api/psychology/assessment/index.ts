@@ -1,5 +1,9 @@
 import type { PageParam, PageResult } from '@vben/request';
-import type { ASSESSMENT_TARGET_TYPE, AssessmentTask } from '@vben/types';
+import type {
+  ASSESSMENT_TARGET_TYPE,
+  AssessmentTask,
+  QuestionnaireResultVO,
+} from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
@@ -154,6 +158,7 @@ export namespace PsychologyAssessmentApi {
 
   /** 测评问卷学生参与答题记录 */
   export interface ParticipantsQuestionnairePageRes {
+    id?: string; // 结果ID
     studentProfileId: number;
     taskNo: string;
     studentNo: string;
@@ -164,6 +169,7 @@ export namespace PsychologyAssessmentApi {
     gradeName: string;
     status: number;
     finishTime: number;
+    questionnaireName: string;
   }
 
   export interface DeptTree {
@@ -367,5 +373,13 @@ export function exportAssessmentResults(taskId: number) {
 export function exportAssessmentReport(taskId: number) {
   return requestClient.download(
     `/psychology/assessment-task/export-report?taskId=${taskId}`,
+  );
+}
+
+// ==================== 测评问卷结果 ====================
+/** 问卷结果 */
+export function getAssessmentQuestionnaireResult(id: string) {
+  return requestClient.get<QuestionnaireResultVO>(
+    `/psychology/questionnaire/get-result?id=${id}`,
   );
 }

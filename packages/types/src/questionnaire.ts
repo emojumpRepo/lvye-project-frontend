@@ -25,3 +25,38 @@ export interface QuestionnaireVO {
   createTime?: string;
   creator?: string;
 }
+
+export interface QuestionnaireResultDataVO {
+  dimensionName?: string;
+  isAbnormal?: number;
+  score?: number;
+  studentComment?: string;
+  teacherComment?: string;
+}
+
+export interface QuestionnaireResultVO {
+  answers: string;
+  assessmentTaskNo: string;
+  createTime: number;
+  dimensionScore: number;
+  completedTime: number;
+  evaluate: string;
+  generationError: string;
+  generationStatus: number;
+  generationTime: number;
+  id: number;
+  questionnaireId: number;
+  resultData: string;
+  riskLevel: number;
+  score: number;
+  suggestions: string;
+  updateTime: number;
+  userId: number;
+}
+
+export interface QuestionnaireAnswerDataVO {
+  answer: string;
+  index: number;
+  score: number;
+  title: string;
+}

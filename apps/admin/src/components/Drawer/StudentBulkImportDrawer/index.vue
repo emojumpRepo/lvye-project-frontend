@@ -47,7 +47,7 @@ const emit = defineEmits<{
 
 const fileList = ref<UploadProps['fileList']>([]);
 const parseData = ref<null | StudentRecordResult>(null);
-const isLoading = ref(false);
+const importCompleted = ref(false);
 const openImportProgress = ref(false);
 const userSexMap = ref<any[]>([]);
 const isCancelled = ref(false);
@@ -64,25 +64,35 @@ const importResult = ref<ImportResult>({
   },
 });
 
-const [Drawer] = useVbenDrawer({
+const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
   closeOnClickModal: false,
+  confirmLoading: importCompleted.value,
   onConfirm: async () => {
-    if (!parseData.value?.success || parseData.value.success.length === 0) {
+    if (
+      !parseData.value?.success ||
+      parseData.value.success.length === 0 ||
+      importCompleted.value
+    ) {
       message.warning('没有可导入的数据');
       return;
     }
-
+    drawerApi.lock();
     await startImport();
     emit('refresh');
+    drawerApi.unlock();
+  },
+  onClosed: () => {
+    handleFileRemove();
+    fileList.value = [];
+    drawerApi.close();
   },
 });
 
 /** 开始导入 */
 async function startImport() {
   try {
-    isLoading.value = true;
     openImportProgress.value = true;
 
     if (parseData.value?.success.length === 0) {
@@ -137,7 +147,8 @@ async function startImport() {
     console.error('导入过程发生错误:', error);
     message.error('导入过程发生错误，请稍后重试');
     openImportProgress.value = false;
-    isLoading.value = false;
+  } finally {
+    importCompleted.value = true;
   }
 }
 
@@ -145,21 +156,21 @@ async function startImport() {
 function cancelImport() {
   isCancelled.value = true;
   openImportProgress.value = false;
-  isLoading.value = false;
+  importCompleted.value = true;
   parseData.value = null;
 }
 
 /** 完成导入 */
 function completeImport() {
   openImportProgress.value = false;
-  isLoading.value = false;
+  importCompleted.value = true;
 }
 
 /** 解析Excel文件 */
 async function parseStudentProfileExcel() {
   try {
-    // // 重置状态
-    isLoading.value = true;
+    // 重置状态
+    importCompleted.value = false;
     handleFileRemove();
 
     // 解析Excel文件
@@ -178,14 +189,13 @@ async function parseStudentProfileExcel() {
   } catch (error) {
     console.error('文件读取失败', error);
     message.error('文件读取失败');
-  } finally {
-    isLoading.value = false;
   }
 }
 
 /** 处理文件移除 */
 function handleFileRemove() {
   isCancelled.value = false;
+  importCompleted.value = false;
   openImportProgress.value = false;
   parseData.value = null;
   importResult.value = {
@@ -241,7 +251,7 @@ onMounted(async () => {
       </div>
     </template>
 
-    <Spin :spinning="isLoading">
+    <Spin :spinning="openImportProgress">
       <div class="mx-1 mt-2 flex h-full flex-col gap-9">
         <!-- 下载模板 -->
         <div>
