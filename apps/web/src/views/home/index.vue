@@ -24,9 +24,6 @@ async function getMyTasks() {
   try {
     tasksLoading.value = true;
     const res = await getMyAssessmentTask();
-    // 兼容 PageResult 结构
-    console.warn(res);
-
     myTasks.value = (res as unknown as AssessmentTask[]) || [];
   } catch (error) {
     // 记录错误但不抛出

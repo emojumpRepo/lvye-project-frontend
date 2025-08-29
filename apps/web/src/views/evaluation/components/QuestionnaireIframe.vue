@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import { ArrowLeft } from '@vben/icons';
 
-import ConfirmDialog from '#/components/ConfirmDialog/index.vue';
+import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 
 interface Props {

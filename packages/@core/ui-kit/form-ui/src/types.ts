@@ -72,6 +72,9 @@ export type FormSchemaRuleType =
   | 'mobileRequired'
   | 'required'
   | 'selectRequired'
+  | 'studentAge'
+  | 'studentHeight'
+  | 'studentWeight'
   | null
   | (Record<never, never> & string)
   | ZodTypeAny;

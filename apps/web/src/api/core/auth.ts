@@ -25,6 +25,7 @@ export namespace AuthApi {
     refreshToken: string;
     userId: number;
     expiresTime: number;
+    isParent: number;
   }
 
   /** 租户信息返回值 */
