@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 
+import { Button } from 'ant-design-vue';
+
 import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
-import LyButton from '#/components/LyButton/index.vue';
 
 import AssessmentListGrid from './components/AssessmentListGrid.vue';
 import AssessmentListSearch from './components/AssessmentListSearch.vue';
@@ -57,9 +58,7 @@ watch(
       @create-assessment="handleCreateAssessment"
     >
       <template #extra>
-        <LyButton type="success" size="large" @click="handleCreateAssessment">
-          创建测评
-        </LyButton>
+        <Button type="primary" @click="handleCreateAssessment">创建测评</Button>
       </template>
     </AssessmentListSearch>
 

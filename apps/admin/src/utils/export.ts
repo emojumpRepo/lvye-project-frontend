@@ -1,6 +1,9 @@
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { message } from 'ant-design-vue';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import {
   AlignmentType,
   Document,
@@ -17,10 +20,13 @@ import * as XLSX from 'xlsx';
 
 import { getDictLabel } from '#/utils';
 
+// 配置dayjs插件
+dayjs.extend(customParseFormat);
+
 /**
  * 学生档案导出字段映射
  */
-const STUDENT_EXPORT_COLUMNS = [
+export const STUDENT_EXPORT_COLUMNS = [
   { key: 'name', label: '学生姓名' },
   { key: 'studentNo', label: '学号' },
   { key: 'sex', label: '性别' },
@@ -54,7 +60,7 @@ function formatStudentDataForExport(
           break;
         }
         case 'graduationStatus': {
-          value = value === 1 ? '已毕业' : '未毕业';
+          value = getDictLabel('student_graduation_status', value);
           break;
         }
         case 'homeAddress':
@@ -67,26 +73,7 @@ function formatStudentDataForExport(
           break;
         }
         case 'psychologicalStatus': {
-          switch (value) {
-            case 0: {
-              value = '一般';
-
-              break;
-            }
-            case 1: {
-              value = '良好';
-
-              break;
-            }
-            case 2: {
-              value = '较差';
-
-              break;
-            }
-            default: {
-              value = '未知';
-            }
-          }
+          value = getDictLabel('student_psychological_status', value);
           break;
         }
         case 'sex': {
@@ -94,7 +81,6 @@ function formatStudentDataForExport(
           break;
         }
         default: {
-          // 保持原值
           break;
         }
       }
@@ -134,29 +120,29 @@ export function exportStudentsToExcel(
     const columnWidths = STUDENT_EXPORT_COLUMNS.map((column) => {
       switch (column.key) {
         case 'birthDate': {
-          return { wch: 12 };
+          return { wch: 20 };
         }
         case 'className':
         case 'gradeName':
         case 'sex': {
-          return { wch: 8 };
+          return { wch: 10 };
         }
         case 'graduationStatus':
         case 'psychologicalStatus': {
           return { wch: 10 };
         }
         case 'homeAddress': {
-          return { wch: 25 };
+          return { wch: 35 };
         }
         case 'mobile': {
-          return { wch: 15 };
+          return { wch: 20 };
         }
         case 'name':
         case 'studentNo': {
-          return { wch: 12 };
+          return { wch: 15 };
         }
         case 'remark': {
-          return { wch: 20 };
+          return { wch: 30 };
         }
         default: {
           return { wch: 10 };
@@ -184,6 +170,65 @@ export function exportStudentsToExcel(
 }
 
 /**
+ * 将测评任务中选中的学生问卷结果导出为 Excel
+ * @param data 学生问卷结果数据（来自测评任务列表勾选项）
+ * @param filename 可选的文件名
+ */
+export function exportAssessmentParticipantsToExcel(
+  data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
+  filename?: string,
+): void {
+  try {
+    if (!data || data.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+
+    const formattedData = data.map((item) => {
+      return {
+        学生姓名: item.name || '---',
+        学号: item.studentNo || '---',
+        班级: item.className || '---',
+        完成状态: item.status === 1 ? '已完成' : '未完成',
+        分数: item.score ?? '--',
+        风险等级: item.riskLevel
+          ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+          : '--',
+        完成时间: item.finishTime
+          ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
+          : '--',
+        任务编号: item.taskNo || '---',
+      } as Record<string, any>;
+    });
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+    // 列宽设置
+    worksheet['!cols'] = [
+      { wch: 12 }, // 学生姓名
+      { wch: 16 }, // 学号
+      { wch: 20 }, // 班级
+      { wch: 10 }, // 完成状态
+      { wch: 10 }, // 分数
+      { wch: 12 }, // 风险等级
+      { wch: 25 }, // 完成时间
+      { wch: 30 }, // 任务编号
+    ];
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, '问卷结果');
+
+    const defaultFilename = `测评问卷结果.xlsx`;
+    const finalFilename = filename || defaultFilename;
+    XLSX.writeFile(workbook, finalFilename);
+    message.success(`已导出 ${data.length} 条问卷结果`);
+  } catch (error) {
+    console.error('导出失败:', error);
+    message.error('导出失败，请重试');
+  }
+}
+
+/**
  * 下载学生批量导入模板
  */
 export function downloadTemplate() {
@@ -193,6 +238,7 @@ export function downloadTemplate() {
   // 创建填写说明工作表
   const instructionData = [
     ['字段名称', '格式要求', '是否必填', '说明', '示例'],
+    ['学生名字', '文本，2-10个字符', '是', '学生的真实姓名', '张三'],
     [
       '学号',
       '数字或字母数字组合，不超过20位',
@@ -200,40 +246,30 @@ export function downloadTemplate() {
       '学生的唯一标识',
       '2024001',
     ],
-    ['姓名', '2-10个字符', '是', '学生的真实姓名', '张三'],
-    ['出生日期', 'YYYY-MM-DD', '是', '日期格式必须为年-月-日', '2008-01-01'],
+    ['性别', '男/女', '是', '只能填写"男"或"女"', '男'],
+    ['年级', '只填写年级', '是', '学生所在年级', '一年级'],
+    ['班级', '填写年级和班级', '是', '学生所在班级', '一年级(1)班'],
+    ['出生日期', 'YYYY/M/D', '是', '日期格式必须为年/月/日', '2008/1/1'],
+    ['联系电话', '11位数字', '否', '学生的联系电话', '13800138000'],
     [
       '家庭住址',
-      '不超过100个字符',
+      '不超过200个字符',
       '否',
       '学生的详细家庭地址',
       '北京市朝阳区XX街道XX号',
     ],
-    ['性别', '男/女', '是', '只能填写"男"或"女"', '男'],
-    ['手机号', '11位数字', '否', '学生的联系电话', '13800138000'],
-    ['年级', '数字', '是', '学生所在年级,如一年级', '一年级'],
-    [
-      '班级',
-      '不超过10个字符',
-      '是',
-      '学生所在班级，如一年级(1)班',
-      '一年级(1)班',
-    ],
-    ['家长', '不超过10个字符', '否', '学生家长姓名', '张三'],
-    ['关系', '如父亲、母亲、监护人', '否', '学生与家长的关系', '父亲'],
-    ['家长手机号码', '11位数字', '否', '家长联系电话', '13800138000'],
-    ['备注', '不超过100个字符', '否', '其他说明', '无'],
+    ['备注', '不超过100个字符', '否', '学生的备注信息', '学生备注信息'],
   ];
 
   const instructionWs = XLSX.utils.aoa_to_sheet(instructionData);
 
   // 设置列宽
   instructionWs['!cols'] = [
-    { wch: 12 }, // 字段名称
-    { wch: 25 }, // 格式要求
+    { wch: 15 }, // 字段名称
+    { wch: 30 }, // 格式要求
     { wch: 10 }, // 是否必填
     { wch: 30 }, // 说明
-    { wch: 15 }, // 示例
+    { wch: 25 }, // 示例
   ];
 
   // 设置表头样式（加粗）
@@ -253,17 +289,14 @@ export function downloadTemplate() {
   // 创建学生信息工作表
   const studentData = [
     [
-      '学号*',
-      '姓名*',
-      '出生日期*',
+      '学生名字',
+      '学号',
+      '性别',
+      '年级',
+      '班级',
+      '出生日期',
+      '联系电话',
       '家庭住址',
-      '性别*',
-      '手机号',
-      '年级*',
-      '班级*',
-      '家长',
-      '关系',
-      '家长手机号码',
       '备注',
     ],
   ];
@@ -272,14 +305,14 @@ export function downloadTemplate() {
 
   // 设置列宽
   studentWs['!cols'] = [
-    { wch: 12 }, // 学生名字
-    { wch: 12 }, // 学号
+    { wch: 15 }, // 学生名字
+    { wch: 15 }, // 学号
     { wch: 8 }, // 性别
-    { wch: 8 }, // 年级
-    { wch: 10 }, // 班级
-    { wch: 12 }, // 出生日期
+    { wch: 15 }, // 年级
+    { wch: 20 }, // 班级
+    { wch: 15 }, // 出生日期
     { wch: 15 }, // 联系电话
-    { wch: 25 }, // 家庭住址
+    { wch: 30 }, // 家庭住址
   ];
 
   // 设置表头样式
@@ -301,6 +334,7 @@ export function downloadTemplate() {
   XLSX.writeFile(wb, fileName);
 }
 
+/** 下载心理评估报告模板 */
 export async function downloadPsychologicalReportTemplate() {
   // 创建文档
   const doc = new Document({

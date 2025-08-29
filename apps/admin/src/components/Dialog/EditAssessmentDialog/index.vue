@@ -57,12 +57,8 @@ const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
     try {
       const result = await updateAssessmentTask({
         ...formData.value,
-        startline: dayjs(formData.value.startline).format(
-          'YYYY-MM-DD[T]HH:mm:ss',
-        ),
-        deadline: dayjs(formData.value.deadline).format(
-          'YYYY-MM-DD[T]HH:mm:ss',
-        ),
+        startline: dayjs(formData.value.startline).valueOf(),
+        deadline: dayjs(formData.value.deadline).valueOf(),
       });
       if (result) {
         message.success('编辑成功');

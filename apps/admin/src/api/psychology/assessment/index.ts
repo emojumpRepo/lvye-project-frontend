@@ -44,8 +44,8 @@ export namespace PsychologyAssessmentApi {
     taskName: string;
     questionnaireIds: number[];
     targetAudience: number; // 0-学生，1-家长
-    startline?: Date | string;
-    deadline?: Date | string;
+    startline?: number; // 毫秒时间戳
+    deadline?: number; // 毫秒时间戳
     deptIdList?: number[];
     userIdList?: number[];
     isPublish?: boolean; // 是否发布
@@ -138,6 +138,51 @@ export namespace PsychologyAssessmentApi {
     averageScore?: number;
     riskLevelDistribution?: Record<string, number>;
   }
+
+  /** 测评问卷学生参与答题记录分页查询参数 */
+  export interface ParticipantsQuestionnairePageReq {
+    taskNo?: string;
+    questionnaireId?: number;
+    name?: string;
+    studentNo?: string;
+    status?: number;
+    riskLevel?: number;
+    classId?: number[];
+    pageNo?: number;
+    pageSize?: number;
+  }
+
+  /** 测评问卷学生参与答题记录 */
+  export interface ParticipantsQuestionnairePageRes {
+    studentProfileId: number;
+    taskNo: string;
+    studentNo: string;
+    score: number;
+    riskLevel: number;
+    name: string;
+    className: string;
+    gradeName: string;
+    status: number;
+    finishTime: number;
+  }
+
+  export interface DeptTree {
+    deptId: number;
+    deptName: string;
+    totalParticipants: number;
+    completedParticipants: number;
+    completionRate: number;
+    children: DeptTree[] | null;
+  }
+
+  export interface AssessmentStatistics {
+    totalParticipants: number;
+    completedParticipants: number;
+    inProgressParticipants: number;
+    notStartedParticipants: number;
+    completionRate: number;
+    deptTree?: DeptTree[];
+  }
 }
 
 // ==================== 测评任务管理 ====================
@@ -168,10 +213,10 @@ export function createAssessmentTask(
 
 /** 更新测评任务 */
 export function updateAssessmentTask(data: {
-  deadline: string;
+  deadline: number; // 毫秒时间戳
   description: string;
   id: string;
-  startline: string;
+  startline: number; // 毫秒时间戳
   targetAudience: string;
   taskName: string;
   taskNo: string;
@@ -248,15 +293,6 @@ export function getAssessmentParticipantPage(
   >('/psychology/assessment-participant/page', { params });
 }
 
-/** 查询测评任务参与者问卷分页列表 */
-export function getAssessmentTaskParticipantsQuestionnairePage(
-  params: PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq,
-) {
-  return requestClient.get<
-    PageResult<PsychologyAssessmentApi.AssessmentParticipant>
-  >('/psychology/assessment-task/participants-questionnaire-page', { params });
-}
-
 /** 获取测评参与者详情 */
 export function getAssessmentParticipant(id: number) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentParticipant>(
@@ -288,6 +324,15 @@ export function addAssessmentParticipants(
   );
 }
 
+/** 获取测评问卷学生答题记录 */
+export function getAssessmentTaskParticipantsQuestionnairePage(
+  params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
+) {
+  return requestClient.get<
+    PageResult<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>
+  >('/psychology/assessment-task/participants-questionnaire-page', { params });
+}
+
 /** 移除测评参与者 */
 export function removeAssessmentParticipants(
   data: PsychologyAssessmentApi.AssessmentTaskParticipantsReq,
@@ -301,9 +346,13 @@ export function removeAssessmentParticipants(
 // ==================== 测评统计分析 ====================
 
 /** 获取测评任务统计信息 */
-export function getAssessmentStatistics(taskNo: string) {
+export function getAssessmentStatistics(params: {
+  includeDeptTree?: number;
+  taskNo: string;
+}) {
   return requestClient.get<PsychologyAssessmentApi.AssessmentStatistics>(
-    `/psychology/assessment-task/statistics/${taskNo}`,
+    `/psychology/assessment-task/statistics`,
+    { params },
   );
 }
 

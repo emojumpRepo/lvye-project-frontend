@@ -1,15 +1,69 @@
 <script setup lang="ts">
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+
+import { message } from 'ant-design-vue';
+
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 import { useGridFormSchema } from '../data';
 
-const [Form] = useVbenForm({
+const emit = defineEmits<{
+  loading: [loading: boolean];
+  search: [params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq];
+}>();
+
+const [Form, formApi] = useVbenForm({
   schema: useGridFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'gap-2 grid-cols-8',
   commonConfig: { componentProps: { class: 'w-full' } },
   submitButtonOptions: { content: '查询', class: 'bg-[#04DC70]' },
+  handleSubmit: async (values) => {
+    await handleSearch(values);
+  },
+});
+
+// 搜索
+async function handleSearch(values: any) {
+  try {
+    emit('loading', true);
+
+    // 判断搜索关键词是学号还是姓名
+    if (values.searchKeyword) {
+      const isStudentNo = /^\d+$/.test(values.searchKeyword.trim());
+      if (isStudentNo) {
+        values.studentNo = values.searchKeyword;
+      } else {
+        values.name = values.searchKeyword;
+      }
+    }
+
+    // 构建搜索参数
+    const params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq = {
+      pageNo: 1, // 重置到第一页
+      studentNo: values.studentNo || undefined,
+      name: values.name || undefined,
+      status: values.status === '' ? undefined : values.status,
+      riskLevel: values.riskLevel === '' ? undefined : values.riskLevel,
+      classId: values.classId || undefined,
+    };
+    emit('search', params);
+  } catch (error) {
+    console.error('搜索失败:', error);
+    message.error('搜索失败，请重试');
+  } finally {
+    emit('loading', false);
+  }
+}
+
+// 重置搜索
+function handleReset() {
+  formApi.form.resetForm();
+}
+
+defineExpose({
+  handleReset,
 });
 </script>
 

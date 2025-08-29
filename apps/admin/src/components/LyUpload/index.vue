@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UploadChangeParam, UploadProps } from 'ant-design-vue';
+import type { UploadProps } from 'ant-design-vue';
 
 import { Upload as AUpload, message } from 'ant-design-vue';
 
@@ -24,6 +24,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'sync'): void;
+  (e: 'parse'): void;
+  (e: 'remove'): void;
 }>();
 
 const fileList = defineModel<UploadProps['fileList']>('fileList', {
@@ -84,7 +86,6 @@ function beforeUpload(file: File) {
     }
   }
 
-  // 使用受控列表，构造 UploadFile 对象，确保 originFileObj 可用
   const newFileList = [
     {
       uid: String(Date.now()),
@@ -94,22 +95,15 @@ function beforeUpload(file: File) {
     } as any,
   ];
   fileList.value = newFileList;
+  emit('parse');
   emit('sync');
-  return false;
-}
 
-function onChange(info: UploadChangeParam) {
-  const status = info.file.status;
-  if (status === 'done') {
-    message.success(`${info.file.name} 上传成功`);
-  } else if (status === 'error') {
-    message.error(`${info.file.name} 上传失败`);
-  }
+  return false;
 }
 
 function onRemove() {
   fileList.value = [];
-  emit('sync');
+  emit('remove');
 }
 </script>
 
@@ -119,11 +113,9 @@ function onRemove() {
     v-model:file-list="fileList"
     name="file"
     :max-count="maxCount"
-    action="http://127.0.0.1:48080/admin-api/psychology/student-profile/import"
     :accept="accept"
     :multiple="multiple"
     :progress="progress"
-    @handle-change="onChange"
     @remove="onRemove"
   >
     <div class="flex flex-col items-center justify-center">
@@ -143,7 +135,7 @@ function onRemove() {
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-upload) {
-  padding: 20px !important;
-}
+// :deep(.ant-upload) {
+//   //padding: 15px !important;
+// }
 </style>

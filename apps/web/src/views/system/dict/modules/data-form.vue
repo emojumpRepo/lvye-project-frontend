@@ -8,11 +8,6 @@ import { useVbenModal } from '@vben/common-ui';
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
-import {
-  createDictData,
-  getDictData,
-  updateDictData,
-} from '#/api/system/dict/data';
 import { $t } from '#/locales';
 
 import { useDataFormSchema } from '../data';
@@ -50,7 +45,7 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = (await formApi.getValues()) as SystemDictDataApi.DictData;
     try {
-      await (formData.value?.id ? updateDictData(data) : createDictData(data));
+      // await (formData.value?.id ? updateDictData(data) : createDictData(data));
       // 关闭并提示
       await modalApi.close();
       emit('success');
@@ -73,11 +68,11 @@ const [Modal, modalApi] = useVbenModal({
     if (data && 'id' in data && data.id) {
       modalApi.lock();
       try {
-        formData.value = await getDictData(data.id as number);
+        // formData.value = await getDictData(data.id as number);
         // 设置到 values
-        if (formData.value) {
-          await formApi.setValues(formData.value);
-        }
+        // if (formData.value) {
+        //   await formApi.setValues(formData.value);
+        // }
       } finally {
         modalApi.unlock();
       }

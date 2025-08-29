@@ -154,6 +154,17 @@ export function importStudentProfile(file: File) {
   );
 }
 
+/** 单个导入学生档案 */
+export function importStudentProfileSingle(
+  data: PsychologyStudentProfileApi.StudentProfileSaveReq,
+) {
+  return requestClient.post<{
+    id: number;
+    message: string;
+    success: boolean;
+  }>('/psychology/student-profile/import-single', data);
+}
+
 /** 更新学生心理状态 */
 export function updateStudentPsychologicalStatus(
   id: number,

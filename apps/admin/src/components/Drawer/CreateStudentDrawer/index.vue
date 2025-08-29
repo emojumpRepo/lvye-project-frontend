@@ -14,6 +14,7 @@ import {
   Input as AInput,
   Radio as ARadio,
   Select as ASelect,
+  Spin as ASpin,
   message,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -28,6 +29,7 @@ const emit = defineEmits<{
 const validateName = ref(false);
 const validateStudentId = ref(false);
 const formRef = ref();
+const loading = ref(false);
 
 const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
 
@@ -138,19 +140,27 @@ const rules: Record<string, Rule[]> = {
 };
 
 async function handleCreateStudent() {
+  loading.value = true;
   const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
   const params = {
     ...studentForm,
     birthDate: formatBirthDate.toString(),
   };
   try {
-    await createStudentProfile(params);
+    const res = await createStudentProfile(params);
+    if (res) {
+      message.success('学生档案创建成功');
+    } else {
+      message.error('学生档案创建失败');
+    }
     message.success('学生档案创建成功');
-  } catch {
+  } catch (error) {
+    console.error('学生档案创建失败', error);
     message.error('学生档案创建失败');
   }
   emit('refresh');
   formRef.value?.resetFields();
+  loading.value = false;
   drawerApi.close();
 }
 
@@ -175,110 +185,111 @@ onMounted(() => {
         <span class="text-lg font-bold">创建学生</span>
       </div>
     </template>
-    <AForm ref="formRef" :model="studentForm" :rules="rules">
-      <div>
-        <LyLabel title="学生姓名" required custom-title-class="font-normal" />
-        <AForm.Item name="name">
-          <div class="flex items-center gap-2">
+    <ASpin :spinning="loading" tip="正在保存...">
+      <AForm ref="formRef" :model="studentForm" :rules="rules">
+        <div>
+          <LyLabel title="学生姓名" required custom-title-class="font-normal" />
+          <AForm.Item name="name">
+            <div class="flex items-center gap-2">
+              <AInput
+                v-model:value="studentForm.name"
+                placeholder="请填写"
+                :maxlength="10"
+              />
+              <IconifyIcon
+                v-if="validateName"
+                icon="lets-icons:check-fill"
+                color="#04DC70"
+              />
+            </div>
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="学号" required custom-title-class="font-normal" />
+          <AForm.Item name="studentNo">
+            <div class="flex items-center gap-2">
+              <AInput
+                v-model:value="studentForm.studentNo"
+                placeholder="请填写"
+              />
+              <IconifyIcon
+                v-if="validateStudentId"
+                icon="lets-icons:check-fill"
+                color="#04DC70"
+              />
+            </div>
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="出生日期" required custom-title-class="font-normal" />
+          <AForm.Item name="birthDate">
+            <ADatePicker
+              v-model:value="studentForm.birthDate"
+              placeholder="请选择日期"
+              style="width: 100%"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="性别" required custom-title-class="font-normal" />
+          <AForm.Item name="sex">
+            <ARadio.Group v-model:value="studentForm.sex">
+              <ARadio value="1">男</ARadio>
+              <ARadio value="2">女</ARadio>
+            </ARadio.Group>
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="年级" required custom-title-class="font-normal" />
+          <AForm.Item name="gradeDeptId">
+            <ASelect
+              v-model:value="studentForm.gradeDeptId"
+              placeholder="请选择年级"
+              :options="deptList"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="班级" required custom-title-class="font-normal" />
+          <AForm.Item name="classDeptId">
+            <ASelect
+              v-model:value="studentForm.classDeptId"
+              placeholder="请选择班级"
+              :options="classList"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="联系电话" custom-title-class="font-normal" />
+          <AForm.Item name="mobile">
             <AInput
-              v-model:value="studentForm.name"
+              v-model:value="studentForm.mobile"
               placeholder="请填写"
-              :maxlength="10"
+              :maxlength="11"
             />
-            <IconifyIcon
-              v-if="validateName"
-              icon="lets-icons:check-fill"
-              color="#04DC70"
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="家庭住址" custom-title-class="font-normal" />
+          <AForm.Item name="homeAddress">
+            <AInput.TextArea
+              v-model:value="studentForm.homeAddress"
+              placeholder="建议填写详细地址便于联系"
+              :rows="3"
+              :maxlength="200"
+              :show-count="true"
             />
-          </div>
-        </AForm.Item>
-      </div>
+          </AForm.Item>
+        </div>
 
-      <div>
-        <LyLabel title="学号" required custom-title-class="font-normal" />
-        <AForm.Item name="studentNo">
-          <div class="flex items-center gap-2">
-            <AInput
-              v-model:value="studentForm.studentNo"
-              placeholder="请填写"
-            />
-            <IconifyIcon
-              v-if="validateStudentId"
-              icon="lets-icons:check-fill"
-              color="#04DC70"
-            />
-          </div>
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="出生日期" required custom-title-class="font-normal" />
-        <AForm.Item name="birthDate">
-          <ADatePicker
-            v-model:value="studentForm.birthDate"
-            placeholder="请选择日期"
-            style="width: 100%"
-          />
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="性别" required custom-title-class="font-normal" />
-        <AForm.Item name="sex">
-          <ARadio.Group v-model:value="studentForm.sex">
-            <ARadio value="1">男</ARadio>
-            <ARadio value="2">女</ARadio>
-          </ARadio.Group>
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="年级" required custom-title-class="font-normal" />
-        <AForm.Item name="gradeDeptId">
-          <ASelect
-            v-model:value="studentForm.gradeDeptId"
-            placeholder="请选择年级"
-            :options="deptList"
-          />
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="班级" required custom-title-class="font-normal" />
-        <AForm.Item name="classDeptId">
-          <ASelect
-            v-model:value="studentForm.classDeptId"
-            placeholder="请选择班级"
-            :options="classList"
-          />
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="联系电话" custom-title-class="font-normal" />
-        <AForm.Item name="mobile">
-          <AInput
-            v-model:value="studentForm.mobile"
-            placeholder="请填写"
-            :maxlength="11"
-          />
-        </AForm.Item>
-      </div>
-
-      <div>
-        <LyLabel title="家庭住址" custom-title-class="font-normal" />
-        <AForm.Item name="homeAddress">
-          <AInput.TextArea
-            v-model:value="studentForm.homeAddress"
-            placeholder="建议填写详细地址便于联系"
-            :rows="3"
-            :maxlength="200"
-            :show-count="true"
-          />
-        </AForm.Item>
-      </div>
-
-      <!-- <div>
+        <!-- <div>
         <LyLabel label="特殊标记" />
         <AForm.Item name="isMark">
           <ARadioGroup v-model:value="studentForm.isMark">
@@ -296,7 +307,7 @@ onMounted(() => {
         </AForm.Item>
       </div> -->
 
-      <!-- <div>
+        <!-- <div>
         <LyLabel title="备注说明" custom-title-class="font-normal" />
         <AForm.Item name="remark">
           <AInput
@@ -305,6 +316,7 @@ onMounted(() => {
           />
         </AForm.Item>
       </div> -->
-    </AForm>
+      </AForm>
+    </ASpin>
   </Drawer>
 </template>

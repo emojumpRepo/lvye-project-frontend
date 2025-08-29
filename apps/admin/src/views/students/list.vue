@@ -458,7 +458,7 @@ onMounted(async () => {
     <Drawer @refresh="refresh" />
     <CreateDrawer @refresh="refresh" />
     <BulkClassTransferDrawer />
-    <BulkImportDrawer />
+    <BulkImportDrawer @refresh="refresh" />
     <DeleteStudentModal />
     <GraduatedFileDrawer />
     <GradeGraduationDrawer v-model:open="graduationDrawerOpen" />

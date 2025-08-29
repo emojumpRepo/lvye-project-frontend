@@ -385,7 +385,7 @@ const [Modal, modalApi] = useVbenModal({
           <template v-else-if="column.key === 'metadataJson'">
             <Input.TextArea
               v-model:value="rowItem.metadataJson"
-              :rows="1"
+              :rows="3"
               placeholder="请输入JSON格式的扩展配置（可选）"
             />
           </template>

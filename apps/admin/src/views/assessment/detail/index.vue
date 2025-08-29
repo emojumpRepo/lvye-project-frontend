@@ -107,8 +107,8 @@ async function loadTaskData() {
     const taskInfo = await getAssessmentTask(taskNo);
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
-        label: item.title,
-        key: item.id.toString(),
+        label: item.title || '',
+        key: item.id?.toString() || '',
       }));
       currentTaskInfo.value = {
         taskNo: taskInfo.taskNo || '',
@@ -116,7 +116,13 @@ async function loadTaskData() {
         status: taskInfo.status,
         startline: Number(taskInfo.startline),
         deadline: Number(taskInfo.deadline),
-        questionnairesTabs,
+        questionnairesTabs: [
+          {
+            label: '整体测评',
+            key: '',
+          },
+          ...questionnairesTabs,
+        ],
       };
       activeTabKey.value =
         currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
@@ -138,10 +144,10 @@ onMounted(async () => {
 <template>
   <div class="flex min-h-screen flex-col gap-4 p-6">
     <!-- nav -->
-    <div class="flex flex-wrap items-center justify-between gap-6">
+    <div class="flex items-center justify-between gap-6">
       <!-- 任务信息 -->
       <div
-        class="flex flex-1 items-center justify-between rounded-xl bg-[#FFFFFF99] px-5 py-2 text-sm text-[#000000A6]"
+        class="flex flex-1 flex-wrap items-center justify-between rounded-xl bg-[#FFFFFF99] px-5 py-2 text-sm text-[#000000A6]"
       >
         <div class="flex flex-nowrap items-center gap-2">
           <IconifyIcon
@@ -156,23 +162,10 @@ onMounted(async () => {
           <span class="truncate"> 任务：{{ currentTaskInfo?.taskNo }} </span>
           <ADivider type="vertical" class="h-4" />
           <span class="truncate">
-            测评量表：{{
-              currentTaskInfo?.questionnairesTabs.find(
-                (item) => item.key === activeTabKey,
-              )?.label
-            }}
-          </span>
-          <ADivider type="vertical" class="h-4" />
-          <span class="truncate">
-            创建时间：{{
+            测评时间：{{
               dayjs(currentTaskInfo?.startline).format('YYYY-MM-DD')
             }}
-          </span>
-          <ADivider type="vertical" class="h-4" />
-          <span class="!truncate">
-            截止时间：{{
-              dayjs(currentTaskInfo?.deadline).format('YYYY-MM-DD')
-            }}
+            至 {{ dayjs(currentTaskInfo?.deadline).format('YYYY-MM-DD') }}
           </span>
         </div>
         <div class="ml-4 truncate" :class="`text-[${taskStatusTag?.color}]`">
@@ -180,7 +173,7 @@ onMounted(async () => {
         </div>
       </div>
       <!-- 操作按钮 -->
-      <div class="space-x-2">
+      <div class="flex flex-nowrap gap-2">
         <LyButton
           size="middle"
           :type="item.value === 'export' ? 'success' : 'default'"
@@ -232,7 +225,7 @@ onMounted(async () => {
 
     <div class="grid grid-cols-2 gap-4">
       <!-- 统计卡片区域 -->
-      <AssessmentDetailTask :task-info="currentTaskInfo" :loading="loading" />
+      <AssessmentDetailTask :task-no="taskNo" :loading="loading" />
 
       <!-- 年级班级对比区域 -->
       <AssessmentDetailCompare :loading="loading" />
