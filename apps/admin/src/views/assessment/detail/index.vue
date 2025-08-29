@@ -136,7 +136,7 @@ async function loadTaskData() {
 
 onMounted(async () => {
   if (taskNo) {
-    loadTaskData();
+    await loadTaskData();
   }
 });
 </script>
@@ -156,7 +156,7 @@ onMounted(async () => {
             class="size-5"
           />
           <span class="truncate">{{
-            truncateText(currentTaskInfo?.taskName, 10)
+            truncateText(currentTaskInfo?.taskName, 16)
           }}</span>
           <ADivider type="vertical" class="h-4" />
           <span class="truncate"> 任务：{{ currentTaskInfo?.taskNo }} </span>

@@ -4,11 +4,14 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { ref, watch } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { exportAssessmentParticipantsToExcel } from '#/utils/export';
@@ -42,6 +45,11 @@ const queryParams =
     taskNo: '',
     questionnaireId: 0,
   });
+
+const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
+  // 连接抽离的组件
+  connectedComponent: QuestionnaireResultDialog,
+});
 
 /** 处理行选中 */
 function handleRowCheckboxChange({ records }: { records: any[] }) {
@@ -128,7 +136,20 @@ function handleLoading(isLoading: boolean) {
 }
 
 /** 查看详情 */
-function viewDetail(_record: any) {}
+function viewDetail(
+  row: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
+) {
+  if (!row?.id) {
+    return message.error('测评结果暂不支持查看');
+  }
+  questionnaireResultModalApi
+    .setData({
+      id: row?.id,
+      name: row?.name,
+      questionnaireName: row?.questionnaireName,
+    })
+    .open();
+}
 
 // 导出数据
 async function handleExport() {
@@ -200,6 +221,7 @@ async function handleExport() {
       </template>
       <template #actions="{ row }">
         <TableAction
+          v-if="row.status === 1"
           :actions="[
             {
               label: '查看报告',
@@ -211,6 +233,7 @@ async function handleExport() {
         />
       </template>
     </Grid>
+    <QuestionnaireResultModal />
   </div>
 </template>
 
