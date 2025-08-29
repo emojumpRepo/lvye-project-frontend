@@ -21,8 +21,8 @@ defineProps<{
             class="rounded-full px-3 py-1 text-sm font-medium"
             :class="[
               questionnaireResult?.isAbnormal === 0
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700',
+                ? 'text-primary bg-[#14E77E14]'
+                : 'bg-[#FF083114] text-[#FF0831]',
             ]"
           >
             {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
@@ -30,9 +30,9 @@ defineProps<{
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
-          <span class="text-2xl font-bold text-blue-600">{{
-            questionnaireResult?.score
-          }}</span>
+          <span class="text-2xl font-bold text-[#1966FF]">
+            {{ questionnaireResult?.score }}
+          </span>
         </div>
       </div>
     </div>
@@ -40,10 +40,10 @@ defineProps<{
     <!-- 评价内容 -->
     <div class="space-y-4 p-4">
       <!-- 学生评价 -->
-      <div class="rounded-lg bg-blue-50 p-4">
+      <div class="rounded-lg bg-[#1966FF14] p-4">
         <div class="mb-3 flex items-center gap-2">
-          <div class="h-2 w-2 rounded-full bg-blue-500"></div>
-          <h4 class="text-sm font-semibold text-blue-700">学生建议</h4>
+          <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
+          <h4 class="text-sm font-semibold text-[#1966FF]">学生建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
           {{ questionnaireResult?.studentComment }}
@@ -51,10 +51,10 @@ defineProps<{
       </div>
 
       <!-- 教师评价 -->
-      <div class="rounded-lg bg-orange-50 p-4">
+      <div class="rounded-lg bg-[#FF9C0514] p-4">
         <div class="mb-3 flex items-center gap-2">
-          <div class="h-2 w-2 rounded-full bg-orange-500"></div>
-          <h4 class="text-sm font-semibold text-orange-700">教师建议</h4>
+          <div class="h-2 w-2 rounded-full bg-[#FF9C05]"></div>
+          <h4 class="text-sm font-semibold text-[#FF9C05]">教师建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
           {{ questionnaireResult?.teacherComment }}

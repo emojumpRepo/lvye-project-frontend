@@ -10,6 +10,7 @@ import {
   Select as ASelect,
   Table as ATable,
   Textarea as ATextarea,
+  message,
 } from 'ant-design-vue';
 
 import LyLabel from '#/components/LyLabel/index.vue';
@@ -78,6 +79,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (data.selectedStudents.length > 0) {
       selectedStudents.value = data.selectedStudents;
     }
+  },
+  onConfirm: () => {
+    message.warning('即将上线');
   },
   onClosed: () => {
     formRef.value?.resetFields();
@@ -192,11 +196,7 @@ onMounted(() => {
           </div>
 
           <div>
-            <LyLabel
-              title="备注说明"
-              required
-              custom-title-class="font-normal"
-            />
+            <LyLabel title="备注说明" custom-title-class="font-normal" />
             <AForm.Item name="grade">
               <ATextarea v-model:value="transferForm.remark" />
             </AForm.Item>

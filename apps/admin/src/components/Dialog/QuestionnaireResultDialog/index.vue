@@ -63,7 +63,7 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
 
 <template>
   <QuestionnaireResultModal>
-    <div class="p-6">
+    <div class="h-[700px] p-6">
       <Tabs v-model:active-key="activeKey">
         <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.title">
           <div v-if="activeKey === 'result'" class="space-y-6">

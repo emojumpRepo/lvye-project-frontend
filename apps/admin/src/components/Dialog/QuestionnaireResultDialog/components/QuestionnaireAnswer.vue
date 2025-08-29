@@ -45,7 +45,7 @@ const unansweredCount = computed(() => {
 </script>
 
 <template>
-  <div class="questionnaire-answer px-6">
+  <div class="questionnaire-answer mb-6 px-6">
     <!-- 统计信息 -->
     <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
       <div

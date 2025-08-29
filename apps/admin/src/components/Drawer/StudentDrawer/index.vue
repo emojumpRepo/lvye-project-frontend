@@ -230,7 +230,7 @@ onMounted(async () => {
               </span>
             </div>
             <div class="text-xs text-[#979899]">
-              <span>XXX</span>
+              <span>{{ studentProfile?.updater }}</span>
               <span>老师更新于</span>
               <span>{{
                 dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')

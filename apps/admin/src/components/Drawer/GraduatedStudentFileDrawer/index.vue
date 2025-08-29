@@ -4,6 +4,8 @@ import type { StudentApi } from '#/api/student/index';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+import { message } from 'ant-design-vue';
+
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
 import { useGraduatedStudentFileGridSchema, useSearchFormSchema } from './data';
@@ -11,6 +13,9 @@ import { useGraduatedStudentFileGridSchema, useSearchFormSchema } from './data';
 const [Drawer, DrawerApi] = useVbenDrawer({
   title: '毕业学生档案',
   class: 'w-[1000px]',
+  onConfirm: () => {
+    message.warning('即将上线');
+  },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({

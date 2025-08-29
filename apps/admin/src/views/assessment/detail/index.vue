@@ -8,6 +8,7 @@ import {
   Divider as ADivider,
   Radio as ARadio,
   Tabs as ATabs,
+  message,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
@@ -43,22 +44,25 @@ const actionButtons = ref([
   {
     label: '发布提醒',
     value: 'publish',
+    onClick: handlePublish,
   },
   {
     label: '延长时间',
     value: 'extend',
+    onClick: handleExtend,
   },
   {
     label: '提前结束',
     value: 'end',
+    onClick: handleEnd,
   },
   {
     label: '导出数据',
     value: 'export',
+    onClick: handleExport,
   },
 ]);
 
-const activeButton = ref('');
 const activeType = ref('all');
 const route = useRoute();
 const router = useRouter();
@@ -82,6 +86,26 @@ const taskStatusTag = computed(() => {
     color: tag?.tagStyle.color,
   };
 });
+
+/** 发布提醒 */
+function handlePublish() {
+  message.warning('即将上线');
+}
+
+/** 延长时间 */
+function handleExtend() {
+  message.warning('即将上线');
+}
+
+/** 提前结束 */
+function handleEnd() {
+  message.warning('即将上线');
+}
+
+/** 导出数据 */
+function handleExport() {
+  message.warning('即将上线');
+}
 
 /**
  * 截取字符串
@@ -179,7 +203,7 @@ onMounted(async () => {
           :type="item.value === 'export' ? 'success' : 'default'"
           v-for="item in actionButtons"
           :key="item.value"
-          @click="activeButton = item.value"
+          @click="item.onClick && item.onClick()"
         >
           {{ item.label }}
         </LyButton>

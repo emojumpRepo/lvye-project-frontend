@@ -30,8 +30,16 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const actionButtons = ref([
-  { label: '批量发送提醒', value: 'batchSendReminder' },
-  { label: '批量转入干预', value: 'batchTransferToIntervention' },
+  {
+    label: '批量发送提醒',
+    value: 'batchSendReminder',
+    onClick: handleBatchSendReminder,
+  },
+  {
+    label: '批量转入干预',
+    value: 'batchTransferToIntervention',
+    onClick: handleBatchTransferToIntervention,
+  },
   { label: '批量导出', value: 'batchExport', onClick: handleExport },
 ]);
 
@@ -133,6 +141,16 @@ function handleSearch(
 /** 处理加载状态 */
 function handleLoading(isLoading: boolean) {
   loading.value = isLoading;
+}
+
+/** 批量发送提醒 */
+function handleBatchSendReminder() {
+  message.warning('即将上线');
+}
+
+/** 批量转入干预 */
+function handleBatchTransferToIntervention() {
+  message.warning('即将上线');
 }
 
 /** 查看详情 */

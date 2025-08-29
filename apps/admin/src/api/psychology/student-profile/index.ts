@@ -21,6 +21,7 @@ export namespace PsychologyStudentProfileApi {
     isMark?: number;
     specialMarks?: string;
     remark?: string;
+    updater?: string;
     count?: number;
     createTime?: Date;
     updateTime?: Date;
