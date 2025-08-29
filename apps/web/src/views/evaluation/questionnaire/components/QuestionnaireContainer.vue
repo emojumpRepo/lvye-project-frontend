@@ -41,7 +41,7 @@ const showIntro = ref(props.hasIntro);
 const isIframeCompleted = ref(false);
 const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 
-const imgBaseUrl = '../../../static/images/evaluation/questionnaire/';
+const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
 
 const bgUrl = computed(() => {
   console.warn(props.sceneData);

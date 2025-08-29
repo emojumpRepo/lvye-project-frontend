@@ -12,7 +12,7 @@ import { getAssessmentParticipantStatus } from '#/api/psychology/assessment';
 import { useEvaluationStore } from '#/store/evaluation';
 
 // 导入背景图片
-import defaultSceneMapUrl from '../../static/images/evaluation/junior_evaluation_map.png';
+import defaultSceneMapUrl from '../../../static/images/evaluation/junior_evaluation_map.png';
 
 const router = useRouter();
 const route = useRoute();
@@ -26,7 +26,7 @@ const {
   selectSlot,
   startEvaluation,
 } = evaluationStore;
-const { loading, scenarioData, currentTaskNo } = storeToRefs(evaluationStore);
+const { loading, currentTaskNo, scenarioData } = storeToRefs(evaluationStore);
 const hasReport = ref(false);
 
 // 方法
@@ -144,7 +144,7 @@ onMounted(async () => {
             :class="{ disabled: !hasReport }"
           >
             <img
-              src="../../static/icons/report.svg"
+              src="../../../static/icons/report.svg"
               alt=""
               width="64"
               class="report-icon"
@@ -179,7 +179,7 @@ onMounted(async () => {
                   class="guide-wave"
                 >
                   <img
-                    src="../../static/images/evaluation/questionnaire/wave.gif"
+                    src="../../../static/images/evaluation/questionnaire/wave.gif"
                     alt="引导动画"
                     class="wave-gif"
                   />

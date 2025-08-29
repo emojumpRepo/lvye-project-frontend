@@ -8,34 +8,31 @@ import { AlarmClockCheck, ScrollText } from '@vben/icons';
 
 import { message } from 'ant-design-vue';
 
-import { startAssessment } from '#/api/psychology/assessment';
+import { useEvaluationStore } from '#/store/evaluation';
 
 const props = defineProps<{
   assessmentTaskNo: string;
   questionnaire: QuestionnaireVO;
 }>();
+const evaluationStore = useEvaluationStore();
+const { startEvaluationWithoutScenario } = evaluationStore;
 
 const router = useRouter();
 
 const loading = ref(false);
 
-async function handleStartQuestionnaire(questionnaire: QuestionnaireVO) {
+async function handleStartQuestionnaire() {
   loading.value = true;
   try {
-    if (questionnaire.completed) {
+    if (props.questionnaire.completed) {
       message.success('该问卷已完成，请等待或查看结果哦~');
       return;
     }
-    await startAssessment(props.assessmentTaskNo);
-    router.push({
-      path: '/evaluation/questionnaire',
-      query: {
-        questionnaireId: questionnaire.questionnaireId,
-        sceneId: '',
-        assessmentTaskNo: props.assessmentTaskNo,
-        questionnaireLink: questionnaire.externalLink.split('render/')[1],
-      },
-    });
+    await startEvaluationWithoutScenario(
+      props.assessmentTaskNo,
+      props.questionnaire,
+      router,
+    );
   } catch (error) {
     console.error(error);
   } finally {
@@ -80,7 +77,7 @@ async function handleStartQuestionnaire(questionnaire: QuestionnaireVO) {
           : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600',
       ]"
       :loading="loading"
-      @click="handleStartQuestionnaire(questionnaire)"
+      @click="handleStartQuestionnaire()"
     >
       {{ questionnaire.completed ? '已完成' : '开始答题' }}
     </button>

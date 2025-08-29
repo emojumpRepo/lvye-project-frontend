@@ -20,7 +20,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '测评场景',
         },
-        component: () => import('#/views/evaluation/scene.vue'),
+        component: () => import('#/views/evaluation/assessment/scene.vue'),
       },
       {
         name: 'EvaluationQuestionnaire',
@@ -28,12 +28,12 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '测评问卷',
         },
-        component: () => import('#/views/evaluation/questionnaire.vue'),
+        component: () => import('#/views/evaluation/questionnaire/index.vue'),
       },
       {
         name: 'EvaluationAssessment',
         path: 'assessment/:id',
-        component: () => import('#/views/evaluation/assessment.vue'),
+        component: () => import('#/views/evaluation/assessment/detail.vue'),
         meta: {
           title: '测评详情',
         },
