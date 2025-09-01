@@ -126,7 +126,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   showCancelButton: false,
   showConfirmButton: false,
   loading: loading.value,
-  onOpenChange: async () => {
+  onOpenChange: async (open) => {
+    if (!open) return;
     const data = drawerApi.getData();
     if (!data.id) return;
 
@@ -138,12 +139,17 @@ const [Drawer, drawerApi] = useVbenDrawer({
       studentParentProfile.value = studentParentProfileData;
 
       if (studentProfileData) {
-        const fieldMappers: Record<string, (data: any) => string> = {
-          name: (data) => data.name || '',
-          sex: (data) => getDictObj('system_user_sex', data.sex)?.label || '',
-          birthDate: (data) => String(calculateAge(data.birthDate) ?? ''),
-          className: (data) => data.className || '',
-          studentNo: (data) => data.studentNo || '',
+        const fieldMappers: Record<
+          string,
+          (data: PsychologyStudentProfileApi.StudentProfile) => string
+        > = {
+          name: (data) => data.name || '未知',
+          sex: (data) =>
+            getDictObj('system_user_sex', data.sex)?.label || '未知',
+          birthDate: (data) =>
+            String(data.birthDate ? calculateAge(data.birthDate) : '未知'),
+          className: (data) => data.className || '未知',
+          studentNo: (data) => data.studentNo || '未知',
         };
 
         // 学生心理状态
@@ -172,18 +178,17 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onClosed: () => {
     studentProfile.value = undefined;
     studentParentProfile.value = undefined;
-    baseInfo.value = [];
     psychologicalStatusTag.value = undefined;
     coreProblemTags.value = [];
-    studentSpecialMark.value = [];
     drawerApi.close();
   },
 });
 
+/** 更新加载状态 */
 function updateLoading(value: boolean) {
   loading.value = value;
   if (!value) {
-    drawerApi.close();
+    // drawerApi.close();
     emit('refresh');
   }
 }
@@ -197,10 +202,7 @@ onMounted(async () => {
   <Drawer title="学生360°档案">
     <template #title>
       <div class="flex items-center gap-2">
-        <img
-          src="../../../static/icons/student/360file_student.png"
-          class="w-5"
-        />
+        <img src="../../../static/icons/student/360file_student.png" class="w-5" />
         <span class="text-lg font-bold">学生360°档案</span>
       </div>
     </template>
@@ -221,20 +223,12 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <div
-            class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
-            :style="psychologicalStatusTag?.colorConfig.style"
-          >
+          <div class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
+            :style="psychologicalStatusTag?.colorConfig.style">
             <div class="flex items-center gap-1 text-sm font-bold">
-              <IconifyIcon
-                icon="solar:health-bold"
-                :color="psychologicalStatusTag?.colorConfig.color"
-                class="size-5"
-              />
+              <IconifyIcon icon="solar:health-bold" :color="psychologicalStatusTag?.colorConfig.color" class="size-5" />
               <span>心理状态：</span>
-              <span
-                :style="{ color: psychologicalStatusTag?.colorConfig.color }"
-              >
+              <span :style="{ color: psychologicalStatusTag?.colorConfig.color }">
                 {{ psychologicalStatusTag?.label }}
               </span>
             </div>
@@ -243,7 +237,7 @@ onMounted(async () => {
               <span>老师更新于</span>
               <span>{{
                 dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
-              }}</span>
+                }}</span>
             </div>
           </div>
           <div class="flex flex-col gap-4">
@@ -254,9 +248,7 @@ onMounted(async () => {
             <div class="flex items-center gap-2.5">
               <template v-if="coreProblemTags.length > 0">
                 <div v-for="tag in coreProblemTags" :key="tag">
-                  <span
-                    class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
-                  >
+                  <span class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700">
                     {{ tag }}
                   </span>
                 </div>
@@ -281,18 +273,11 @@ onMounted(async () => {
                 <ConsultationListTab />
               </Tabs.TabPane>
               <Tabs.TabPane tab="完善个人信息" key="personalInfo">
-                <PersonalInfoTab
-                  :student-info="studentProfile"
-                  :parent-info="studentParentProfile"
-                  @update-loading="updateLoading"
-                />
+                <PersonalInfoTab :student-info="studentProfile" :parent-info="studentParentProfile"
+                  @update-loading="updateLoading" />
               </Tabs.TabPane>
             </Tabs>
-            <LyButton
-              type="success"
-              size="middle"
-              class="absolute right-7 top-1.5"
-            >
+            <LyButton type="success" size="middle" class="absolute right-7 top-1.5">
               导出信息
             </LyButton>
           </div>
@@ -302,17 +287,9 @@ onMounted(async () => {
 
     <template #footer>
       <div class="flex items-center justify-end gap-2">
-        <button
-          v-for="button in footerButtons"
-          :key="button.value"
-          class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm"
-          :class="button.class"
-        >
-          <IconifyIcon
-            :icon="button.icon"
-            :color="button.type === 'dashed' ? button.color : '#fff'"
-            class="size-4"
-          />
+        <button v-for="button in footerButtons" :key="button.value"
+          class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm" :class="button.class">
+          <IconifyIcon :icon="button.icon" :color="button.type === 'dashed' ? button.color : '#fff'" class="size-4" />
           <span class="text-xs">{{ button.label }}</span>
         </button>
       </div>

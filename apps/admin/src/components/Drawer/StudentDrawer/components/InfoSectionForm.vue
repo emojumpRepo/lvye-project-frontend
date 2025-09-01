@@ -4,7 +4,7 @@ import type { ConfigOptions } from '../data';
 import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { computed, onMounted, ref, unref, watch } from 'vue';
+import { computed, ref, unref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -14,7 +14,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 import { useVbenForm } from '#/adapter/form';
 import { updateStudentProfile } from '#/api/psychology/student-profile';
-import { getDictObj, getDictOptions } from '#/utils/dict';
+import { getDictOptions } from '#/utils/dict';
 import { loadDeptList } from '#/utils/transformDeptToTree';
 
 import {
@@ -34,16 +34,16 @@ const emit = defineEmits<{
 }>();
 
 dayjs.extend(customParseFormat);
-const isYYYYMMDD = (val: unknown) =>
-  typeof val === 'string' && dayjs(val, 'YYYY-MM-DD', true).isValid();
+const _timestampRegex = /^\d{10}$|^\d{13}$/;
 
 const edit = ref(false);
+const dictLoaded = ref(false);
 const configOptions = ref<ConfigOptions>({
   classList: [],
   graduationStatusMap: [],
   sexMap: [],
 });
-const studentFormInfo = ref<Record<string, any>>({});
+const studentFormInfo = ref({});
 const parentFormInfo =
   ref<PsychologyStudentParentProfileApi.StudentParentProfilePageReq>();
 
@@ -69,107 +69,70 @@ const [InfoForm, InfoFormApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-// 监听编辑状态变化，重新设置表单schema
-watch(edit, (newEdit) => {
+watch(
+  () => props.studentInfo,
+  async (newStudentInfo) => {
+    if (!newStudentInfo) return;
+    if (!dictLoaded.value) {
+      await getDictTypeOptions();
+    }
+    if (props.schemaType === 'personalInfo') {
+      formatFormData(props.studentInfo);
+      InfoFormApi.setValues(studentFormInfo.value);
+    } else if (props.schemaType === 'familyBackground') {
+      parentFormInfo.value = props.parentInfo as
+        | PsychologyStudentParentProfileApi.StudentParentProfilePageReq
+        | undefined;
+      InfoFormApi.setValues(parentFormInfo.value as Record<string, any>);
+    }
+  },
+  {
+    immediate: true,
+  },
+);
+
+/** 重新设置表单schema */
+function setFormValues() {
   InfoFormApi.setState({
     schema: formSchema.value,
-    commonConfig: { disabled: !newEdit },
+    commonConfig: { disabled: !edit.value },
   });
-});
+}
 
 /** 开始编辑 */
 function handleEdit() {
   edit.value = true;
-  if (props.schemaType === 'personalInfo') {
-    InfoFormApi.setFieldValue(
-      'classDeptId',
-      (
-        props.studentInfo as
-          | PsychologyStudentProfileApi.StudentProfile
-          | undefined
-      )?.classDeptId,
-    );
-    InfoFormApi.setFieldValue(
-      'graduationStatus',
-      String(
-        (
-          props.studentInfo as
-            | PsychologyStudentProfileApi.StudentProfile
-            | undefined
-        )?.graduationStatus,
-      ),
-    );
-    InfoFormApi.setFieldValue(
-      'birthDate',
-      dayjs(
-        (
-          props.studentInfo as
-            | PsychologyStudentProfileApi.StudentProfile
-            | undefined
-        )?.birthDate,
-      ),
-    );
-    InfoFormApi.setFieldValue(
-      'sex',
-      getDictObj(
-        'system_user_sex',
-        Number(
-          (
-            props.studentInfo as
-              | PsychologyStudentProfileApi.StudentProfile
-              | undefined
-          )?.sex,
-        ),
-      )?.value,
-    );
+  setFormValues();
+  if (props.studentInfo) {
+    InfoFormApi.setValues({
+      ...props.studentInfo,
+      birthDate: dayjs(props.studentInfo?.birthDate),
+    });
   }
 }
 
 /** 保存 */
 async function handleSave() {
   emit('updateLoading', true);
+  edit.value = false;
+  setFormValues();
+
   const values = await InfoFormApi.getValues();
 
   values.classDeptId = Number(values.classDeptId);
   values.graduationStatus = Number(values.graduationStatus);
-  edit.value = false;
+
   if (props.schemaType === 'personalInfo') {
-    const data = values;
-    InfoFormApi.setFieldValue(
-      'classDeptId',
-      configOptions.value?.classList.find(
-        (item) => item.value === values.classDeptId,
-      )?.label,
-    );
-    InfoFormApi.setFieldValue(
-      'graduationStatus',
-      getDictObj('student_graduation_status', Number(values.graduationStatus))
-        ?.label,
-    );
-    InfoFormApi.setFieldValue(
-      'sex',
-      configOptions.value?.sexMap.find((item) => item.value === values.sex)
-        ?.label,
-    );
-    InfoFormApi.setFieldValue(
-      'birthDate',
-      dayjs(unref(values.birthDate)).format('YYYY-MM-DD'),
-    );
+    formatFormData(values as PsychologyStudentProfileApi.StudentProfile);
+    InfoFormApi.setValues(studentFormInfo.value);
 
     try {
+      const formatBirthDate = validateTimeFormat(values.birthDate);
       await updateStudentProfile({
-        ...data,
-        birthDate: dayjs(values.birthDate).valueOf().toString(),
-        id: (
-          props.studentInfo as
-            | PsychologyStudentProfileApi.StudentProfile
-            | undefined
-        )?.id,
-        gradeDeptId: (
-          props.studentInfo as
-            | PsychologyStudentProfileApi.StudentProfile
-            | undefined
-        )?.gradeDeptId,
+        id: props.studentInfo?.id,
+        gradeDeptId: props.studentInfo?.gradeDeptId,
+        ...values,
+        birthDate: dayjs(formatBirthDate).valueOf().toString(),
       });
     } catch (error) {
       console.warn('updateStudentProfile failed', error);
@@ -181,13 +144,51 @@ async function handleSave() {
 /** 取消 */
 function handleCancel() {
   edit.value = false;
-  if (props.studentInfo && props.schemaType === 'personalInfo') {
-    InfoFormApi.setValues(
-      formatFormData(
-        props.studentInfo as PsychologyStudentProfileApi.StudentProfile,
-      ),
-    );
+  setFormValues();
+  if (props.studentInfo) {
+    InfoFormApi.setValues(studentFormInfo.value);
   }
+}
+
+// 处理时间格式
+function validateTimeFormat(val: any) {
+  if (!val) return val;
+
+  if (_timestampRegex.test(val as string)) {
+    return dayjs(val).format('YYYY-MM-DD');
+  }
+  if (val instanceof Object) {
+    return dayjs(unref(val)).format('YYYY-MM-DD');
+  }
+  return val;
+}
+
+// 格式化表单
+function formatFormData(
+  info: PsychologyStudentProfileApi.StudentProfile | undefined,
+) {
+  if (!info) return {};
+  const sex = configOptions.value?.sexMap.find(
+    (item) => item.value === info.sex,
+  )?.label;
+  const graduationStatus = configOptions.value?.graduationStatusMap.find(
+    (item) => item.value === info.graduationStatus,
+  )?.label;
+  const birthDate = validateTimeFormat(info.birthDate);
+  const classDeptId = configOptions.value?.classList.find(
+    (item) => item.value === info.classDeptId,
+  )?.label;
+
+  const formatFormInfo = {
+    ...info,
+    sex,
+    birthDate,
+    graduationStatus,
+    classDeptId,
+  };
+
+  studentFormInfo.value = formatFormInfo;
+  return studentFormInfo;
 }
 
 // 获取类型字典
@@ -204,15 +205,12 @@ async function getDictTypeOptions() {
       deptList.value = treeData;
     } catch (error) {
       console.error('加载部门列表失败:', error);
-      return;
+      return [];
     }
   }
 
   const gradeDept = deptList.value.find((item) => {
-    const base = props.studentInfo as
-      | PsychologyStudentProfileApi.StudentProfile
-      | undefined;
-    return item.value === base?.gradeDeptId;
+    return item.value === props.studentInfo?.gradeDeptId;
   });
 
   if (!gradeDept) return [];
@@ -223,7 +221,7 @@ async function getDictTypeOptions() {
   const sexMap = await getDictOptions('system_user_sex');
   configOptions.value.sexMap = sexMap.map((item) => ({
     label: item.label,
-    value: item.value,
+    value: Number(item.value),
   }));
 
   // 获取毕业状态字典
@@ -233,44 +231,11 @@ async function getDictTypeOptions() {
   configOptions.value.graduationStatusMap =
     studentGraduationStatus.map((item) => ({
       label: item.label,
-      value: item.value,
+      value: Number(item.value),
     })) ?? [];
-}
 
-// 格式化表单
-function formatFormData(info: PsychologyStudentProfileApi.StudentProfile) {
-  const studentFormInfo = {
-    ...info,
-    sex: getDictObj('system_user_sex', info.sex)?.label,
-    birthDate: isYYYYMMDD(info.birthDate)
-      ? dayjs(info.birthDate).format('YYYY-MM-DD')
-      : info.birthDate,
-    graduationStatus: getDictObj(
-      'student_graduation_status',
-      info.graduationStatus,
-    )?.label,
-    classDeptId: configOptions.value?.classList.find(
-      (item) => item.value === info.classDeptId,
-    )?.label,
-  };
-  return studentFormInfo;
+  dictLoaded.value = true;
 }
-
-onMounted(async () => {
-  if (!props.studentInfo) return;
-  if (props.schemaType === 'personalInfo') {
-    await getDictTypeOptions();
-    const info =
-      props.studentInfo as PsychologyStudentProfileApi.StudentProfile;
-    studentFormInfo.value = formatFormData(info);
-    InfoFormApi.setValues(studentFormInfo.value as Record<string, any>);
-  } else if (props.schemaType === 'familyBackground') {
-    parentFormInfo.value = props.parentInfo as
-      | PsychologyStudentParentProfileApi.StudentParentProfilePageReq
-      | undefined;
-    InfoFormApi.setValues(parentFormInfo.value as Record<string, any>);
-  }
-});
 </script>
 
 <template>
@@ -281,35 +246,17 @@ onMounted(async () => {
           <Divider type="vertical" class="bg-primary m-0 h-3 w-0.5" />
           <span class="font-bold">{{ title }}</span>
         </div>
-        <div
-          v-if="!edit"
-          class="flex cursor-pointer items-center gap-1 text-sm"
-          @click="handleEdit"
-        >
+        <div v-if="!edit" class="flex cursor-pointer items-center gap-1 text-sm" @click="handleEdit">
           <IconifyIcon icon="icon-park:edit-one" />
           <span>编辑</span>
         </div>
         <div v-else class="flex items-center gap-3 text-sm">
-          <div
-            class="flex cursor-pointer items-center gap-1"
-            @click="handleSave"
-          >
-            <IconifyIcon
-              icon="material-symbols:check-rounded"
-              color="#04DC70"
-              class="size-5"
-            />
+          <div class="flex cursor-pointer items-center gap-1" @click="handleSave">
+            <IconifyIcon icon="material-symbols:check-rounded" color="#04DC70" class="size-5" />
             <span class="text-[#04DC70]">保存</span>
           </div>
-          <div
-            class="flex cursor-pointer items-center gap-1"
-            @click="handleCancel"
-          >
-            <IconifyIcon
-              icon="material-symbols:close-rounded"
-              color="#979899"
-              class="size-4"
-            />
+          <div class="flex cursor-pointer items-center gap-1" @click="handleCancel">
+            <IconifyIcon icon="material-symbols:close-rounded" color="#979899" class="size-4" />
             <span class="text-[#979899]">取消</span>
           </div>
         </div>
