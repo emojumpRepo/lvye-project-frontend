@@ -212,3 +212,4 @@ catalog:
   highlight.js: ^11.11.1
   vue3-signature: ^0.2.4
   xlsx: ^0.18.5
+  pdfmake: ^0.2.2

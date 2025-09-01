@@ -14,7 +14,7 @@
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
   "editor.cursorBlinking": "expand",
-  "editor.largeFileOptimizations": true,
+  "editor.largeFileOptimizations": false,
   "editor.accessibilitySupport": "off",
   "editor.cursorSmoothCaretAnimation": "on",
   "editor.guides.bracketPairs": "active",

@@ -12,26 +12,43 @@ import { message, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getAssessmentQuestionnaireResult } from '#/api/psychology/assessment/index';
+import LyButton from '#/components/LyButton/index.vue';
 
 import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
+import { exportQuestionnaireReportToPDF } from './composables/exportToPDF.js';
 
 const questionnaireResult = ref<QuestionnaireResultDataVO[]>();
 const questionnaireAnswer = ref<QuestionnaireAnswerDataVO[]>();
 const queryData = ref();
 const completedTime = ref<number>();
 
-const tabs = ref([
-  {
-    title: '问卷报告',
-    key: 'result',
-  },
-  {
-    title: '答题记录',
-    key: 'answer',
-  },
-]);
 const activeKey = ref('result');
+
+// 导出问卷报告
+const handleExport = async () => {
+  if (
+    !questionnaireResult.value ||
+    !questionnaireAnswer.value ||
+    !queryData.value
+  ) {
+    message.warning('暂无数据可导出');
+    return;
+  }
+
+  try {
+    await exportQuestionnaireReportToPDF({
+      questionnaireResult: questionnaireResult.value,
+      questionnaireAnswer: questionnaireAnswer.value,
+      completedTime: completedTime.value,
+      studentName: queryData.value.name,
+      questionnaireName: queryData.value.questionnaireName,
+    });
+  } catch (error) {
+    console.error('导出失败:', error);
+    message.error('导出失败，请重试');
+  }
+};
 
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreenButton: false,
@@ -65,8 +82,8 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   <QuestionnaireResultModal>
     <div class="h-[700px] p-6">
       <Tabs v-model:active-key="activeKey">
-        <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.title">
-          <div v-if="activeKey === 'result'" class="space-y-6">
+        <Tabs.TabPane key="result" tab="问卷报告">
+          <div class="space-y-6">
             <!-- 问卷信息标题 -->
             <div class="mb-6 flex items-center gap-3">
               <div class="h-6 w-1 rounded-full bg-[#2C68FF]"></div>
@@ -84,8 +101,9 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
               />
             </div>
           </div>
-
-          <div v-else-if="activeKey === 'answer'">
+        </Tabs.TabPane>
+        <Tabs.TabPane key="answer" tab="答题记录">
+          <div>
             <!-- 问卷信息标题 -->
             <div class="mb-6 flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -107,6 +125,12 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
             <QuestionnaireAnswer :answers="questionnaireAnswer" />
           </div>
         </Tabs.TabPane>
+
+        <template #rightExtra>
+          <LyButton type="success" size="small" @click="handleExport">
+            导出
+          </LyButton>
+        </template>
       </Tabs>
     </div>
   </QuestionnaireResultModal>

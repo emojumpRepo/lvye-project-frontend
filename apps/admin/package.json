@@ -51,6 +51,7 @@
     "dayjs": "catalog:",
     "docx": "^9.5.1",
     "highlight.js": "catalog:",
+    "pdfmake": "catalog:",
     "pinia": "catalog:",
     "vue": "catalog:",
     "vue-dompurify-html": "catalog:",
