@@ -122,11 +122,6 @@ export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.Pa
       slots: { default: 'status' },
     },
     {
-      field: 'questionnaireName',
-      title: '问卷名称',
-      minWidth: 120,
-    },
-    {
       field: 'score',
       title: '得分',
       minWidth: 120,

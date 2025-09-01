@@ -169,6 +169,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
     loading.value = false;
   },
+  onClosed: () => {
+    studentProfile.value = undefined;
+    studentParentProfile.value = undefined;
+    baseInfo.value = [];
+    psychologicalStatusTag.value = undefined;
+    coreProblemTags.value = [];
+    studentSpecialMark.value = [];
+    drawerApi.close();
+  },
 });
 
 function updateLoading(value: boolean) {
@@ -230,7 +239,7 @@ onMounted(async () => {
               </span>
             </div>
             <div class="text-xs text-[#979899]">
-              <span>XXX</span>
+              <span>{{ studentProfile?.updater }}</span>
               <span>老师更新于</span>
               <span>{{
                 dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
