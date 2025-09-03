@@ -60,7 +60,12 @@ onMounted(async () => {
 });
 
 function handleBack() {
-  router.back();
+  router.replace({
+    path: '/evaluation/scene',
+    query: {
+      taskNo: currentTaskNo.value,
+    },
+  });
 }
 
 async function handleContinue() {

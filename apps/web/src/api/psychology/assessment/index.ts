@@ -5,6 +5,24 @@ import type {
 
 import { appRequestClient } from '#/api/request';
 
+// 测评结果
+export interface AssessmentResult {
+  id: number;
+  questionnaireId: number;
+  userId: number;
+  assessmentTaskNo: string;
+  score: number;
+  resultDataParsed: AssessmentResultItem[];
+}
+
+// 测评结果数据
+export interface AssessmentResultItem {
+  dimensionName: string;
+  isAbnormal: number;
+  score: number;
+  studentComment: string;
+}
+
 // ==================== 测评任务管理 ====================
 
 /** 查询我的测评任务列表 */
@@ -32,5 +50,12 @@ export function startAssessment(taskNo: string) {
 export function getAssessmentParticipantStatus(taskNo: string) {
   return appRequestClient.get<AssessmentTaskParticipantStatus>(
     `/psychology/assessment-participant/status?taskNo=${taskNo}`,
+  );
+}
+
+/** 获取测评结果 */
+export function getAssessmentResult(taskNo: string) {
+  return appRequestClient.get<AssessmentResult[]>(
+    `/psychology/assessment-task/my-task-results?taskNo=${taskNo}`,
   );
 }

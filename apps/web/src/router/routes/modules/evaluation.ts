@@ -38,6 +38,15 @@ const routes: RouteRecordRaw[] = [
           title: '测评详情',
         },
       },
+      {
+        name: 'EvaluationResult',
+        path: 'result/:taskNo',
+        component: () =>
+          import('#/views/evaluation/assessment/result/index.vue'),
+        meta: {
+          title: '测评结果',
+        },
+      },
     ],
   },
 ];
