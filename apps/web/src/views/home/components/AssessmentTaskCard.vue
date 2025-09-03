@@ -91,7 +91,7 @@ async function handleClick() {
       break;
     }
     case 2: {
-      router.push('/evaluation/result');
+      router.push(`/evaluation/result/${task.taskNo}`);
       break;
     }
   }

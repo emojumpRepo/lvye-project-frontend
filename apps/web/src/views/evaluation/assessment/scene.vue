@@ -92,7 +92,9 @@ function showSummaryReport() {
     message.warning('完成所有场景后才可以查看汇总报告');
     return;
   }
-  router.push('/evaluation/summary');
+  router.push({
+    path: `/evaluation/result/${currentTaskNo.value}`,
+  });
 }
 
 onMounted(async () => {
