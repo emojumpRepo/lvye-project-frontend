@@ -13,7 +13,11 @@ import dayjs from 'dayjs';
 
 import { getStudentPsychologicalStatusTag } from '#/api/constants';
 import { getStudentParentProfile } from '#/api/psychology/student-parent-profile';
-import { getStudentProfile } from '#/api/psychology/student-profile/index';
+import {
+  getStudentAssessmentHistory,
+  getStudentProfile,
+  getStudentProfileTimeline,
+} from '#/api/psychology/student-profile/index';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
@@ -50,6 +54,20 @@ const emit = defineEmits<{
 const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>();
 const studentParentProfile =
   ref<PsychologyStudentParentProfileApi.StudentParentProfile[]>();
+const studentProfileTimeline = ref<
+  PsychologyStudentProfileApi.StudentProfileTimeline[]
+>([]);
+const studentAssessmentHistory = ref<
+  PsychologyStudentProfileApi.StudentAssessmentHistory[]
+>([]);
+
+const psychologicalStatusTag = ref<PsychologicalStatusTag>();
+const coreProblemTags = ref<string[]>([]); // 核心问题标签
+const studentSpecialMark = ref<DictDataType[]>([]);
+const studentSexMap = ref<DictDataType[]>([]);
+const loading = ref(false);
+const timelineTabs = ref<{ key: number; title: string }[]>([]);
+const activeTimelineKey = ref(0);
 
 const baseInfo = ref([
   { label: '姓名', value: '', key: 'name' },
@@ -58,12 +76,6 @@ const baseInfo = ref([
   { label: '年级', value: '', key: 'className' },
   { label: '学号', value: '', key: 'studentNo' },
 ]);
-
-const psychologicalStatusTag = ref<PsychologicalStatusTag>();
-const coreProblemTags = ref<string[]>([]); // 核心问题标签
-const studentSpecialMark = ref<DictDataType[]>([]);
-const studentSexMap = ref<DictDataType[]>([]);
-const loading = ref(false);
 
 const footerButtons = ref<FooterButton[]>([
   {
@@ -133,56 +145,119 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
     loading.value = true;
     if (data.id) {
-      const studentProfileData = await getStudentProfile(data.id);
-      studentProfile.value = studentProfileData;
+      await loadStudentProfile(data.id);
       const studentParentProfileData = await getStudentParentProfile(data.id);
       studentParentProfile.value = studentParentProfileData;
-
-      if (studentProfileData) {
-        const fieldMappers: Record<
-          string,
-          (data: PsychologyStudentProfileApi.StudentProfile) => string
-        > = {
-          name: (data) => data.name || '未知',
-          sex: (data) =>
-            getDictObj('system_user_sex', data.sex)?.label || '未知',
-          birthDate: (data) =>
-            String(data.birthDate ? calculateAge(data.birthDate) : '未知'),
-          className: (data) => data.className || '未知',
-          studentNo: (data) => data.studentNo || '未知',
-        };
-
-        // 学生心理状态
-        psychologicalStatusTag.value = (await getStudentPsychologicalStatusTag(
-          'student_psychological_status',
-          studentProfileData.psychologicalStatus || 1,
-        )) as PsychologicalStatusTag;
-
-        // 核心问题标签
-        coreProblemTags.value = getSpecialMarkLabels(
-          studentProfileData?.specialMarks || '',
-        );
-
-        // 基础信息
-        baseInfo.value.forEach((item) => {
-          const mapper = fieldMappers[item.key];
-          if (mapper) {
-            item.value = mapper(studentProfileData);
-          }
-        });
-      }
+      await loadStudentProfileTimeline(data.id);
+      await loadStudentAssessmentHistory(data.id);
     }
-
     loading.value = false;
   },
   onClosed: () => {
     studentProfile.value = undefined;
-    studentParentProfile.value = undefined;
+    studentParentProfile.value = [];
     psychologicalStatusTag.value = undefined;
+    studentProfileTimeline.value = [];
+    studentAssessmentHistory.value = [];
     coreProblemTags.value = [];
+    timelineTabs.value = [];
+    activeTimelineKey.value = 0;
     drawerApi.close();
   },
 });
+
+/**
+ * 加载学生档案数据
+ * @param id 学生id
+ */
+async function loadStudentProfile(id: number) {
+  try {
+    const studentProfileData = await getStudentProfile(id);
+    if (!studentProfileData) return;
+
+    studentProfile.value = studentProfileData;
+
+    const fieldMappers: Record<
+      string,
+      (data: PsychologyStudentProfileApi.StudentProfile) => string
+    > = {
+      name: (data) => data.name || '未知',
+      sex: (data) => getDictObj('system_user_sex', data.sex)?.label || '未知',
+      birthDate: (data) =>
+        String(data.birthDate ? calculateAge(data.birthDate) : '未知'),
+      className: (data) => data.className || '未知',
+      studentNo: (data) => data.studentNo || '未知',
+    };
+
+    // 学生心理状态
+    psychologicalStatusTag.value = (await getStudentPsychologicalStatusTag(
+      'student_psychological_status',
+      studentProfileData.psychologicalStatus || 1,
+    )) as PsychologicalStatusTag;
+
+    // 核心问题标签
+    coreProblemTags.value = getSpecialMarkLabels(
+      studentProfileData?.specialMarks || '',
+    );
+
+    // 基础信息
+    baseInfo.value.forEach((item) => {
+      const mapper = fieldMappers[item.key];
+      if (mapper) {
+        item.value = mapper(studentProfileData);
+      }
+    });
+  } catch (error) {
+    console.error('加载学生档案数据失败', error);
+  }
+}
+
+/**
+ * 加载学生时间线数据
+ * @param id 学生id
+ */
+async function loadStudentProfileTimeline(id: number) {
+  try {
+    const timeline = await getStudentProfileTimeline(id);
+    if (timeline.length === 0) return;
+
+    studentProfileTimeline.value = timeline;
+    timelineTabs.value = timeline.map((item) => {
+      return {
+        title: item.title,
+        key: item.eventType,
+      };
+    });
+
+    // 根据key去重
+    timelineTabs.value = timelineTabs.value.filter(
+      (item, index, self) =>
+        index === self.findIndex((t) => t.key === item.key),
+    );
+
+    timelineTabs.value.unshift({
+      title: '全部',
+      key: 0,
+    });
+    activeTimelineKey.value = timelineTabs.value[0]?.key || 0;
+  } catch (error) {
+    console.error('加载学生时间线数据失败', error);
+  }
+}
+
+/**
+ * 加载学生测评历史数据
+ * @param id 学生id
+ */
+async function loadStudentAssessmentHistory(id: number) {
+  try {
+    const assessmentHistory = await getStudentAssessmentHistory(id);
+    if (assessmentHistory.length === 0) return;
+    studentAssessmentHistory.value = assessmentHistory;
+  } catch (error) {
+    console.error('加载学生测评历史数据失败', error);
+  }
+}
 
 /** 更新加载状态 */
 function updateLoading(value: boolean) {
@@ -202,7 +277,10 @@ onMounted(async () => {
   <Drawer title="学生360°档案">
     <template #title>
       <div class="flex items-center gap-2">
-        <img src="../../../static/icons/student/360file_student.png" class="w-5" />
+        <img
+          src="../../../static/icons/student/360file_student.png"
+          class="w-5"
+        />
         <span class="text-lg font-bold">学生360°档案</span>
       </div>
     </template>
@@ -223,12 +301,20 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <div class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
-            :style="psychologicalStatusTag?.colorConfig.style">
+          <div
+            class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
+            :style="psychologicalStatusTag?.colorConfig.style"
+          >
             <div class="flex items-center gap-1 text-sm font-bold">
-              <IconifyIcon icon="solar:health-bold" :color="psychologicalStatusTag?.colorConfig.color" class="size-5" />
+              <IconifyIcon
+                icon="solar:health-bold"
+                :color="psychologicalStatusTag?.colorConfig.color"
+                class="size-5"
+              />
               <span>心理状态：</span>
-              <span :style="{ color: psychologicalStatusTag?.colorConfig.color }">
+              <span
+                :style="{ color: psychologicalStatusTag?.colorConfig.color }"
+              >
                 {{ psychologicalStatusTag?.label }}
               </span>
             </div>
@@ -237,7 +323,7 @@ onMounted(async () => {
               <span>老师更新于</span>
               <span>{{
                 dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
-                }}</span>
+              }}</span>
             </div>
           </div>
           <div class="flex flex-col gap-4">
@@ -248,7 +334,9 @@ onMounted(async () => {
             <div class="flex items-center gap-2.5">
               <template v-if="coreProblemTags.length > 0">
                 <div v-for="tag in coreProblemTags" :key="tag">
-                  <span class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700">
+                  <span
+                    class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
+                  >
                     {{ tag }}
                   </span>
                 </div>
@@ -264,20 +352,33 @@ onMounted(async () => {
           <div class="relative h-full w-full">
             <Tabs :tab-bar-gutter="24">
               <Tabs.TabPane tab="综合时间线" key="timeline">
-                <TimelineTab />
+                <TimelineTab
+                  v-model:active-timeline-key="activeTimelineKey"
+                  :timeline-tabs="timelineTabs"
+                  :student-profile-timeline="studentProfileTimeline"
+                />
               </Tabs.TabPane>
               <Tabs.TabPane tab="测评历史" key="history">
-                <AssessmentListTab :student-profile-id="studentProfile?.id" />
+                <AssessmentListTab
+                  :student-assessment-history="studentAssessmentHistory"
+                />
               </Tabs.TabPane>
               <Tabs.TabPane tab="咨询与干预记录" key="consultation">
                 <ConsultationListTab />
               </Tabs.TabPane>
               <Tabs.TabPane tab="完善个人信息" key="personalInfo">
-                <PersonalInfoTab :student-info="studentProfile" :parent-info="studentParentProfile"
-                  @update-loading="updateLoading" />
+                <PersonalInfoTab
+                  :student-info="studentProfile"
+                  :parent-info="studentParentProfile"
+                  @update-loading="updateLoading"
+                />
               </Tabs.TabPane>
             </Tabs>
-            <LyButton type="success" size="middle" class="absolute right-7 top-1.5">
+            <LyButton
+              type="success"
+              size="middle"
+              class="absolute right-7 top-1.5"
+            >
               导出信息
             </LyButton>
           </div>
@@ -287,9 +388,17 @@ onMounted(async () => {
 
     <template #footer>
       <div class="flex items-center justify-end gap-2">
-        <button v-for="button in footerButtons" :key="button.value"
-          class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm" :class="button.class">
-          <IconifyIcon :icon="button.icon" :color="button.type === 'dashed' ? button.color : '#fff'" class="size-4" />
+        <button
+          v-for="button in footerButtons"
+          :key="button.value"
+          class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm"
+          :class="button.class"
+        >
+          <IconifyIcon
+            :icon="button.icon"
+            :color="button.type === 'dashed' ? button.color : '#fff'"
+            class="size-4"
+          />
           <span class="text-xs">{{ button.label }}</span>
         </button>
       </div>

@@ -69,7 +69,7 @@ const personalInfoFields = [
     viewComponent: 'Input',
     editComponent: 'DatePicker',
     placeholder: '请选择出生日期',
-    rules: z.any().refine((val) => {
+    rules: z.string().refine((val) => {
       if (!val) return false;
       const age = calculateAge(dayjs(val).valueOf());
       return age >= 12 && age <= 20;
@@ -77,6 +77,8 @@ const personalInfoFields = [
     componentProps: {
       format: 'YYYY-MM-DD',
       valueFormat: 'YYYY-MM-DD',
+      allowClear: false,
+      inputReadOnly: true,
     },
   },
   {

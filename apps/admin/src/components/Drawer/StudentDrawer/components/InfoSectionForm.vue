@@ -8,7 +8,7 @@ import { computed, ref, unref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Divider } from 'ant-design-vue';
+import { Divider, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 
@@ -116,6 +116,15 @@ async function handleSave() {
   emit('updateLoading', true);
   edit.value = false;
   setFormValues();
+  const { valid } = await InfoFormApi.validate();
+  console.log('valid', valid);
+  if (!valid) {
+    handleCancel();
+    InfoFormApi.resetValidate();
+    message.error('请检查输入内容');
+    emit('updateLoading', false);
+    return;
+  }
 
   const values = await InfoFormApi.getValues();
 
@@ -246,17 +255,35 @@ async function getDictTypeOptions() {
           <Divider type="vertical" class="bg-primary m-0 h-3 w-0.5" />
           <span class="font-bold">{{ title }}</span>
         </div>
-        <div v-if="!edit" class="flex cursor-pointer items-center gap-1 text-sm" @click="handleEdit">
+        <div
+          v-if="!edit"
+          class="flex cursor-pointer items-center gap-1 text-sm"
+          @click="handleEdit"
+        >
           <IconifyIcon icon="icon-park:edit-one" />
           <span>编辑</span>
         </div>
         <div v-else class="flex items-center gap-3 text-sm">
-          <div class="flex cursor-pointer items-center gap-1" @click="handleSave">
-            <IconifyIcon icon="material-symbols:check-rounded" color="#04DC70" class="size-5" />
+          <div
+            class="flex cursor-pointer items-center gap-1"
+            @click="handleSave"
+          >
+            <IconifyIcon
+              icon="material-symbols:check-rounded"
+              color="#04DC70"
+              class="size-5"
+            />
             <span class="text-[#04DC70]">保存</span>
           </div>
-          <div class="flex cursor-pointer items-center gap-1" @click="handleCancel">
-            <IconifyIcon icon="material-symbols:close-rounded" color="#979899" class="size-4" />
+          <div
+            class="flex cursor-pointer items-center gap-1"
+            @click="handleCancel"
+          >
+            <IconifyIcon
+              icon="material-symbols:close-rounded"
+              color="#979899"
+              class="size-4"
+            />
             <span class="text-[#979899]">取消</span>
           </div>
         </div>

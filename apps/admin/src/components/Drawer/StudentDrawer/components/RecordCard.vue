@@ -9,7 +9,7 @@ import { getDictObj } from '#/utils/dict';
 
 defineProps<{
   buttonText: string;
-  cardInfo: PsychologyStudentProfileApi.StudentProfileTimeline;
+  cardInfo: PsychologyStudentProfileApi.StudentAssessmentHistory;
 }>();
 </script>
 

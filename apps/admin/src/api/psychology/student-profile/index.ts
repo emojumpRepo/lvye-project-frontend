@@ -88,11 +88,27 @@ export namespace PsychologyStudentProfileApi {
 
   /** 学生档案时间线 */
   export interface StudentProfileTimeline {
+    id: number;
+    studentProfileId: number;
+    eventType: number;
+    title: string;
+    content: string;
+    bizId: string;
+    operator: string;
+    createTime: number;
+    updateTime: number;
+  }
+
+  /** 学生测评历史 */
+  export interface StudentAssessmentHistory {
     taskId: string;
     taskNo: string;
     taskName: string;
     targetAudience: number;
     status: number;
+    riskLevel: number;
+    evaluate: string;
+    suggestions: string;
     startline: number;
     deadline: number;
   }
@@ -217,6 +233,15 @@ export function getDeptById(id: number) {
 export function getStudentProfileTimeline(studentProfileId: number) {
   return requestClient.get<
     PsychologyStudentProfileApi.StudentProfileTimeline[]
+  >('/psychology/student-profile/timeline-list', {
+    params: { studentProfileId },
+  });
+}
+
+/** 获取学生测评历史列表 */
+export function getStudentAssessmentHistory(studentProfileId: number) {
+  return requestClient.get<
+    PsychologyStudentProfileApi.StudentAssessmentHistory[]
   >('/psychology/student-profile/student-task-list', {
     params: { studentProfileId },
   });
