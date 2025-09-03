@@ -5,7 +5,7 @@ import type { DictDataType } from '#/utils/dict';
 
 import { onMounted, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import { Divider, Spin, Tabs } from 'ant-design-vue';
@@ -18,6 +18,7 @@ import {
   getStudentProfile,
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
+import CreateStudentEventRecord from '#/components/Dialog/CreateStudentEventRecord/index.vue';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
@@ -131,6 +132,12 @@ const getSpecialMarkLabels = (specialMarks: string): string[] => {
 
   return labels.filter(Boolean) as string[];
 };
+
+/** 新增记录弹窗 */
+const [CreateStudentEventRecordModal, createStudentEventRecordModalApi] =
+  useVbenModal({
+    connectedComponent: CreateStudentEventRecord,
+  });
 
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[800px]',
@@ -268,6 +275,13 @@ function updateLoading(value: boolean) {
   }
 }
 
+/**
+ * 新增记录
+ */
+function handleCreateStudentEventRecord() {
+  createStudentEventRecordModalApi.open();
+}
+
 onMounted(async () => {
   studentSpecialMark.value = await getDictOptions('student_special_mark');
   studentSexMap.value = await getDictOptions('system_user_sex');
@@ -319,8 +333,13 @@ onMounted(async () => {
               </span>
             </div>
             <div class="text-xs text-[#979899]">
-              <span>{{ studentProfile?.updater }}</span>
-              <span>老师更新于</span>
+              <span>
+                {{
+                  studentProfile?.updater === '管理员'
+                    ? studentProfile?.updater
+                    : `${studentProfile?.updater}老师`
+                }}更新于
+              </span>
               <span>{{
                 dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
               }}</span>
@@ -374,13 +393,16 @@ onMounted(async () => {
                 />
               </Tabs.TabPane>
             </Tabs>
-            <LyButton
-              type="success"
-              size="middle"
-              class="absolute right-7 top-1.5"
-            >
-              导出信息
-            </LyButton>
+            <div class="absolute right-7 top-1.5 flex items-center gap-2">
+              <LyButton type="default" size="middle"> 导出信息 </LyButton>
+              <LyButton
+                type="success"
+                size="middle"
+                @click="handleCreateStudentEventRecord"
+              >
+                新增记录
+              </LyButton>
+            </div>
           </div>
         </div>
       </div>
@@ -403,6 +425,8 @@ onMounted(async () => {
         </button>
       </div>
     </template>
+
+    <CreateStudentEventRecordModal />
   </Drawer>
 </template>
 

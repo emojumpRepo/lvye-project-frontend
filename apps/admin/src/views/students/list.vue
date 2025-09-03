@@ -23,11 +23,11 @@ import {
 } from '#/api/psychology/student-profile';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
 import CreateStudentDrawer from '#/components/Drawer/CreateStudentDrawer/index.vue';
-import GradeGraduationDrawer from '#/components/Drawer/GradeGraduationDrawer/index.vue';
-import GraduatedStudentFileDrawer from '#/components/Drawer/GraduatedStudentFileDrawer/index.vue';
+import GraduatedStudentProfileDrawer from '#/components/Drawer/GraduatedStudentProfileDrawer/index.vue';
 import StudentBulkClassTransferDrawer from '#/components/Drawer/StudentBulkClassTransferDrawer/index.vue';
 import StudentBulkImportDrawer from '#/components/Drawer/StudentBulkImportDrawer/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import StudentGradeGraduationDrawer from '#/components/Drawer/StudentGradeGraduationDrawer/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
@@ -89,7 +89,7 @@ const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
 
 // 已毕业学生档案抽屉
 const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
-  connectedComponent: GraduatedStudentFileDrawer,
+  connectedComponent: GraduatedStudentProfileDrawer,
 });
 
 // ============== 视图模式与选择 ==============
@@ -461,7 +461,7 @@ onMounted(async () => {
     <BulkImportDrawer @refresh="refresh" />
     <DeleteStudentModal />
     <GraduatedFileDrawer />
-    <GradeGraduationDrawer v-model:open="graduationDrawerOpen" />
+    <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
   </div>
 </template>
 

@@ -1,37 +1,88 @@
-<script lang="ts" setup>
-import { useVbenDrawer } from '@vben/common-ui';
-import { Divider, Tabs } from 'ant-design-vue';
+<script setup lang="ts">
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { StudentApi } from '#/api/student/index';
 
-const [Drawer] = useVbenDrawer({
-  class: 'w-[800px]',
-  contentClass: 'bg-gray-50 p-0',
-  showCancelButton: false,
-  showConfirmButton: false,
+import { useVbenDrawer } from '@vben/common-ui';
+
+import { message } from 'ant-design-vue';
+
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+
+import { useGraduatedStudentFileGridSchema, useSearchFormSchema } from './data';
+
+const [Drawer, DrawerApi] = useVbenDrawer({
+  title: '毕业学生档案',
+  class: 'w-[1000px]',
+  onConfirm: () => {
+    message.warning('即将上线');
+  },
+});
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useSearchFormSchema(),
+    compact: true,
+    showCollapseButton: false,
+    commonConfig: {
+      hideLabel: true,
+    },
+    wrapperClass: '!flex gap-2 flex-nowrap',
+  },
+  gridOptions: {
+    columns: useGraduatedStudentFileGridSchema(),
+    height: '100%',
+    pagerConfig: {
+      enabled: true,
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          return [];
+        },
+      },
+    },
+    toolbarConfig: {
+      refresh: false,
+      search: false,
+      custom: false,
+      zoom: false,
+    },
+  } as VxeTableGridOptions<StudentApi.GraduatedStudentFile>,
 });
 </script>
 
 <template>
-  <Drawer title="已毕业学生档案">
-    <div class="flex h-full flex-col gap-3">
-      <div class="bg-white px-4 pb-3 pt-6">
-        <div class="flex items-center gap-2.5">
-          <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
-          <span class="font-bold">基础信息</span>
-        </div>
-        <div class="mt-3 text-xs text-[#979899]">展示已毕业学生的基础信息与毕业时间、去向等。</div>
+  <Drawer>
+    <template #title>
+      <div class="flex items-center gap-2">
+        <img
+          src="../../../static/icons/student/graduate-file_student.png"
+          class="w-5"
+        />
+        <span class="text-lg font-bold">已毕业学生档案</span>
       </div>
-      <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
-        <Tabs :tab-bar-gutter="24">
-          <Tabs.TabPane tab="档案信息" key="profile">
-            <div class="p-4 text-xs text-[#979899]">展示历史测评、咨询记录的简要归档。</div>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="附件/证明" key="attachments">
-            <div class="p-4 text-xs text-[#979899]">展示毕业相关附件/证明。</div>
-          </Tabs.TabPane>
-        </Tabs>
-      </div>
-    </div>
+    </template>
+
+    <Grid />
   </Drawer>
 </template>
 
+<style lang="scss" scoped>
+:deep(.form-item) {
+  padding-bottom: 0 !important;
+}
 
+:deep(.form-actions) {
+  grid-column: -3 / -1 !important;
+  padding-bottom: 0 !important;
+}
+
+:deep(.bg-background-deep) {
+  display: none !important;
+}
+
+:deep(.vxe-grid--form-wrapper > div) {
+  padding-top: 0 !important;
+  padding-bottom: 24px !important;
+}
+</style>
