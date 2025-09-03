@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-
-import { Button } from 'ant-design-vue';
+import { onMounted, ref, watch } from 'vue';
 
 import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
+import { loadDeptList } from '#/utils/transformDeptToTree';
 
 import AssessmentListGrid from './components/AssessmentListGrid.vue';
 import AssessmentListSearch from './components/AssessmentListSearch.vue';
@@ -47,6 +46,12 @@ watch(
   },
   { immediate: true },
 );
+
+onMounted(async () => {
+  const stored = sessionStorage.getItem('deptList');
+  if (stored) return;
+  await loadDeptList();
+});
 </script>
 
 <template>
@@ -56,11 +61,7 @@ watch(
       @tab-change="handleTabChange"
       @reset="handleReset"
       @create-assessment="handleCreateAssessment"
-    >
-      <template #extra>
-        <Button type="primary" @click="handleCreateAssessment">创建测评</Button>
-      </template>
-    </AssessmentListSearch>
+    />
 
     <AssessmentListGrid ref="gridRef" />
     <CreateAssessmentDialog v-model:open="isOpenCreateAssessmentDialog" />

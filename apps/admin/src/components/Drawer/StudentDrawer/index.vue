@@ -69,6 +69,7 @@ const studentSexMap = ref<DictDataType[]>([]);
 const loading = ref(false);
 const timelineTabs = ref<{ key: number; title: string }[]>([]);
 const activeTimelineKey = ref(0);
+const activeTabKey = ref('timeline');
 
 const baseInfo = ref([
   { label: '姓名', value: '', key: 'name' },
@@ -168,6 +169,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     studentAssessmentHistory.value = [];
     coreProblemTags.value = [];
     timelineTabs.value = [];
+    activeTabKey.value = 'timeline';
     activeTimelineKey.value = 0;
     drawerApi.close();
   },
@@ -369,7 +371,7 @@ onMounted(async () => {
 
         <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
           <div class="relative h-full w-full">
-            <Tabs :tab-bar-gutter="24">
+            <Tabs :tab-bar-gutter="24" v-model:active-key="activeTabKey">
               <Tabs.TabPane tab="综合时间线" key="timeline">
                 <TimelineTab
                   v-model:active-timeline-key="activeTimelineKey"

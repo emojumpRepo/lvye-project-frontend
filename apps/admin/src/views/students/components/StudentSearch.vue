@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import { message } from 'ant-design-vue';
 
@@ -9,6 +9,10 @@ import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 import { useSearchFormSchema } from '../data';
+
+const props = defineProps<{
+  deptListLoaded: boolean;
+}>();
 
 // 定义 emit 事件
 const emit = defineEmits<{
@@ -103,6 +107,16 @@ function handleReset() {
   };
   emit('search', searchParams.value);
 }
+
+watch(
+  () => props.deptListLoaded,
+  () => {
+    if (props.deptListLoaded) {
+      formApi.updateSchema(useSearchFormSchema());
+    }
+  },
+  { immediate: true },
+);
 
 // 暴露方法给父组件
 defineExpose({

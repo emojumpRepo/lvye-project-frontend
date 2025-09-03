@@ -8,15 +8,25 @@ import { h, ref } from 'vue';
 import { IconifyIcon } from '@vben/icons';
 
 import { getDictOptions } from '#/utils';
-import { loadDeptList } from '#/utils/transformDeptToTree.js';
 
 /** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
   const stored = sessionStorage.getItem('deptList');
-  deptList.value = stored ? JSON.parse(stored) : loadDeptList();
+  deptList.value = stored ? JSON.parse(stored) : [];
+  const deptOptions = deptList.value?.map((dept) => ({
+    label: dept.label,
+    value: dept.value,
+    children:
+      dept.children?.map((cls) => ({
+        label: cls.label,
+        value: cls.value,
+        isLeaf: true,
+      })) || [],
+  }));
 
+  // 获取风险等级字典
   const riskLevelOptions = getDictOptions('questionnaire_result_risk_level');
 
   return [
@@ -50,16 +60,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         options: [
           { label: '全部班级', value: '', isLeaf: true },
-          ...deptList.value.map((dept) => ({
-            label: dept.label,
-            value: dept.value,
-            children:
-              dept.children?.map((cls) => ({
-                label: cls.label,
-                value: cls.value,
-                isLeaf: true,
-              })) || [],
-          })),
+          ...deptOptions,
         ],
         defaultValue: [''],
         expandTrigger: 'hover',

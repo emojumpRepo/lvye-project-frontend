@@ -106,7 +106,7 @@ function handleEdit() {
   if (props.studentInfo) {
     InfoFormApi.setValues({
       ...props.studentInfo,
-      birthDate: dayjs(props.studentInfo?.birthDate),
+      birthDate: dayjs(props.studentInfo?.birthDate).format('YYYY-MM-DD'),
     });
   }
 }
@@ -117,7 +117,6 @@ async function handleSave() {
   edit.value = false;
   setFormValues();
   const { valid } = await InfoFormApi.validate();
-  console.log('valid', valid);
   if (!valid) {
     handleCancel();
     InfoFormApi.resetValidate();

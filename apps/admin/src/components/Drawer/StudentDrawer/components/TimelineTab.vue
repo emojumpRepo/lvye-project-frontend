@@ -6,6 +6,8 @@ import { computed } from 'vue';
 import { Divider, Empty, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getDictLabel } from '#/utils/dict';
+
 const props = defineProps<{
   studentProfileTimeline: PsychologyStudentProfileApi.StudentProfileTimeline[];
   timelineTabs: { key: number; title: string }[];
@@ -60,7 +62,12 @@ function handleViewDetail(
           >
             <div class="flex items-center justify-between text-xs">
               <span class="rounded bg-[#14E77E1F] p-1 text-[#04DC70]">
-                {{ timeline.title }}
+                {{
+                  getDictLabel(
+                    'student_timeline_event_type',
+                    timeline.eventType,
+                  )
+                }}
               </span>
               <span class="text-[#B0B1B2]">
                 {{ dayjs(timeline.createTime).format('YYYY-MM-DD') }}

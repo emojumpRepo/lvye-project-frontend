@@ -48,6 +48,7 @@ defineOptions({ name: 'StudentArchive' });
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
+const deptListLoaded = ref(false);
 
 // ============== 抽屉 ==============
 // 详情抽屉
@@ -316,15 +317,22 @@ function refresh() {
 
 // 组件挂载时加载数据
 onMounted(async () => {
-  await loadDeptList();
-  gridApi.query();
+  const stored = sessionStorage.getItem('deptList');
+  if (!stored) {
+    await loadDeptList();
+  }
+  deptListLoaded.value = true;
 });
 </script>
 
 <template>
   <div class="flex h-full flex-col p-6">
     <!-- 搜索组件 -->
-    <StudentSearch @search="handleSearch" @loading="handleLoading" />
+    <StudentSearch
+      :dept-list-loaded="deptListLoaded"
+      @search="handleSearch"
+      @loading="handleLoading"
+    />
 
     <!-- 数据表格 -->
     <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">

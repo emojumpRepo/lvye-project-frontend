@@ -5,6 +5,7 @@ import { Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { useVbenForm } from '#/adapter/form';
+import LyButton from '#/components/LyButton/index.vue';
 
 import { loadQuestionnaireOptions, useGridFormSchema } from '../data';
 
@@ -118,8 +119,14 @@ onMounted(async () => {
       :tab-bar-gutter="24"
       @change="handleTabChange"
     >
-      <template #tabBarExtraContent>
-        <slot name="extra" />
+      <template #rightExtra>
+        <LyButton
+          type="success"
+          size="middle"
+          @click="emit('createAssessment')"
+        >
+          创建测评
+        </LyButton>
       </template>
       <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.label">
         <Form />
