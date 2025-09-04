@@ -2,7 +2,7 @@
 import type { EchartsUIType } from '@vben/plugins/echarts';
 import type { QuestionnaireResultDataVO } from '@vben/types';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
@@ -22,7 +22,7 @@ const scores = computed(() => {
   return props.questionnaireResult.map((item) => item.score);
 });
 
-onMounted(() => {
+function renderChart() {
   renderEcharts({
     // legend: {
     //   bottom: 0,
@@ -62,7 +62,17 @@ onMounted(() => {
     ],
     tooltip: {},
   });
-});
+}
+
+watch(
+  () => props.questionnaireResult,
+  (newValue) => {
+    if (newValue.length > 0) {
+      renderChart();
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

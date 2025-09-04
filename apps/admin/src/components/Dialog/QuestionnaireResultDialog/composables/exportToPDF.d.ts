@@ -1,23 +1,13 @@
-export interface QuestionnaireResultItem {
-  dimensionName?: string;
-  score?: number;
-  isAbnormal?: number;
-  studentComment?: string;
-  teacherComment?: string;
-}
-
-export interface QuestionnaireAnswerItem {
-  index?: number;
-  title?: string;
-  answer?: string;
-  score?: number;
-}
+import type {
+  QuestionnaireAnswerItem,
+  QuestionnaireResultDataVO,
+} from '@vben/types';
 
 export declare function exportQuestionnaireReportToPDF(params: {
   completedTime?: Date | number | string;
-  questionnaireAnswer: any[] | QuestionnaireAnswerItem[];
+  questionnaireAnswer: QuestionnaireAnswerItem[];
   questionnaireName: string;
-  questionnaireResult: any[] | QuestionnaireResultItem[];
+  questionnaireResult: QuestionnaireResultDataVO[];
   studentName: string;
 }): Promise<void>;
 
