@@ -10,8 +10,9 @@ import LyCardTitle from '#/components/LyCardTitle/index.vue';
 const props = withDefaults(
   defineProps<{
     count?: null | number;
+    iconBg?: string;
     // optional icon url (use Figma dev assets if passed)
-    iconSrc?: null | string;
+    iconSrc?: string;
     // pagination config
     pagination?: null | {
       current?: number;
@@ -27,7 +28,8 @@ const props = withDefaults(
   }>(),
   {
     count: null,
-    iconSrc: null,
+    iconSrc: '',
+    iconBg: '',
     withGradient: false,
     pagination: null,
     showRefresh: true,
@@ -65,11 +67,11 @@ const containerClasses = computed(() => {
 
     <div class="ml-4 mt-4 flex items-center gap-2 sm:ml-5 sm:mt-5">
       <LyCardTitle
-        icon="mingcute:task-2-fill"
+        :icon="iconSrc"
         :title="title"
         title-class="text-lg font-semibold text-black"
         hide-line
-        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
+        :icon-bg="iconBg"
       >
         <template #extra>
           <div
