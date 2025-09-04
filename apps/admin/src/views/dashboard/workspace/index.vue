@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
+import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
 
@@ -154,9 +155,10 @@ function onAlertsRefresh() {
 </script>
 
 <template>
-  <div class="p-5">
+  <div class="flex h-full flex-col px-[70px] pb-10 pt-5">
+    <PageTitle title="工作台" />
     <!-- New cards from Figma design -->
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
@@ -194,7 +196,7 @@ function onAlertsRefresh() {
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex  max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedInterveneList"
             :key="idx"
@@ -217,7 +219,7 @@ function onAlertsRefresh() {
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex  max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedAlertsList"
             :key="idx"
