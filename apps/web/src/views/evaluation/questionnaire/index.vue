@@ -60,8 +60,11 @@ onMounted(async () => {
 });
 
 function handleBack() {
+  const targetPath = hasScenario.value
+    ? '/evaluation/scene'
+    : `/evaluation/assessment/${currentTaskNo.value}`;
   router.replace({
-    path: '/evaluation/scene',
+    path: targetPath,
     query: {
       taskNo: currentTaskNo.value,
     },
@@ -119,6 +122,24 @@ async function handleContinue() {
 function handleComplete(payload: null | Record<string, unknown>) {
   // 处理问卷完成逻辑
   console.warn('Questionnaire completed:', payload);
+
+  // 更新当前问卷的完成状态
+  if (hasScenario.value && selectedSlot.value?.questionnaire) {
+    // 有场景模式：更新当前场景的问卷状态
+    selectedSlot.value.questionnaire.completed = true;
+  } else {
+    // 无场景模式：更新当前问卷的完成状态
+    const questionnaireId = route.query.questionnaireId as string;
+    if (questionnaireId && evaluationStore.taskDetailInfo?.questionnaires) {
+      const currentQuestionnaire =
+        evaluationStore.taskDetailInfo.questionnaires.find(
+          (q) => q.questionnaireId === Number(questionnaireId),
+        );
+      if (currentQuestionnaire) {
+        currentQuestionnaire.completed = true;
+      }
+    }
+  }
 }
 </script>
 
