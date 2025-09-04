@@ -274,6 +274,12 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     taskDetailInfo.value = null;
     selectedSlot.value = null;
     loading.value = false;
+    error.value = null;
+  }
+
+  // 实现 $reset 方法供 Pinia 调用
+  function $reset() {
+    reset();
   }
 
   return {
@@ -282,6 +288,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     taskDetailInfo,
     selectedSlot,
     loading,
+    error,
 
     // 计算属性
     scenarioData,
@@ -305,5 +312,6 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     startEvaluation,
     startEvaluationWithoutScenario,
     reset,
+    $reset,
   };
 });
