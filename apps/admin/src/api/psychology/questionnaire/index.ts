@@ -75,6 +75,35 @@ export interface QuestionnaireResultPageReqVO {
   createTime?: string[];
 }
 
+// ============== 问卷系统 ===============
+// 输入框类型
+export interface InputObject {
+  required: boolean;
+  placeholder: string;
+  key: string;
+}
+
+// 复杂选项类型
+export interface OptionObject {
+  text: string;
+  input: InputObject;
+}
+
+// 问题类型
+export interface Question {
+  title: string;
+  type: string;
+  options: Array<OptionObject | string>;
+}
+
+/** 获取问卷题目 */
+export function getAssessmentQuestionnaireQuestion(surveyId: string) {
+  return requestClient.get<Question[]>(
+    '/psychology/questionnaire/survey-questions',
+    { params: { surveyId } },
+  );
+}
+
 // 创建问卷
 export const createQuestionnaire = (data: QuestionnaireVO) => {
   return requestClient.post('/emojump/questionnaire/create', data);

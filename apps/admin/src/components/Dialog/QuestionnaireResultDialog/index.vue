@@ -14,9 +14,11 @@ import dayjs from 'dayjs';
 import { getAssessmentQuestionnaireResult } from '#/api/psychology/assessment/index';
 import LyButton from '#/components/LyButton/index.vue';
 
+import AssessmentRadar from './components/AssessmentRadar.vue';
+import AssessmentResult from './components/AssessmentResult.vue';
 import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
-import { exportQuestionnaireReportToPDF } from './composables/exportToPDF.js';
+import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
 
 const questionnaireResult = ref<QuestionnaireResultDataVO[]>();
 const questionnaireAnswer = ref<QuestionnaireAnswerDataVO[]>();
@@ -75,6 +77,10 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
       }
     }
   },
+  onClosed: () => {
+    activeKey.value = 'result';
+    questionnaireResultModalApi.close();
+  },
 });
 </script>
 
@@ -83,23 +89,40 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
     <div class="h-[700px] p-6">
       <Tabs v-model:active-key="activeKey">
         <Tabs.TabPane key="result" tab="问卷报告">
-          <div class="space-y-6">
+          <div class="mb-8 space-y-6">
             <!-- 问卷信息标题 -->
             <div class="mb-6 flex items-center gap-3">
-              <div class="h-6 w-1 rounded-full bg-[#2C68FF]"></div>
+              <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
               <h2 class="text-xl font-semibold text-gray-800">
                 {{ queryData.questionnaireName }}结果分析
               </h2>
             </div>
 
-            <!-- 维度结果展示 -->
-            <div class="space-y-4">
-              <QuestionnaireResult
-                v-for="(item, index) in questionnaireResult"
-                :key="index"
-                :questionnaire-result="item"
+            <template
+              v-if="
+                (!queryData.questionnaireId ||
+                  queryData.questionnaireId === '12') &&
+                questionnaireResult &&
+                questionnaireResult.length > 0
+              "
+            >
+              <AssessmentRadar :questionnaire-result="questionnaireResult" />
+              <AssessmentResult
+                :questionnaire-result="questionnaireResult"
+                :questionnaire-name="queryData.questionnaireName"
               />
-            </div>
+            </template>
+
+            <!-- 维度结果展示 -->
+            <template v-if="queryData.questionnaireId">
+              <div class="space-y-4">
+                <QuestionnaireResult
+                  v-for="(item, index) in questionnaireResult"
+                  :key="index"
+                  :questionnaire-result="item"
+                />
+              </div>
+            </template>
           </div>
         </Tabs.TabPane>
         <Tabs.TabPane key="answer" tab="答题记录">
@@ -107,7 +130,7 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
             <!-- 问卷信息标题 -->
             <div class="mb-6 flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <div class="h-6 w-1 rounded-full bg-[#2C68FF]"></div>
+                <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
                 <h2 class="text-xl font-semibold text-gray-800">
                   {{ queryData.questionnaireName }}作答
                 </h2>

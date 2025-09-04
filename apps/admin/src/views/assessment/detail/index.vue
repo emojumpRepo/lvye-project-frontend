@@ -63,7 +63,7 @@ const actionButtons = ref([
   },
 ]);
 
-const activeType = ref('all');
+const activeType = ref('all'); // 年级班级类型
 const route = useRoute();
 const router = useRouter();
 const taskNo = String(route.params.taskNo || '');
@@ -71,7 +71,7 @@ const taskNo = String(route.params.taskNo || '');
 const loading = ref(false);
 
 const currentTaskInfo = ref<TaskInfo>();
-const activeTabKey = ref('');
+const activeTabKey = ref(''); // 问卷Tab
 
 const taskStatusTag = computed(() => {
   if (!currentTaskInfo.value) {

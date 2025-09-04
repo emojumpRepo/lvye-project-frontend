@@ -55,7 +55,6 @@ const queryParams =
   });
 
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
-  // 连接抽离的组件
   connectedComponent: QuestionnaireResultDialog,
 });
 
@@ -165,6 +164,7 @@ function viewDetail(
       id: row?.id,
       name: row?.name,
       questionnaireName: row?.questionnaireName,
+      questionnaireId: props.questionnaireId,
     })
     .open();
 }

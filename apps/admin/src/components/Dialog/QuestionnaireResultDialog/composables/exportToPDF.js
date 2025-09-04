@@ -15,12 +15,13 @@ pdfMake.vfs = vfs_fonts;
 pdfMake.fonts = fonts;
 
 /**
- * 导出问卷报告和答题记录为PDF
- * @param questionnaireResult 问卷结果数据
- * @param questionnaireAnswer 答题记录数据
- * @param completedTime 完成时间
- * @param studentName 学生姓名
- * @param questionnaireName 问卷名称
+ * 导出问卷报告和答题记录为 PDF
+ * @param {object} params 参数对象
+ * @param {Array<any>} params.questionnaireResult 问卷结果数据
+ * @param {Array<any>} params.questionnaireAnswer 答题记录数据
+ * @param {string|number|Date} params.completedTime 完成时间
+ * @param {string} params.studentName 学生姓名
+ * @param {string} params.questionnaireName 问卷名称
  */
 export async function exportQuestionnaireReportToPDF({
   questionnaireResult,
@@ -307,7 +308,7 @@ function generateAnswerRecords(questionnaireAnswer) {
           ],
           [
             {
-              text: `答案：${item.answer ? formatAnswerForPDF(item.answer) : '未作答'}`,
+              text: `答案：${item.answer ? formatAnswer(item.answer) : '未作答'}`,
               style: 'answerText',
               colSpan: 2,
             },
@@ -326,7 +327,7 @@ function generateAnswerRecords(questionnaireAnswer) {
 /**
  * 格式化答案文本用于PDF显示
  */
-function formatAnswerForPDF(answer) {
+export function formatAnswer(answer) {
   if (!answer) return '';
   return answer
     .replaceAll('&lt;=', '≤')
