@@ -5,15 +5,6 @@ import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
 
-// Figma Dev assets (localhost sources per Dev Mode)
-// IMPORTANT: Use these URLs directly per workspace rules
-const figmaIconIntervene =
-  'http://localhost:3845/assets/9470459d64ab112a182f91a36f411cd903afe046.svg';
-const figmaIconAlert =
-  'http://localhost:3845/assets/34ebb4c161b135e6c18f375d9f7247f8a6cc2e11.svg';
-const figmaIconTask =
-  'http://localhost:3845/assets/8769234d7de8a9ddfc72a2d695b8e8bb7c1fdabb.svg';
-
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
   {
@@ -162,7 +153,8 @@ function onAlertsRefresh() {
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconTask"
+        icon-src="mingcute:task-2-fill"
+        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
         :pagination="{
           total: taskList.length,
           current: taskPage,
@@ -185,7 +177,8 @@ function onAlertsRefresh() {
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconIntervene"
+        icon-src="ix:user-filled"
+        icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
         :pagination="{
           total: interveneList.length,
           current: intervenePage,
@@ -208,7 +201,8 @@ function onAlertsRefresh() {
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconAlert"
+        icon-src="octicon:bell-fill-24"
+        icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
         :pagination="{
           total: alertsList.length,
           current: alertsPage,
