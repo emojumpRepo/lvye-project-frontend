@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router';
 
 import { useVbenModal } from '@vben/common-ui';
 import { Copy } from '@vben/icons';
-import { getStatusColor, getStatusLabel } from '@vben/types';
 
 import {
   Divider,
@@ -14,12 +13,12 @@ import {
   Menu,
   message,
   Progress,
-  Tag,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { deleteAssessmentTask } from '#/api/psychology/assessment/index';
 import EditAssessmentDialog from '#/components/Dialog/EditAssessmentDialog/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
 
 const props = defineProps<{
   card: AssessmentTask;
@@ -126,18 +125,18 @@ function handleDeleteTask() {
     <!-- 卡片标题 -->
     <div class="mb-3 flex items-center justify-between">
       <div class="flex items-center gap-2 text-gray-800">
-        <span class="text-lg font-semibold">{{
-          // card.taskNo?.split('_')[1] ?? ''
-          card.taskName ?? ''
-        }}</span>
+        <span class="text-lg font-semibold">
+          {{ card.taskName ?? '' }}
+        </span>
         <Copy
           class="size-3 cursor-pointer text-gray-300 transition-all duration-200 hover:text-gray-500"
           @click="handleCopyTaskNo"
         />
       </div>
-      <Tag :color="getStatusColor(card.status, 'assessment')">
-        {{ getStatusLabel(card.status, 'assessment') }}
-      </Tag>
+      <LyTag
+        tag-category-key="assessment_task_status"
+        :dict-value="String(card.status)"
+      />
     </div>
 
     <!-- 时间信息 -->
