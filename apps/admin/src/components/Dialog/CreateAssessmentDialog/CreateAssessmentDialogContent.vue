@@ -125,7 +125,7 @@ const isPublish = ref(false); // 是否发布
 const isCommiting = ref(false); // 是否正在提交
 
 // 发布成功页面信息
-const taskId = ref<null | number>(null);
+const taskNo = ref<null | string>(null);
 const selectedStudentCount = computed(() =>
   targetSelectData.value.selected.reduce(
     (acc, cur) =>
@@ -152,7 +152,7 @@ async function handleNext() {
     router.push({
       name: 'AssessmentDetail',
       params: {
-        taskNo: taskId.value?.toString() ?? '',
+        taskNo: taskNo.value?.toString() ?? '',
       },
     });
   } else if (props.step === 4 && !publishSucceeded.value) {
@@ -251,8 +251,10 @@ async function handleCommit(publish: boolean) {
     isPublish.value = publish;
     const res = await createAssessmentTask({
       taskName: basicInfoFormData.value.name,
-      startline: basicInfoFormData.value.timeRange?.[0]?.valueOf?.() ?? undefined,
-      deadline: basicInfoFormData.value.timeRange?.[1]?.valueOf?.() ?? undefined,
+      startline:
+        basicInfoFormData.value.timeRange?.[0]?.valueOf?.() ?? undefined,
+      deadline:
+        basicInfoFormData.value.timeRange?.[1]?.valueOf?.() ?? undefined,
       questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
       deptIdList: targetSelectData.value.selected.flatMap((i) => i.classId),
@@ -261,7 +263,7 @@ async function handleCommit(publish: boolean) {
       isPublish: publish,
     });
 
-    taskId.value = res;
+    taskNo.value = res;
     emit('publish', res);
     message.success(isPublish.value ? '发布测评任务成功' : '创建测评任务成功');
     publishSucceeded.value = true;
@@ -358,7 +360,7 @@ onBeforeUnmount(() => {
     <PublishSuccess
       v-else
       :is-publish="isPublish"
-      :task-id="taskId"
+      :task-no="taskNo"
       :notify-text="notifySendText"
       :finish-date="expectedFinishDate"
     />
