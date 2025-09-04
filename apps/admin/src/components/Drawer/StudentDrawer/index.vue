@@ -8,7 +8,7 @@ import { onMounted, ref } from 'vue';
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Divider, Spin, Tabs } from 'ant-design-vue';
+import { Divider, message, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getStudentPsychologicalStatusTag } from '#/api/constants';
@@ -284,6 +284,13 @@ function handleCreateStudentEventRecord() {
   createStudentEventRecordModalApi.open();
 }
 
+/**
+ * 导出信息
+ */
+function handleExportInfo() {
+  message.warning('即将上线');
+}
+
 onMounted(async () => {
   studentSpecialMark.value = await getDictOptions('student_special_mark');
   studentSexMap.value = await getDictOptions('system_user_sex');
@@ -396,7 +403,9 @@ onMounted(async () => {
               </Tabs.TabPane>
             </Tabs>
             <div class="absolute right-7 top-1.5 flex items-center gap-2">
-              <LyButton type="default" size="middle"> 导出信息 </LyButton>
+              <LyButton type="default" size="middle" @click="handleExportInfo">
+                导出信息
+              </LyButton>
               <LyButton
                 type="success"
                 size="middle"
