@@ -27,7 +27,10 @@ const props = withDefaults(
     secondaryBadge?: null | SecondaryBadge;
     // leading background & left-border accent
     severity?: Severity;
-    statusBadge?: null | { color: 'green' | 'orange' | 'red'; text: string };
+    statusBadge?: null | {
+      color: 'green' | 'grey' | 'orange' | 'red';
+      text: string;
+    };
     time?: null | string;
   }>(),
   {
@@ -43,7 +46,7 @@ const props = withDefaults(
 );
 
 const containerClasses = computed(() => {
-  const base = 'rounded-lg p-4 sm:p-5';
+  const base = 'rounded-lg p-4';
   switch (props.severity) {
     case 'danger': {
       return `${base} bg-[rgba(250,75,75,0.06)] border-l-4 border-[#FA4B4B]`;
@@ -79,10 +82,14 @@ const rightActionType = computed(() => {
 
 const statusBadgeClasses = computed(() => {
   if (!props.statusBadge) return '';
-  const common = 'px-1.5 py-1 rounded-[19px] text-white text-xs';
+  const common =
+    'px-1.5 py-1 rounded-[19px] text-white text-[10px] leading-[10px] border border-transparent';
   switch (props.statusBadge.color) {
     case 'green': {
       return `${common} bg-[#14E77E]`;
+    }
+    case 'grey': {
+      return `${common} !text-[#0E1E42] bg-[#DAE4F8]`;
     }
     case 'orange': {
       return `${common} bg-[#FF9D00]`;
@@ -98,57 +105,71 @@ const statusBadgeClasses = computed(() => {
 
 const secondaryBadgeClasses = computed(() => {
   if (!props.secondaryBadge) return '';
+  const common = 'px-1.5 py-1 rounded-[19px] text-[10px] leading-[10px] border';
   // Match figma swatches
   if (props.secondaryBadge.type === 'ai') {
-    return 'px-1.5 py-1 rounded-[19px] text-[#01BE5F] text-xs bg-[#F2FFF6] border border-[#00EC76]';
+    return `${common} text-[#01BE5F] bg-[#F2FFF6] border-[#00EC76]`;
   }
   if (props.secondaryBadge.type === 'teacher') {
-    return 'px-1.5 py-1 rounded-[19px] text-[#0060FF] text-xs bg-[#EBF1FA] border border-[#0060FF]';
+    return `${common} text-[#0060FF] bg-[#EBF1FA] border-[#0060FF]`;
   }
   // system
-  return 'px-1.5 py-1 rounded-[19px] text-[#0E1E42] text-xs bg-[#DDE8FF] border border-[#98B4EE]';
+  return `${common} text-[#0E1E42] bg-[#DDE8FF] border-[#98B4EE]`;
 });
 </script>
 
 <template>
-  <div :class="['w-full', containerClasses]">
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <div class="flex flex-wrap items-center gap-1.5">
-        <div class="text-sm font-semibold text-black sm:text-base">{{ name }}</div>
-        <div class="size-0.5 overflow-hidden rounded-full">
-          <span class="block size-0.5 bg-[#D9D9D9]"></span>
-        </div>
-        <div class="text-sm font-semibold text-black sm:text-base">{{ className }}</div>
-        <div v-if="statusBadge" :class="statusBadgeClasses">
-          {{ statusBadge!.text }}
-        </div>
-        <div v-if="secondaryBadge" :class="secondaryBadgeClasses">
-          {{ secondaryBadge!.text }}
+  <div
+    class="flex w-full items-center justify-between"
+    :class="[containerClasses]"
+  >
+    <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="text-sm font-semibold text-black">
+            {{ name }}
+          </div>
+          <div class="size-0.5 overflow-hidden rounded-full">
+            <span class="block size-0.5 rounded-full bg-black"></span>
+          </div>
+          <div class="text-sm font-semibold text-black">
+            {{ className }}
+          </div>
+          <div v-if="statusBadge" :class="statusBadgeClasses">
+            {{ statusBadge!.text }}
+          </div>
+          <div v-if="secondaryBadge" :class="secondaryBadgeClasses">
+            {{ secondaryBadge!.text }}
+          </div>
         </div>
       </div>
-      <div v-if="rightAction" class="sm:ml-auto">
+
+      <div v-if="description" class="text-xs text-[#959599]">
+        {{ description }}
+      </div>
+
+      <div class="flex items-center gap-1.5 text-xs text-[#959599]">
+        <span v-if="date">{{ date }}</span>
+        <span v-if="time">{{ time }}</span>
+      </div>
+
+      <div v-if="counselor" class="text-xs text-[#959599]">
+        咨询师：{{ counselor }}
+      </div>
+    </div>
+
+    <div class="sm:ml-auto">
+      <slot name="rightAction">
         <LyButton
           size="middle"
+          font-size="small"
           ghost
           :type="rightActionType as any"
-          class="h-8 rounded-md border px-2.5 text-xs"
+          class="px-[10px]"
         >
           {{ rightAction!.text }}
         </LyButton>
-      </div>
-    </div>
-
-    <div v-if="description" class="mt-2 text-xs text-[#959599]">
-      {{ description }}
-    </div>
-
-    <div class="mt-2 flex items-center gap-1.5 text-xs text-[#959599]">
-      <span v-if="date">{{ date }}</span>
-      <span v-if="time">{{ time }}</span>
-    </div>
-
-    <div v-if="counselor" class="mt-1 text-xs text-[#959599]">
-      咨询师：{{ counselor }}
+      </slot>
     </div>
   </div>
 </template>

@@ -76,7 +76,7 @@ const containerClasses = computed(() => {
         <template #extra>
           <div
             v-if="count !== null"
-            class="line-height-1 relative rounded-2xl border border-[#FFC57B] bg-[#FFF1E0] px-3 text-sm font-semibold text-[#FF8400]"
+            class="relative rounded-2xl border border-[#FFC57B] bg-[#FFF1E0] px-3 text-[14px] font-semibold leading-[14px] text-[#FF8400]"
           >
             {{ count }}
           </div>
@@ -88,7 +88,7 @@ const containerClasses = computed(() => {
       <slot></slot>
     </div>
 
-    <div v-if="pagination" class="px-4 pb-5 sm:px-6">
+    <div v-if="pagination" class="px-[70px] pb-5">
       <APagination
         size="small"
         :current="pagination.current ?? 1"
