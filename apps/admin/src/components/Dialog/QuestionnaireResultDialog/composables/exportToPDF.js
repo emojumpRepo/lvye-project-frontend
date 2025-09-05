@@ -15,12 +15,13 @@ pdfMake.vfs = vfs_fonts;
 pdfMake.fonts = fonts;
 
 /**
- * 导出问卷报告和答题记录为PDF
- * @param questionnaireResult 问卷结果数据
- * @param questionnaireAnswer 答题记录数据
- * @param completedTime 完成时间
- * @param studentName 学生姓名
- * @param questionnaireName 问卷名称
+ * 导出问卷报告和答题记录为 PDF
+ * @param {object} params 参数对象
+ * @param {Array<any>} params.questionnaireResult 问卷结果数据
+ * @param {Array<any>} params.questionnaireAnswer 答题记录数据
+ * @param {string|number|Date} params.completedTime 完成时间
+ * @param {string} params.studentName 学生姓名
+ * @param {string} params.questionnaireName 问卷名称
  */
 export async function exportQuestionnaireReportToPDF({
   questionnaireResult,
@@ -102,6 +103,7 @@ export async function exportQuestionnaireReportToPDF({
           fontSize: 12,
           bold: true,
           margin: [0, 5, 0, 5],
+          lineHeight: 1.4,
         },
         answerText: {
           fontSize: 11,
@@ -257,13 +259,36 @@ function generateAnswerRecords(questionnaireAnswer) {
 
   const content = [];
 
+  // 展开新结构：QuestionnaireAnswerItem[] -> Question[]
+  const allQuestions = questionnaireAnswer
+    .flatMap((qa) => (Array.isArray(qa.answers) ? qa.answers : []))
+    .filter(Boolean);
+
+  function getDisplayAnswer(question) {
+    if (!question || !question.answer) return '未作答';
+    if (question.type === 'checkbox') {
+      return (
+        question.answer
+          .split(/[,，]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((s) => formatAnswer(s))
+          .join('，') || '未作答'
+      );
+    }
+    return formatAnswer(question.answer);
+  }
+
   // 统计信息
-  const totalScore = questionnaireAnswer.reduce(
-    (sum, item) => sum + (item.score || 0),
+  const totalScore = allQuestions.reduce(
+    (sum, q) => sum + (Number(q.score) || 0),
     0,
   );
-  const answeredCount = questionnaireAnswer.length;
-  const unansweredCount = questionnaireAnswer.length - answeredCount;
+  const totalCount = allQuestions.length;
+  const answeredCount = allQuestions.filter(
+    (q) => typeof q.answer === 'string' && q.answer.trim() !== '',
+  ).length;
+  const unansweredCount = totalCount - answeredCount;
 
   content.push({
     table: {
@@ -277,7 +302,7 @@ function generateAnswerRecords(questionnaireAnswer) {
         ],
         [
           { text: totalScore.toString(), style: 'tableCell' },
-          { text: questionnaireAnswer.length.toString(), style: 'tableCell' },
+          { text: totalCount.toString(), style: 'tableCell' },
           { text: answeredCount.toString(), style: 'tableCell' },
           { text: unansweredCount.toString(), style: 'tableCell' },
         ],
@@ -287,27 +312,30 @@ function generateAnswerRecords(questionnaireAnswer) {
   });
 
   // 详细答题记录
-  questionnaireAnswer.forEach((item, index) => {
+  allQuestions.forEach((q, index) => {
     const questionNumber = index + 1;
+    const displayAnswer = getDisplayAnswer(q);
+
     content.push({
       table: {
-        widths: ['*', 'auto'],
+        widths: ['90%', '10%'],
         body: [
           [
             {
-              text: `第${questionNumber}题：${item.title || ''}`,
+              text: `第${questionNumber}题：${q.title || ''}`,
               style: 'questionText',
-              margin: [0, 0, 0, 5],
+              margin: [0, 0, 10, 5],
             },
             {
-              text: `得分：${item.score || 0}`,
+              text: `得分：${q && q.score ? q.score : 0}`,
               style: 'scoreText',
               margin: [0, 0, 0, 10],
+              alignment: 'right',
             },
           ],
           [
             {
-              text: `答案：${item.answer ? formatAnswerForPDF(item.answer) : '未作答'}`,
+              text: `答案：${displayAnswer}`,
               style: 'answerText',
               colSpan: 2,
             },
@@ -326,7 +354,7 @@ function generateAnswerRecords(questionnaireAnswer) {
 /**
  * 格式化答案文本用于PDF显示
  */
-function formatAnswerForPDF(answer) {
+export function formatAnswer(answer) {
   if (!answer) return '';
   return answer
     .replaceAll('&lt;=', '≤')

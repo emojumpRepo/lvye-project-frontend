@@ -1,4 +1,4 @@
-import type { QuestionnaireVO } from '@vben/types';
+import type { Question, QuestionnaireVO } from '@vben/types';
 
 import { QUESTIONNAIRE_CONFIG_CALCULATE_TYPE } from '#/api/constants';
 import { requestClient } from '#/api/request';
@@ -73,6 +73,25 @@ export interface QuestionnaireResultPageReqVO {
   level?: string;
   completionTime?: string[];
   createTime?: string[];
+}
+
+// ============== 问卷系统 ===============
+
+export interface QuestionnaireQuestionReq {
+  code: number;
+  data: Question[];
+  message: string;
+  success: boolean;
+}
+
+/** 获取问卷题目 */
+export function getAssessmentQuestionnaireQuestion(questionnaireId: string) {
+  return requestClient.get<QuestionnaireQuestionReq>(
+    '/psychology/questionnaire/survey-questions',
+    {
+      params: { questionnaireId },
+    },
+  );
 }
 
 // 创建问卷

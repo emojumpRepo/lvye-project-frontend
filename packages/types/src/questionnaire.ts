@@ -60,3 +60,28 @@ export interface QuestionnaireAnswerDataVO {
   score: number;
   title: string;
 }
+
+// 输入框类型
+export interface InputObject {
+  required: boolean;
+  placeholder: string;
+  key: string;
+}
+
+// 复杂选项类型
+export interface OptionObject {
+  text: string;
+  input: InputObject;
+}
+
+// 问题类型
+export interface Question extends QuestionnaireAnswerDataVO {
+  type: string;
+  options: Array<OptionObject | string>;
+}
+
+// 每套问卷答案
+export interface QuestionnaireAnswerItem {
+  questionnaireId: string;
+  answers: Question[];
+}
