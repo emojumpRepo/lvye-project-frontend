@@ -1,13 +1,12 @@
 import type {
+  AssessmentQuestionnaireResultVO,
   QuestionnaireAnswerItem,
-  QuestionnaireResultDataVO,
 } from '@vben/types';
 
 export declare function exportQuestionnaireReportToPDF(params: {
   completedTime?: Date | number | string;
   questionnaireAnswer: QuestionnaireAnswerItem[];
-  questionnaireName: string;
-  questionnaireResult: QuestionnaireResultDataVO[];
+  questionnaireResult: AssessmentQuestionnaireResultVO[];
   studentName: string;
 }): Promise<void>;
 

@@ -1,6 +1,7 @@
 import type { PageParam, PageResult } from '@vben/request';
 import type {
   ASSESSMENT_TARGET_TYPE,
+  AssessmentResultVO,
   AssessmentTask,
   QuestionnaireResultVO,
 } from '@vben/types';
@@ -381,5 +382,13 @@ export function exportAssessmentReport(taskId: number) {
 export function getAssessmentQuestionnaireResult(id: string) {
   return requestClient.get<QuestionnaireResultVO>(
     `/psychology/questionnaire/get-result?id=${id}`,
+  );
+}
+
+/** 测评报告结果 */
+export function getAssessmentResult(id: string) {
+  return requestClient.get<AssessmentResultVO>(
+    '/psychology/assessment-result/get',
+    { params: { id } },
   );
 }

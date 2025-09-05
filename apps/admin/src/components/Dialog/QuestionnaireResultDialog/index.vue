@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type {
+  AssessmentQuestionnaireResultVO,
+  AssessmentResultVO,
   Question,
   QuestionnaireAnswerDataVO,
   QuestionnaireAnswerItem,
@@ -13,11 +15,13 @@ import { useVbenModal } from '@vben/common-ui';
 import { Empty, message, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import { getAssessmentQuestionnaireResult } from '#/api/psychology/assessment/index';
+import {
+  getAssessmentQuestionnaireResult,
+  getAssessmentResult,
+} from '#/api/psychology/assessment/index';
 import { getAssessmentQuestionnaireQuestion } from '#/api/psychology/questionnaire/index';
 import LyButton from '#/components/LyButton/index.vue';
 
-import AssessmentRadar from './components/AssessmentRadar.vue';
 import AssessmentResult from './components/AssessmentResult.vue';
 import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
@@ -25,10 +29,11 @@ import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
 
 const questionnaireResult = ref<QuestionnaireResultDataVO[]>([]);
 const questionnaireAnswer = ref<QuestionnaireAnswerItem[]>([]);
+const assessmentResult = ref<AssessmentResultVO>();
 const queryData = ref();
 const completedTime = ref<number>();
 const activeKey = ref('result');
-const loading = ref(false);
+const loading = ref(true);
 
 // 导出问卷报告
 const handleExport = async () => {
@@ -39,11 +44,10 @@ const handleExport = async () => {
 
   try {
     await exportQuestionnaireReportToPDF({
-      questionnaireResult: questionnaireResult.value,
+      questionnaireResult: assessmentResult.value!.questionnaireResults,
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
       studentName: queryData.value.name,
-      questionnaireName: queryData.value.questionnaireName,
     });
   } catch (error) {
     console.error('导出失败:', error);
@@ -62,27 +66,71 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
       loading.value = true;
       queryData.value = await questionnaireResultModalApi.getData();
       try {
+        const safeParse = (raw: string, fallback: any) => {
+          try {
+            return JSON.parse(raw);
+          } catch (error) {
+            console.error('JSON 解析失败', error, raw);
+            return fallback;
+          }
+        };
+
         if (queryData.value.questionnaireId) {
           const response = await getAssessmentQuestionnaireResult(
             queryData.value.id,
           );
-          questionnaireResult.value = JSON.parse(
+
+          questionnaireResult.value = safeParse(
             response.resultData,
-          ) as QuestionnaireResultDataVO[];
-          const parsedQuestionnaireAnswer = JSON.parse(
+            [] as QuestionnaireResultDataVO[],
+          );
+
+          console.log(questionnaireResult.value);
+
+          const parsedQuestionnaireAnswer = safeParse(
             response.answers,
-          ) as QuestionnaireAnswerDataVO[];
+            [] as QuestionnaireAnswerDataVO[],
+          );
+
           const newQuestionnaireAnswer = await getQuestionnaireQuestion(
             queryData.value.questionnaireId,
             parsedQuestionnaireAnswer,
           );
+
           questionnaireAnswer.value = [
             {
-              answers: newQuestionnaireAnswer as Question[],
+              questionnaireName: queryData.value.questionnaireName,
+              answers: (newQuestionnaireAnswer as Question[]) ?? [],
               questionnaireId: queryData.value.questionnaireId,
             },
           ];
           completedTime.value = response.completedTime;
+        } else {
+          const response = await getAssessmentResult(queryData.value.id);
+          if (response) {
+            assessmentResult.value = response;
+            completedTime.value = response.updateTime;
+
+            const results = assessmentResult.value.questionnaireResults;
+            const answersList = await Promise.all(
+              results.map(async (item: AssessmentQuestionnaireResultVO) => {
+                const parsedAnswers = safeParse(
+                  item.answers,
+                  [] as QuestionnaireAnswerDataVO[],
+                );
+                const merged = await getQuestionnaireQuestion(
+                  item.questionnaireId.toString(),
+                  parsedAnswers,
+                );
+                return {
+                  questionnaireName: item.questionnaireName,
+                  questionnaireId: item.questionnaireId,
+                  answers: (merged as Question[]) ?? [],
+                };
+              }),
+            );
+            questionnaireAnswer.value = answersList;
+          }
         }
       } catch (error) {
         console.error('获取问卷结果失败', error);
@@ -141,24 +189,18 @@ async function getQuestionnaireQuestion(
             <div class="flex items-center gap-3">
               <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
               <h2 class="text-xl font-semibold text-gray-800">
-                {{ queryData.questionnaireName }}结果分析
+                {{ queryData.questionnaireName || queryData.taskName }}结果分析
               </h2>
             </div>
 
-            <div v-if="questionnaireResult.length > 0" class="px-4">
-              <template
-                v-if="
-                  (!queryData.questionnaireId ||
-                    queryData.questionnaireId === '12') &&
-                  questionnaireResult &&
-                  questionnaireResult.length > 0
-                "
-              >
-                <AssessmentRadar :questionnaire-result="questionnaireResult" />
-                <AssessmentResult
-                  :questionnaire-result="questionnaireResult"
-                  :questionnaire-name="queryData.questionnaireName"
-                />
+            <div
+              v-if="
+                !loading && (assessmentResult || questionnaireResult.length > 0)
+              "
+              class="px-4"
+            >
+              <template v-if="!queryData.questionnaireId && assessmentResult">
+                <AssessmentResult :assessment-result="assessmentResult!" />
               </template>
 
               <!-- 维度结果展示 -->
@@ -178,31 +220,34 @@ async function getQuestionnaireQuestion(
           </div>
         </Tabs.TabPane>
         <Tabs.TabPane key="answer" tab="答题记录">
-          <template v-if="questionnaireAnswer.length > 0">
-            <div
-              class="h-full space-y-6 overflow-y-auto"
-              v-for="item in questionnaireAnswer"
-              :key="item.questionnaireId"
-            >
-              <!-- 问卷信息标题 -->
-              <div class="mr-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
-                  <h2 class="text-xl font-semibold text-gray-800">
-                    {{ queryData.questionnaireName }}作答
-                  </h2>
-                </div>
-                <div class="flex items-center gap-3 text-xs">
-                  <span> 作答人：{{ queryData.name }} </span>
-                  <span>
-                    作答时间：{{
-                      dayjs(completedTime).format('YYYY-MM-DD HH:mm:ss')
-                    }}
-                  </span>
+          <template v-if="!loading && questionnaireAnswer.length > 0">
+            <div class="h-full overflow-y-auto">
+              <div class="mr-6 flex items-center justify-end gap-3 text-xs">
+                <span> 作答人：{{ queryData.name }} </span>
+                <span>
+                  作答时间：{{
+                    dayjs(completedTime).format('YYYY-MM-DD HH:mm:ss')
+                  }}
+                </span>
+              </div>
+              <div class="space-y-8">
+                <div
+                  v-for="item in questionnaireAnswer"
+                  :key="item.questionnaireId"
+                >
+                  <!-- 问卷信息标题 -->
+                  <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
+                      <h2 class="text-xl font-semibold text-gray-800">
+                        {{ item.questionnaireName }}作答
+                      </h2>
+                    </div>
+                  </div>
+
+                  <QuestionnaireAnswer :answers="item.answers" />
                 </div>
               </div>
-
-              <QuestionnaireAnswer :answers="item.answers" />
             </div>
           </template>
           <template v-else>
@@ -213,7 +258,12 @@ async function getQuestionnaireQuestion(
         </Tabs.TabPane>
 
         <template #rightExtra>
-          <LyButton type="success" size="small" @click="handleExport">
+          <LyButton
+            v-if="queryData.taskName"
+            type="success"
+            size="small"
+            @click="handleExport"
+          >
             导出
           </LyButton>
         </template>

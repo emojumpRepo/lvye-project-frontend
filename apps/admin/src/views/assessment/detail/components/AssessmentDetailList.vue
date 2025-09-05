@@ -21,12 +21,16 @@ import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
 
 interface Props {
   taskNo?: string;
+  taskName?: string;
   questionnaireId?: string;
+  hasHealthSelfAssessment?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   taskNo: '',
+  taskName: '',
   questionnaireId: '',
+  hasHealthSelfAssessment: false,
 });
 
 const actionButtons = ref([
@@ -156,17 +160,28 @@ function handleBatchTransferToIntervention() {
 function viewDetail(
   row: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
 ) {
-  if (!row?.id) {
-    return message.error('测评结果暂不支持查看');
+  if (props.questionnaireId) {
+    questionnaireResultModalApi
+      .setData({
+        id: row?.id,
+        name: row?.name,
+        questionnaireName: row?.questionnaireName,
+        questionnaireId: props.questionnaireId,
+      })
+      .open();
+  } else {
+    if (props.hasHealthSelfAssessment) {
+      questionnaireResultModalApi
+        .setData({
+          id: row?.id,
+          name: row?.name,
+          taskName: props.taskName,
+        })
+        .open();
+    } else {
+      return message.error('问卷暂不支持查看');
+    }
   }
-  questionnaireResultModalApi
-    .setData({
-      id: row?.id,
-      name: row?.name,
-      questionnaireName: row?.questionnaireName,
-      questionnaireId: props.questionnaireId,
-    })
-    .open();
 }
 
 // 导出数据

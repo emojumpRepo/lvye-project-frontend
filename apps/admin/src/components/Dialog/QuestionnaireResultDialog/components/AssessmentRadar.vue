@@ -1,26 +1,40 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
-import type { QuestionnaireResultDataVO } from '@vben/types';
+import type {
+  AssessmentQuestionnaireResultVO,
+  QuestionnaireResultDataVO,
+} from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
 import { EchartsUI, useEcharts } from '@vben/plugins/echarts';
 
 const props = defineProps<{
-  questionnaireResult: QuestionnaireResultDataVO[];
+  questionnaireResult: AssessmentQuestionnaireResultVO[];
 }>();
 
 const chartRef = ref<EchartsUIType>();
 const { renderEcharts } = useEcharts(chartRef);
 
-const indicators = computed(() => {
-  return props.questionnaireResult.map((item) => ({
-    name: (item.dimensionName ?? '').replaceAll('自我评价', '').trim(),
-  }));
+const dimensions = computed(() => {
+  return props.questionnaireResult.flatMap(
+    (result: AssessmentQuestionnaireResultVO) => {
+      const reportContent = JSON.parse(
+        result.reportContent,
+      ) as QuestionnaireResultDataVO[];
+      return reportContent
+        .filter((item) => Boolean(item.dimensionName))
+        .map((item: QuestionnaireResultDataVO) => ({
+          name: (item.dimensionName ?? '').replaceAll('自我评价', '').trim(),
+          score: Number(item.score ?? 0),
+        }));
+    },
+  );
 });
-const scores = computed(() => {
-  return props.questionnaireResult.map((item) => item.score);
-});
+
+const indicators = computed(() => dimensions.value);
+
+const scores = computed(() => indicators.value.map((d) => d.score));
 
 function renderChart() {
   renderEcharts({

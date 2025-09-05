@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import type { QuestionnaireResultDataVO } from '@vben/types';
+import type { AssessmentResultVO } from '@vben/types';
+
+import { computed } from 'vue';
 
 import { Table } from 'ant-design-vue';
 
 import LyTag from '#/components/LyTag/index.vue';
 
-defineProps<{
-  questionnaireName: string;
-  questionnaireResult: QuestionnaireResultDataVO[];
+import AssessmentRadar from './AssessmentRadar.vue';
+
+const props = defineProps<{
+  assessmentResult: AssessmentResultVO;
 }>();
 
 const columns = [
@@ -25,34 +28,43 @@ const columns = [
   },
 ];
 
-const extraData = {
-  riskLevel: 1,
-  evaluate: '目前为心理健康问题的中风险人群。',
-  suggestions: '建议进行心理咨询，以缓解焦虑和压力。',
-};
+const interventionSuggestions = computed(() => {
+  const parsed = JSON.parse(props.assessmentResult.interventionSuggestions);
+  return parsed.sort((a: any, b: any) => a.priority - b.priority);
+});
 </script>
 
 <template>
   <div>
+    <AssessmentRadar
+      :questionnaire-result="assessmentResult.questionnaireResults"
+    />
     <div class="space-y-4">
-      <Table
-        bordered
-        :columns="columns"
-        :data-source="questionnaireResult"
-        :pagination="false"
+      <div
+        v-for="item in assessmentResult.questionnaireResults"
+        :key="item.questionnaireId"
       >
-        <template #bodyCell="{ column, text }">
-          <template v-if="column.dataIndex === 'isAbnormal'">
-            <LyTag
-              :color-type="text === 0 ? 'success' : 'error'"
-              :tag-label="text === 0 ? '正常' : '异常'"
-            />
+        <Table
+          bordered
+          :columns="columns"
+          :data-source="JSON.parse(item.reportContent)"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, text }">
+            <template v-if="column.dataIndex === 'isAbnormal'">
+              <LyTag
+                :color-type="text === 0 ? 'success' : 'error'"
+                :tag-label="text === 0 ? '正常' : '异常'"
+              />
+            </template>
           </template>
-        </template>
-        <template #title>
-          <div class="font-bold">{{ questionnaireName }}</div>
-        </template>
-      </Table>
+          <template #title>
+            <div class="font-bold">
+              {{ item.questionnaireName }}
+            </div>
+          </template>
+        </Table>
+      </div>
     </div>
 
     <!-- 测评总结 -->
@@ -65,28 +77,49 @@ const extraData = {
       <div class="mb-4 flex items-center">
         <span class="w-20 text-sm font-medium text-gray-600">风险等级:</span>
         <LyTag
-          tag-category-key="questionnaire_result_risk_level"
-          :dict-value="extraData.riskLevel"
+          color-type="success"
+          :tag-label="assessmentResult.riskLevelDescription"
         />
       </div>
 
       <!-- 评估结果 -->
       <div class="mb-4">
         <div class="mb-2 text-sm font-medium text-gray-600">评估结果:</div>
-        <div class="rounded bg-blue-50 p-3">
+        <div class="rounded-md bg-white p-3">
           <p class="text-sm leading-relaxed text-gray-700">
-            {{ extraData.evaluate }}
+            {{ assessmentResult.riskLevelIntervention.evaluation }}
           </p>
         </div>
       </div>
 
-      <!-- 建议 -->
+      <!-- 干预建议 -->
       <div>
-        <div class="mb-2 text-sm font-medium text-gray-600">专业建议:</div>
-        <div class="rounded bg-green-50 p-3">
-          <p class="text-sm leading-relaxed text-gray-700">
-            {{ extraData.suggestions }}
-          </p>
+        <div class="mb-2 text-sm font-medium text-gray-600">干预建议:</div>
+        <div class="space-y-3">
+          <div
+            v-for="suggestion in interventionSuggestions"
+            :key="suggestion.priority"
+            class="rounded-md bg-white p-3"
+          >
+            <div class="mb-2 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span
+                  class="bg-primary flex size-4 items-center justify-center rounded-full text-xs text-white"
+                >
+                  {{ suggestion.priority }}
+                </span>
+                <h4 class="text-sm font-semibold text-gray-800">
+                  {{ suggestion.title }}
+                </h4>
+              </div>
+              <span class="text-primary text-xs">
+                {{ suggestion.timeframe }}
+              </span>
+            </div>
+            <p class="ml-6 text-sm leading-relaxed text-gray-700">
+              {{ suggestion.content }}
+            </p>
+          </div>
         </div>
       </div>
     </div>

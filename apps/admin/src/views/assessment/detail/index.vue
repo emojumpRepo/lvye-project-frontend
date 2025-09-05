@@ -73,6 +73,10 @@ const loading = ref(false);
 const currentTaskInfo = ref<TaskInfo>();
 const activeTabKey = ref(''); // 问卷Tab
 
+/** 是否存在身心健康自评问卷 */
+const hasHealthSelfAssessment = ref(false);
+
+/** 任务状态标签 */
 const taskStatusTag = computed(() => {
   if (!currentTaskInfo.value) {
     return null;
@@ -150,6 +154,10 @@ async function loadTaskData() {
       };
       activeTabKey.value =
         currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
+      hasHealthSelfAssessment.value =
+        currentTaskInfo.value.questionnairesTabs.some(
+          (item) => item.key === '12',
+        );
     }
   } catch (error) {
     console.error('Failed to load task data:', error);
@@ -256,7 +264,12 @@ onMounted(async () => {
     </div>
 
     <!-- 年级管理区域 -->
-    <AssessmentDetailList :task-no="taskNo" :questionnaire-id="activeTabKey" />
+    <AssessmentDetailList
+      :task-no="taskNo"
+      :task-name="currentTaskInfo?.taskName"
+      :questionnaire-id="activeTabKey"
+      :has-health-self-assessment="hasHealthSelfAssessment"
+    />
   </div>
 </template>
 
