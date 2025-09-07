@@ -1,32 +1,87 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import type { AssessmentTaskRiskLevelStatistics } from '@vben/types';
+
+import { computed, ref, watch } from 'vue';
 
 import {
-  Pagination as APagination,
+  Empty as AEmpty,
   Progress as AProgress,
   Spin as ASpin,
+  message,
 } from 'ant-design-vue';
 
+import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessment/index';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
+import { getDictLabel } from '#/utils/dict';
+
+interface RiskLevelConfig {
+  level: number;
+  color: string;
+  bgColor?: string;
+}
 
 const props = defineProps<{
   loading: boolean;
+  taskNo: string;
 }>();
 
-const currentPage = ref(1);
-const pageSize = ref(5);
-const totalPages = ref(20);
+const assessmentTaskRiskLevelStatistics =
+  ref<AssessmentTaskRiskLevelStatistics>();
 
-const goToPage = (p: number) => {
-  if (p >= 1 && p <= totalPages.value) currentPage.value = p;
-};
+// 风险等级配置
+const riskLevelConfigs: RiskLevelConfig[] = [
+  { level: 4, color: '#FF0831' },
+  { level: 3, color: '#FF9C05' },
+  { level: 2, color: '#1966FF' },
+  { level: 1, color: '#04DC70' },
+];
+
+// 计算风险等级统计数据
+const riskLevelStats = computed(() => {
+  if (!assessmentTaskRiskLevelStatistics.value?.totalList) {
+    return [];
+  }
+
+  const statsMap = new Map(
+    assessmentTaskRiskLevelStatistics.value.totalList.map((item) => [
+      item.riskLevel,
+      item.count,
+    ]),
+  );
+
+  return riskLevelConfigs.map((config) => ({
+    ...config,
+    count: statsMap.get(config.level) || 0,
+    label: getDictLabel('questionnaire_result_risk_level', config.level),
+  }));
+});
+
+watch(
+  () => props.taskNo,
+  async (newTaskNo: string) => {
+    if (newTaskNo) {
+      try {
+        const response = await getAssessmentTaskRiskLevelStatistics(newTaskNo);
+        if (!response) {
+          assessmentTaskRiskLevelStatistics.value = undefined;
+          return message.error('获取风险统计信息失败');
+        }
+        assessmentTaskRiskLevelStatistics.value = response;
+      } catch (error) {
+        console.error('获取风险统计信息失败', error);
+        message.error('获取风险统计信息失败，请重试');
+      }
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <div class="box-border flex h-full flex-col gap-6 rounded-xl bg-white p-6">
     <ASpin :spinning="props.loading">
       <div class="flex h-full flex-col justify-between">
-        <div class="space-y-6">
+        <div class="flex-1">
           <LyCardTitle
             icon="material-symbols:error-rounded"
             title="风险分布"
@@ -34,57 +89,46 @@ const goToPage = (p: number) => {
             icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
           />
 
-          <div class="grid grid-cols-4 gap-4">
-            <div
-              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-            >
-              <span class="text-2xl font-bold text-[#FF0831]">20</span>
-              <span class="text-xs text-[#979899]">高危</span>
+          <div v-if="assessmentTaskRiskLevelStatistics" class="mt-6 space-y-6">
+            <div class="mt-6 grid grid-cols-4 gap-4">
+              <div
+                v-for="stat in riskLevelStats"
+                :key="stat.level"
+                class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+              >
+                <span
+                  class="text-2xl font-bold"
+                  :class="stat.bgColor"
+                  :style="{ color: stat.bgColor ? undefined : stat.color }"
+                >
+                  {{ stat.count }}
+                </span>
+                <span class="text-xs text-[#979899]">
+                  {{ stat.label }}
+                </span>
+              </div>
             </div>
-            <div
-              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-            >
-              <span class="text-2xl font-bold text-[#FF9C05]">20</span>
-              <span class="text-xs text-[#979899]">中度</span>
-            </div>
-            <div
-              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-            >
-              <span class="text-2xl font-bold text-[#1966FF]">0</span>
-              <span class="text-xs text-[#979899]">关注</span>
-            </div>
-            <div
-              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-            >
-              <span class="text-primary text-2xl font-bold">20</span>
-              <span class="text-xs text-[#979899]">正常</span>
+
+            <div class="flex flex-col gap-2 rounded-2xl bg-[#F7F8FA] p-4">
+              <div class="flex items-center justify-between gap-10">
+                <span class="whitespace-nowrap font-bold">一年级</span>
+                <span class="text-primary whitespace-nowrap text-sm">100</span>
+                <span class="whitespace-nowrap text-sm text-[#FF9C05]">40</span>
+                <span class="whitespace-nowrap text-sm text-[#FF0831]">20</span>
+                <AProgress
+                  :percent="80"
+                  :size="14"
+                  :show-info="false"
+                  :success="{ percent: 40 }"
+                  trail-color="#FF0831"
+                />
+              </div>
             </div>
           </div>
 
-          <div class="flex flex-col gap-2 rounded-2xl bg-[#F7F8FA] p-4">
-            <div class="flex items-center justify-between gap-10">
-              <span class="whitespace-nowrap font-bold">一年级</span>
-              <span class="text-primary whitespace-nowrap text-sm">100</span>
-              <span class="whitespace-nowrap text-sm text-[#FF9C05]">40</span>
-              <span class="whitespace-nowrap text-sm text-[#FF0831]">20</span>
-              <AProgress
-                :percent="80"
-                :size="14"
-                :show-info="false"
-                :success="{ percent: 40 }"
-                trail-color="#FF0831"
-              />
-            </div>
+          <div v-else class="flex-center h-full">
+            <AEmpty />
           </div>
-        </div>
-
-        <div class="flex justify-end self-end">
-          <APagination
-            :current="currentPage"
-            :page-size="pageSize"
-            :total="20"
-            @change="goToPage"
-          />
         </div>
       </div>
     </ASpin>

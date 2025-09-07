@@ -3,6 +3,7 @@ import type {
   ASSESSMENT_TARGET_TYPE,
   AssessmentResultVO,
   AssessmentTask,
+  AssessmentTaskRiskLevelStatistics,
   QuestionnaireResultVO,
 } from '@vben/types';
 
@@ -363,17 +364,10 @@ export function getAssessmentStatistics(params: {
   );
 }
 
-/** 导出测评结果 */
-export function exportAssessmentResults(taskId: number) {
-  return requestClient.download(
-    `/psychology/assessment-task/export-results?taskId=${taskId}`,
-  );
-}
-
-/** 导出测评报告 */
-export function exportAssessmentReport(taskId: number) {
-  return requestClient.download(
-    `/psychology/assessment-task/export-report?taskId=${taskId}`,
+/** 获取任务风险等级统计信息 */
+export function getAssessmentTaskRiskLevelStatistics(taskNo: string) {
+  return requestClient.get<AssessmentTaskRiskLevelStatistics>(
+    `/psychology/assessment-task/risk-level-statistics?taskNo=${taskNo}`,
   );
 }
 

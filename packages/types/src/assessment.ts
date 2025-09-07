@@ -99,6 +99,23 @@ export interface AssessmentResultVO {
   updateTime: number;
 }
 
+/** 风险等级统计类型 */
+export interface RiskLevel {
+  riskLevel: number;
+  count: number;
+}
+
+export interface GradeRiskLevel {
+  gradeDeptId: number;
+  gradeName: string;
+  riskLevelList: RiskLevel[];
+}
+
+export interface AssessmentTaskRiskLevelStatistics {
+  totalList: RiskLevel[];
+  gradeList: GradeRiskLevel[];
+}
+
 // 测评状态枚举
 export const ASSESSMENT_STATUS = {
   DRAFT: 0,
