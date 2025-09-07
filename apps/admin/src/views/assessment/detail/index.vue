@@ -269,6 +269,7 @@ onMounted(async () => {
       :task-name="currentTaskInfo?.taskName"
       :questionnaire-id="activeTabKey"
       :has-health-self-assessment="hasHealthSelfAssessment"
+      :questionnaires-tabs="currentTaskInfo?.questionnairesTabs"
     />
   </div>
 </template>

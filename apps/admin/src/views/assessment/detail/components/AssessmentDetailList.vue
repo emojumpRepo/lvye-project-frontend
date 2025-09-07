@@ -24,6 +24,7 @@ interface Props {
   taskName?: string;
   questionnaireId?: string;
   hasHealthSelfAssessment?: boolean;
+  questionnairesTabs?: { key: string; label: string }[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   taskName: '',
   questionnaireId: '',
   hasHealthSelfAssessment: false,
+  questionnairesTabs: () => [],
 });
 
 const actionButtons = ref([
@@ -176,6 +178,7 @@ function viewDetail(
           id: row?.id,
           name: row?.name,
           taskName: props.taskName,
+          questionnairesTabs: props.questionnairesTabs,
         })
         .open();
     } else {
