@@ -52,7 +52,13 @@ watch(
           title="测评完成率"
           hide-line
           icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
-        />
+        >
+          <template #right>
+            <span class="text-xs text-[#979899]">
+              总参与人数: {{ assessmentStatistics?.totalParticipants }}人
+            </span>
+          </template>
+        </LyCardTitle>
 
         <div v-if="assessmentStatistics" class="mt-6 space-y-6">
           <div class="grid grid-cols-4 gap-4">
@@ -67,15 +73,7 @@ watch(
             <div
               class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
             >
-              <span class="text-2xl font-bold text-[#4C4C4D]">
-                {{ assessmentStatistics?.totalParticipants }}
-              </span>
-              <span class="text-xs text-[#979899]">总人数</span>
-            </div>
-            <div
-              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-            >
-              <span class="text-primary text-2xl font-bold">
+              <span class="text-2xl font-bold text-[#1966FF]">
                 {{ assessmentStatistics?.completedParticipants }}
               </span>
               <span class="text-xs text-[#979899]">已完成</span>
@@ -83,10 +81,18 @@ watch(
             <div
               class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
             >
+              <span class="text-primary text-2xl font-bold">
+                {{ assessmentStatistics?.inProgressParticipants }}
+              </span>
+              <span class="text-xs text-[#979899]">进行中</span>
+            </div>
+            <div
+              class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+            >
               <span class="text-2xl font-bold text-[#FF9C05]">
                 {{ assessmentStatistics?.notStartedParticipants }}
               </span>
-              <span class="text-xs text-[#979899]">未完成</span>
+              <span class="text-xs text-[#979899]">未开始</span>
             </div>
           </div>
 
