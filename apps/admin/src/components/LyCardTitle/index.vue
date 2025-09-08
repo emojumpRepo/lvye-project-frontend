@@ -10,6 +10,7 @@ const props = defineProps<{
   mb?: number;
   pb?: number;
   title: string;
+  titleClass?: string;
 }>();
 
 const containerClasses = computed(() => {
@@ -35,7 +36,8 @@ const containerClasses = computed(() => {
       >
         <IconifyIcon :icon="icon" color="#fff" :size="10" />
       </div>
-      <h3 class="font-bold">{{ title }}</h3>
+      <h3 :class="titleClass || 'font-bold'">{{ title }}</h3>
+      <slot name="extra"></slot>
     </div>
     <slot name="right"></slot>
   </div>

@@ -1,13 +1,18 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
+import { RefreshCw } from '@vben/icons';
+
 import { Pagination as APagination } from 'ant-design-vue';
+
+import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = withDefaults(
   defineProps<{
     count?: null | number;
+    iconBg?: string;
     // optional icon url (use Figma dev assets if passed)
-    iconSrc?: null | string;
+    iconSrc?: string;
     // pagination config
     pagination?: null | {
       current?: number;
@@ -23,7 +28,8 @@ const props = withDefaults(
   }>(),
   {
     count: null,
-    iconSrc: null,
+    iconSrc: '',
+    iconBg: '',
     withGradient: false,
     pagination: null,
     showRefresh: true,
@@ -41,14 +47,10 @@ const containerClasses = computed(() => {
     ? `${base} bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]`
     : `${base} bg-white`;
 });
-
-// Figma Dev asset: refresh icon
-const figmaRefreshIcon =
-  'http://localhost:3845/assets/8a4d347f5db81198ab1fea13bbf9ab4ebf9d829f.svg';
 </script>
 
 <template>
-  <div :class="containerClasses">
+  <div class="flex h-full flex-col" :class="containerClasses">
     <div
       class="pointer-events-none absolute inset-0 rounded-2xl border border-white"
     ></div>
@@ -59,31 +61,34 @@ const figmaRefreshIcon =
       class="absolute right-4 top-4 inline-flex items-center gap-1.5 text-sm text-[#959599] sm:right-5 sm:top-7"
       @click="emit('refresh')"
     >
-      <img :src="figmaRefreshIcon" alt="" class="size-4" />
+      <RefreshCw class="size-3" />
       <span>刷新</span>
     </button>
 
-    <div class="mt-4 ml-4 flex items-center gap-2 sm:mt-5 sm:ml-5">
-      <img v-if="iconSrc" :src="iconSrc!" alt="" class="size-6" />
-      <div class="text-lg font-semibold text-black sm:text-xl">{{ title }}</div>
-      <div
-        v-if="count !== null"
-        class="relative rounded-2xl bg-[#FFF1E0] px-4 py-0.5"
+    <div class="ml-4 mt-4 flex items-center gap-2 sm:ml-5 sm:mt-5">
+      <LyCardTitle
+        :icon="iconSrc"
+        :title="title"
+        title-class="text-lg font-semibold text-black"
+        hide-line
+        :icon-bg="iconBg"
       >
-        <div
-          class="pointer-events-none absolute inset-0 rounded-2xl border border-[#FFC57B]"
-        ></div>
-        <span class="text-sm font-semibold text-[#FF8400]">{{
-          count
-        }}</span>
-      </div>
+        <template #extra>
+          <div
+            v-if="count !== null"
+            class="relative rounded-2xl border border-[#FFC57B] bg-[#FFF1E0] px-3 text-[14px] font-semibold leading-[14px] text-[#FF8400]"
+          >
+            {{ count }}
+          </div>
+        </template>
+      </LyCardTitle>
     </div>
 
-    <div class="mt-4 px-4 pb-5 sm:mt-6 sm:px-6">
+    <div class="mt-4 flex-1 px-4 pb-5 sm:mt-6 sm:px-6">
       <slot></slot>
     </div>
 
-    <div v-if="pagination" class="px-4 pb-5 sm:px-6">
+    <div v-if="pagination" class="px-[70px] pb-5">
       <APagination
         size="small"
         :current="pagination.current ?? 1"

@@ -1,7 +1,9 @@
 import type { PageParam, PageResult } from '@vben/request';
 import type {
   ASSESSMENT_TARGET_TYPE,
+  AssessmentResultVO,
   AssessmentTask,
+  AssessmentTaskRiskLevelStatistics,
   QuestionnaireResultVO,
 } from '@vben/types';
 
@@ -362,17 +364,10 @@ export function getAssessmentStatistics(params: {
   );
 }
 
-/** 导出测评结果 */
-export function exportAssessmentResults(taskId: number) {
-  return requestClient.download(
-    `/psychology/assessment-task/export-results?taskId=${taskId}`,
-  );
-}
-
-/** 导出测评报告 */
-export function exportAssessmentReport(taskId: number) {
-  return requestClient.download(
-    `/psychology/assessment-task/export-report?taskId=${taskId}`,
+/** 获取任务风险等级统计信息 */
+export function getAssessmentTaskRiskLevelStatistics(taskNo: string) {
+  return requestClient.get<AssessmentTaskRiskLevelStatistics>(
+    `/psychology/assessment-task/risk-level-statistics?taskNo=${taskNo}`,
   );
 }
 
@@ -381,5 +376,13 @@ export function exportAssessmentReport(taskId: number) {
 export function getAssessmentQuestionnaireResult(id: string) {
   return requestClient.get<QuestionnaireResultVO>(
     `/psychology/questionnaire/get-result?id=${id}`,
+  );
+}
+
+/** 测评报告结果 */
+export function getAssessmentResult(id: string) {
+  return requestClient.get<AssessmentResultVO>(
+    '/psychology/assessment-result/get',
+    { params: { id } },
   );
 }

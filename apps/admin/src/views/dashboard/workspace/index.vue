@@ -1,17 +1,11 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
+import { ChevronRight } from '@vben/icons';
+
+import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
-
-// Figma Dev assets (localhost sources per Dev Mode)
-// IMPORTANT: Use these URLs directly per workspace rules
-const figmaIconIntervene =
-  'http://localhost:3845/assets/9470459d64ab112a182f91a36f411cd903afe046.svg';
-const figmaIconAlert =
-  'http://localhost:3845/assets/34ebb4c161b135e6c18f375d9f7247f8a6cc2e11.svg';
-const figmaIconTask =
-  'http://localhost:3845/assets/8769234d7de8a9ddfc72a2d695b8e8bb7c1fdabb.svg';
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
@@ -51,7 +45,7 @@ const interveneList = [
     severity: 'danger',
     name: '李晓红',
     className: '高三 ( 1 ) 班',
-    statusBadge: { text: '重大', color: 'red' },
+    statusBadge: { text: '重大（三类）', color: 'red' },
     description: '2小时前',
     counselor: '李老师',
   },
@@ -59,7 +53,7 @@ const interveneList = [
     severity: 'warning',
     name: '张明明',
     className: '高三 ( 2 ) 班',
-    statusBadge: { text: '严重', color: 'orange' },
+    statusBadge: { text: '严重（二类）', color: 'orange' },
     date: '2025-01-10',
     time: '12:12:00',
     counselor: '李老师',
@@ -68,6 +62,7 @@ const interveneList = [
     severity: 'neutral',
     name: '王大大',
     className: '高三 ( 3 ) 班',
+    statusBadge: { text: '一般（一类）', color: 'grey' },
     date: '2025-01-10',
     time: '12:12:00',
     counselor: '李老师',
@@ -79,8 +74,9 @@ const alertsList = [
     severity: 'danger',
     name: '张小明',
     className: '高三 ( 1 ) 班',
-    statusBadge: { text: '紧急', color: 'red' },
+    statusBadge: { text: '紧急（三类）', color: 'red' },
     secondaryBadge: { text: 'AI检测', type: 'ai' },
+    time: '20分钟前',
     description: 'AI在对话中检测到该生存在严重自我否定情绪,表达了轻生倾...',
     rightAction: { text: '立即处理', color: 'red' },
   },
@@ -88,16 +84,19 @@ const alertsList = [
     severity: 'warning',
     name: '张明明',
     className: '高三 ( 2 ) 班',
-    statusBadge: { text: '重要', color: 'orange' },
+    statusBadge: { text: '重要（二类）', color: 'orange' },
     secondaryBadge: { text: '教师上报', type: 'teacher' },
+    time: '20分钟前',
     description: '班主任上报:  该学生近期情绪低落,经常独自一人,需要关注...',
-    rightAction: { text: '立即处理', color: 'green' },
+    rightAction: { text: '立即处理', color: 'orange' },
   },
   {
     severity: 'neutral',
     name: '张明明',
     className: '高三 ( 2 ) 班',
+    statusBadge: { text: '一般（一类）', color: 'grey' },
     secondaryBadge: { text: '评测系统', type: 'system' },
+    time: '20分钟前',
     description: '心理测评结果显示该学生焦虑指数严重偏高,建议立即干预...',
     rightAction: { text: '立即处理', color: 'green' },
   },
@@ -154,13 +153,15 @@ function onAlertsRefresh() {
 </script>
 
 <template>
-  <div class="p-5">
+  <div class="flex h-full flex-col px-[70px] pb-10 pt-5">
+    <PageTitle title="工作台" />
     <!-- New cards from Figma design -->
-    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconTask"
+        icon-src="mingcute:task-2-fill"
+        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
         :pagination="{
           total: taskList.length,
           current: taskPage,
@@ -183,7 +184,8 @@ function onAlertsRefresh() {
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconIntervene"
+        icon-src="ix:user-filled"
+        icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
         :pagination="{
           total: interveneList.length,
           current: intervenePage,
@@ -194,19 +196,24 @@ function onAlertsRefresh() {
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex  max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedInterveneList"
             :key="idx"
             v-bind="item as any"
-          />
+          >
+            <template #rightAction>
+              <ChevronRight class="size-4 cursor-pointer" color="#959599" />
+            </template>
+          </WorkSpaceItem>
         </div>
       </WorkSpaceCard>
 
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
-        :icon-src="figmaIconAlert"
+        icon-src="octicon:bell-fill-24"
+        icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
         :pagination="{
           total: alertsList.length,
           current: alertsPage,
@@ -217,7 +224,7 @@ function onAlertsRefresh() {
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex  max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedAlertsList"
             :key="idx"

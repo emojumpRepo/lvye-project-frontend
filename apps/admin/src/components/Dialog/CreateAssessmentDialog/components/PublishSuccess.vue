@@ -4,7 +4,7 @@ const props = withDefaults(
     finishDate: string;
     isPublish: boolean;
     notifyText: string;
-    taskId: null | number;
+    taskNo: null | string;
   }>(),
   {},
 );
@@ -26,8 +26,8 @@ const props = withDefaults(
     <div class="mx-auto w-full max-w-[600px] rounded-xl bg-[#F7F8FB] p-6">
       <div class="flex flex-col space-y-3 text-[16px] text-[#959599]">
         <div>
-          <span class="publish-success-detail-title">任务ID：</span>
-          <span>{{ props.taskId }}</span>
+          <span class="publish-success-detail-title">任务编号：</span>
+          <span>{{ props.taskNo }}</span>
         </div>
         <div>
           <span class="publish-success-detail-title">通知发送：</span>
