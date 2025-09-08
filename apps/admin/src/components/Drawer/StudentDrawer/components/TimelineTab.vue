@@ -78,6 +78,7 @@ function handleViewDetail(
               {{ timeline.content || '暂无内容' }}
             </div>
             <div
+              v-if="timeline.eventType === 2 || timeline.eventType === 4"
               class="cursor-pointer text-xs text-[#1966FF]"
               @click="handleViewDetail(timeline)"
             >

@@ -6,7 +6,7 @@ import { ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { message } from 'ant-design-vue';
+import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -35,6 +35,8 @@ const props = withDefaults(defineProps<Props>(), {
   questionnairesTabs: () => [],
 });
 
+const activeTabKey = defineModel<string>('activeTabKey'); // 问卷Tab
+
 const actionButtons = ref([
   {
     label: '批量发送提醒',
@@ -42,7 +44,7 @@ const actionButtons = ref([
     onClick: handleBatchSendReminder,
   },
   {
-    label: '批量转入干预',
+    label: '批量转入评估',
     value: 'batchTransferToIntervention',
     onClick: handleBatchTransferToIntervention,
   },
@@ -212,6 +214,22 @@ async function handleExport() {
 
 <template>
   <div class="mb-6">
+    <!-- 问卷Tabs -->
+    <ATabs :tab-bar-gutter="10" class="mb-3" v-model:active-key="activeTabKey">
+      <ATabs.TabPane v-for="tab in props.questionnairesTabs" :key="tab.key">
+        <template #tab>
+          <span
+            class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
+            :class="{
+              '!bg-primary !text-white': activeTabKey === tab.key,
+            }"
+          >
+            {{ tab.label }}
+          </span>
+        </template>
+      </ATabs.TabPane>
+    </ATabs>
+
     <AssessmentDetailSearch
       ref="searchRef"
       @search="handleSearch"
