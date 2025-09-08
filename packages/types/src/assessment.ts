@@ -103,11 +103,13 @@ export interface AssessmentResultVO {
 export interface RiskLevel {
   riskLevel: number;
   count: number;
+  color?: string;
 }
 
 export interface GradeRiskLevel {
   gradeDeptId: number;
   gradeName: string;
+  total: number;
   riskLevelList: RiskLevel[];
 }
 
