@@ -153,7 +153,7 @@ function onAlertsRefresh() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[70px] pb-10 pt-5">
+  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
     <PageTitle title="工作台" />
     <!-- New cards from Figma design -->
     <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
