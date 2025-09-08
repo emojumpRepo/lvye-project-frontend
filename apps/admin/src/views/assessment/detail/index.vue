@@ -257,10 +257,10 @@ onMounted(async () => {
 
     <div class="grid grid-cols-2 gap-4">
       <!-- 统计卡片区域 -->
-      <AssessmentDetailTask :task-no="taskNo" :loading="loading" />
+      <AssessmentDetailTask :task-no="taskNo" />
 
       <!-- 年级班级对比区域 -->
-      <AssessmentDetailCompare :loading="loading" :task-no="taskNo" />
+      <AssessmentDetailCompare :task-no="taskNo" />
     </div>
 
     <!-- 年级管理区域 -->
