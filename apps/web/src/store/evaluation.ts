@@ -217,6 +217,42 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     return null;
   }
 
+  // 全屏功能
+  async function enterFullscreen() {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else if ((document.documentElement as any).webkitRequestFullscreen) {
+        await (document.documentElement as any).webkitRequestFullscreen();
+      } else if ((document.documentElement as any).msRequestFullscreen) {
+        await (document.documentElement as any).msRequestFullscreen();
+      }
+    } catch (error) {
+      console.warn('无法进入全屏模式:', error);
+    }
+  }
+
+  function exitFullscreen() {
+    try {
+      // 检查是否处于全屏状态
+      if (
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).msFullscreenElement
+      ) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen();
+        }
+      }
+    } catch (error) {
+      console.warn('无法退出全屏模式:', error);
+    }
+  }
+
   // 开始测评（有场景模式）
   async function startEvaluation(taskNo: string, router: any) {
     if (!selectedSlot.value?.questionnaire) {
@@ -237,6 +273,10 @@ export const useEvaluationStore = defineStore('evaluation', () => {
             )[1] || '',
         },
       });
+      // 进入问卷页面后自动全屏
+      setTimeout(() => {
+        enterFullscreen();
+      }, 100);
     } catch (error_) {
       console.error('startEvaluation error:', error_);
       error.value = error_ instanceof Error ? error_.message : '开始测评失败';
@@ -261,6 +301,10 @@ export const useEvaluationStore = defineStore('evaluation', () => {
             questionnaire.externalLink?.split('render/')[1] || '',
         },
       });
+      // 进入问卷页面后自动全屏
+      setTimeout(() => {
+        enterFullscreen();
+      }, 100);
     } catch (error_) {
       console.error('startEvaluationWithoutScenario error:', error_);
       error.value = error_ instanceof Error ? error_.message : '开始测评失败';
@@ -311,6 +355,8 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     getNextAvailableSlot,
     startEvaluation,
     startEvaluationWithoutScenario,
+    enterFullscreen,
+    exitFullscreen,
     reset,
     $reset,
   };

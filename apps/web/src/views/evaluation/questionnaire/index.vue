@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Spin } from 'ant-design-vue';
@@ -28,6 +28,7 @@ const {
   startEvaluation,
   startEvaluationWithoutScenario,
   loadTaskDetail,
+  exitFullscreen,
 } = evaluationStore;
 
 const { generateIframeSrc } = useEvaluation();
@@ -36,6 +37,11 @@ const hasIntro = ref(false); // 是否需要介绍
 const hasScene = ref(false); // 是否需要场景
 
 const iframeSrc = ref('');
+
+// 页面关闭前确认函数
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  event.preventDefault();
+}
 
 onMounted(async () => {
   const sceneId = route.query.sceneId as string;
@@ -57,18 +63,36 @@ onMounted(async () => {
   const questionnaireLink = route.query.questionnaireLink as string;
 
   iframeSrc.value = generateIframeSrc(questionnaireId, questionnaireLink);
+
+  // 注册页面关闭前确认事件
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 function handleBack() {
   const targetPath = hasScenario.value
     ? '/evaluation/scene'
     : `/evaluation/assessment/${currentTaskNo.value}`;
-  router.replace({
-    path: targetPath,
-    query: {
-      taskNo: currentTaskNo.value,
-    },
-  });
+
+  // 移除页面关闭前确认事件
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+
+  // 先退出全屏模式，再跳转页面
+  exitFullscreen();
+
+  // 延迟跳转，确保退出全屏操作完成
+  setTimeout(() => {
+    router.replace({
+      path: targetPath,
+      query: {
+        taskNo: currentTaskNo.value,
+      },
+    });
+  }, 100);
 }
 
 async function handleContinue() {
@@ -77,12 +101,19 @@ async function handleContinue() {
     // 如果当前是最后一个场景，则不进行跳转，直接提交回答
     if (isLastScene.value) {
       console.warn('last scene');
-      router.replace({
-        path: '/evaluation/scene',
-        query: {
-          taskNo: currentTaskNo.value,
-        },
-      });
+      // 移除页面关闭前确认事件
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 先退出全屏模式，再跳转页面
+      exitFullscreen();
+
+      setTimeout(() => {
+        router.replace({
+          path: '/evaluation/scene',
+          query: {
+            taskNo: currentTaskNo.value,
+          },
+        });
+      }, 100);
       return;
     }
     const nextScene = getNextSlot();
@@ -112,9 +143,16 @@ async function handleContinue() {
     } else {
       // 所有问卷都已完成，跳转到测评详情页面
       console.warn('all questionnaires completed');
-      router.replace({
-        path: `/evaluation/assessment/${currentTaskNo.value}`,
-      });
+      // 移除页面关闭前确认事件
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 先退出全屏模式，再跳转页面
+      exitFullscreen();
+
+      setTimeout(() => {
+        router.replace({
+          path: `/evaluation/assessment/${currentTaskNo.value}`,
+        });
+      }, 100);
     }
   }
 }

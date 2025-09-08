@@ -1,4 +1,6 @@
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import WelcomeKaola from '#/static/images/evaluation/result/report_logo.png';
+</script>
 
 <template>
   <div
@@ -19,8 +21,8 @@
         </p>
       </div>
       <img
-        class="w-18 absolute bottom-0 right-4 h-auto opacity-90 lg:w-28"
-        src="https://i.111666.best/image/Lifss7exPGWTVFwqUMLEuj.png"
+        class="absolute bottom-0 right-4 h-1/2 w-24 object-cover object-top opacity-90 lg:w-28"
+        :src="WelcomeKaola"
         alt="banner mascot"
         style="max-height: 100%"
       />
