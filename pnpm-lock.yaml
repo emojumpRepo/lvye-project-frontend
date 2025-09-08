@@ -373,7 +373,7 @@ catalogs:
       specifier: ^8.2.0
       version: 8.2.0
     pdfmake:
-      specifier: ^0.2.14
+      specifier: ^0.2.2
       version: 0.2.20
     pinia-plugin-persistedstate:
       specifier: ^4.4.1
