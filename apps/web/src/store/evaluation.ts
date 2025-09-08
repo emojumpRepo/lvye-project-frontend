@@ -297,8 +297,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
         query: {
           questionnaireId: questionnaire.questionnaireId,
           assessmentTaskNo: taskNo,
-          questionnaireLink:
-            questionnaire.externalLink?.split('render/')[1] || '',
+          questionnaireLink: questionnaire.externalLink,
         },
       });
       // 进入问卷页面后自动全屏

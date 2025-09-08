@@ -48,12 +48,7 @@ async function initializePage() {
   const sceneId = route.query.sceneId as string;
   const assessmentTaskNo = route.query.assessmentTaskNo as string;
 
-  console.warn('初始化页面参数:', {
-    sceneId,
-    assessmentTaskNo,
-    questionnaireId: route.query.questionnaireId,
-    questionnaireLink: route.query.questionnaireLink,
-  });
+  // 最小必要日志已保留在子组件
 
   // 确保任务数据已加载
   if (assessmentTaskNo) {
@@ -61,29 +56,12 @@ async function initializePage() {
   }
 
   if (sceneId) {
-    console.warn('设置场景模式前:', {
-      hasScene: hasScene.value,
-      hasIntro: hasIntro.value,
-    });
     hasScene.value = true;
     hasIntro.value = true;
     selectSlot(sceneId);
-    console.warn('场景模式初始化:', {
-      sceneId,
-      hasScene: hasScene.value,
-      hasIntro: hasIntro.value,
-    });
   } else {
-    console.warn('设置非场景模式前:', {
-      hasScene: hasScene.value,
-      hasIntro: hasIntro.value,
-    });
     hasScene.value = false;
     hasIntro.value = false;
-    console.warn('非场景模式初始化:', {
-      hasScene: hasScene.value,
-      hasIntro: hasIntro.value,
-    });
   }
 
   // 从 URL 参数获取问卷信息（无场景模式使用）
@@ -91,6 +69,7 @@ async function initializePage() {
   const questionnaireLink = route.query.questionnaireLink as string;
 
   iframeSrc.value = generateIframeSrc(questionnaireId, questionnaireLink);
+  console.warn(iframeSrc.value);
 }
 
 onMounted(async () => {
@@ -116,17 +95,7 @@ watch(
   { immediate: false },
 );
 
-// 监听 hasIntro 的变化
-watch(
-  () => hasIntro.value,
-  (newVal, oldVal) => {
-    console.warn('父组件 hasIntro 变化:', {
-      oldValue: oldVal,
-      newValue: newVal,
-    });
-  },
-  { immediate: true },
-);
+// 保留简洁逻辑，无额外日志
 
 // 组件卸载时移除事件监听器
 onUnmounted(() => {
@@ -159,7 +128,6 @@ async function handleContinue() {
   if (hasScenario.value) {
     // 如果当前是最后一个场景，则不进行跳转，直接提交回答
     if (isLastScene.value) {
-      console.warn('last scene');
       // 移除页面关闭前确认事件
       window.removeEventListener('beforeunload', handleBeforeUnload);
       // 先退出全屏模式，再跳转页面
@@ -176,11 +144,9 @@ async function handleContinue() {
       return;
     }
     const nextScene = getNextSlot();
-    console.warn('下一个场景:', nextScene);
     if (nextScene) {
       // 先切换到下一个插槽
       selectSlot(nextScene.id || 0);
-      console.warn('切换后的selectedSlot:', evaluationStore.selectedSlot);
       // 然后跳转到下一个插槽的问卷页面
       await startEvaluation(currentTaskNo.value || '', router);
     }
@@ -198,7 +164,6 @@ async function handleContinue() {
       );
     } else {
       // 所有问卷都已完成，跳转到测评详情页面
-      console.warn('all questionnaires completed');
       // 先退出全屏模式，再跳转页面
       exitFullscreen();
 

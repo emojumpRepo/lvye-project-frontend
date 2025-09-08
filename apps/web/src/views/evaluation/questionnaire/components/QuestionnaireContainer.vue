@@ -44,7 +44,6 @@ const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
 
 const bgUrl = computed(() => {
-  console.warn(props.sceneData);
   const introBgImgUrl =
     props.sceneData?.metadata?.introConfig.backgroundImageUrl;
   return showIntro.value
@@ -80,13 +79,7 @@ function handleBack() {
 
 watch(
   () => props.hasIntro,
-  (newVal, oldVal) => {
-    console.warn('QuestionnaireContainer hasIntro 变化:', {
-      oldValue: oldVal,
-      newValue: newVal,
-      currentShowIntro: showIntro.value,
-      propsHasIntro: props.hasIntro,
-    });
+  (newVal) => {
     showIntro.value = newVal;
   },
   { immediate: true },
@@ -101,17 +94,12 @@ watch(
     // 重置完成状态
     isIframeCompleted.value = false;
     iframeCompletionPayload.value = null;
-    console.warn('场景变更，重置介绍与完成状态');
+    // 最小必要日志：保留一次场景变更提示
+    console.warn('[Questionnaire] 场景变更，重置介绍与完成状态');
   },
 );
 
-// 添加一个 watch 来监听 showIntro 的变化
-watch(
-  () => showIntro.value,
-  (newVal) => {
-    console.warn('showIntro 变化:', newVal);
-  },
-);
+// 不再冗余输出 showIntro 的每次变化
 </script>
 
 <template>
