@@ -87,7 +87,8 @@ async function load() {
         fetchKeyValue('student.defaultPassword'),
       ]);
     form.enablePasswordLogin =
-      enablePasswordLogin === 'true' || DEFAULT_ENABLE_PASSWORD_LOGIN;
+      String(enablePasswordLogin).trim().toLowerCase() === 'true' ||
+      String(enablePasswordLogin).trim() === '1';
     form.defaultPassword = defaultPassword || DEFAULT_PASSWORD;
     initialSnapshot.value = { ...form };
   } finally {

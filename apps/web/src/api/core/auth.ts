@@ -11,6 +11,7 @@ export namespace AuthApi {
   export interface LoginParams {
     password?: string;
     username?: string;
+    studentName?: string;
     captchaVerification?: string;
     // 绑定社交登录时，需要传递如下参数
     socialType?: number;
