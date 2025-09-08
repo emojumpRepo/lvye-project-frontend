@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Spin } from 'ant-design-vue';
@@ -43,9 +43,17 @@ function handleBeforeUnload(event: BeforeUnloadEvent) {
   event.preventDefault();
 }
 
-onMounted(async () => {
+// 初始化页面状态
+async function initializePage() {
   const sceneId = route.query.sceneId as string;
   const assessmentTaskNo = route.query.assessmentTaskNo as string;
+
+  console.warn('初始化页面参数:', {
+    sceneId,
+    assessmentTaskNo,
+    questionnaireId: route.query.questionnaireId,
+    questionnaireLink: route.query.questionnaireLink,
+  });
 
   // 确保任务数据已加载
   if (assessmentTaskNo) {
@@ -53,9 +61,29 @@ onMounted(async () => {
   }
 
   if (sceneId) {
+    console.warn('设置场景模式前:', {
+      hasScene: hasScene.value,
+      hasIntro: hasIntro.value,
+    });
     hasScene.value = true;
     hasIntro.value = true;
     selectSlot(sceneId);
+    console.warn('场景模式初始化:', {
+      sceneId,
+      hasScene: hasScene.value,
+      hasIntro: hasIntro.value,
+    });
+  } else {
+    console.warn('设置非场景模式前:', {
+      hasScene: hasScene.value,
+      hasIntro: hasIntro.value,
+    });
+    hasScene.value = false;
+    hasIntro.value = false;
+    console.warn('非场景模式初始化:', {
+      hasScene: hasScene.value,
+      hasIntro: hasIntro.value,
+    });
   }
 
   // 从 URL 参数获取问卷信息（无场景模式使用）
@@ -63,10 +91,42 @@ onMounted(async () => {
   const questionnaireLink = route.query.questionnaireLink as string;
 
   iframeSrc.value = generateIframeSrc(questionnaireId, questionnaireLink);
+}
+
+onMounted(async () => {
+  // 初始化页面状态
+  await initializePage();
 
   // 注册页面关闭前确认事件
   window.addEventListener('beforeunload', handleBeforeUnload);
 });
+
+// 监听路由变化，重新初始化页面状态
+watch(
+  () => [
+    route.query.questionnaireId,
+    route.query.questionnaireLink,
+    route.query.sceneId,
+    route.query.assessmentTaskNo,
+  ],
+  async () => {
+    // 重新初始化页面状态，包括场景、介绍、iframe等
+    await initializePage();
+  },
+  { immediate: false },
+);
+
+// 监听 hasIntro 的变化
+watch(
+  () => hasIntro.value,
+  (newVal, oldVal) => {
+    console.warn('父组件 hasIntro 变化:', {
+      oldValue: oldVal,
+      newValue: newVal,
+    });
+  },
+  { immediate: true },
+);
 
 // 组件卸载时移除事件监听器
 onUnmounted(() => {
@@ -74,25 +134,24 @@ onUnmounted(() => {
 });
 
 function handleBack() {
-  const targetPath = hasScenario.value
-    ? '/evaluation/scene'
-    : `/evaluation/assessment/${currentTaskNo.value}`;
-
   // 移除页面关闭前确认事件
   window.removeEventListener('beforeunload', handleBeforeUnload);
 
   // 先退出全屏模式，再跳转页面
   exitFullscreen();
 
-  // 延迟跳转，确保退出全屏操作完成
-  setTimeout(() => {
+  if (hasScenario.value) {
     router.replace({
-      path: targetPath,
+      path: '/evaluation/scene',
       query: {
         taskNo: currentTaskNo.value,
       },
     });
-  }, 100);
+  } else {
+    router.replace({
+      path: `/evaluation/assessment/${currentTaskNo.value}`,
+    });
+  }
 }
 
 async function handleContinue() {
@@ -117,19 +176,19 @@ async function handleContinue() {
       return;
     }
     const nextScene = getNextSlot();
-    console.warn(nextScene);
+    console.warn('下一个场景:', nextScene);
     if (nextScene) {
       // 先切换到下一个插槽
       selectSlot(nextScene.id || 0);
+      console.warn('切换后的selectedSlot:', evaluationStore.selectedSlot);
       // 然后跳转到下一个插槽的问卷页面
       await startEvaluation(currentTaskNo.value || '', router);
-      router.afterEach(() => {
-        window.location.reload();
-      });
     }
   } else {
     // 无测试场景的模式
     const nextQuestionnaire = getNextIncompleteQuestionnaire.value;
+    // 移除页面关闭前确认事件
+    window.removeEventListener('beforeunload', handleBeforeUnload);
     if (nextQuestionnaire) {
       // 跳转到下一个未完成的问卷
       await startEvaluationWithoutScenario(
@@ -137,14 +196,9 @@ async function handleContinue() {
         nextQuestionnaire,
         router,
       );
-      router.afterEach(() => {
-        window.location.reload();
-      });
     } else {
       // 所有问卷都已完成，跳转到测评详情页面
       console.warn('all questionnaires completed');
-      // 移除页面关闭前确认事件
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       // 先退出全屏模式，再跳转页面
       exitFullscreen();
 
@@ -190,6 +244,7 @@ function handleComplete(payload: null | Record<string, unknown>) {
     </template>
     <template v-else>
       <QuestionnaireContainer
+        :key="selectedSlot?.id || `${route.query.questionnaireId}`"
         :scene-data="selectedSlot"
         :iframe-src="iframeSrc"
         :has-intro="hasIntro"

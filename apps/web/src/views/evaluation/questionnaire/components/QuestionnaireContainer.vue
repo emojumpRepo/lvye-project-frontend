@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-const showIntro = ref(props.hasIntro);
+const showIntro = ref(false);
 const isIframeCompleted = ref(false);
 const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 
@@ -80,8 +80,36 @@ function handleBack() {
 
 watch(
   () => props.hasIntro,
-  (newVal) => {
+  (newVal, oldVal) => {
+    console.warn('QuestionnaireContainer hasIntro 变化:', {
+      oldValue: oldVal,
+      newValue: newVal,
+      currentShowIntro: showIntro.value,
+      propsHasIntro: props.hasIntro,
+    });
     showIntro.value = newVal;
+  },
+  { immediate: true },
+);
+
+// 场景切换时，强制展示介绍并重置完成状态
+watch(
+  () => props.sceneData?.id,
+  () => {
+    // 每个场景进入时都显示介绍
+    showIntro.value = true;
+    // 重置完成状态
+    isIframeCompleted.value = false;
+    iframeCompletionPayload.value = null;
+    console.warn('场景变更，重置介绍与完成状态');
+  },
+);
+
+// 添加一个 watch 来监听 showIntro 的变化
+watch(
+  () => showIntro.value,
+  (newVal) => {
+    console.warn('showIntro 变化:', newVal);
   },
 );
 </script>
