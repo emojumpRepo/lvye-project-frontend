@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import type { QuestionnaireResultDataVO } from '@vben/types';
+import type { AssessmentResultVO } from '@vben/types';
+
+import { computed } from 'vue';
 
 import { Table } from 'ant-design-vue';
 
 import LyTag from '#/components/LyTag/index.vue';
 
-defineProps<{
-  questionnaireName: string;
-  questionnaireResult: QuestionnaireResultDataVO[];
+import AssessmentRadar from './AssessmentRadar.vue';
+
+const props = defineProps<{
+  assessmentResult: AssessmentResultVO;
 }>();
 
 const columns = [
@@ -25,67 +28,99 @@ const columns = [
   },
 ];
 
-const extraData = {
-  riskLevel: 1,
-  evaluate: '目前为心理健康问题的中风险人群。',
-  suggestions: '建议进行心理咨询，以缓解焦虑和压力。',
-};
+/**
+ * 计算问卷结果
+ */
+const questionnaireResults = computed(() => {
+  const hasHealthSelfAssessment =
+    props.assessmentResult.questionnaireResults.some(
+      (item) => item.questionnaireId === 12,
+    );
+  return hasHealthSelfAssessment
+    ? props.assessmentResult.questionnaireResults.filter(
+        (item) => item.questionnaireId === 12,
+      )
+    : props.assessmentResult.questionnaireResults;
+});
+
+// 干预建议
+// const interventionSuggestions = computed(() => {
+//   const parsed = JSON.parse(props.assessmentResult.interventionSuggestions);
+//   return parsed.sort((a: any, b: any) => a.priority - b.priority);
+// });
 </script>
 
 <template>
   <div>
+    <AssessmentRadar :questionnaire-result="questionnaireResults" />
     <div class="space-y-4">
-      <Table
-        bordered
-        :columns="columns"
-        :data-source="questionnaireResult"
-        :pagination="false"
-      >
-        <template #bodyCell="{ column, text }">
-          <template v-if="column.dataIndex === 'isAbnormal'">
-            <LyTag
-              :color-type="text === 0 ? 'success' : 'error'"
-              :tag-label="text === 0 ? '正常' : '异常'"
-            />
+      <div v-for="item in questionnaireResults" :key="item.questionnaireId">
+        <Table
+          bordered
+          :columns="columns"
+          :data-source="JSON.parse(item.reportContent)"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, text }">
+            <template v-if="column.dataIndex === 'isAbnormal'">
+              <LyTag
+                :color-type="text === 0 ? 'success' : 'error'"
+                :tag-label="text === 0 ? '正常' : '异常'"
+              />
+            </template>
           </template>
-        </template>
-        <template #title>
-          <div class="font-bold">{{ questionnaireName }}</div>
-        </template>
-      </Table>
+          <template #title>
+            <div class="font-bold">
+              {{ item.questionnaireName }}
+            </div>
+          </template>
+        </Table>
+      </div>
     </div>
 
     <!-- 测评总结 -->
-    <div class="mt-6 rounded-lg border bg-gray-50 p-4">
-      <div class="mb-4">
-        <h3 class="mb-3 text-lg font-semibold text-gray-800">测评总结</h3>
+    <div
+      class="mt-6 flex flex-col gap-4 rounded-lg border bg-gray-50 p-4 text-sm"
+    >
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">测评总结</h3>
       </div>
 
       <!-- 风险等级 -->
-      <div class="mb-4 flex items-center">
-        <span class="w-20 text-sm font-medium text-gray-600">风险等级:</span>
+      <div class="flex items-center gap-3">
+        <span class="font-medium text-gray-600">风险等级:</span>
         <LyTag
-          tag-category-key="questionnaire_result_risk_level"
-          :dict-value="extraData.riskLevel"
+          color-type="success"
+          :tag-label="assessmentResult.riskLevelIntervention.riskLevelName"
         />
       </div>
 
-      <!-- 评估结果 -->
-      <div class="mb-4">
-        <div class="mb-2 text-sm font-medium text-gray-600">评估结果:</div>
-        <div class="rounded bg-blue-50 p-3">
+      <!-- 评估标准 -->
+      <div>
+        <div class="mb-2 font-medium text-gray-600">评估标准:</div>
+        <div class="rounded-md bg-white p-3">
           <p class="text-sm leading-relaxed text-gray-700">
-            {{ extraData.evaluate }}
+            {{ assessmentResult.riskLevelIntervention.criteria }}
           </p>
         </div>
       </div>
 
-      <!-- 建议 -->
+      <!-- 评估结果 -->
       <div>
-        <div class="mb-2 text-sm font-medium text-gray-600">专业建议:</div>
-        <div class="rounded bg-green-50 p-3">
-          <p class="text-sm leading-relaxed text-gray-700">
-            {{ extraData.suggestions }}
+        <div class="mb-2 font-medium text-gray-600">评估结果:</div>
+        <div class="rounded-md bg-white p-3">
+          <p class="leading-relaxed text-gray-700">
+            {{ assessmentResult.riskLevelIntervention.evaluation }}
+          </p>
+        </div>
+      </div>
+
+      <!-- 干预建议 -->
+      <div>
+        <div class="mb-2 font-medium text-gray-600">评估结果:</div>
+        <div class="rounded-md bg-white p-3">
+          <p class="leading-relaxed text-gray-700">
+            {{ assessmentResult.riskLevelIntervention.suggestion }}
           </p>
         </div>
       </div>

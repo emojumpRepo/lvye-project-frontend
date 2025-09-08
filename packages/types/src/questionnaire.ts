@@ -82,6 +82,7 @@ export interface Question extends QuestionnaireAnswerDataVO {
 
 // 每套问卷答案
 export interface QuestionnaireAnswerItem {
-  questionnaireId: string;
+  questionnaireName: string;
+  questionnaireId: number | string;
   answers: Question[];
 }

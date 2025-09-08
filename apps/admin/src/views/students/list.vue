@@ -417,17 +417,17 @@ onMounted(async () => {
                     type: 'link',
                     onClick: () => drawerApi.setData({ id: row.id }).open(),
                   },
-                  {
-                    label: '删除',
-                    type: 'link',
-                    danger: true,
-                    onClick: () =>
-                      openDeleteStudentModal(
-                        row.id as number,
-                        row.studentNo,
-                        row.name,
-                      ),
-                  },
+                  // {
+                  //   label: '删除',
+                  //   type: 'link',
+                  //   danger: true,
+                  //   onClick: () =>
+                  //     openDeleteStudentModal(
+                  //       row.id as number,
+                  //       row.studentNo,
+                  //       row.name,
+                  //     ),
+                  // },
                 ]"
               />
             </template>
