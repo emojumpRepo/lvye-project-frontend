@@ -83,12 +83,12 @@ const rules: Record<string, Rule[]> = {
         if (!value) {
           return Promise.reject(new Error('请输入学生姓名'));
         }
-        if (value.length < 2 || value.length > 10) {
+        if (value.length < 2 || value.length > 30) {
           return Promise.reject(new Error('姓名格式不正确'));
         }
-        if (!/^[\u4E00-\u9FA5]+$/.test(value)) {
-          return Promise.reject(new Error('姓名格式不正确'));
-        }
+        // if (!/^[\u4E00-\u9FA5]+$/.test(value)) {
+        //   return Promise.reject(new Error('姓名格式不正确'));
+        // }
         validateName.value = true;
         return Promise.resolve();
       },
@@ -120,8 +120,8 @@ const rules: Record<string, Rule[]> = {
           const birthYear = new Date(value).getFullYear();
           const currentYear = new Date().getFullYear();
           const age = currentYear - birthYear;
-          if (age < 12 || age > 20) {
-            return Promise.reject(new Error('年龄应在12-20岁之间'));
+          if (age < 1 || age > 30) {
+            return Promise.reject(new Error('年龄应在1-30岁之间'));
           }
         }
         return Promise.resolve();
@@ -154,7 +154,6 @@ async function handleCreateStudent() {
     } else {
       message.error('学生档案创建失败');
     }
-    message.success('学生档案创建成功');
   } catch (error) {
     console.error('学生档案创建失败', error);
     message.error('学生档案创建失败');
@@ -195,7 +194,7 @@ onMounted(() => {
               <AInput
                 v-model:value="studentForm.name"
                 placeholder="请填写"
-                :maxlength="10"
+                :maxlength="30"
               />
               <IconifyIcon
                 v-if="validateName"

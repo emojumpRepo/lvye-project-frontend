@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { ChevronRight } from '@vben/icons';
 
+import { getConfigPage } from '#/api/infra/config';
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
+
+const systemWelcome = ref('');
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
@@ -74,7 +77,7 @@ const alertsList = [
     severity: 'danger',
     name: '张小明',
     className: '高三 ( 1 ) 班',
-    statusBadge: { text: '紧急（三类）', color: 'red' },
+    statusBadge: { text: '紧急', color: 'red' },
     secondaryBadge: { text: 'AI检测', type: 'ai' },
     time: '20分钟前',
     description: 'AI在对话中检测到该生存在严重自我否定情绪,表达了轻生倾...',
@@ -84,7 +87,7 @@ const alertsList = [
     severity: 'warning',
     name: '张明明',
     className: '高三 ( 2 ) 班',
-    statusBadge: { text: '重要（二类）', color: 'orange' },
+    statusBadge: { text: '重要', color: 'orange' },
     secondaryBadge: { text: '教师上报', type: 'teacher' },
     time: '20分钟前',
     description: '班主任上报:  该学生近期情绪低落,经常独自一人,需要关注...',
@@ -94,7 +97,7 @@ const alertsList = [
     severity: 'neutral',
     name: '张明明',
     className: '高三 ( 2 ) 班',
-    statusBadge: { text: '一般（一类）', color: 'grey' },
+    statusBadge: { text: '一般', color: 'grey' },
     secondaryBadge: { text: '评测系统', type: 'system' },
     time: '20分钟前',
     description: '心理测评结果显示该学生焦虑指数严重偏高,建议立即干预...',
@@ -150,13 +153,29 @@ function onAlertsPageChange(page: number, pageSize: number) {
 function onAlertsRefresh() {
   // TODO: hook to real data source
 }
+
+onMounted(async () => {
+  try {
+    const res = await getConfigPage({
+      pageNo: 1,
+      pageSize: 10,
+      key: 'system.welcome',
+    });
+
+    if (res.list.length > 0) {
+      systemWelcome.value = res.list[0].value || '欢迎使用心理健康管理系统';
+    }
+  } catch (error) {
+    console.error('system.welcome', error);
+  }
+});
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
-    <PageTitle title="工作台" />
+  <div class="flex h-full flex-col px-[30px] pb-10 pt-5">
+    <PageTitle :title="systemWelcome" />
     <!-- New cards from Figma design -->
-    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-10">
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
@@ -169,6 +188,7 @@ function onAlertsRefresh() {
           showSizeChanger: false,
         }"
         title="今日心理咨询任务"
+        class="lg:col-span-3"
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
@@ -193,6 +213,7 @@ function onAlertsRefresh() {
           showSizeChanger: false,
         }"
         title="重点干预学生"
+        class="lg:col-span-3"
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
@@ -221,6 +242,7 @@ function onAlertsRefresh() {
           showSizeChanger: false,
         }"
         title="待处理预警事件"
+        class="lg:col-span-4"
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >

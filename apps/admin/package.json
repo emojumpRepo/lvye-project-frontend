@@ -50,6 +50,7 @@
     "crypto-js": "catalog:",
     "dayjs": "catalog:",
     "docx": "^9.5.1",
+    "exceljs": "catalog:",
     "highlight.js": "catalog:",
     "pdfmake": "catalog:",
     "pinia": "catalog:",

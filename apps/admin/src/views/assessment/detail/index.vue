@@ -220,7 +220,7 @@ onMounted(async () => {
 
     <!-- 问卷Tabs -->
     <ATabs v-model:active-key="activeTabKey" :tab-bar-gutter="10">
-      <ATabs.TabPane
+      <!-- <ATabs.TabPane
         v-for="tab in currentTaskInfo?.questionnairesTabs"
         :key="tab.key"
       >
@@ -234,7 +234,7 @@ onMounted(async () => {
             {{ tab.label }}
           </span>
         </template>
-      </ATabs.TabPane>
+      </ATabs.TabPane> -->
       <template #leftExtra>
         <div class="mr-6">
           <LyButton size="middle" type="default" @click="router.back()">
@@ -242,7 +242,7 @@ onMounted(async () => {
           </LyButton>
         </div>
       </template>
-      <template #rightExtra>
+      <template #rightExtra v-if="false">
         <ARadio.Group v-model:value="activeType">
           <ARadio.Button
             v-for="item in classType"
@@ -257,10 +257,10 @@ onMounted(async () => {
 
     <div class="grid grid-cols-2 gap-4">
       <!-- 统计卡片区域 -->
-      <AssessmentDetailTask :task-no="taskNo" :loading="loading" />
+      <AssessmentDetailTask :task-no="taskNo" />
 
       <!-- 年级班级对比区域 -->
-      <AssessmentDetailCompare :loading="loading" :task-no="taskNo" />
+      <AssessmentDetailCompare :task-no="taskNo" />
     </div>
 
     <!-- 年级管理区域 -->
@@ -270,6 +270,7 @@ onMounted(async () => {
       :questionnaire-id="activeTabKey"
       :has-health-self-assessment="hasHealthSelfAssessment"
       :questionnaires-tabs="currentTaskInfo?.questionnairesTabs"
+      v-model:active-tab-key="activeTabKey"
     />
   </div>
 </template>

@@ -103,11 +103,13 @@ export interface AssessmentResultVO {
 export interface RiskLevel {
   riskLevel: number;
   count: number;
+  color?: string;
 }
 
 export interface GradeRiskLevel {
   gradeDeptId: number;
   gradeName: string;
+  total: number;
   riskLevelList: RiskLevel[];
 }
 
@@ -118,10 +120,10 @@ export interface AssessmentTaskRiskLevelStatistics {
 
 // 测评状态枚举
 export const ASSESSMENT_STATUS = {
-  DRAFT: 0,
-  PUBLISHED: 1,
-  ENDED: 2,
-  CANCELLED: 3,
+  DRAFT: 0, // 草稿
+  PUBLISHED: 1, // 已发布
+  COMPLETED: 2, // 已完成
+  ENDED: 3, // 已截止
 } as const;
 
 /** 测评任务参与状态 */

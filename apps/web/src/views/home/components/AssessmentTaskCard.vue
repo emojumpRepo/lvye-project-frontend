@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@vben/stores';
 import { ASSESSMENT_STATUS } from '@vben/types';
 
-import { message } from 'ant-design-vue';
+import { message, Tag } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { AssessmentTaskParticipantStatus } from '#/api/constant';
@@ -39,8 +39,35 @@ function getActionText(task: AssessmentTask) {
   }
 }
 
-function isActionDisabled(task: AssessmentTask) {
-  return task.status === ASSESSMENT_STATUS.ENDED;
+function getTagColor(task: AssessmentTask) {
+  switch (task.status) {
+    case ASSESSMENT_STATUS.COMPLETED: {
+      return 'cyan';
+    }
+    case ASSESSMENT_STATUS.ENDED: {
+      return 'red';
+    }
+    case ASSESSMENT_STATUS.PUBLISHED: {
+      return 'green';
+    }
+  }
+}
+
+function getTagText(task: AssessmentTask) {
+  switch (task.status) {
+    case ASSESSMENT_STATUS.COMPLETED: {
+      return '已完成';
+    }
+    case ASSESSMENT_STATUS.ENDED: {
+      return '已截止';
+    }
+    case ASSESSMENT_STATUS.PUBLISHED: {
+      return '进行中';
+    }
+    default: {
+      return '';
+    }
+  }
 }
 
 /**
@@ -73,6 +100,7 @@ async function handleClick() {
   const { task } = props;
   if (task.status === ASSESSMENT_STATUS.ENDED) {
     message.warning('此测评任务已结束，无法答题哦');
+    return;
   }
 
   switch (task.participantStatus) {
@@ -102,12 +130,15 @@ async function handleClick() {
   <div
     class="group rounded-2xl border border-emerald-100/60 bg-white/70 p-4 shadow-sm transition-all duration-200 hover:shadow-md"
   >
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex items-center justify-between gap-4">
       <div class="min-w-0 flex-1">
-        <div class="mb-1 flex items-center gap-2">
+        <div class="mb-1 flex items-center justify-between">
           <div class="truncate text-base font-semibold text-emerald-900">
             {{ task.taskName }}
           </div>
+          <Tag :color="getTagColor(task)" :bordered="false">
+            {{ getTagText(task) }}
+          </Tag>
         </div>
         <div class="mb-2 text-xs text-emerald-900/70">
           截止于：{{ dayjs(task.deadline).format('YYYY-MM-DD HH:mm') }}
@@ -123,9 +154,11 @@ async function handleClick() {
         </div>
       </div>
       <button
-        v-if="task.status !== ASSESSMENT_STATUS.ENDED"
         class="box-border w-24 shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-        :disabled="isActionDisabled(task)"
+        :disabled="
+          task.status === ASSESSMENT_STATUS.ENDED &&
+          task.participantStatus !== AssessmentTaskParticipantStatus.COMPLETED
+        "
         @click="handleClick"
       >
         {{ getActionText(task) }}

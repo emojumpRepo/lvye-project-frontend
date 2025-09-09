@@ -8,7 +8,7 @@ import type {
   QuestionnaireResultDataVO,
 } from '@vben/types';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
@@ -34,10 +34,18 @@ const queryData = ref();
 const completedTime = ref<number>();
 const activeKey = ref('result');
 const loading = ref(true);
+const questionnaireAnswerActiveKey = ref('');
 const tabs = ref<{ key: string; tab: string }[]>([
   { key: 'result', tab: '问卷报告' },
   { key: 'answer', tab: '答题记录' },
 ]);
+
+// 切换问卷答案
+const filterQuestionnaireAnswer = computed(() => {
+  return questionnaireAnswer.value.filter(
+    (item) => item.questionnaireId === questionnaireAnswerActiveKey.value,
+  );
+});
 
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreenButton: false,
@@ -52,6 +60,9 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
       await (queryData.value.questionnaireId
         ? loadQuestionnaireResult()
         : loadAssessmentResult());
+
+      questionnaireAnswerActiveKey.value = (questionnaireAnswer.value[0]
+        ?.questionnaireId ?? '') as string;
       loading.value = false;
     }
   },
@@ -275,17 +286,29 @@ const handleExport = async () => {
             <!-- 答题记录 -->
             <div v-if="tab.key === 'answer'">
               <template v-if="questionnaireAnswer.length > 0">
-                <div class="mr-6 flex items-center justify-end gap-3 text-xs">
-                  <span> 作答人：{{ queryData.name }} </span>
-                  <span>
-                    作答时间：{{
-                      dayjs(completedTime).format('YYYY-MM-DD HH:mm:ss')
-                    }}
-                  </span>
-                </div>
+                <Tabs v-model:active-key="questionnaireAnswerActiveKey">
+                  <Tabs.TabPane
+                    v-for="item in questionnaireAnswer"
+                    :key="item.questionnaireId"
+                    :tab="item.questionnaireName"
+                  />
+                  <template #rightExtra>
+                    <div
+                      class="mr-6 flex items-center justify-end gap-3 text-xs"
+                    >
+                      <span> 作答人：{{ queryData.name }} </span>
+                      <span>
+                        作答时间：{{
+                          dayjs(completedTime).format('YYYY-MM-DD HH:mm:ss')
+                        }}
+                      </span>
+                    </div>
+                  </template>
+                </Tabs>
+
                 <div class="space-y-8">
                   <div
-                    v-for="item in questionnaireAnswer"
+                    v-for="item in filterQuestionnaireAnswer"
                     :key="item.questionnaireId"
                   >
                     <!-- 问卷信息标题 -->

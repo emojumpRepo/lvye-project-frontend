@@ -22,6 +22,10 @@ export const TAG_TYPE = {
     backgroundColor: '#FF083114',
     color: '#FF0831',
   },
+  default: {
+    backgroundColor: '#f7f8fa',
+    color: '#1e1e1e',
+  },
 } as const;
 
 const STUDENT_PSYCHOLOGICAL_STATUS = {
@@ -50,6 +54,11 @@ const STUDENT_PSYCHOLOGICAL_STATUS = {
     borderColor: '#1E96FF66',
     color: '#1E96FF',
   },
+  default: {
+    backgroundColor: '#f7f8fa',
+    borderColor: '#d9d9d9',
+    color: '#1e1e1e',
+  },
 };
 
 /** 获取标签样式 */
@@ -75,23 +84,26 @@ export function getStudentPsychologicalStatusTag(
   value: number,
 ) {
   const dictObj = getDictObj(dictType, value);
-  if (!dictObj) {
-    return null;
-  }
+
   const colorType =
     STUDENT_PSYCHOLOGICAL_STATUS[
-      dictObj.colorType as keyof typeof STUDENT_PSYCHOLOGICAL_STATUS
+      dictObj?.colorType as keyof typeof STUDENT_PSYCHOLOGICAL_STATUS
     ];
+
   return {
     colorConfig: {
       style: {
-        backgroundColor: colorType.backgroundColor,
-        borderColor: colorType.borderColor,
+        backgroundColor:
+          colorType?.backgroundColor ||
+          STUDENT_PSYCHOLOGICAL_STATUS.default.backgroundColor,
+        borderColor:
+          colorType?.borderColor ||
+          STUDENT_PSYCHOLOGICAL_STATUS.default.borderColor,
       },
-      color: colorType.color,
+      color: colorType?.color || STUDENT_PSYCHOLOGICAL_STATUS.default.color,
     },
-    label: dictObj.label,
-    value: dictObj.value,
+    label: dictObj?.label || '未知',
+    value: dictObj?.value || value,
   };
 }
 

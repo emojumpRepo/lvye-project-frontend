@@ -31,24 +31,29 @@ async function getMyTasks() {
         const progressB = (b as any).progress ?? 0;
         const doneA = progressA === 100;
         const doneB = progressB === 100;
-
-        // 未完成排前，已完成(100)排后
-        if (doneA !== doneB) return doneA ? 1 : -1;
-
         const deadlineA = Number(a.deadline ?? 0);
         const deadlineB = Number(b.deadline ?? 0);
+        const expiredA = deadlineA < now;
+        const expiredB = deadlineB < now;
+        const startTimeA = Number((a as any).startTime ?? 0);
+        const startTimeB = Number((b as any).startTime ?? 0);
 
-        if (!doneA && !doneB) {
-          // 未完成：按离现在更近的在前（距离小的优先）
-          const distA = Math.abs(deadlineA - now);
-          const distB = Math.abs(deadlineB - now);
-          if (distA !== distB) return distA - distB;
-          // 距离相同则更早截止在前
-          if (deadlineA !== deadlineB) return deadlineA - deadlineB;
-        } else {
-          // 已完成：按截止日期更早的在前
-          if (deadlineA !== deadlineB) return deadlineA - deadlineB;
-        }
+        // 优先级：未完成/进行中 > 已完成/已截止
+        const activeA = !doneA && !expiredA;
+        const activeB = !doneB && !expiredB;
+        const inactiveA = doneA || expiredA;
+        const inactiveB = doneB || expiredB;
+
+        if (activeA && inactiveB) return -1;
+        if (inactiveA && activeB) return 1;
+
+        // 未完成/进行中：按截止日期升序（更早截止在前）
+        if (activeA && activeB && deadlineA !== deadlineB)
+          return deadlineA - deadlineB;
+
+        // 已完成/已截止：按开始时间降序（更晚开始在前）
+        if (inactiveA && inactiveB && startTimeA !== startTimeB)
+          return startTimeB - startTimeA;
 
         // 兜底：创建时间较新在前
         const createA = Number((a as any).createTime ?? 0);
