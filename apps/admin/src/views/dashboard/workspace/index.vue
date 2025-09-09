@@ -8,7 +8,7 @@ import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
 
-const systemWelcome = ref('欢迎使用心理健康管理系统');
+const systemWelcome = ref('');
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
@@ -157,13 +157,13 @@ function onAlertsRefresh() {
 onMounted(async () => {
   try {
     const res = await getConfigPage({
-      page: 1,
+      pageNo: 1,
       pageSize: 10,
       key: 'system.welcome',
     });
 
     if (res.list.length > 0) {
-      systemWelcome.value = res.list[0].value;
+      systemWelcome.value = res.list[0].value || '欢迎使用心理健康管理系统';
     }
   } catch (error) {
     console.error('system.welcome', error);
