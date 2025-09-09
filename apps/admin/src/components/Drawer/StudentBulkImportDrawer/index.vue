@@ -18,7 +18,7 @@ import { getDictOptions } from '#/utils/dict';
 import { downloadTemplate } from '#/utils/export';
 import { parseExcel } from '#/utils/formatExcel';
 
-import ExportStudentProfileDialog from '../../Dialog/ExportStudentProfileDialog/index.vue';
+import ImportStudentProfileResultDialog from '../../Dialog/ImportStudentProfileResultDialog/index.vue';
 import ImportProgress from './components/ImportProgress.vue';
 import ImportTable from './components/ImportTable.vue';
 import { studentBulkImportFailedColumns } from './data';
@@ -60,10 +60,12 @@ const importResult = ref<ImportResult>({
   },
 });
 
-const [ExportStudentProfileDialogModal, ExportStudentProfileDialogModalApi] =
-  useVbenModal({
-    connectedComponent: ExportStudentProfileDialog,
-  });
+const [
+  ImportStudentProfileResultDialogModal,
+  ImportStudentProfileResultDialogModalApi,
+] = useVbenModal({
+  connectedComponent: ImportStudentProfileResultDialog,
+});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
@@ -163,7 +165,7 @@ function cancelImport() {
   isCancelled.value = true;
   openImportProgress.value = false;
   importCompleted.value = true;
-  ExportStudentProfileDialogModalApi.setData({
+  ImportStudentProfileResultDialogModalApi.setData({
     importResult: importResult.value,
     parseData: parseData.value,
   }).open();
@@ -173,7 +175,7 @@ function cancelImport() {
 function completeImport() {
   openImportProgress.value = false;
   importCompleted.value = true;
-  ExportStudentProfileDialogModalApi.setData({
+  ImportStudentProfileResultDialogModalApi.setData({
     importResult: importResult.value,
     parseData: parseData.value,
   }).open();
@@ -318,7 +320,7 @@ onMounted(async () => {
       @complete="completeImport"
     />
 
-    <ExportStudentProfileDialogModal @reset="resetUploadFile" />
+    <ImportStudentProfileResultDialogModal @reset="resetUploadFile" />
   </Drawer>
 </template>
 

@@ -51,7 +51,7 @@ watch(
     class="box-border flex !h-[400px] flex-col gap-6 rounded-xl bg-white p-6"
   >
     <ASpin :spinning="loading" class="h-full">
-      <div class="flex h-full flex-col">
+      <div class="flex h-full flex-col justify-between gap-6 overflow-hidden">
         <LyCardTitle
           icon="mingcute:task-2-fill"
           title="测评完成率"
@@ -66,7 +66,7 @@ watch(
         </LyCardTitle>
 
         <template v-if="!loading">
-          <div v-if="assessmentStatistics" class="mt-6 space-y-6">
+          <div v-if="assessmentStatistics" class="flex flex-1 flex-col gap-6">
             <div class="grid grid-cols-4 gap-4">
               <div
                 class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
@@ -102,7 +102,7 @@ watch(
               </div>
             </div>
 
-            <div class="scroll-area h-full overflow-y-auto">
+            <div class="scroll-area h-[200px] overflow-y-scroll">
               <ACollapse
                 v-model:active-key="activeKey"
                 accordion
@@ -154,7 +154,7 @@ watch(
             </div>
           </div>
 
-          <div v-else class="flex-center h-full">
+          <div v-else class="flex-center flex-1">
             <AEmpty />
           </div>
         </template>
@@ -180,18 +180,9 @@ watch(
   background-color: #04dc70 !important;
 }
 
-/* Page-local custom scrollbar */
-.scroll-area {
-  scrollbar-color: hsl(var(--muted-foreground) / 35%) transparent;
-  scrollbar-width: thin;
-}
-
 .scroll-area::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-}
-
-.scroll-area::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -200,9 +191,5 @@ watch(
   background-clip: content-box;
   border: 2px solid transparent;
   border-radius: 999px;
-}
-
-.scroll-area:hover::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 55%);
 }
 </style>

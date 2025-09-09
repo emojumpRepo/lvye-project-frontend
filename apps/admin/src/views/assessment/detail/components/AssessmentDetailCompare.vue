@@ -123,87 +123,82 @@ watch(
 <template>
   <div class="box-border flex h-full flex-col gap-6 rounded-xl bg-white p-6">
     <ASpin :spinning="loading">
-      <div class="flex h-full flex-col justify-between">
-        <div class="flex-1">
-          <LyCardTitle
-            icon="material-symbols:error-rounded"
-            title="风险分布"
-            hide-line
-            icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
-          />
+      <div class="flex h-full flex-col justify-between gap-6 overflow-hidden">
+        <LyCardTitle
+          icon="material-symbols:error-rounded"
+          title="风险分布"
+          hide-line
+          icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
+        />
 
-          <template v-if="!loading">
-            <div
-              v-if="assessmentTaskRiskLevelStatistics"
-              class="mt-6 space-y-6"
-            >
-              <div class="mt-6 grid grid-cols-4 gap-4">
-                <div
-                  v-for="stat in riskLevelStats"
-                  :key="stat.level"
-                  class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
-                >
-                  <span
-                    class="text-2xl font-bold"
-                    :style="{ color: stat.color }"
-                  >
-                    {{ stat.count }}
-                  </span>
-                  <span class="text-xs text-[#979899]">
-                    {{ stat.label }}
-                  </span>
-                </div>
+        <template v-if="!loading">
+          <div
+            v-if="assessmentTaskRiskLevelStatistics"
+            class="flex flex-1 flex-col gap-6"
+          >
+            <div class="grid grid-cols-4 gap-4">
+              <div
+                v-for="stat in riskLevelStats"
+                :key="stat.level"
+                class="flex flex-col items-center justify-center gap-2 rounded-xl border border-[#EEEFF5] p-4"
+              >
+                <span class="text-2xl font-bold" :style="{ color: stat.color }">
+                  {{ stat.count }}
+                </span>
+                <span class="text-xs text-[#979899]">
+                  {{ stat.label }}
+                </span>
               </div>
+            </div>
 
-              <div class="scroll-area h-full overflow-y-auto">
-                <ACollapse
-                  v-model:active-key="activeKey"
-                  accordion
-                  :bordered="false"
-                  style="background: #f7f8fa"
+            <div class="scroll-area h-[200px] overflow-y-auto">
+              <ACollapse
+                v-model:active-key="activeKey"
+                accordion
+                :bordered="false"
+                style="background: #f7f8fa"
+              >
+                <template #expandIcon="scope">
+                  <IconifyIcon
+                    icon="bxs:right-arrow"
+                    :rotate="scope?.isActive ? 45 : 0"
+                    class="size-2.5"
+                  />
+                </template>
+                <ACollapse.Panel
+                  v-for="grade in assessmentTaskRiskLevelStatistics?.gradeList"
+                  :key="grade.gradeDeptId"
+                  :header="grade.gradeName"
                 >
-                  <template #expandIcon="scope">
-                    <IconifyIcon
-                      icon="bxs:right-arrow"
-                      :rotate="scope?.isActive ? 45 : 0"
-                      class="size-2.5"
-                    />
-                  </template>
-                  <ACollapse.Panel
-                    v-for="grade in assessmentTaskRiskLevelStatistics?.gradeList"
-                    :key="grade.gradeDeptId"
-                    :header="grade.gradeName"
-                  >
-                    <div class="flex items-center justify-center gap-12">
-                      <div
-                        v-for="child in grade.riskLevelList"
-                        :key="child.riskLevel"
-                        class="flex items-center justify-between"
+                  <div class="flex items-center justify-center gap-12">
+                    <div
+                      v-for="child in grade.riskLevelList"
+                      :key="child.riskLevel"
+                      class="flex items-center justify-between"
+                    >
+                      <span
+                        class="text-primary whitespace-nowrap text-sm"
+                        :style="{ color: child.color }"
                       >
-                        <span
-                          class="text-primary whitespace-nowrap text-sm"
-                          :style="{ color: child.color }"
-                        >
-                          {{ child.count }}
-                        </span>
-                      </div>
-                      <AProgress
-                        :percent="100"
-                        :size="14"
-                        :show-info="false"
-                        :stroke-color="getRiskLevelProgress(grade)"
-                      />
+                        {{ child.count }}
+                      </span>
                     </div>
-                  </ACollapse.Panel>
-                </ACollapse>
-              </div>
+                    <AProgress
+                      :percent="100"
+                      :size="14"
+                      :show-info="false"
+                      :stroke-color="getRiskLevelProgress(grade)"
+                    />
+                  </div>
+                </ACollapse.Panel>
+              </ACollapse>
             </div>
+          </div>
 
-            <div v-else class="flex-center h-full">
-              <AEmpty />
-            </div>
-          </template>
-        </div>
+          <div v-else class="flex-center flex-1">
+            <AEmpty />
+          </div>
+        </template>
       </div>
     </ASpin>
   </div>
@@ -224,5 +219,18 @@ watch(
 
 :deep(.ant-spin-container) {
   height: 100% !important;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
 }
 </style>
