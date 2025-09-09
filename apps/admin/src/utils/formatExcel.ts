@@ -85,9 +85,9 @@ const _rules = {
     required: true,
     validator: (value: string): boolean => {
       const len = getStringLength(value);
-      return len >= 2 && len <= 20;
+      return len >= 2 && len <= 30;
     },
-    message: '姓名应为2-20个字符',
+    message: '姓名应为2-30个字符',
   },
   birthDate: {
     required: true,

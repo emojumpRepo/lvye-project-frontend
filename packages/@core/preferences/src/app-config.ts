@@ -25,7 +25,7 @@ const appConfigs: Record<string, AppConfig> = {
   web: {
     name: 'Web前台',
     defaultHomePath: '/home',
-    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/logo.png',
+    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/full-logo.png',
     theme: {
       primaryColor: 'hsl(144 57% 58%)',
       mode: 'light',
