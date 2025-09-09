@@ -19,6 +19,7 @@ import {
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
 import CreateStudentEventRecord from '#/components/Dialog/CreateStudentEventRecord/index.vue';
+import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
@@ -139,6 +140,11 @@ const [CreateStudentEventRecordModal, createStudentEventRecordModalApi] =
   useVbenModal({
     connectedComponent: CreateStudentEventRecord,
   });
+
+/** 导出信息弹窗 */
+const [ExportStudnetInfoModal, exportStudnetInfoModalApi] = useVbenModal({
+  connectedComponent: ExportStudnetInfoDialog,
+});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[800px]',
@@ -289,7 +295,8 @@ function handleCreateStudentEventRecord() {
  * 导出信息
  */
 function handleExportInfo() {
-  message.warning('即将上线');
+  // message.warning('即将上线');
+  exportStudnetInfoModalApi.open();
 }
 
 onMounted(async () => {
@@ -439,6 +446,7 @@ onMounted(async () => {
     </template>
 
     <CreateStudentEventRecordModal />
+    <ExportStudnetInfoModal />
   </Drawer>
 </template>
 
