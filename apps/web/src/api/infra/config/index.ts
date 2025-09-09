@@ -1,6 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
-import { requestClient } from '#/api/request';
+import { appRequestClient, requestClient } from '#/api/request';
 
 export namespace InfraConfigApi {
   /** 参数配置信息 */
@@ -64,4 +64,11 @@ export function exportConfig(params: any) {
   return requestClient.download('/infra/config/export-excel', {
     params,
   });
+}
+
+/** 获取是否开启密码登录 */
+export function getEnablePasswordLogin() {
+  return appRequestClient.get<{ enablePasswordLogin: boolean }>(
+    `/infra/config/enable-password-login`,
+  );
 }

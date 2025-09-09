@@ -73,6 +73,10 @@ const loading = ref(false);
 const currentTaskInfo = ref<TaskInfo>();
 const activeTabKey = ref(''); // 问卷Tab
 
+/** 是否存在身心健康自评问卷 */
+const hasHealthSelfAssessment = ref(false);
+
+/** 任务状态标签 */
 const taskStatusTag = computed(() => {
   if (!currentTaskInfo.value) {
     return null;
@@ -150,6 +154,10 @@ async function loadTaskData() {
       };
       activeTabKey.value =
         currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
+      hasHealthSelfAssessment.value =
+        currentTaskInfo.value.questionnairesTabs.some(
+          (item) => item.key === '12',
+        );
     }
   } catch (error) {
     console.error('Failed to load task data:', error);
@@ -212,7 +220,7 @@ onMounted(async () => {
 
     <!-- 问卷Tabs -->
     <ATabs v-model:active-key="activeTabKey" :tab-bar-gutter="10">
-      <ATabs.TabPane
+      <!-- <ATabs.TabPane
         v-for="tab in currentTaskInfo?.questionnairesTabs"
         :key="tab.key"
       >
@@ -226,7 +234,7 @@ onMounted(async () => {
             {{ tab.label }}
           </span>
         </template>
-      </ATabs.TabPane>
+      </ATabs.TabPane> -->
       <template #leftExtra>
         <div class="mr-6">
           <LyButton size="middle" type="default" @click="router.back()">
@@ -234,7 +242,7 @@ onMounted(async () => {
           </LyButton>
         </div>
       </template>
-      <template #rightExtra>
+      <template #rightExtra v-if="false">
         <ARadio.Group v-model:value="activeType">
           <ARadio.Button
             v-for="item in classType"
@@ -249,14 +257,21 @@ onMounted(async () => {
 
     <div class="grid grid-cols-2 gap-4">
       <!-- 统计卡片区域 -->
-      <AssessmentDetailTask :task-no="taskNo" :loading="loading" />
+      <AssessmentDetailTask :task-no="taskNo" />
 
       <!-- 年级班级对比区域 -->
-      <AssessmentDetailCompare :loading="loading" />
+      <AssessmentDetailCompare :task-no="taskNo" />
     </div>
 
     <!-- 年级管理区域 -->
-    <AssessmentDetailList :task-no="taskNo" :questionnaire-id="activeTabKey" />
+    <AssessmentDetailList
+      :task-no="taskNo"
+      :task-name="currentTaskInfo?.taskName"
+      :questionnaire-id="activeTabKey"
+      :has-health-self-assessment="hasHealthSelfAssessment"
+      :questionnaires-tabs="currentTaskInfo?.questionnairesTabs"
+      v-model:active-tab-key="activeTabKey"
+    />
   </div>
 </template>
 

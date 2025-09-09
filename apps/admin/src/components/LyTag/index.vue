@@ -71,12 +71,16 @@ const computedTagStyle = computed(() => {
   if (computedTagType.value) {
     return computedTagType.value;
   }
-  return {};
+  // 当没有传递颜色对、颜色类型时，使用默认的 default 颜色类型
+  return TAG_TYPE.default;
 });
 </script>
 
 <template>
-  <span class="rounded-md px-2 py-1 text-xs" :style="computedTagStyle">
-    {{ tag ? tag?.label : tagLabel }}
+  <span
+    class="box-border rounded-md px-2 py-1 text-xs"
+    :style="computedTagStyle"
+  >
+    {{ tag?.label || tagLabel || '未知' }}
   </span>
 </template>

@@ -6,7 +6,7 @@ import { ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { message } from 'ant-design-vue';
+import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -21,13 +21,21 @@ import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
 
 interface Props {
   taskNo?: string;
+  taskName?: string;
   questionnaireId?: string;
+  hasHealthSelfAssessment?: boolean;
+  questionnairesTabs?: { key: string; label: string }[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   taskNo: '',
+  taskName: '',
   questionnaireId: '',
+  hasHealthSelfAssessment: false,
+  questionnairesTabs: () => [],
 });
+
+const activeTabKey = defineModel<string>('activeTabKey'); // 问卷Tab
 
 const actionButtons = ref([
   {
@@ -36,7 +44,7 @@ const actionButtons = ref([
     onClick: handleBatchSendReminder,
   },
   {
-    label: '批量转入干预',
+    label: '批量转入评估',
     value: 'batchTransferToIntervention',
     onClick: handleBatchTransferToIntervention,
   },
@@ -156,17 +164,29 @@ function handleBatchTransferToIntervention() {
 function viewDetail(
   row: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
 ) {
-  if (!row?.id) {
-    return message.error('测评结果暂不支持查看');
+  if (props.questionnaireId) {
+    questionnaireResultModalApi
+      .setData({
+        id: row?.id,
+        name: row?.name,
+        questionnaireName: row?.questionnaireName,
+        questionnaireId: props.questionnaireId,
+      })
+      .open();
+  } else {
+    if (props.hasHealthSelfAssessment) {
+      questionnaireResultModalApi
+        .setData({
+          id: row?.id,
+          name: row?.name,
+          taskName: props.taskName,
+          questionnairesTabs: props.questionnairesTabs,
+        })
+        .open();
+    } else {
+      return message.error('问卷暂不支持查看');
+    }
   }
-  questionnaireResultModalApi
-    .setData({
-      id: row?.id,
-      name: row?.name,
-      questionnaireName: row?.questionnaireName,
-      questionnaireId: props.questionnaireId,
-    })
-    .open();
 }
 
 // 导出数据
@@ -194,6 +214,22 @@ async function handleExport() {
 
 <template>
   <div class="mb-6">
+    <!-- 问卷Tabs -->
+    <ATabs :tab-bar-gutter="10" class="mb-3" v-model:active-key="activeTabKey">
+      <ATabs.TabPane v-for="tab in props.questionnairesTabs" :key="tab.key">
+        <template #tab>
+          <span
+            class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
+            :class="{
+              '!bg-primary !text-white': activeTabKey === tab.key,
+            }"
+          >
+            {{ tab.label }}
+          </span>
+        </template>
+      </ATabs.TabPane>
+    </ATabs>
+
     <AssessmentDetailSearch
       ref="searchRef"
       @search="handleSearch"

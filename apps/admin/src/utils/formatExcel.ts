@@ -85,9 +85,9 @@ const _rules = {
     required: true,
     validator: (value: string): boolean => {
       const len = getStringLength(value);
-      return len >= 2 && len <= 10;
+      return len >= 2 && len <= 20;
     },
-    message: '姓名应为2-10个字符',
+    message: '姓名应为2-20个字符',
   },
   birthDate: {
     required: true,
@@ -98,9 +98,14 @@ const _rules = {
       const [y, m, d] = value.split('-').map((x) => Number.parseInt(x, 10));
       if (!y || !m || !d) return false;
       const dt = dayjs(`${y}-${m}-${d}`);
-      return dt.isValid();
+      if (!dt.isValid()) return false;
+
+      // 校验年龄在1-30岁之间
+      const now = dayjs();
+      const age = now.diff(dt, 'year');
+      return age >= 1 && age <= 30;
     },
-    message: '出生日期需为YYYY-MM-DD且为有效日期',
+    message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在1-30岁之间',
   },
   sex: {
     required: true,
@@ -169,7 +174,7 @@ export async function validateStudentRecord(
     if (!record[field]) {
       const fieldNames: Record<keyof StudentRecord, string> = {
         studentNo: '学号',
-        name: '姓名',
+        name: '学生姓名',
         birthDate: '出生日期',
         sex: '性别',
         gradeName: '年级',
@@ -460,7 +465,7 @@ export async function parseExcel(
       const firstRow = processedData[0];
       if (firstRow && firstRow.length > 0) {
         headers = firstRow.map((cell: any) => String(cell || ''));
-        dataRows = processedData.slice(1);
+        dataRows = processedData.slice(2);
       } else {
         // 第一行存在但为空，生成默认列名
         const maxCols = Math.max(

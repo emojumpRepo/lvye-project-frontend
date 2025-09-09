@@ -267,18 +267,21 @@ function handleImport() {
 
 // 批量换班
 function handleBulkChangeClass() {
-  const selectedStudents = gridApi.grid.getCheckboxRecords();
-  bulkClassTransferDrawerApi.setData({ selectedStudents }).open();
+  message.warning('即将上线');
+  //   const selectedStudents = gridApi.grid.getCheckboxRecords();
+  //   bulkClassTransferDrawerApi.setData({ selectedStudents }).open();
 }
 
 // 已毕业学生档案
 function handleGraduatedStudentFile() {
-  graduatedFileDrawerApi.open();
+  message.warning('即将上线');
+  // graduatedFileDrawerApi.open();
 }
 
 // 年级毕业
 function handleGraduated() {
-  graduationDrawerOpen.value = true;
+  message.warning('即将上线');
+  // graduationDrawerOpen.value = true;
 }
 
 // 导出数据
@@ -390,9 +393,11 @@ onMounted(async () => {
             <!-- 心理状态 -->
             <template #psychologicalStatus="{ row }">
               <LyTag
+                v-if="row?.psychologicalStatus"
                 tag-category-key="student_psychological_status"
                 :dict-value="row?.psychologicalStatus"
               />
+              <LyTag v-else />
             </template>
 
             <!-- 毕业状态 -->
@@ -405,7 +410,7 @@ onMounted(async () => {
 
             <!-- 联系电话 -->
             <template #mobile="{ row }">
-              <span>{{ row?.mobile || '---' }}</span>
+              <span>{{ row?.mobile || '--' }}</span>
             </template>
 
             <!-- 操作 -->
@@ -417,17 +422,17 @@ onMounted(async () => {
                     type: 'link',
                     onClick: () => drawerApi.setData({ id: row.id }).open(),
                   },
-                  {
-                    label: '删除',
-                    type: 'link',
-                    danger: true,
-                    onClick: () =>
-                      openDeleteStudentModal(
-                        row.id as number,
-                        row.studentNo,
-                        row.name,
-                      ),
-                  },
+                  // {
+                  //   label: '删除',
+                  //   type: 'link',
+                  //   danger: true,
+                  //   onClick: () =>
+                  //     openDeleteStudentModal(
+                  //       row.id as number,
+                  //       row.studentNo,
+                  //       row.name,
+                  //     ),
+                  // },
                 ]"
               />
             </template>

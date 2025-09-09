@@ -15,44 +15,20 @@ interface AppConfig {
 const appConfigs: Record<string, AppConfig> = {
   admin: {
     name: 'Admin管理后台',
-    defaultHomePath: '/analytics',
-    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/static/logo/lvye_logo.png',
+    defaultHomePath: '/workspace',
+    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/full-logo.png',
     theme: {
-      primaryColor: 'hsl(144 57% 58%)',
+      primaryColor: 'hsl(150, 84%, 49%)',
       mode: 'dark',
     },
   },
   web: {
     name: 'Web前台',
     defaultHomePath: '/home',
-    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/static/logo/lvye_logo.png',
+    logo: 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/logo.png',
     theme: {
       primaryColor: 'hsl(144 57% 58%)',
       mode: 'light',
-    },
-  },
-  'web-antd': {
-    name: 'Antd版本',
-    defaultHomePath: '/home',
-    theme: {
-      primaryColor: 'hsl(348 100% 61%)',
-      mode: 'light',
-    },
-  },
-  'web-ele': {
-    name: 'Element版本',
-    defaultHomePath: '/index',
-    theme: {
-      primaryColor: 'hsl(42 84% 61%)',
-      mode: 'light',
-    },
-  },
-  'web-naive': {
-    name: 'Naive版本',
-    defaultHomePath: '/welcome',
-    theme: {
-      primaryColor: 'hsl(212 100% 45%)',
-      mode: 'dark',
     },
   },
 };
@@ -187,7 +163,7 @@ export function createAppPreferences(): Preferences {
       builtinType: 'default',
       colorDestructive: 'hsl(348 100% 61%)',
       colorPrimary: appConfig.theme?.primaryColor || 'hsl(212 100% 45%)',
-      colorSuccess: 'hsl(144 57% 58%)',
+      colorSuccess: 'hsl(150, 84%, 49%)',
       colorWarning: 'hsl(42 84% 61%)',
       mode: appConfig.theme?.mode || 'dark',
       radius: '0.5',

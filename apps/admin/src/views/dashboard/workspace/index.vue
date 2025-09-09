@@ -2,10 +2,13 @@
 import { computed, ref } from 'vue';
 
 import { ChevronRight } from '@vben/icons';
+import { useUserStore } from '@vben/stores';
 
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
+
+const userStore = useUserStore();
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
@@ -153,8 +156,10 @@ function onAlertsRefresh() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[70px] pb-10 pt-5">
-    <PageTitle title="工作台" />
+  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
+    <PageTitle
+      :title="`欢迎${userStore.userInfo?.nickname}，开始您一天的工作吧！`"
+    />
     <!-- New cards from Figma design -->
     <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
       <WorkSpaceCard

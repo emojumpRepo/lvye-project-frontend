@@ -201,7 +201,7 @@ async function loadStudentProfile(id: number) {
     // 学生心理状态
     psychologicalStatusTag.value = (await getStudentPsychologicalStatusTag(
       'student_psychological_status',
-      studentProfileData.psychologicalStatus || 1,
+      studentProfileData.psychologicalStatus || 0,
     )) as PsychologicalStatusTag;
 
     // 核心问题标签
@@ -281,7 +281,8 @@ function updateLoading(value: boolean) {
  * 新增记录
  */
 function handleCreateStudentEventRecord() {
-  createStudentEventRecordModalApi.open();
+  message.warning('即将上线');
+  // createStudentEventRecordModalApi.open();
 }
 
 /**

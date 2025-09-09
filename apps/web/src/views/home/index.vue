@@ -24,7 +24,37 @@ async function getMyTasks() {
   try {
     tasksLoading.value = true;
     const res = await getMyAssessmentTask();
-    myTasks.value = (res as unknown as AssessmentTask[]) || [];
+    myTasks.value =
+      (res as unknown as AssessmentTask[]).sort((a, b) => {
+        const now = Date.now();
+        const progressA = (a as any).progress ?? 0;
+        const progressB = (b as any).progress ?? 0;
+        const doneA = progressA === 100;
+        const doneB = progressB === 100;
+
+        // 未完成排前，已完成(100)排后
+        if (doneA !== doneB) return doneA ? 1 : -1;
+
+        const deadlineA = Number(a.deadline ?? 0);
+        const deadlineB = Number(b.deadline ?? 0);
+
+        if (!doneA && !doneB) {
+          // 未完成：按离现在更近的在前（距离小的优先）
+          const distA = Math.abs(deadlineA - now);
+          const distB = Math.abs(deadlineB - now);
+          if (distA !== distB) return distA - distB;
+          // 距离相同则更早截止在前
+          if (deadlineA !== deadlineB) return deadlineA - deadlineB;
+        } else {
+          // 已完成：按截止日期更早的在前
+          if (deadlineA !== deadlineB) return deadlineA - deadlineB;
+        }
+
+        // 兜底：创建时间较新在前
+        const createA = Number((a as any).createTime ?? 0);
+        const createB = Number((b as any).createTime ?? 0);
+        return createB - createA;
+      }) || [];
   } catch (error) {
     // 记录错误但不抛出
     console.error(error);
@@ -45,30 +75,17 @@ function onTaskAction(task: AssessmentTask) {
 
 <template>
   <Page auto-content-height :height-offset="50">
-    <div class="h-full overflow-hidden p-4 lg:p-6">
-      <!-- 一屏布局：左8/右4 -->
-      <div
-        class="grid h-full grid-cols-1 gap-4 overflow-hidden lg:grid-cols-12 lg:[grid-template-rows:auto_1fr]"
-      >
-        <!-- 欢迎横幅 -->
-        <div class="lg:col-span-8">
-          <WelcomeBanner />
-        </div>
-
-        <!-- 考拉老师寄语 -->
-        <div class="lg:col-span-4">
-          <KoalaMessage />
-        </div>
-
-        <!-- 测评快速入口（左下：标题 + 三卡并排，占据一格） -->
-        <!-- <div class="lg:col-span-8">
-        <AssessmentCards :items="assessments" />
-      </div> -->
-
+    <!-- 一屏布局：左8/右4 -->
+    <div
+      class="grid h-full grid-cols-1 gap-4 lg:grid-cols-12 lg:[grid-template-rows:auto_1fr]"
+    >
+      <!-- 左边布局 -->
+      <div class="flex h-full flex-col overflow-y-auto lg:col-span-8">
+        <WelcomeBanner />
         <!-- 我的测评任务列表 -->
-        <div class="h-full overflow-hidden lg:col-span-8">
+        <div class="flex-1">
           <div
-            class="flex h-full flex-col overflow-hidden rounded-3xl border-0 bg-white/60 p-4 shadow backdrop-blur-sm"
+            class="flex h-full flex-col rounded-3xl border-0 bg-white/60 p-4 shadow backdrop-blur-sm"
           >
             <div
               class="mb-3 flex shrink-0 items-center text-xl font-bold text-emerald-900"
@@ -102,13 +119,19 @@ function onTaskAction(task: AssessmentTask) {
             </template>
           </div>
         </div>
-
-        <!-- 右下：小贴士 + 正念音频 二分栏堆叠，占据一格 -->
-        <div class="flex h-full gap-4 lg:col-span-4">
-          <!-- 小贴士 -->
-          <DailyTip :tip="dailyTip" />
-        </div>
       </div>
+
+      <!-- 考拉老师寄语 -->
+      <div class="h-full space-y-6 lg:col-span-4">
+        <KoalaMessage />
+        <DailyTip :tip="dailyTip" />
+      </div>
+
+      <!-- 右下：小贴士 + 正念音频 二分栏堆叠，占据一格 -->
+      <!-- <div class="flex h-full gap-4 lg:col-span-4"> -->
+      <!-- 小贴士 -->
+      <!-- <DailyTip :tip="dailyTip" /> -->
+      <!-- </div> -->
     </div>
   </Page>
 </template>
