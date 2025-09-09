@@ -2,24 +2,28 @@
 withDefaults(
   defineProps<{
     description?: string;
+    marginBottom?: string;
     title?: string;
   }>(),
   {
     description: '',
     title: '',
+    marginBottom: 'mb-6',
   },
 );
 </script>
 
 <template>
-  <div class="mb-6">
+  <div class="flex w-full items-center justify-between" :class="marginBottom">
     <!-- 标题区 -->
-    <div class="flex flex-col">
+    <div class="flex flex-col gap-1">
       <h1 class="truncate text-2xl font-bold text-black">
         {{ title }}
       </h1>
-      <p v-if="description" class="text-sm text-gray-500">{{ description }}</p>
+      <p v-if="description" class="text-sm text-[#979899]">{{ description }}</p>
     </div>
+    <!-- 操作区 -->
+    <slot name="action"></slot>
   </div>
 </template>
 <style scoped></style>

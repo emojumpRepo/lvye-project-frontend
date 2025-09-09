@@ -40,6 +40,8 @@
   "emailValidErrorTip": "你输入的邮箱格式不正确",
   "resetPassword": "重置密码",
   "email": "邮箱",
+  "studentName": "学生姓名",
+  "studentNameTip": "请输入学生姓名",
   "qrcodeSubtitle": "请用手机扫描二维码登录",
   "qrcodePrompt": "扫码后点击 '确认'，即可完成登录",
   "qrcodeLogin": "扫码登录",

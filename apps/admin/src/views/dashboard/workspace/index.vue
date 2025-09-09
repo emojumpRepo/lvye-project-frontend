@@ -156,7 +156,7 @@ function onAlertsRefresh() {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[70px] pb-10 pt-5">
+  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
     <PageTitle
       :title="`欢迎${userStore.userInfo?.nickname}，开始您一天的工作吧！`"
     />

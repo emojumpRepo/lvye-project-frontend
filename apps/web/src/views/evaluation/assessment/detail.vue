@@ -35,7 +35,9 @@ onMounted(async () => {
 });
 
 function handleBack() {
-  router.back();
+  router.replace({
+    path: '/home',
+  });
 }
 
 // 格式化显示

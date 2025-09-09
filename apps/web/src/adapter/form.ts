@@ -59,36 +59,36 @@ async function initSetupVbenForm() {
         }
         return true;
       },
-      // 小学生年龄验证（6-16岁）
+      // 小学生年龄验证（1-30岁）
       studentAge: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value === '') {
           return $t('ui.formRules.required', [ctx.label]);
         }
         const age = Number(value);
-        if (Number.isNaN(age) || age < 6 || age > 16) {
-          return `${ctx.label}必须是6-16岁之间的有效年龄`;
+        if (Number.isNaN(age) || age < 1 || age > 30) {
+          return `${ctx.label}必须是1-30岁之间的有效年龄`;
         }
         return true;
       },
-      // 小学生身高验证（80-200cm）
+      // 小学生身高验证（50-300cm）
       studentHeight: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value === '') {
           return $t('ui.formRules.required', [ctx.label]);
         }
         const height = Number(value);
-        if (Number.isNaN(height) || height < 80 || height > 200) {
-          return `${ctx.label}必须是80-200cm之间的有效身高`;
+        if (Number.isNaN(height) || height < 50 || height > 300) {
+          return `${ctx.label}必须是50-300cm之间的有效身高`;
         }
         return true;
       },
-      // 小学生体重验证（20-100kg）
+      // 小学生体重验证（10-300kg）
       studentWeight: (value: any, _params: any, ctx: any) => {
         if (value === undefined || value === null || value === '') {
           return $t('ui.formRules.required', [ctx.label]);
         }
         const weight = Number(value);
-        if (Number.isNaN(weight) || weight < 20 || weight > 100) {
-          return `${ctx.label}必须是20-100kg之间的有效体重`;
+        if (Number.isNaN(weight) || weight < 10 || weight > 300) {
+          return `${ctx.label}必须是10-300kg之间的有效体重`;
         }
         return true;
       },

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Spin } from 'ant-design-vue';
@@ -28,6 +28,7 @@ const {
   startEvaluation,
   startEvaluationWithoutScenario,
   loadTaskDetail,
+  exitFullscreen,
 } = evaluationStore;
 
 const { generateIframeSrc } = useEvaluation();
@@ -37,9 +38,17 @@ const hasScene = ref(false); // 是否需要场景
 
 const iframeSrc = ref('');
 
-onMounted(async () => {
+// 页面关闭前确认函数
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  event.preventDefault();
+}
+
+// 初始化页面状态
+async function initializePage() {
   const sceneId = route.query.sceneId as string;
   const assessmentTaskNo = route.query.assessmentTaskNo as string;
+
+  // 最小必要日志已保留在子组件
 
   // 确保任务数据已加载
   if (assessmentTaskNo) {
@@ -50,6 +59,9 @@ onMounted(async () => {
     hasScene.value = true;
     hasIntro.value = true;
     selectSlot(sceneId);
+  } else {
+    hasScene.value = false;
+    hasIntro.value = false;
   }
 
   // 从 URL 参数获取问卷信息（无场景模式使用）
@@ -57,18 +69,58 @@ onMounted(async () => {
   const questionnaireLink = route.query.questionnaireLink as string;
 
   iframeSrc.value = generateIframeSrc(questionnaireId, questionnaireLink);
+  console.warn(iframeSrc.value);
+}
+
+onMounted(async () => {
+  // 初始化页面状态
+  await initializePage();
+
+  // 注册页面关闭前确认事件
+  window.addEventListener('beforeunload', handleBeforeUnload);
+});
+
+// 监听路由变化，重新初始化页面状态
+watch(
+  () => [
+    route.query.questionnaireId,
+    route.query.questionnaireLink,
+    route.query.sceneId,
+    route.query.assessmentTaskNo,
+  ],
+  async () => {
+    // 重新初始化页面状态，包括场景、介绍、iframe等
+    await initializePage();
+  },
+  { immediate: false },
+);
+
+// 保留简洁逻辑，无额外日志
+
+// 组件卸载时移除事件监听器
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 function handleBack() {
-  const targetPath = hasScenario.value
-    ? '/evaluation/scene'
-    : `/evaluation/assessment/${currentTaskNo.value}`;
-  router.replace({
-    path: targetPath,
-    query: {
-      taskNo: currentTaskNo.value,
-    },
-  });
+  // 移除页面关闭前确认事件
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+
+  // 先退出全屏模式，再跳转页面
+  exitFullscreen();
+
+  if (hasScenario.value) {
+    router.replace({
+      path: '/evaluation/scene',
+      query: {
+        taskNo: currentTaskNo.value,
+      },
+    });
+  } else {
+    router.replace({
+      path: `/evaluation/assessment/${currentTaskNo.value}`,
+    });
+  }
 }
 
 async function handleContinue() {
@@ -76,29 +128,33 @@ async function handleContinue() {
   if (hasScenario.value) {
     // 如果当前是最后一个场景，则不进行跳转，直接提交回答
     if (isLastScene.value) {
-      console.warn('last scene');
-      router.replace({
-        path: '/evaluation/scene',
-        query: {
-          taskNo: currentTaskNo.value,
-        },
-      });
+      // 移除页面关闭前确认事件
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // 先退出全屏模式，再跳转页面
+      exitFullscreen();
+
+      setTimeout(() => {
+        router.replace({
+          path: '/evaluation/scene',
+          query: {
+            taskNo: currentTaskNo.value,
+          },
+        });
+      }, 100);
       return;
     }
     const nextScene = getNextSlot();
-    console.warn(nextScene);
     if (nextScene) {
       // 先切换到下一个插槽
       selectSlot(nextScene.id || 0);
       // 然后跳转到下一个插槽的问卷页面
       await startEvaluation(currentTaskNo.value || '', router);
-      router.afterEach(() => {
-        window.location.reload();
-      });
     }
   } else {
     // 无测试场景的模式
     const nextQuestionnaire = getNextIncompleteQuestionnaire.value;
+    // 移除页面关闭前确认事件
+    window.removeEventListener('beforeunload', handleBeforeUnload);
     if (nextQuestionnaire) {
       // 跳转到下一个未完成的问卷
       await startEvaluationWithoutScenario(
@@ -106,15 +162,16 @@ async function handleContinue() {
         nextQuestionnaire,
         router,
       );
-      router.afterEach(() => {
-        window.location.reload();
-      });
     } else {
       // 所有问卷都已完成，跳转到测评详情页面
-      console.warn('all questionnaires completed');
-      router.replace({
-        path: `/evaluation/assessment/${currentTaskNo.value}`,
-      });
+      // 先退出全屏模式，再跳转页面
+      exitFullscreen();
+
+      setTimeout(() => {
+        router.replace({
+          path: `/evaluation/assessment/${currentTaskNo.value}`,
+        });
+      }, 100);
     }
   }
 }
@@ -152,6 +209,7 @@ function handleComplete(payload: null | Record<string, unknown>) {
     </template>
     <template v-else>
       <QuestionnaireContainer
+        :key="selectedSlot?.id || `${route.query.questionnaireId}`"
         :scene-data="selectedSlot"
         :iframe-src="iframeSrc"
         :has-intro="hasIntro"

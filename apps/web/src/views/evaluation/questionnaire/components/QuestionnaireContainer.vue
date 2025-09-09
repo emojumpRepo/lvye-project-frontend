@@ -37,14 +37,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-const showIntro = ref(props.hasIntro);
+const showIntro = ref(false);
 const isIframeCompleted = ref(false);
 const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 
 const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
 
 const bgUrl = computed(() => {
-  console.warn(props.sceneData);
   const introBgImgUrl =
     props.sceneData?.metadata?.introConfig.backgroundImageUrl;
   return showIntro.value
@@ -83,7 +82,24 @@ watch(
   (newVal) => {
     showIntro.value = newVal;
   },
+  { immediate: true },
 );
+
+// 场景切换时，强制展示介绍并重置完成状态
+watch(
+  () => props.sceneData?.id,
+  () => {
+    // 每个场景进入时都显示介绍
+    showIntro.value = true;
+    // 重置完成状态
+    isIframeCompleted.value = false;
+    iframeCompletionPayload.value = null;
+    // 最小必要日志：保留一次场景变更提示
+    console.warn('[Questionnaire] 场景变更，重置介绍与完成状态');
+  },
+);
+
+// 不再冗余输出 showIntro 的每次变化
 </script>
 
 <template>
