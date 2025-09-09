@@ -83,7 +83,7 @@ const rules: Record<string, Rule[]> = {
         if (!value) {
           return Promise.reject(new Error('请输入学生姓名'));
         }
-        if (value.length < 2 || value.length > 20) {
+        if (value.length < 2 || value.length > 30) {
           return Promise.reject(new Error('姓名格式不正确'));
         }
         // if (!/^[\u4E00-\u9FA5]+$/.test(value)) {

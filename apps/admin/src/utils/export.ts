@@ -249,7 +249,7 @@ export async function downloadTemplate() {
   ];
 
   worksheet.addRow([
-    '文本，2-20个字符',
+    '文本，2-30个字符',
     '数字或字母数字组合，不超过20位',
     '男/女',
     '只填写年级',
