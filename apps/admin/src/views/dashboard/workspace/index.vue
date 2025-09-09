@@ -172,7 +172,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
+  <div class="flex h-full flex-col px-[30px] pb-10 pt-5">
     <PageTitle :title="systemWelcome" />
     <!-- New cards from Figma design -->
     <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
@@ -188,6 +188,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="今日心理咨询任务"
+        class="lg:col-span-2"
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
@@ -212,6 +213,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="重点干预学生"
+        class="lg:col-span-2"
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
@@ -240,6 +242,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="待处理预警事件"
+        class="lg:col-span-3"
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >

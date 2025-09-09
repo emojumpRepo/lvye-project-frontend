@@ -144,7 +144,7 @@ const secondaryBadgeClasses = computed(() => {
         </div>
       </div>
 
-      <div v-if="description" class="text-xs text-[#959599]">
+      <div v-if="description" class="line-clamp-1 text-xs text-[#959599]">
         {{ description }}
       </div>
 

@@ -9,6 +9,7 @@ import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = withDefaults(
   defineProps<{
+    class?: string;
     count?: null | number;
     iconBg?: string;
     // optional icon url (use Figma dev assets if passed)
@@ -33,6 +34,7 @@ const props = withDefaults(
     withGradient: false,
     pagination: null,
     showRefresh: true,
+    class: '',
   },
 );
 
