@@ -46,8 +46,8 @@ const emit = defineEmits<{
 const containerClasses = computed(() => {
   const base = 'rounded-2xl relative';
   return props.withGradient
-    ? `${base} bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]`
-    : `${base} bg-white`;
+    ? `${base} ${props.class} bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]`
+    : `${base} ${props.class} bg-white`;
 });
 </script>
 
