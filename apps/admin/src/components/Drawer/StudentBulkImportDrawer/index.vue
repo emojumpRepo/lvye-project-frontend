@@ -5,8 +5,7 @@ import type { StudentRecord, StudentRecordResult } from '#/utils/formatExcel';
 
 import { onMounted, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { message, Spin } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -19,13 +18,10 @@ import { getDictOptions } from '#/utils/dict';
 import { downloadTemplate } from '#/utils/export';
 import { parseExcel } from '#/utils/formatExcel';
 
+import ExportStudentProfileDialog from '../../Dialog/ExportStudentProfileDialog/index.vue';
 import ImportProgress from './components/ImportProgress.vue';
 import ImportTable from './components/ImportTable.vue';
-import {
-  studentBulkImportColumns,
-  studentBulkImportFailedColumns,
-  studentBulkImportFailedDataColumns,
-} from './data';
+import { studentBulkImportFailedColumns } from './data';
 
 // 导入结果类型定义
 interface ImportResult {
@@ -64,6 +60,11 @@ const importResult = ref<ImportResult>({
   },
 });
 
+const [ExportStudentProfileDialogModal, ExportStudentProfileDialogModalApi] =
+  useVbenModal({
+    connectedComponent: ExportStudentProfileDialog,
+  });
+
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
@@ -78,10 +79,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
       message.warning('没有可导入的数据');
       return;
     }
-    drawerApi.lock();
+    // drawerApi.lock();
     await startImport();
     emit('refresh');
-    drawerApi.unlock();
+    // drawerApi.unlock();
   },
   onClosed: () => {
     handleFileRemove();
@@ -93,6 +94,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
 /** 开始导入 */
 async function startImport() {
   try {
+    if (openImportProgress.value) {
+      message.warning('请先等待导入完成');
+      return;
+    }
+
     openImportProgress.value = true;
 
     if (parseData.value?.success.length === 0) {
@@ -143,11 +149,11 @@ async function startImport() {
 
     // 完成导入或中断
     importResult.value.summary.endTime = dayjs().valueOf();
+    importCompleted.value = true;
   } catch (error) {
     console.error('导入过程发生错误:', error);
     message.error('导入过程发生错误，请稍后重试');
     openImportProgress.value = false;
-  } finally {
     importCompleted.value = true;
   }
 }
@@ -157,13 +163,20 @@ function cancelImport() {
   isCancelled.value = true;
   openImportProgress.value = false;
   importCompleted.value = true;
-  parseData.value = null;
+  ExportStudentProfileDialogModalApi.setData({
+    importResult: importResult.value,
+    parseData: parseData.value,
+  }).open();
 }
 
 /** 完成导入 */
 function completeImport() {
   openImportProgress.value = false;
   importCompleted.value = true;
+  ExportStudentProfileDialogModalApi.setData({
+    importResult: importResult.value,
+    parseData: parseData.value,
+  }).open();
 }
 
 /** 解析Excel文件 */
@@ -211,18 +224,9 @@ function handleFileRemove() {
   };
 }
 
-/** 格式化处理时间 */
-function formatProcessTime(startTime: number, endTime?: number) {
-  if (!endTime) return '处理中...';
-
-  const duration = endTime - startTime;
-  const seconds = Math.floor(duration / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-
-  return minutes > 0
-    ? `${minutes}分${remainingSeconds}秒`
-    : `${remainingSeconds}秒`;
+function resetUploadFile() {
+  fileList.value = [];
+  handleFileRemove();
 }
 
 /** 获取字典列表 */
@@ -300,113 +304,6 @@ onMounted(async () => {
               :data-source="parseData.failed"
             />
           </div>
-
-          <!-- 导入结果 -->
-          <div
-            v-if="
-              importResult.summary.endTime &&
-              (importResult.summary.successCount > 0 ||
-                importResult.summary.failedCount > 0)
-            "
-            class="mt-6 space-y-6"
-          >
-            <LyLabel has-indicator title="第四步：导入结果" />
-
-            <!-- 导入概况卡片 -->
-            <div
-              class="import-summary-card rounded-lg border p-6 shadow-sm transition-all duration-200"
-              :class="[
-                importResult.summary.failedCount === 0
-                  ? 'border-green-200 bg-green-50'
-                  : 'border-orange-200 bg-orange-50',
-              ]"
-            >
-              <div class="flex items-start gap-4">
-                <!-- 状态图标 -->
-                <div
-                  class="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF9C0514]"
-                >
-                  <IconifyIcon icon="material-symbols:error" color="#FF9C05" />
-                </div>
-
-                <!-- 导入概况内容 -->
-                <div class="flex-1">
-                  <h3 class="mb-4 text-lg font-semibold text-gray-800">
-                    导入概况
-                  </h3>
-
-                  <div class="space-y-2 text-sm">
-                    <div class="flex items-center gap-2">
-                      <span class="w-20 text-gray-600">• 成功导入：</span>
-                      <span class="font-semibold text-green-600">
-                        {{ importResult.summary.successCount }} 名学生
-                      </span>
-                    </div>
-
-                    <div
-                      v-if="importResult.summary.failedCount > 0"
-                      class="flex items-center gap-2"
-                    >
-                      <span class="w-20 text-gray-600">• 导入失败：</span>
-                      <span class="font-semibold text-red-600">
-                        {{ importResult.summary.failedCount }} 名学生
-                      </span>
-                    </div>
-
-                    <div
-                      v-if="parseData && parseData.failed.length > 0"
-                      class="flex items-center gap-2"
-                    >
-                      <span class="w-20 text-gray-600">• 错误数据：</span>
-                      <span class="font-semibold text-red-600">
-                        {{ parseData.failed.length }} 条记录
-                      </span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                      <span class="w-20 text-gray-600">• 处理时间：</span>
-                      <span class="font-semibold text-gray-800">
-                        {{
-                          formatProcessTime(
-                            importResult.summary.startTime,
-                            importResult.summary.endTime,
-                          )
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 详细结果表格 -->
-            <div v-if="importResult.success.length > 0" class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div class="h-1 w-1 rounded-full bg-green-500"></div>
-                <span class="text-sm font-medium text-gray-700">
-                  成功导入详情
-                </span>
-              </div>
-              <ImportTable
-                :columns="studentBulkImportColumns"
-                :data-source="importResult.success"
-              />
-            </div>
-
-            <!-- 失败结果表格 -->
-            <div v-if="importResult.failed.length > 0" class="space-y-3">
-              <div class="flex items-center gap-2">
-                <div class="h-1 w-1 rounded-full bg-red-500"></div>
-                <span class="text-sm font-medium text-gray-700">
-                  失败记录详情
-                </span>
-              </div>
-              <ImportTable
-                :columns="studentBulkImportFailedDataColumns"
-                :data-source="importResult.failed"
-              />
-            </div>
-          </div>
         </div>
       </div>
     </Spin>
@@ -420,6 +317,8 @@ onMounted(async () => {
       @cancel="cancelImport"
       @complete="completeImport"
     />
+
+    <ExportStudentProfileDialogModal @reset="resetUploadFile" />
   </Drawer>
 </template>
 
