@@ -20,29 +20,30 @@ const importResult = ref();
 const parseData = ref();
 const loading = ref(false);
 
-const [ExportStudentProfileModal, ExportStudentProfileModalApi] = useVbenModal({
-  title: '导入学生档案结果',
-  fullscreenButton: false,
-  class: 'w-[800px]',
-  confirmText: '完成',
-  onOpenChange: async (open) => {
-    if (open) {
-      loading.value = true;
-      const data = await ExportStudentProfileModalApi.getData();
-      importResult.value = data.importResult;
-      parseData.value = data.parseData;
-      loading.value = false;
-    }
-  },
-  onConfirm: () => {
-    emit('reset');
-    ExportStudentProfileModalApi.close();
-  },
-  onCancel: () => {
-    emit('reset');
-    ExportStudentProfileModalApi.close();
-  },
-});
+const [ImportStudentProfileResultModal, ImportStudentProfileResultModalApi] =
+  useVbenModal({
+    title: '导入学生档案结果',
+    fullscreenButton: false,
+    class: 'w-[800px]',
+    confirmText: '完成',
+    onOpenChange: async (open) => {
+      if (open) {
+        loading.value = true;
+        const data = await ImportStudentProfileResultModalApi.getData();
+        importResult.value = data.importResult;
+        parseData.value = data.parseData;
+        loading.value = false;
+      }
+    },
+    onConfirm: () => {
+      emit('reset');
+      ImportStudentProfileResultModalApi.close();
+    },
+    onCancel: () => {
+      emit('reset');
+      ImportStudentProfileResultModalApi.close();
+    },
+  });
 
 /** 格式化处理时间 */
 function formatProcessTime(startTime: number, endTime?: number) {
@@ -60,7 +61,7 @@ function formatProcessTime(startTime: number, endTime?: number) {
 </script>
 
 <template>
-  <ExportStudentProfileModal>
+  <ImportStudentProfileResultModal>
     <Spin :spinning="loading" />
     <!-- 导入结果 -->
     <div v-if="!loading" class="mt-2 space-y-6 px-2">
@@ -153,5 +154,5 @@ function formatProcessTime(startTime: number, endTime?: number) {
         />
       </div>
     </div>
-  </ExportStudentProfileModal>
+  </ImportStudentProfileResultModal>
 </template>
