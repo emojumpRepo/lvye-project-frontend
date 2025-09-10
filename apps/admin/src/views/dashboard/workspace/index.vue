@@ -172,7 +172,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[30px] pb-10 pt-5">
+  <div class="flex h-full flex-col px-8 pb-10 pt-5">
     <PageTitle :title="systemWelcome" />
     <!-- New cards from Figma design -->
     <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-10">
