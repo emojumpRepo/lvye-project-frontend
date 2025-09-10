@@ -12,7 +12,7 @@ defineOptions({
   name: 'Page',
 });
 
-const { autoContentHeight = false, heightOffset = 0 } =
+const { autoContentHeight = false, heightOffset = 56 } =
   defineProps<PageProps>();
 
 const headerHeight = ref(0);
