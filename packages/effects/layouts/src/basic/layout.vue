@@ -52,6 +52,10 @@ const {
 const accessStore = useAccessStore();
 const { refresh } = useRefresh();
 
+const appLogo = computed(() => {
+  return import.meta.env.VITE_APP_LOGO || preferences.logo.source;
+});
+
 const sidebarTheme = computed(() => {
   const dark = isDark.value || preferences.theme.semiDarkSidebar;
   return dark ? 'dark' : 'light';
@@ -221,7 +225,11 @@ const headerSlots = computed(() => {
     @toggle-sidebar="toggleSidebar"
     @update:sidebar-collapse="
       (value: boolean) =>
-        updatePreferences({ sidebar: { collapsed: preferences.sidebar.neverCollapse ? false : value } })
+        updatePreferences({
+          sidebar: {
+            collapsed: preferences.sidebar.neverCollapse ? false : value,
+          },
+        })
     "
     @update:sidebar-enable="
       (value: boolean) => updatePreferences({ sidebar: { enable: value } })
@@ -242,7 +250,7 @@ const headerSlots = computed(() => {
         :fit="preferences.logo.fit"
         :class="logoClass"
         :collapsed="logoCollapsed"
-        :src="preferences.logo.source"
+        :src="appLogo"
         :text="preferences.app.name"
         :theme="showHeaderNav ? headerTheme : theme"
         @click="clickLogo"

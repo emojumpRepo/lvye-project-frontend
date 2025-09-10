@@ -8,7 +8,7 @@ import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
 
-const systemWelcome = ref('欢迎使用心理健康管理系统');
+const systemWelcome = ref('');
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
 const taskList = [
@@ -157,13 +157,13 @@ function onAlertsRefresh() {
 onMounted(async () => {
   try {
     const res = await getConfigPage({
-      page: 1,
+      pageNo: 1,
       pageSize: 10,
       key: 'system.welcome',
     });
 
     if (res.list.length > 0) {
-      systemWelcome.value = res.list[0].value;
+      systemWelcome.value = res.list[0].value || '欢迎使用心理健康管理系统';
     }
   } catch (error) {
     console.error('system.welcome', error);
@@ -172,10 +172,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-[60px] pb-10 pt-5">
+  <div class="flex h-full flex-col px-[30px] pb-10 pt-5">
     <PageTitle :title="systemWelcome" />
     <!-- New cards from Figma design -->
-    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-10">
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
@@ -188,6 +188,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="今日心理咨询任务"
+        class="lg:col-span-3"
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
@@ -212,6 +213,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="重点干预学生"
+        class="lg:col-span-3"
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
@@ -240,6 +242,7 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="待处理预警事件"
+        class="lg:col-span-4"
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >

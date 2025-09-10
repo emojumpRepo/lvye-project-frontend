@@ -34,7 +34,7 @@ function handleAction() {
 <template>
   <div
     class="flex w-[420px] flex-col rounded-xl border bg-white p-6 shadow-lg"
-    style="z-index: 99"
+    style="z-index: 999"
   >
     <!-- 进度中状态 -->
     <div class="space-y-4">
@@ -61,7 +61,7 @@ function handleAction() {
     </div>
 
     <!-- 操作按钮 -->
-    <div class="mt-6 flex justify-end">
+    <div class="z-999 mt-6 flex justify-end">
       <AButton
         :type="isCompleted ? 'primary' : 'default'"
         @click="handleAction"

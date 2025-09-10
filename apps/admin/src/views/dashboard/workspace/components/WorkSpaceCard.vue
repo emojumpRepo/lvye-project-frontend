@@ -9,6 +9,7 @@ import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 const props = withDefaults(
   defineProps<{
+    class?: string;
     count?: null | number;
     iconBg?: string;
     // optional icon url (use Figma dev assets if passed)
@@ -33,6 +34,7 @@ const props = withDefaults(
     withGradient: false,
     pagination: null,
     showRefresh: true,
+    class: '',
   },
 );
 
@@ -44,8 +46,8 @@ const emit = defineEmits<{
 const containerClasses = computed(() => {
   const base = 'rounded-2xl relative';
   return props.withGradient
-    ? `${base} bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]`
-    : `${base} bg-white`;
+    ? `${base} ${props.class} bg-gradient-to-b from-[#ffffff59] via-[#ffffff] to-[#ffffff]`
+    : `${base} ${props.class} bg-white`;
 });
 </script>
 
