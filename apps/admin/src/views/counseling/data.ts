@@ -6,7 +6,89 @@ import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
+import dayjs from 'dayjs';
+
 import { getDictOptions } from '#/utils/dict';
+
+export interface CounselingRecordRow {
+  id: number;
+  studentName: string;
+  studentClass: string;
+  time: number; // timestamp
+  duration: number; // minutes
+  type: string; // 咨询类型
+  teacher: string; // 咨询老师
+  location: string; // 地点
+  status: '已取消' | '已完成' | '已逾期' | '已预约';
+  progress: number; // 0-100
+}
+
+export function useGridColumns(): VxeTableGridOptions['columns'] {
+  return [
+    { type: 'seq', title: '序号', width: 60 },
+    {
+      field: 'studentName',
+      title: '学生信息',
+      width: 160,
+      slots: { default: 'student' },
+    },
+    {
+      field: 'time',
+      title: '时间',
+      width: 220,
+      formatter: ({ cellValue, row }) =>
+        `${dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')}\n${row.duration}分钟`,
+    },
+    { field: 'type', title: '咨询类型', width: 140 },
+    { field: 'teacher', title: '咨询老师', width: 120 },
+    { field: 'location', title: '地点', width: 140 },
+    {
+      field: 'status',
+      title: '状态',
+      width: 120,
+      slots: { default: 'status' },
+    },
+    {
+      field: 'progress',
+      title: '进度',
+      width: 160,
+      slots: { default: 'progress' },
+    },
+    {
+      title: '操作',
+      width: 200,
+      fixed: 'right',
+      slots: { default: 'actions' },
+    },
+  ];
+}
+
+// 临时模拟数据，后续可替换为真实接口
+export function mockQuery({
+  page,
+}: {
+  page: { currentPage: number; pageSize: number };
+}) {
+  const total = 200;
+  const list: CounselingRecordRow[] = Array.from({ length: page.pageSize }).map(
+    (_, idx) => {
+      const id = (page.currentPage - 1) * page.pageSize + idx + 1;
+      return {
+        id,
+        studentName: '张晓明',
+        studentClass: '高一（3）班',
+        time: dayjs('2024-01-01 12:00:00').valueOf(),
+        duration: 60,
+        type: '学生压力咨询',
+        teacher: '李老师',
+        location: '心理咨询室A',
+        status: (['已取消', '已完成', '已预约', '已逾期'] as const)[id % 4],
+        progress: [10, 30, 60, 90, 100][id % 5],
+      };
+    },
+  );
+  return Promise.resolve({ list, total });
+}
 
 /** 搜索表单 */
 export function useSearchFormSchema(): VbenFormSchema[] {
@@ -33,31 +115,12 @@ export function useSearchFormSchema(): VbenFormSchema[] {
     'student_psychological_status',
   );
 
-  /** 毕业状态 */
-  const graduationStatusList = getDictOptions('student_graduation_status');
-
   return [
-    {
-      fieldName: 'gradeDeptId',
-      component: 'Select',
-      componentProps: {
-        options: [{ label: '全部年级', value: '' }, ...deptList.value],
-      },
-      defaultValue: '',
-    },
     {
       fieldName: 'classDeptId',
       component: 'Select',
       componentProps: {
         options: [{ label: '全部班级', value: '' }, ...classList],
-      },
-      defaultValue: '',
-    },
-    {
-      fieldName: 'graduationStatus',
-      component: 'Select',
-      componentProps: {
-        options: [{ label: '是否毕业', value: '' }, ...graduationStatusList],
       },
       defaultValue: '',
     },

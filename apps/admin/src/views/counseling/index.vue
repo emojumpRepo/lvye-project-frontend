@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
+import { Page } from '@vben/common-ui';
+
 import { RadioButton, RadioGroup } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
@@ -8,8 +10,9 @@ import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsult
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
 
-import CounselingSearch from './components/CounselSearch.vue';
+import CounselingCalendar from './calendar.vue';
 import StatisticCard from './components/StatisticCard.vue';
+import CounselingList from './list.vue';
 
 defineOptions({ name: 'CounselingCenter' });
 
@@ -27,8 +30,8 @@ const today = computed(
 </script>
 
 <template>
-  <div>
-    <div class="px-[60px] pt-5">
+  <Page auto-content-height :height-offset="50">
+    <div class="flex h-full flex-col overflow-hidden px-4">
       <!-- 页面标题 -->
       <PageTitle title="咨询管理" :description="today" margin-bottom="mb-4">
         <template #action>
@@ -50,7 +53,7 @@ const today = computed(
       </PageTitle>
 
       <!-- 统计卡片栏 -->
-      <div class="mb-6 grid grid-cols-4 gap-8">
+      <div class="mb-6 grid shrink-0 grid-cols-4 gap-8">
         <StatisticCard
           icon-bg="#f3f6ff"
           icon-color="#247eff"
@@ -84,16 +87,19 @@ const today = computed(
         />
       </div>
 
-      <template v-if="viewType === 1">
-        <!-- 咨询记录搜索栏 -->
-        <CounselingSearch />
-      </template>
-      <LyButton type="success" @click="isOpenModal = true">
-        创建心理咨询
-      </LyButton>
+      <Transition name="fade" mode="out-in">
+        <template v-if="viewType === 1">
+          <!-- 咨询记录列表 -->
+          <CounselingList />
+        </template>
+        <template v-else>
+          <!-- 日历视图 -->
+          <CounselingCalendar />
+        </template>
+      </Transition>
     </div>
     <PsychologicalConsultDialog v-model:open="isOpenModal" />
-  </div>
+  </Page>
 </template>
 
 <style lang="scss" scoped>
