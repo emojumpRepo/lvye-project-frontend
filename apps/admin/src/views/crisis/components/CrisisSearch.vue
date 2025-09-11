@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import { Badge as ABadge, Tabs as ATabs, message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
+import LyButton from '#/components/LyButton/index.vue';
 
 import { useSearchFormSchema } from '../data';
 
@@ -108,7 +109,24 @@ function parseSearchKeyword(keyword?: string) {
       </ATabs.TabPane>
     </ATabs>
 
-    <Form />
+    <Form>
+      <template #reset-before>
+        <div class="flex items-center gap-3">
+          <LyButton type="default" size="middle">
+            <div class="flex items-center gap-2">
+              <span>待处理</span>
+              <ABadge count="6" color="#FF9C05" />
+            </div>
+          </LyButton>
+          <LyButton type="default" size="middle">
+            <div class="flex items-center gap-2">
+              <span>紧急事件</span>
+              <ABadge count="6" color="#FF0831" />
+            </div>
+          </LyButton>
+        </div>
+      </template>
+    </Form>
   </div>
 </template>
 
@@ -118,7 +136,9 @@ function parseSearchKeyword(keyword?: string) {
 }
 
 :deep(.form-actions) {
-  grid-column: -3 / -1 !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   padding-bottom: 0 !important;
 }
 

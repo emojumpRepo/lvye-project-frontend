@@ -64,7 +64,7 @@ const interventionTypeMap: Record<number, InterventionType> = {
   },
   4: {
     title: '持续观察',
-    description: '需要紧急干预',
+    description: '需要长期跟踪观察的学生',
     icon: crisisContinuousIcon,
     bgColor: '#D0E5FF',
     color: '#1966FF',

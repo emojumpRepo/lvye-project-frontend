@@ -1,10 +1,13 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { Progress as AProgress } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
@@ -35,6 +38,10 @@ const eventpanelIconMap: Record<number, string> = {
   6: crisisEventClosedIcon,
 };
 
+const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
+  connectedComponent: HandleCrisisEventDialog,
+});
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     height: '570px',
@@ -55,6 +62,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 /** 查看详情 */
 function handleViewDetail(row: any) {
   console.log(row);
+  handleCrisisEventModalApi.open();
 }
 </script>
 
@@ -187,6 +195,8 @@ function handleViewDetail(row: any) {
         </template>
       </Grid>
     </div>
+
+    <HandleCrisisEventModal />
   </div>
 </template>
 
