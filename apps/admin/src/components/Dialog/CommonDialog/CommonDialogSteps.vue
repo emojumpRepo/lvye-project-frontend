@@ -41,9 +41,9 @@ const items = computed(() =>
 
 <template>
   <div
-    class="relative flex h-full rounded-2xl bg-gradient-to-b from-[#fff] via-[#fff] to-[#ffffff59] p-6"
+    class="relative flex h-full rounded-2xl bg-gradient-to-b from-[#fff] via-[#fff] to-[#ffffff59]"
   >
-    <div class="flex">
+    <div class="flex overflow-y-auto p-8">
       <ASteps
         :current="currentIndex"
         label-placement="vertical"

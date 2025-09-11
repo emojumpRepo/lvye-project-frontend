@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { IconifyIcon } from '@vben/icons';
+import { useVbenModal } from '@vben/common-ui';
 
 import { Textarea as ATextarea } from 'ant-design-vue';
-import dayjs from 'dayjs';
 
+import EditEventRecord from '#/components/Dialog/EditEventRecord.vue/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+
+import EventRecord from './EventRecord.vue';
+
+const eventDescription = ref('');
+
+const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
+  connectedComponent: EditEventRecord,
+  destroyOnClose: true,
+});
 
 // 事件基本信息
 const eventBaseInfo = ref([
@@ -48,7 +57,7 @@ const eventBaseInfo = ref([
 ]);
 
 // 事件处理记录
-const eventProcessingRecord = ref([
+const eventProcessingRecords = ref([
   {
     id: 1,
     title: '事件上报',
@@ -85,16 +94,25 @@ const eventProcessingRecord = ref([
     operator: '李数学老师',
   },
 ]);
+
+/** 快速分配 */
+function handleEditEventRecord() {
+  editEventRecordApi
+    .setData({
+      type: 'edit',
+    })
+    .open();
+}
 </script>
 
 <template>
   <div class="grid h-full grid-cols-2 grid-rows-2 gap-6">
     <!-- 事件基本信息 -->
-    <div class="row-span-1 h-full">
+    <div class="row-span-1">
       <div class="flex h-full flex-col justify-between gap-3">
         <LyLabel has-indicator title="事件基本信息" />
         <div
-          class="flex flex-1 flex-col justify-center gap-4 rounded-xl bg-[#F7F8FA] px-4"
+          class="flex flex-1 flex-col justify-between rounded-xl bg-[#F7F8FA] p-4"
         >
           <div v-for="item in eventBaseInfo" :key="item.key">
             <span class="font-bold">{{ item.label }}：</span>
@@ -107,38 +125,22 @@ const eventProcessingRecord = ref([
     <!-- 事件处理记录 -->
     <div class="row-span-2 h-full">
       <div class="flex h-full flex-col justify-between gap-3">
-        <LyLabel has-indicator title="事件处理记录" />
+        <LyLabel has-indicator title="处理记录" />
         <div class="flex-1 overflow-hidden">
           <div class="h-full space-y-4 overflow-y-auto">
-            <div
-              v-for="item in eventProcessingRecord"
-              :key="item.id"
-              class="mr-3 space-y-3 rounded-xl bg-[#F7F8FA] p-4 text-sm"
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold">{{ item.title }}</span>
-                  <span class="text-xs text-[#979899]">
-                    {{ dayjs(item.time).format('YYYY-MM-DD HH:mm:ss') }}
-                  </span>
-                </div>
-                <IconifyIcon
-                  icon="mynaui:edit"
-                  color="#666666"
-                  class="size-5"
-                />
-              </div>
-
-              <div class="text-[#17191A]">{{ item.content }}</div>
-              <div class="text-[#04DC70]">{{ item.operator }}</div>
-            </div>
+            <template v-for="record in eventProcessingRecords" :key="record.id">
+              <EventRecord
+                :event-processing-record="record"
+                @edit="handleEditEventRecord"
+              />
+            </template>
           </div>
         </div>
       </div>
     </div>
 
     <!-- 事件描述 -->
-    <div class="row-span-1 h-full">
+    <div class="row-span-1">
       <div class="flex h-full flex-col gap-3">
         <LyLabel has-indicator title="事件描述" />
         <!-- <div class="flex-1 rounded-xl bg-[#F7F8FA] p-4 leading-normal">
@@ -146,10 +148,15 @@ const eventProcessingRecord = ref([
           臂,需要立即关注和专业处理
         </div> -->
         <div class="flex-1">
-          <ATextarea />
+          <ATextarea
+            v-model:value="eventDescription"
+            placeholder="请输入事件描述"
+          />
         </div>
       </div>
     </div>
+
+    <EditEventRecordModal />
   </div>
 </template>
 

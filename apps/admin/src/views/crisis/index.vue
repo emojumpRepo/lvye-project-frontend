@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Progress as AProgress } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
+import CrisisInterventionSettingDrawer from '#/components/Drawer/CrisisInterventionSettingDrawer/index.vue';
+import ReportQuickyDrawer from '#/components/Drawer/ReportQuickyDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
@@ -38,10 +40,22 @@ const eventpanelIconMap: Record<number, string> = {
   6: crisisEventClosedIcon,
 };
 
+// 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   connectedComponent: HandleCrisisEventDialog,
 });
 
+// 危机干预系统设置抽屉
+const [SystemSettingDrawer, systemSettingDrawerApi] = useVbenDrawer({
+  connectedComponent: CrisisInterventionSettingDrawer,
+});
+
+// 快速上班抽屉
+const [ReportFastDrawer, reportFastDrawerApi] = useVbenDrawer({
+  connectedComponent: ReportQuickyDrawer,
+});
+
+// 表格视图
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     height: '570px',
@@ -64,6 +78,16 @@ function handleViewDetail(row: any) {
   console.log(row);
   handleCrisisEventModalApi.open();
 }
+
+/** 系统设置 */
+function handleSystemSetting() {
+  systemSettingDrawerApi.open();
+}
+
+/** 快速上报 */
+function handleReportFast() {
+  reportFastDrawerApi.open();
+}
 </script>
 
 <template>
@@ -76,10 +100,20 @@ function handleViewDetail(row: any) {
     >
       <template #action>
         <div class="flex items-center gap-2">
-          <LyButton size="middle" type="default" class="h-10 w-[96px]">
+          <LyButton
+            size="middle"
+            type="default"
+            class="h-10 w-[96px]"
+            @click="handleSystemSetting"
+          >
             系统设置
           </LyButton>
-          <LyButton size="middle" type="success" class="h-10 w-[96px]">
+          <LyButton
+            size="middle"
+            type="success"
+            class="h-10 w-[96px]"
+            @click="handleReportFast"
+          >
             快速上报
           </LyButton>
         </div>
@@ -197,6 +231,8 @@ function handleViewDetail(row: any) {
     </div>
 
     <HandleCrisisEventModal />
+    <SystemSettingDrawer />
+    <ReportFastDrawer />
   </div>
 </template>
 
