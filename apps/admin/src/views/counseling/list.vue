@@ -3,7 +3,7 @@ import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { ref } from 'vue';
 
-import { prompt, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { prompt, useVbenModal } from '@vben/common-ui';
 
 import {
   RadioGroup as ARadioGroup,
@@ -15,7 +15,6 @@ import dayjs from 'dayjs';
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
-import StudentAppointmentDetailDrawer from '#/components/Drawer/StudentAppointmentDetailDrawer/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
 import CounselingSearch from './components/CounselSearch.vue';
@@ -23,13 +22,12 @@ import { mockQuery, useGridColumns } from './data';
 
 defineOptions({ name: 'CounselingList' });
 
+const emit = defineEmits<{
+  (e: 'viewDetail'): void;
+}>();
+
 const loading = ref(false);
 const isOpenPsychologicalConsultDialogModal = ref(false);
-
-/** 预约详情抽屉 */
-const [AppointmentDetailDrawer, appointmentDetailDrawerApi] = useVbenDrawer({
-  connectedComponent: StudentAppointmentDetailDrawer,
-});
 
 /** 调整预约时间弹窗 */
 const [AdjustAppointmentTimeModal, appointmentDetailModalApi] = useVbenModal({
@@ -65,8 +63,7 @@ function handleSearch(params: any) {
 
 /** 查看详情 */
 function handleViewDetail() {
-  // message.warning('即将上线');
-  appointmentDetailDrawerApi.open();
+  emit('viewDetail');
 }
 
 /** 完成 */

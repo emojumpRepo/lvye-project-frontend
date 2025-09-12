@@ -175,3 +175,25 @@ export function useSearchFormSchema(): VbenFormSchema[] {
     },
   ];
 }
+
+/** 事件样式选项 */
+export const eventStyleOptions = [
+  {
+    backgroundColor: '#04DC7014',
+    dotColor: '#04DC70',
+  },
+  {
+    backgroundColor: '#1966FF14',
+    dotColor: '#1966FF',
+  },
+  {
+    backgroundColor: '#FF9C0514',
+    dotColor: '#FF9C05',
+  },
+];
+
+/** 根据索引获取事件样式选项 */
+export function getEventStyleOptions(index: number) {
+  return eventStyleOptions[index % eventStyleOptions.length];
+}
+export { type PsychologyStudentProfileApi } from '#/api/psychology/student-profile';

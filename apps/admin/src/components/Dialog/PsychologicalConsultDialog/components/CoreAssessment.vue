@@ -155,16 +155,16 @@ defineExpose({
         custom-title-class="text-[16px] font-semibold"
       />
       <div
-        class="grid grid-cols-5 gap-4 rounded-xl bg-[#F7F8FA] px-8 py-6 max-lg:grid-cols-2"
+        class="grid grid-cols-4 gap-4 rounded-xl bg-[#F7F8FA] px-8 py-6 max-lg:grid-cols-2"
       >
         <button
           v-for="opt in riskOptions"
           :key="opt.key"
           type="button"
-          class="group flex w-full flex-col items-center rounded-xl border-2 border-solid p-4 text-left transition-colors"
+          class="group flex w-full flex-col items-center rounded-xl border border-solid p-4 text-left transition-colors"
           :class="
             riskSelected === opt.key
-              ? 'border-[#04DC70] bg-[#14E77E0D]'
+              ? 'border-2 border-[#04DC70] bg-[#14E77E0D]'
               : '!border-[#F2F3F5] !bg-[#FFFFFF]'
           "
           @click="selectRisk(opt.key)"
