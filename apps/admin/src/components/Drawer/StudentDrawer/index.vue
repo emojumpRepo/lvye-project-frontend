@@ -402,7 +402,7 @@ onMounted(async () => {
               <Tabs.TabPane tab="咨询与干预记录" key="consultation">
                 <ConsultationListTab />
               </Tabs.TabPane>
-              <Tabs.TabPane tab="完善个人信息" key="personalInfo">
+              <Tabs.TabPane tab="个人信息" key="personalInfo">
                 <PersonalInfoTab
                   :student-info="studentProfile"
                   :parent-info="studentParentProfile"
