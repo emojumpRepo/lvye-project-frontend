@@ -21,6 +21,7 @@ import {
   deleteStudentProfile,
   getStudentProfilePage,
 } from '#/api/psychology/student-profile';
+import BulkDeleteStudentDialog from '#/components/Dialog/BulkDeleteStudentDialog/index.vue';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
 import CreateStudentDrawer from '#/components/Drawer/CreateStudentDrawer/index.vue';
 import GraduatedStudentProfileDrawer from '#/components/Drawer/GraduatedStudentProfileDrawer/index.vue';
@@ -73,7 +74,6 @@ const [BulkImportDrawer, bulkImportDrawerApi] = useVbenDrawer({
 
 // 删除学生确认框
 const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
-  // 连接抽离的组件
   connectedComponent: DeleteStudentDialog,
   onConfirm: async () => {
     const data = deleteStudentModalApi.getData();
@@ -84,6 +84,27 @@ const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
       deleteStudentModalApi.close();
     } else {
       message.error('删除失败');
+    }
+  },
+});
+
+// 批量删除学生确认框
+const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
+  connectedComponent: BulkDeleteStudentDialog,
+  onConfirm: async () => {
+    try {
+      loading.value = true;
+      await Promise.all(
+        selectedRowKeys.value.map(async (id) => await deleteStudentProfile(id)),
+      );
+      message.success('批量删除成功');
+      selectedRowKeys.value = [];
+      await gridApi.query();
+    } catch (error) {
+      console.error('批量删除失败:', error);
+      message.error('批量删除失败，请重试');
+    } finally {
+      loading.value = false;
     }
   },
 });
@@ -233,20 +254,16 @@ async function handleBulkDelete() {
     message.warning('请先选择要删除的学生');
     return;
   }
-  try {
-    loading.value = true;
-    await Promise.all(
-      selectedRowKeys.value.map((id) => deleteStudentProfile(id)),
-    );
-    message.success('批量删除成功');
-    selectedRowKeys.value = [];
-    await gridApi.query();
-  } catch (error) {
-    console.error('批量删除失败:', error);
-    message.error('批量删除失败，请重试');
-  } finally {
-    loading.value = false;
-  }
+
+  const selectedStudents = await gridApi.grid.getCheckboxRecords();
+  const filteredStudents = selectedStudents.filter(
+    (student: any) => !student.hasChildField && student.id !== null,
+  );
+  bulkDeleteStudentModalApi
+    .setData({
+      selectedStudents: filteredStudents,
+    })
+    .open();
 }
 
 // 处理加载状态
@@ -472,6 +489,7 @@ onMounted(async () => {
     <BulkClassTransferDrawer />
     <BulkImportDrawer @refresh="refresh" />
     <DeleteStudentModal />
+    <BulkDeleteStudentModal />
     <GraduatedFileDrawer />
     <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
   </div>
