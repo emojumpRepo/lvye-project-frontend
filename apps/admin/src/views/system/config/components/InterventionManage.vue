@@ -127,39 +127,58 @@ defineExpose({
 
 <template>
   <div class="h-full w-full">
-    <LyLabel
-      title="时效管理"
-      has-indicator
-      custom-title-class="text-[16px] font-semibold"
-      custom-gap-class="gap-3"
-      custom-indicator-class="h-[14px] w-[2px]"
-      margin-bottom-class="mb-5"
-    />
+    <div>
+      <LyLabel
+        title="时效管理"
+        has-indicator
+        custom-title-class="text-[16px] font-semibold"
+        custom-gap-class="gap-3"
+        custom-indicator-class="h-[14px] w-[2px]"
+        margin-bottom-class="mb-5"
+      />
 
-    <section>
-      <AForm layout="vertical" :disabled="loading">
-        <!-- 评估报告逾期时间 -->
-        <AForm.Item>
-          <LyLabel
-            title="评估报告逾期时间"
-            custom-title-class="text-[14px] font-semibold"
-          />
-          <ASelect
-            v-model:value="form.reportExpireTime"
-            placeholder="请选择评估报告逾期时间"
-            class="mb-1 max-w-[448px] rounded-[4px]"
-            :options="reportExpireTimeOptions"
-          />
-          <div class="input-description">
-            心理访谈评估的时效性要求和逾期提醒
-          </div>
-          <div class="input-description">
-            <span class="mr-1 inline-block">影响范围：</span>
-            心理访谈评估报告的时效控制
-          </div>
-        </AForm.Item>
-      </AForm>
-    </section>
+      <section>
+        <AForm layout="vertical" :disabled="loading">
+          <!-- 评估报告逾期时间 -->
+          <AForm.Item>
+            <LyLabel
+              title="评估报告逾期时间"
+              custom-title-class="text-[14px] font-semibold"
+            />
+            <ASelect
+              v-model:value="form.reportExpireTime"
+              placeholder="请选择评估报告逾期时间"
+              class="mb-1 max-w-[448px] rounded-[4px]"
+              :options="reportExpireTimeOptions"
+            />
+            <div class="input-description">
+              心理访谈评估的时效性要求和逾期提醒
+            </div>
+            <div class="input-description">
+              <span class="mr-1 inline-block">影响范围：</span>
+              心理访谈评估报告的时效控制
+            </div>
+          </AForm.Item>
+        </AForm>
+      </section>
+    </div>
+
+    <div>
+      <LyLabel
+        title="评估模板管理"
+        has-indicator
+        custom-title-class="text-[16px] font-semibold"
+        custom-gap-class="gap-3"
+        custom-indicator-class="h-[14px] w-[2px]"
+        margin-bottom-class="mb-5"
+      />
+
+      <section>
+        <div class="border border-solid border-[#EAEBED] px-8 py-5">
+          <div></div>
+        </div>
+      </section>
+    </div>
 
     <ConfirmDialog
       v-model:show="openConfirmDialog"

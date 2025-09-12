@@ -125,10 +125,15 @@ function onRemove() {
         class="mb-1 h-[54px] w-[54px]"
       />
       <div class="mb-2 text-sm font-medium">
-        <slot name="upload-text"></slot>
+        <slot name="upload-text">
+          <div>
+            <span class="font-bold">将评估文件拖拽到此处或，</span>
+            <span class="text-[#04DC70]">点击上传</span>
+          </div>
+        </slot>
       </div>
       <div class="mb-2 text-xs text-[#969997]">
-        <slot name="upload-text-desc"></slot>
+        <slot name="upload-text-desc"> 支持DOC、DOCX、PDF格式, 最大10MB </slot>
       </div>
     </div>
   </AUpload.Dragger>

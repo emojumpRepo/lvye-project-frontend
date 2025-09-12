@@ -2,13 +2,23 @@
 import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
-import { Input as AInput, Textarea as ATextarea } from 'ant-design-vue';
+import {
+  Input as AInput,
+  Tag as ATag,
+  Textarea as ATextarea,
+} from 'ant-design-vue';
 
+import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import LyUpload from '#/components/LyUpload/index.vue';
 
 const searchKeyword = ref(''); // 搜索关键词
 const eventDescription = ref(''); // 事件描述
+const fileList = ref([]); // 附件列表
+const currentCriticalLevelKey = ref<number>(0); // 当前紧急程度
+const studentInfo = ref(''); // 学生信息
 
 const criticalLevel = ref([
   {
@@ -34,6 +44,11 @@ const criticalLevel = ref([
 const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
   class: 'w-[720px]',
 });
+
+/** 关闭学生信息标签 */
+function handleCloseTag() {
+  studentInfo.value = '';
+}
 </script>
 
 <template>
@@ -61,6 +76,26 @@ const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
             required
             custom-title-class="font-normal text-sm"
           />
+          <ATag
+            closable
+            :bordered="false"
+            @close="handleCloseTag"
+            color="#04DC7014"
+            class="mb-3 !inline-flex items-center gap-2 p-2"
+          >
+            <template #closeIcon>
+              <IconifyIcon
+                icon="carbon:close-filled"
+                color="#00000033"
+                class="size-4"
+              />
+            </template>
+            <div class="flex gap-1 text-sm text-black">
+              <span>麦明明</span>
+              <span>（三年1班）</span>
+              <span>学号：2928893934939</span>
+            </div>
+          </ATag>
           <AInput.Search
             v-model:value="searchKeyword"
             placeholder="输入学生姓名或学号进行搜索"
@@ -91,28 +126,27 @@ const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
           />
 
           <div class="space-y-5">
-            <div
+            <LyCategoryCard
               v-for="item in criticalLevel"
               :key="item.key"
-              class="space-y-2 rounded-xl border border-solid px-6 py-5"
-            >
-              <div class="flex items-center gap-2">
-                <span
-                  class="size-3 rounded-full"
-                  :style="{ backgroundColor: item.color }"
-                >
-                </span>
-                <span class="font-bold">
-                  {{ item.title }}
-                </span>
-              </div>
-              <div class="text-sm text-[#979899]">
-                {{ item.description }}
-              </div>
-            </div>
+              :category="item"
+              v-model:current-category-key="currentCriticalLevelKey"
+            />
           </div>
+        </div>
+
+        <!-- 附件上传 -->
+        <div>
+          <LyLabel title="附件上传" custom-title-class="font-normal text-sm" />
+          <LyUpload v-model:file-list="fileList" />
         </div>
       </div>
     </div>
   </SelectHandleMethodDrawer>
 </template>
+
+<style lang="scss" scoped>
+:deep(.ant-tag-close-icon) {
+  margin-inline-start: 0 !important;
+}
+</style>
