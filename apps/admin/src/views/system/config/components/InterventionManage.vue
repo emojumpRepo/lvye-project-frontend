@@ -1,10 +1,20 @@
 <script setup lang="ts">
+import type { UploadProps } from 'ant-design-vue';
+
 import { onMounted, reactive, ref } from 'vue';
 
-import { Form as AForm, Select as ASelect, message } from 'ant-design-vue';
+import { IconifyIcon } from '@vben/icons';
+
+import {
+  Form as AForm,
+  Select as ASelect,
+  Upload as AUpload,
+  message,
+} from 'ant-design-vue';
 
 import { createConfig, getConfigPage, updateConfig } from '#/api/infra/config';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
+import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 type InterventionConfigKeys = 'intervention.reportExpireTime';
@@ -25,6 +35,7 @@ const form = reactive<InterventionManageState>({
 
 const initialSnapshot = ref<InterventionManageState | null>(null);
 const loading = ref(false);
+const fileList = ref<UploadProps['fileList']>([]);
 
 const openConfirmDialog = ref(false);
 
@@ -115,6 +126,10 @@ function handleReset() {
   }
 }
 
+function handleRemove(file: any) {
+  fileList.value = fileList.value.filter((item) => item.uid !== file.uid);
+}
+
 onMounted(() => {
   load();
 });
@@ -174,8 +189,48 @@ defineExpose({
       />
 
       <section>
-        <div class="border border-solid border-[#EAEBED] px-8 py-5">
-          <div></div>
+        <div class="w-[700px] space-y-3">
+          <div
+            class="flex items-center justify-between rounded-xl border border-solid border-[#EAEBED] px-8 py-5"
+          >
+            <div class="flex flex-col gap-2">
+              <span class="font-bold">请上传规定要求的心理评估模板</span>
+              <span class="whitespace-nowrap text-sm text-[#979899]">
+                根据教育局或本校要求，上传规定的模板,用于心理老师评估后上传
+              </span>
+              <span class="text-sm text-[#C9CBCC]">
+                支持格式为：doc, docx, 大小不超过 1MB
+              </span>
+            </div>
+
+            <AUpload
+              v-model:file-list="fileList"
+              name="file"
+              :show-upload-list="false"
+            >
+              <LyButton type="success" size="large">点击上传</LyButton>
+            </AUpload>
+          </div>
+
+          <!-- 上传列表 -->
+          <div class="space-y-3">
+            <div
+              v-for="file in fileList"
+              :key="file.uid"
+              class="flex items-center justify-between rounded-lg bg-[#F7F8FA] px-4 py-2"
+            >
+              <div class="flex items-center gap-2">
+                <IconifyIcon icon="icon-park-outline:link" color="#333333" />
+                <span class="text-sm text-[#979899]">{{ file.name }}</span>
+              </div>
+              <IconifyIcon
+                icon="lucide:trash-2"
+                color="#FF0831"
+                class="cursor-pointer"
+                @click="handleRemove(file)"
+              />
+            </div>
+          </div>
         </div>
       </section>
     </div>
