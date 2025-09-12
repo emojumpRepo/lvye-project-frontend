@@ -29,6 +29,7 @@
     "@form-create/ant-design-vue": "catalog:",
     "@form-create/antd-designer": "catalog:",
     "@tinymce/tinymce-vue": "catalog:",
+    "@toast-ui/calendar": "catalog:",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",

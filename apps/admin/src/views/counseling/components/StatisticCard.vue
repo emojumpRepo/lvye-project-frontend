@@ -20,21 +20,21 @@ defineProps<{
     <div class="flex flex-col">
       <Statistic
         :value="value"
-        :value-style="{ color: '#000000', fontWeight: 600, fontSize: '1.5rem' }"
+        :value-style="{ color: '#000000', fontWeight: 600, fontSize: '1.2rem' }"
       />
       <div class="text-sm text-[#979899]">{{ title }}</div>
     </div>
 
     <!-- 统计图标区域 -->
     <div
-      class="flex h-[60px] w-[60px] items-center justify-center rounded-full"
+      class="flex h-[40px] w-[40px] items-center justify-center rounded-full"
       :style="{ backgroundColor: iconBg }"
     >
       <IconifyIcon
         :icon="iconSrc"
         alt="icon"
         :color="iconColor"
-        class="h-10 w-10"
+        class="h-8 w-8"
       />
     </div>
   </div>
@@ -45,7 +45,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 0.4rem 1rem;
   background-image: linear-gradient(
     90deg,
     #fff 0%,
