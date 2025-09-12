@@ -23,8 +23,12 @@ export const TAG_TYPE = {
     color: '#FF0831',
   },
   default: {
-    backgroundColor: '#f7f8fa',
-    color: '#1e1e1e',
+    backgroundColor: '#F7F8FA',
+    color: '#979899',
+  },
+  pink: {
+    backgroundColor: '#FF418D14',
+    color: '#FF418D',
   },
 } as const;
 
@@ -55,9 +59,9 @@ const STUDENT_PSYCHOLOGICAL_STATUS = {
     color: '#1E96FF',
   },
   default: {
-    backgroundColor: '#f7f8fa',
+    backgroundColor: '#F7F8FA',
     borderColor: '#d9d9d9',
-    color: '#1e1e1e',
+    color: '#979899',
   },
 };
 
@@ -69,10 +73,7 @@ export function getTagByCategory(dictType: string, value: number | string) {
   }
 
   return {
-    tagStyle:
-      STUDENT_PSYCHOLOGICAL_STATUS[
-        dictObj.colorType as keyof typeof STUDENT_PSYCHOLOGICAL_STATUS
-      ],
+    tagStyle: TAG_TYPE[dictObj.colorType as keyof typeof TAG_TYPE],
     label: dictObj.label,
     value: dictObj.value,
   };

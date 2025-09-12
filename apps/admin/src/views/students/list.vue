@@ -105,8 +105,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxConfig: { reserve: true },
     pagerConfig: {
       align: 'right',
-      pageSize: 100,
-      pageSizes: [10, 20, 50, 100],
+      pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
     },
     columns: useStudentProfileGridSchema(),
@@ -479,29 +478,7 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
-.vxe-pager .vxe-pager--sizes {
-  margin-right: 0 !important;
-}
-
-:deep(.vxe-cell--col-resizable) {
-  display: none !important;
-}
-
-:deep(.vxe-pager) {
-  background: transparent !important;
-}
-
-:deep(.vxe-pager--goto) {
-  width: 2.4em !important;
-  margin: 0 4px !important;
-}
-
-:deep(.vxe-pager--wrapper) {
-  align-items: center !important;
-}
-
 :deep(.vxe-pager--sizes) {
-  width: 8em !important;
   margin-right: 0 !important;
 }
 </style>

@@ -1,0 +1,89 @@
+<script lang="ts" setup>
+import { computed } from 'vue';
+
+import { Steps as ASteps } from 'ant-design-vue';
+
+import LyTag from '#/components/LyTag/index.vue';
+
+type StepItem = {
+  description?: string;
+  key?: number | string;
+  label: string;
+};
+
+const props = withDefaults(
+  defineProps<{
+    currentStep?: number;
+    steps?: StepItem[];
+    titleColor?: string;
+    type?: 'default' | 'tag';
+  }>(),
+  {
+    steps: () => [],
+    currentStep: 1,
+    titleColor: '#000',
+    type: 'default',
+  },
+);
+
+const currentIndex = computed(() => Math.max(0, (props.currentStep || 1) - 1));
+
+const items = computed(() =>
+  (props.steps || []).map((s, idx) => ({
+    index: idx + 1,
+    label: s.label,
+    description: s.description,
+    active: (props.currentStep || 1) === idx + 1,
+    done: (props.currentStep || 1) > idx + 1,
+  })),
+);
+</script>
+
+<template>
+  <div
+    class="relative flex h-full rounded-2xl bg-gradient-to-b from-[#fff] via-[#fff] to-[#ffffff59]"
+  >
+    <div class="flex overflow-y-auto p-8">
+      <ASteps
+        :current="currentIndex"
+        label-placement="vertical"
+        direction="vertical"
+      >
+        <ASteps.Step v-for="it in items" :key="it.index">
+          <template #title>
+            <div class="flex items-center gap-2">
+              <span
+                class="whitespace-nowrap font-bold"
+                :style="
+                  currentIndex === it.index - 1
+                    ? `color: ${props.titleColor}`
+                    : 'color: #000'
+                "
+              >
+                {{ it.label }}
+              </span>
+              <LyTag
+                v-if="type === 'tag'"
+                :color-type="it.done ? 'success' : 'processing'"
+                :tag-label="it.description"
+              />
+            </div>
+          </template>
+          <template #description>
+            <div class="flex flex-col gap-2">
+              <div
+                v-if="type === 'default'"
+                class="whitespace-nowrap text-sm text-[#979899]"
+              >
+                {{ it.description }}
+              </div>
+              <slot name="event" :index="it.index"></slot>
+            </div>
+          </template>
+        </ASteps.Step>
+      </ASteps>
+
+      <!-- <slot name="event"></slot> -->
+    </div>
+  </div>
+</template>

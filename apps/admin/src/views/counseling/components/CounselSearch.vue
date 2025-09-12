@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
-
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 
@@ -10,18 +8,23 @@ import LyCardTitle from '#/components/LyCardTitle/index.vue';
 
 import { useSearchFormSchema } from '../data';
 
-const props = defineProps<{
-  deptListLoaded: boolean;
-}>();
+interface SearchParams {
+  pageNo?: number;
+  pageSize?: number;
+  classDeptId?: number;
+  status?: string;
+  consultTime?: string;
+  studentNo?: string;
+}
 
 // 定义 emit 事件
 const emit = defineEmits<{
   loading: [loading: boolean];
-  search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
+  search: [params: SearchParams];
 }>();
 
 // 搜索参数
-const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>({
+const searchParams = ref<SearchParams>({
   pageNo: 1,
   pageSize: 10,
 });
@@ -36,10 +39,6 @@ const [Form, formApi] = useVbenForm({
     },
     hideLabel: true,
   },
-  submitButtonOptions: {
-    content: '查询',
-    class: 'bg-[#04DC70]',
-  },
   handleSubmit: async (values) => {
     await handleSearch(values);
   },
@@ -48,21 +47,14 @@ const [Form, formApi] = useVbenForm({
 // 处理搜索
 async function handleSearch(values: any) {
   try {
-    emit('loading', true);
-
-    // 智能识别搜索关键词是学号还是姓名
-    const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
-
     // 构建搜索参数
-    const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
+    const params: SearchParams = {
       ...searchParams.value,
       pageNo: 1, // 重置到第一页
-      studentNo,
-      name,
-      gradeDeptId: values.gradeDeptId || undefined,
+      studentNo: values.searchKeyword,
+      status: values.status || undefined,
+      consultTime: values.consultTime || undefined,
       classDeptId: values.classDeptId || undefined,
-      graduationStatus: values.graduationStatus || undefined,
-      psychologicalStatus: values.psychologicalStatus || undefined,
     };
 
     searchParams.value = params;
@@ -70,60 +62,8 @@ async function handleSearch(values: any) {
   } catch (error) {
     console.error('搜索失败:', error);
     message.error('搜索失败，请重试');
-  } finally {
-    emit('loading', false);
   }
 }
-
-/**
- * 智能解析搜索关键词，判断是学号还是姓名
- * @param keyword 搜索关键词
- * @returns 返回解析后的学号和姓名字段
- */
-function parseSearchKeyword(keyword?: string) {
-  if (!keyword || keyword.trim() === '') {
-    return { studentNo: undefined, name: undefined };
-  }
-
-  const trimmedKeyword = keyword.trim();
-
-  // 判断是否为学号的特征：
-  // 1. 纯数字
-  // 2. 以数字开头
-  const isStudentNo = /^\d+$/.test(trimmedKeyword);
-
-  // 如果符合学号特征，则赋值给学号字段，否则认为是姓名
-  return isStudentNo
-    ? { studentNo: trimmedKeyword, name: undefined }
-    : { studentNo: undefined, name: trimmedKeyword };
-}
-
-// 重置搜索
-function handleReset() {
-  formApi.resetForm();
-  searchParams.value = {
-    pageNo: 1,
-    pageSize: 10,
-  };
-  emit('search', searchParams.value);
-}
-
-watch(
-  () => props.deptListLoaded,
-  () => {
-    if (props.deptListLoaded) {
-      formApi.updateSchema(useSearchFormSchema());
-    }
-  },
-  { immediate: true },
-);
-
-// 暴露方法给父组件
-defineExpose({
-  handleSearch,
-  handleReset,
-  searchParams,
-});
 </script>
 
 <template>

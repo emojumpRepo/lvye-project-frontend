@@ -67,5 +67,3 @@ onMounted(async () => {
     <CreateAssessmentDialog v-model:open="isOpenCreateAssessmentDialog" />
   </div>
 </template>
-
-<style scoped></style>
