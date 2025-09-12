@@ -45,7 +45,7 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4rem 1rem;
+  padding: 0.2rem 1rem;
   background-image: linear-gradient(
     90deg,
     #fff 0%,

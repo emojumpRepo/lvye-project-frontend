@@ -6,9 +6,9 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { RadioButton, RadioGroup } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import ConsultMoreDrawerComponent from '#/components/Drawer/ConsultMoreDrawer/index.vue';
 import CreateConsultDrawerComponent from '#/components/Drawer/CreateConsultDrawer/index.vue';
+import StudentAppointmentDetailDrawer from '#/components/Drawer/StudentAppointmentDetailDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
 
@@ -23,15 +23,21 @@ const viewTypeOptions = [
   { label: '日历视图', value: 2 },
 ];
 
-const isOpenModal = ref(false); // 心理咨询评估弹窗开关
 const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
 
+// 创建咨询预约抽屉
 const [CreateConsultDrawer, createConsultDrawerApi] = useVbenDrawer({
   connectedComponent: CreateConsultDrawerComponent,
 });
 
+// 更多预约列表抽屉
 const [ConsultMoreDrawer, consultMoreDrawerApi] = useVbenDrawer({
   connectedComponent: ConsultMoreDrawerComponent,
+});
+
+/** 预约详情抽屉 */
+const [AppointmentDetailDrawer, appointmentDetailDrawerApi] = useVbenDrawer({
+  connectedComponent: StudentAppointmentDetailDrawer,
 });
 
 const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
@@ -40,6 +46,7 @@ const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
 
+/** 打开创建咨询预约抽屉 */
 function handleCreateConsult(
   payload?:
     | dayjs.Dayjs
@@ -80,7 +87,7 @@ function handleCreateConsult(
   }, 100);
 }
 
-// 打开预约列表抽屉
+/** 打开预约列表抽屉 */
 function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
   // 立即设置标志，防止后续的 monthCellClick 事件被处理
   isProcessingMoreClick.value = true;
@@ -99,6 +106,11 @@ function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
   setTimeout(() => {
     isProcessingMoreClick.value = false;
   }, 300);
+}
+
+/** 打开预约详情抽屉 */
+function handleViewDetail() {
+  appointmentDetailDrawerApi.open();
 }
 </script>
 
@@ -168,7 +180,7 @@ function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
           <!-- 咨询记录列表 -->
-          <CounselingList />
+          <CounselingList @view-detail="handleViewDetail" />
         </template>
         <template v-else>
           <!-- 日历视图 -->
@@ -176,13 +188,14 @@ function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
             @time-click="handleCreateConsult"
             @month-cell-click="handleCreateConsult"
             @more-events-click="handleViewMoreAppointments"
+            @event-click="handleViewDetail"
           />
         </template>
       </Transition>
     </div>
-    <PsychologicalConsultDialog v-model:open="isOpenModal" />
     <CreateConsultDrawer />
     <ConsultMoreDrawer />
+    <AppointmentDetailDrawer />
   </Page>
 </template>
 
