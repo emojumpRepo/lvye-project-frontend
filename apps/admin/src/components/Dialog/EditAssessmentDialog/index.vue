@@ -25,6 +25,7 @@ const formData = ref({
 });
 
 const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
+  destroyOnClose: true,
   onOpenChange(isOpen) {
     if (isOpen) {
       const data = editAssessmentApi.getData();
@@ -73,18 +74,6 @@ const [EditAssessmentModal, editAssessmentApi] = useVbenModal({
       loading.value = false;
     }
   },
-  onClosed() {
-    formData.value = {
-      id: '',
-      targetAudience: '',
-      taskNo: '',
-      taskName: '',
-      startline: dayjs(),
-      deadline: dayjs(),
-      description: '',
-    };
-    editAssessmentApi.close();
-  },
 });
 
 // 加载状态
@@ -100,7 +89,7 @@ const loading = ref(false);
           title="任务名称"
           required
           size="small"
-          custom-title-class="font-normal"
+          custom-title-class="font-normal text-sm"
         />
         <Input
           v-model:value="formData.taskName"
@@ -115,7 +104,7 @@ const loading = ref(false);
           title="结束时间"
           required
           size="small"
-          custom-title-class="font-normal"
+          custom-title-class="font-normal text-sm"
         />
         <DatePicker
           v-model:value="formData.deadline"
@@ -130,7 +119,7 @@ const loading = ref(false);
         <LyLabel
           title="任务描述"
           size="small"
-          custom-title-class="font-normal"
+          custom-title-class="font-normal text-sm"
         />
         <Textarea
           v-model:value="formData.description"

@@ -94,7 +94,7 @@ function handleReportFast() {
   <div class="flex flex-col gap-4 p-6">
     <!-- 页面标题 -->
     <PageTitle
-      title="咨询管理"
+      title="危机干预管理系统"
       description="事件上报来源 → 处理流程分配 → 进度跟踪管理"
       margin-bottom="mb-4"
     >
@@ -247,5 +247,9 @@ function handleReportFast() {
 
 :deep(.ant-btn-link) {
   color: #2c68ff;
+}
+
+:deep(.ant-pagination-simple-pager) {
+  margin-inline-end: 0 !important;
 }
 </style>

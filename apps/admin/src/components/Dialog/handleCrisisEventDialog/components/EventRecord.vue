@@ -35,7 +35,9 @@ const isHover = ref(false);
       />
     </div>
 
-    <div class="text-[#17191A]">{{ eventProcessingRecord.content }}</div>
+    <div class="line-clamp-2 text-[#17191A]">
+      {{ eventProcessingRecord.content }}
+    </div>
     <div class="text-[#04DC70]">{{ eventProcessingRecord.operator }}</div>
   </div>
 </template>

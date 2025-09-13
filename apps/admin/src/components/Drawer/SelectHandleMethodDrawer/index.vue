@@ -50,6 +50,7 @@ const handleMethod = ref<CategoryCard[]>([
 
 const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
   class: 'w-[720px]',
+  destroyOnClose: true,
 });
 </script>
 

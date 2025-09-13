@@ -67,9 +67,10 @@ const [
   connectedComponent: ImportStudentProfileResultDialog,
 });
 
-const [Drawer, drawerApi] = useVbenDrawer({
+const [Drawer] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
+  destroyOnClose: true,
   closeOnClickModal: false,
   confirmLoading: importCompleted.value,
   onConfirm: async () => {
@@ -85,11 +86,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
     await startImport();
     emit('refresh');
     // drawerApi.unlock();
-  },
-  onClosed: () => {
-    handleFileRemove();
-    fileList.value = [];
-    drawerApi.close();
   },
 });
 
