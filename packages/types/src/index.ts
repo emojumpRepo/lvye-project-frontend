@@ -1,4 +1,5 @@
 export * from './assessment';
+export * from './crisis';
 export * from './questionnaire';
 export * from './scenario';
 export * from './user';

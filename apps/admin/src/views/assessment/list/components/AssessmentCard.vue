@@ -164,16 +164,13 @@ function handleDeleteTask() {
       }}%)
     </div>
 
-    <div class="flex items-center justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <span class="text-xs text-gray-500">
         {{ card.taskNo }}
       </span>
 
       <!-- 操作按钮 -->
       <div class="flex justify-end">
-        <!-- <LyButton type="success" size="middle" @click="handleViewDetail">
-        查看详情
-      </LyButton> -->
         <DropdownButton @click="handleViewDetail" ghost>
           查看详情
           <template #overlay>

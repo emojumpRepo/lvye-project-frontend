@@ -78,7 +78,7 @@ const computedTagStyle = computed(() => {
 
 <template>
   <span
-    class="box-border rounded-md px-2 py-1 text-xs"
+    class="box-border whitespace-nowrap rounded-md px-2 py-1 text-xs"
     :style="computedTagStyle"
   >
     {{ tag?.label || tagLabel || '未知' }}

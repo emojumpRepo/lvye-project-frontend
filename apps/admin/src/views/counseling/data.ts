@@ -6,8 +6,6 @@ import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
-import dayjs from 'dayjs';
-
 import { getDictOptions } from '#/utils/dict';
 
 export interface CounselingRecordRow {
@@ -25,38 +23,52 @@ export interface CounselingRecordRow {
 
 export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
-    { type: 'seq', title: '序号', width: 60 },
     {
       field: 'studentName',
       title: '学生信息',
-      width: 160,
-      slots: { default: 'student' },
+      width: '15%',
+      slots: { default: 'studentName' },
     },
     {
-      field: 'time',
+      field: 'className',
+      title: '班级',
+      width: '10%',
+      visible: false,
+    },
+    {
+      field: 'consultTime',
       title: '时间',
-      width: 220,
-      formatter: ({ cellValue, row }) =>
-        `${dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')}\n${row.duration}分钟`,
+      width: '15%',
+      slots: { default: 'consultTime' },
     },
-    { field: 'type', title: '咨询类型', width: 140 },
-    { field: 'teacher', title: '咨询老师', width: 120 },
-    { field: 'location', title: '地点', width: 140 },
     {
-      field: 'status',
+      field: 'consultDuration',
+      title: '时长',
+      width: '10%',
+      visible: false,
+    },
+    {
+      field: 'consultType',
+      title: '咨询类型',
+      width: '10%',
+    },
+    { field: 'consultant', title: '咨询老师', width: '10%' },
+    { field: 'location', title: '地点', width: '13%' },
+    {
+      field: 'stauts',
       title: '状态',
-      width: 120,
-      slots: { default: 'status' },
+      width: '15%',
+      slots: { default: 'stauts' },
     },
     {
       field: 'progress',
       title: '进度',
-      width: 160,
+      width: '15%',
       slots: { default: 'progress' },
     },
     {
       title: '操作',
-      width: 200,
+      width: '12%',
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -76,13 +88,13 @@ export function mockQuery({
       return {
         id,
         studentName: '张晓明',
-        studentClass: '高一（3）班',
-        time: dayjs('2024-01-01 12:00:00').valueOf(),
-        duration: 60,
-        type: '学生压力咨询',
-        teacher: '李老师',
+        className: '高一（3）班',
+        consultTime: 1_757_492_748_000,
+        consultDuration: 60,
+        consultType: '初次咨询',
+        consultant: '李老师',
         location: '心理咨询室A',
-        status: (['已取消', '已完成', '已预约', '已逾期'] as const)[id % 4],
+        status: ([1, 2, 3, 4] as const)[id % 4],
         progress: [10, 30, 60, 90, 100][id % 5],
       };
     },
@@ -95,43 +107,52 @@ export function useSearchFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
   const stored = sessionStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  }
+  deptList.value = stored ? JSON.parse(stored) : [];
+  const deptOptions = deptList.value?.map((dept) => ({
+    label: dept.label,
+    value: dept.value,
+    children:
+      dept.children?.map((cls) => ({
+        label: cls.label,
+        value: cls.value,
+        isLeaf: true,
+      })) || [],
+  }));
 
-  /** 班级列表 */
-  const classList = deptList.value.reduce(
-    (acc, item) => {
-      if (item.children) {
-        acc.push(...item.children);
-      }
-      return acc;
-    },
-    [] as { label: string; value: number }[],
-  );
-
-  /** 心理状态 */
-  const studentProfileStatusList = getDictOptions(
-    'student_psychological_status',
-  );
+  /** 咨询状态 */
+  const counselingStatusList = getDictOptions('counseling_status');
 
   return [
     {
       fieldName: 'classDeptId',
+      component: 'Cascader',
+      componentProps: {
+        options: [
+          { label: '全部班级', value: '', isLeaf: true },
+          ...deptOptions,
+        ],
+        defaultValue: [''],
+        expandTrigger: 'hover',
+        changeOnSelect: true,
+        allowClear: false,
+        showSearch: false,
+        style: { cursor: 'pointer' },
+      },
+    },
+    {
+      fieldName: 'status',
       component: 'Select',
       componentProps: {
-        options: [{ label: '全部班级', value: '' }, ...classList],
+        options: [{ label: '全部状态', value: '' }, ...counselingStatusList],
       },
       defaultValue: '',
     },
     {
-      fieldName: 'psychologicalStatus',
-      component: 'Select',
+      fieldName: 'consultTime',
+      component: 'DatePicker',
       componentProps: {
-        options: [
-          { label: '全部心理状态', value: '' },
-          ...studentProfileStatusList,
-        ],
+        placeholder: '咨询时间',
+        valueFormat: 'YYYY-MM-DD',
       },
       defaultValue: '',
     },
@@ -139,7 +160,7 @@ export function useSearchFormSchema(): VbenFormSchema[] {
       fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
-        placeholder: '搜索学生姓名或学号',
+        placeholder: '搜索学生',
       },
       hideLabel: true,
       renderComponentContent: () => ({
@@ -155,72 +176,24 @@ export function useSearchFormSchema(): VbenFormSchema[] {
   ];
 }
 
-/** 学生档案列表（列表视图） */
-export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
-  return [
-    { type: 'checkbox', width: '5%' },
-    { field: 'name', title: '学生姓名', width: '10%', showOverflow: 'tooltip' },
-    { field: 'studentNo', title: '学号', width: '10%' },
-    { field: 'sex', title: '性别', width: '10%', slots: { default: 'sex' } },
-    { field: 'gradeName', title: '年级', width: '10%' },
-    {
-      field: 'className',
-      title: '班级',
-      width: '10%',
-      showOverflow: 'tooltip',
-    },
-    {
-      field: 'psychologicalStatus',
-      title: '心理状态',
-      width: '10%',
-      slots: { default: 'psychologicalStatus' },
-    },
-    {
-      field: 'mobile',
-      title: '联系电话',
-      width: '10%',
-      slots: { default: 'mobile' },
-    },
-    {
-      field: 'graduationStatus',
-      title: '毕业状态',
-      width: '10%',
-      slots: { default: 'graduationStatus' },
-    },
-    {
-      field: 'actions',
-      title: '操作',
-      width: '15%',
-      fixed: 'right',
-      align: 'center',
-      slots: { default: 'actions' },
-    },
-  ];
-}
+/** 事件样式选项 */
+export const eventStyleOptions = [
+  {
+    backgroundColor: '#04DC7014',
+    dotColor: '#04DC70',
+  },
+  {
+    backgroundColor: '#1966FF14',
+    dotColor: '#1966FF',
+  },
+  {
+    backgroundColor: '#FF9C0514',
+    dotColor: '#FF9C05',
+  },
+];
 
-/** 学生档案列表（分组视图） */
-export function useStudentProfileGroupGridSchema(): VxeTableGridOptions<PsychologyStudentProfileApi.StudentProfile>['columns'] {
-  return [
-    {
-      field: 'name',
-      title: '名称',
-      align: 'left',
-      fixed: 'left',
-      showOverflow: 'tooltip',
-      treeNode: true,
-      slots: {
-        default: 'name',
-      },
-      className: '!pl-5',
-    },
-    {
-      field: 'count',
-      title: '学生人数',
-      width: '80',
-      slots: { default: 'count' },
-    },
-    { type: 'checkbox', width: '80', align: 'center', fixed: 'right' },
-  ];
+/** 根据索引获取事件样式选项 */
+export function getEventStyleOptions(index: number) {
+  return eventStyleOptions[index % eventStyleOptions.length];
 }
-
 export { type PsychologyStudentProfileApi } from '#/api/psychology/student-profile';

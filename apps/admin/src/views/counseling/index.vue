@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenDrawer } from '@vben/common-ui';
 
 import { RadioButton, RadioGroup } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
+import ConsultMoreDrawerComponent from '#/components/Drawer/ConsultMoreDrawer/index.vue';
+import CreateConsultDrawerComponent from '#/components/Drawer/CreateConsultDrawer/index.vue';
+import StudentAppointmentDetailDrawer from '#/components/Drawer/StudentAppointmentDetailDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
 
@@ -21,12 +23,95 @@ const viewTypeOptions = [
   { label: '日历视图', value: 2 },
 ];
 
-const isOpenModal = ref(false); // 心理咨询评估弹窗开关
+const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
+
+// 创建咨询预约抽屉
+const [CreateConsultDrawer, createConsultDrawerApi] = useVbenDrawer({
+  connectedComponent: CreateConsultDrawerComponent,
+});
+
+// 更多预约列表抽屉
+const [ConsultMoreDrawer, consultMoreDrawerApi] = useVbenDrawer({
+  connectedComponent: ConsultMoreDrawerComponent,
+});
+
+/** 预约详情抽屉 */
+const [AppointmentDetailDrawer, appointmentDetailDrawerApi] = useVbenDrawer({
+  connectedComponent: StudentAppointmentDetailDrawer,
+});
+
 const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
 
 const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
+
+/** 打开创建咨询预约抽屉 */
+function handleCreateConsult(
+  payload?:
+    | dayjs.Dayjs
+    | undefined
+    | { date: Date }
+    | { end: Date; start: Date },
+) {
+  // 延迟执行，避免与 moreEventsClick 事件冲突
+  setTimeout(() => {
+    // 如果正在处理更多事件点击，则跳过创建预约
+    if (isProcessingMoreClick.value) {
+      return;
+    }
+
+    // 提取日期信息
+    const currentDate = payload
+      ? (dayjs.isDayjs(payload)
+          ? payload
+          : dayjs('date' in payload ? payload.date : payload.start)
+        ).format('YYYY-MM-DD')
+      : dayjs().format('YYYY-MM-DD');
+
+    // 提取时间段信息
+    const timeRange =
+      payload && 'start' in payload && 'end' in payload
+        ? {
+            start: dayjs(payload.start).format('HH:mm'),
+            end: dayjs(payload.end).format('HH:mm'),
+          }
+        : undefined;
+
+    createConsultDrawerApi
+      .setData({
+        currentDate,
+        timeRange,
+      })
+      .open();
+  }, 100);
+}
+
+/** 打开预约列表抽屉 */
+function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
+  // 立即设置标志，防止后续的 monthCellClick 事件被处理
+  isProcessingMoreClick.value = true;
+
+  const currentDate = moreEventsBtnInfo?.date
+    ? dayjs(moreEventsBtnInfo.date).format('YYYY-MM-DD')
+    : dayjs().format('YYYY-MM-DD');
+
+  consultMoreDrawerApi
+    .setData({
+      currentDate,
+    })
+    .open();
+
+  // 延迟重置标志
+  setTimeout(() => {
+    isProcessingMoreClick.value = false;
+  }, 300);
+}
+
+/** 打开预约详情抽屉 */
+function handleViewDetail() {
+  appointmentDetailDrawerApi.open();
+}
 </script>
 
 <template>
@@ -35,7 +120,7 @@ const today = computed(
       <!-- 页面标题 -->
       <PageTitle title="咨询管理" :description="today" margin-bottom="mb-4">
         <template #action>
-          <div class="flex items-center gap-4">
+          <div class="custom-radio-group flex items-center gap-4">
             <RadioGroup v-model:value="viewType">
               <RadioButton
                 v-for="option in viewTypeOptions"
@@ -45,7 +130,12 @@ const today = computed(
                 {{ option.label }}
               </RadioButton>
             </RadioGroup>
-            <LyButton size="middle" type="success" class="h-10 w-[96px]">
+            <LyButton
+              size="middle"
+              type="success"
+              class="h-10 w-[96px]"
+              @click="handleCreateConsult"
+            >
               新建预约
             </LyButton>
           </div>
@@ -90,42 +180,51 @@ const today = computed(
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
           <!-- 咨询记录列表 -->
-          <CounselingList />
+          <CounselingList @view-detail="handleViewDetail" />
         </template>
         <template v-else>
           <!-- 日历视图 -->
-          <CounselingCalendar />
+          <CounselingCalendar
+            @time-click="handleCreateConsult"
+            @month-cell-click="handleCreateConsult"
+            @more-events-click="handleViewMoreAppointments"
+            @event-click="handleViewDetail"
+          />
         </template>
       </Transition>
     </div>
-    <PsychologicalConsultDialog v-model:open="isOpenModal" />
+    <CreateConsultDrawer />
+    <ConsultMoreDrawer />
+    <AppointmentDetailDrawer />
   </Page>
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-radio-group) {
-  height: 40px;
-  line-height: 40px;
-  // border-radius: 4px;
-
-  .ant-radio-button-wrapper {
+.custom-radio-group {
+  :deep(.ant-radio-group) {
     height: 40px;
-    padding: 0 20px;
     line-height: 40px;
-    color: #979899;
-  }
+    // border-radius: 4px;
 
-  .ant-radio-button-wrapper-checked {
-    color: #04dc70 !important;
-    background-color: #14e77e14 !important;
-  }
+    .ant-radio-button-wrapper {
+      height: 40px;
+      padding: 0 20px;
+      line-height: 40px;
+      color: #979899;
+    }
 
-  .ant-radio-button-wrapper:first-child {
-    border-radius: 4px 0 0 4px;
-  }
+    .ant-radio-button-wrapper-checked {
+      color: #04dc70 !important;
+      background-color: #14e77e14 !important;
+    }
 
-  .ant-radio-button-wrapper:last-child {
-    border-radius: 0 4px 4px 0;
+    .ant-radio-button-wrapper:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    .ant-radio-button-wrapper:last-child {
+      border-radius: 0 4px 4px 0;
+    }
   }
 }
 </style>

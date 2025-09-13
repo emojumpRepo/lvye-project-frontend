@@ -445,7 +445,7 @@ async function handleSearch() {
   <div class="mx-auto w-full max-w-[610px] space-y-6">
     <!-- 收件类型 -->
     <div>
-      <LyLabel title="收件类型" required size="small" />
+      <LyLabel title="测评对象" required size="small" />
       <ARadio.Group v-model:value="type">
         <ARadio :value="ASSESSMENT_TARGET_TYPE.STUDENT">学生本人</ARadio>
         <ARadio :value="ASSESSMENT_TARGET_TYPE.PARENT">学生家长</ARadio>
