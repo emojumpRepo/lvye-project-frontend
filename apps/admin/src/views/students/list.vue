@@ -91,22 +91,6 @@ const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
 // 批量删除学生确认框
 const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
   connectedComponent: BulkDeleteStudentDialog,
-  onConfirm: async () => {
-    try {
-      loading.value = true;
-      await Promise.all(
-        selectedRowKeys.value.map(async (id) => await deleteStudentProfile(id)),
-      );
-      message.success('批量删除成功');
-      selectedRowKeys.value = [];
-      await gridApi.query();
-    } catch (error) {
-      console.error('批量删除失败:', error);
-      message.error('批量删除失败，请重试');
-    } finally {
-      loading.value = false;
-    }
-  },
 });
 
 // 已毕业学生档案抽屉
@@ -248,7 +232,7 @@ function openDeleteStudentModal(id: number, studentNo: string, name: string) {
   deleteStudentModalApi.setData({ id, studentNo, name }).open();
 }
 
-// 批量删除
+// 批量删除弹窗
 async function handleBulkDelete() {
   if (selectedRowKeys.value.length === 0) {
     message.warning('请先选择要删除的学生');
@@ -330,6 +314,7 @@ async function handleExport() {
   }
 }
 
+/** 刷新表格 */
 function refresh() {
   gridApi.query();
 }
@@ -489,7 +474,7 @@ onMounted(async () => {
     <BulkClassTransferDrawer />
     <BulkImportDrawer @refresh="refresh" />
     <DeleteStudentModal />
-    <BulkDeleteStudentModal />
+    <BulkDeleteStudentModal @refresh="refresh" />
     <GraduatedFileDrawer />
     <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
   </div>

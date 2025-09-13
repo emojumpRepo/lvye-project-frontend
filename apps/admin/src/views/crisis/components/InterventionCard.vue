@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
+import { useVbenDrawer } from '@vben/common-ui';
+
 import {
   Badge as ABadge,
   Divider as ADivider,
@@ -8,6 +10,8 @@ import {
   Pagination as APagination,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
+
+import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 
 import crisisContinuousIcon from '../../../static/icons/crisis/crisis_continuous_icon.png';
 import crisisCriticalIcon from '../../../static/icons/crisis/crisis_critical_icon.png';
@@ -38,6 +42,11 @@ const props = defineProps<{
 
 const currentPage = ref(1);
 const pageSize = ref(5);
+
+const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
+  class: 'w-[800px]',
+  connectedComponent: StudentDrawer,
+});
 
 // 干预卡片类型
 const interventionTypeMap: Record<number, InterventionType> = {
@@ -83,10 +92,17 @@ const interventionType = computed((): InterventionType | undefined => {
   return interventionTypeMap[props.interventionItem.type];
 });
 
+/**  */
 function handlePageChange(page: number) {
   console.log('page', page);
   currentPage.value = page;
   // TODO 请求数据
+}
+
+/** 查看学生详情 */
+function handleStudentClick(item: any) {
+  console.log('item', item);
+  studentDetailDrawerApi.open();
 }
 </script>
 
@@ -121,7 +137,8 @@ function handlePageChange(page: number) {
         <div
           v-for="item in interventionItem.list"
           :key="item.name"
-          class="space-y-2 rounded-xl bg-[#F7F8FA] p-4"
+          class="cursor-pointer space-y-2 rounded-xl bg-[#F7F8FA] p-4 hover:bg-[#f2f3f5]"
+          @click="handleStudentClick(item)"
         >
           <div class="flex items-center gap-1 text-sm font-bold">
             <span>{{ item.name }}</span>
@@ -156,6 +173,8 @@ function handlePageChange(page: number) {
         @change="handlePageChange"
       />
     </div>
+
+    <StudentDetailDrawer />
   </div>
 </template>
 
