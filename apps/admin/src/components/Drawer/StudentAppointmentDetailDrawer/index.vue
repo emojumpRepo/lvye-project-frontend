@@ -34,6 +34,7 @@ interface Form {
 const [StudentAppointmentDetailDrawer, studentAppointmentDetailDrawerApi] =
   useVbenDrawer({
     class: 'w-[720px]',
+    destroyOnClose: true,
   });
 
 const form = ref<Form>({

@@ -13,6 +13,7 @@ const originalConsultTime = ref<Dayjs>(dayjs());
 
 const [AdjustAppointmentTimeModal, appointmentTimeModalApi] = useVbenModal({
   fullscreenButton: false,
+  destroyOnClose: true,
   async onOpenChange(isOpen) {
     if (isOpen) {
       originalConsultTime.value = await appointmentTimeModalApi.getData();

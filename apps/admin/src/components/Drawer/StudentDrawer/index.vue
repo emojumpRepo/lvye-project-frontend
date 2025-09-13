@@ -152,6 +152,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   showCancelButton: false,
   showConfirmButton: false,
   loading: loading.value,
+  destroyOnClose: true,
   onOpenChange: async (open) => {
     if (!open) return;
     const data = drawerApi.getData();
@@ -166,18 +167,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
       await loadStudentAssessmentHistory(data.id);
     }
     loading.value = false;
-  },
-  onClosed: () => {
-    studentProfile.value = undefined;
-    studentParentProfile.value = [];
-    psychologicalStatusTag.value = undefined;
-    studentProfileTimeline.value = [];
-    studentAssessmentHistory.value = [];
-    coreProblemTags.value = [];
-    timelineTabs.value = [];
-    activeTabKey.value = 'timeline';
-    activeTimelineKey.value = 0;
-    drawerApi.close();
   },
 });
 

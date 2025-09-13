@@ -4,6 +4,7 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
 
 import { Spin as ASpin, message } from 'ant-design-vue';
 
@@ -70,6 +71,19 @@ const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
     <ASpin :spinning="loading">
       <div class="space-y-3 px-2">
         <div class="font-bold">确定删除以下学生吗？</div>
+        <div
+          class="mt-4 space-y-3 rounded-xl border border-solid border-[#FF9C05CC] bg-[#FF9C0514] p-3"
+        >
+          <div class="flex items-center gap-2">
+            <IconifyIcon icon="mdi:alert-circle" color="#FF9C05" />
+            <span class="text-xs font-medium text-[#FF9C05]">删除提示</span>
+          </div>
+          <ul class="list-disc space-y-2 pl-5 text-xs text-[#979899]">
+            <li>删除后该学生将无法登录系统</li>
+            <li>相关测评数据将被隐藏</li>
+            <li>30天内可以恢复删除的数据</li>
+          </ul>
+        </div>
         <div>
           <ImportTable
             :columns="studentBulkImportColumns"

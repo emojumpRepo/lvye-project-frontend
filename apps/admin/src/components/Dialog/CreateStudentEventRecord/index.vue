@@ -8,6 +8,7 @@ import LyLabel from '#/components/LyLabel/index.vue';
 
 const [CreateStudentEventRecord] = useVbenModal({
   fullscreenButton: false,
+  destroyOnClose: true,
   confirmText: '提交',
   class: '!w-[620px]',
 });

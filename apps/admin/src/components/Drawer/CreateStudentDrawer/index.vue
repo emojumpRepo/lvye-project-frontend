@@ -36,12 +36,9 @@ const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
 
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
+  destroyOnClose: true,
   confirmText: '创建',
   onConfirm: handleCreateStudent,
-  onClosed: () => {
-    formRef.value?.resetFields();
-    drawerApi.close();
-  },
 });
 
 const studentForm = reactive<PsychologyStudentProfileApi.StudentProfileSaveReq>(

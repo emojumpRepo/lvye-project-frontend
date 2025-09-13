@@ -65,6 +65,7 @@ const currentExportType = ref('zip');
 const [ExportStudnetInfoDialog] = useVbenModal({
   title: '选择导出信息',
   fullscreenButton: false,
+  destroyOnClose: true,
   class: '!w-[720px]',
 });
 

@@ -73,6 +73,7 @@ const reasonOptions = ref([
 // =================== 事件 ===================
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
+  destroyOnClose: true,
   confirmText: '确认换班',
   onOpenChange: async () => {
     const data = drawerApi.getData();
@@ -82,10 +83,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   },
   onConfirm: () => {
     message.warning('即将上线');
-  },
-  onClosed: () => {
-    formRef.value?.resetFields();
-    drawerApi.close();
   },
 });
 

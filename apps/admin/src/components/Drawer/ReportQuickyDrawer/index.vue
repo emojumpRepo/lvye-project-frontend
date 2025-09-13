@@ -43,6 +43,7 @@ const criticalLevel = ref([
 
 const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
   class: 'w-[720px]',
+  destroyOnClose: true,
 });
 
 /** 关闭学生信息标签 */
