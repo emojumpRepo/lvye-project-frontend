@@ -33,6 +33,7 @@ const title = computed(() => {
 
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   fullscreenButton: false,
+  destroyOnClose: true,
   onOpenChange(isOpen) {
     if (!isOpen) return;
     const data = editEventRecordApi.getData() as Params;

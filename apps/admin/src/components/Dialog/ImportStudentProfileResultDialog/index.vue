@@ -24,8 +24,10 @@ const [ImportStudentProfileResultModal, ImportStudentProfileResultModalApi] =
   useVbenModal({
     title: '导入学生档案结果',
     fullscreenButton: false,
+    destroyOnClose: true,
     class: 'w-[800px]',
     confirmText: '完成',
+    showCancelButton: false,
     onOpenChange: async (open) => {
       if (open) {
         loading.value = true;
@@ -36,10 +38,6 @@ const [ImportStudentProfileResultModal, ImportStudentProfileResultModalApi] =
       }
     },
     onConfirm: () => {
-      emit('reset');
-      ImportStudentProfileResultModalApi.close();
-    },
-    onCancel: () => {
       emit('reset');
       ImportStudentProfileResultModalApi.close();
     },

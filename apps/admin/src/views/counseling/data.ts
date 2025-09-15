@@ -68,7 +68,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      width: '12%',
+      width: '13%',
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -106,7 +106,7 @@ export function mockQuery({
 export function useSearchFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = sessionStorage.getItem('deptList');
+  const stored = localStorage.getItem('deptList');
   deptList.value = stored ? JSON.parse(stored) : [];
   const deptOptions = deptList.value?.map((dept) => ({
     label: dept.label,

@@ -12,6 +12,7 @@ const studentInfo = ref<{ name: string; studentNo: string }>({
 const [DeleteStudentModal, DeleteStudentModalApi] = useVbenModal({
   title: '确定删除学生',
   fullscreenButton: false,
+  destroyOnClose: true,
   confirmText: '确定删除',
   onOpenChange: (open) => {
     if (open) {

@@ -105,9 +105,6 @@ function handleClose() {
             <div class="text-lg font-bold">危机事件处理-xxx</div>
           </div>
         </div>
-        <LyButton type="error" size="middle" @click="handleClose">
-          关闭事件
-        </LyButton>
       </div>
     </template>
 
@@ -190,18 +187,8 @@ function handleClose() {
       <!-- 事件详情 -->
       <div class="h-full">
         <div class="flex h-full flex-col rounded-xl bg-white">
-          <div class="box-border flex-1 overflow-hidden p-8">
+          <div class="box-border flex-1 overflow-hidden px-10 py-8">
             <EventReporting />
-          </div>
-
-          <div
-            v-if="false"
-            class="flex justify-end bg-white p-4"
-            style="box-shadow: 0 -4px 6px 0 #031a4108"
-          >
-            <LyButton type="error" size="large" @click="handleClose">
-              关闭事件
-            </LyButton>
           </div>
         </div>
       </div>

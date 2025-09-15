@@ -50,6 +50,7 @@ const filterQuestionnaireAnswer = computed(() => {
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreenButton: false,
   fullscreen: true,
+  destroyOnClose: true,
   class: 'w-[900px] !h-full',
   footer: false,
   header: false,
@@ -65,14 +66,6 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
         ?.questionnaireId ?? '') as string;
       loading.value = false;
     }
-  },
-  onClosed: () => {
-    activeKey.value = 'result';
-    assessmentResult.value = undefined;
-    questionnaireResult.value = [];
-    questionnaireAnswer.value = [];
-    completedTime.value = undefined;
-    questionnaireResultModalApi.close();
   },
 });
 

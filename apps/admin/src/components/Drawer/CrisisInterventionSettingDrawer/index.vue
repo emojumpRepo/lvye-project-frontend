@@ -38,6 +38,7 @@ const allocationModes = ref<CategoryCard[]>([
 const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
   useVbenDrawer({
     class: 'w-[720px]',
+    destroyOnClose: true,
   });
 </script>
 <template>

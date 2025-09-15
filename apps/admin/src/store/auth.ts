@@ -21,6 +21,7 @@ import {
   socialLogin,
 } from '#/api';
 import { $t } from '#/locales';
+import { loadDeptList } from '#/utils/transformDeptToTree';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
@@ -140,6 +141,8 @@ export const useAuthStore = defineStore('auth', () => {
     // accessStore
     accessStore.setAccessMenus(authPermissionInfo.menus);
     accessStore.setAccessCodes(authPermissionInfo.permissions);
+    // 加载班级列表
+    await loadDeptList();
     return authPermissionInfo;
   }
 
