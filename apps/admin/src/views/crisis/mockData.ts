@@ -141,15 +141,11 @@ export const eventPanelData = [
 /** 事件列表数据 */
 export const eventListData = [
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description:
-        '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 1,
     consultant: {
@@ -160,14 +156,11 @@ export const eventListData = [
     createTime: 1_757_486_940_000,
   },
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description: '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 2,
     consultant: {
@@ -178,15 +171,11 @@ export const eventListData = [
     createTime: 1_757_486_940_000,
   },
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description:
-        '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 3,
     consultant: {
@@ -197,14 +186,11 @@ export const eventListData = [
     createTime: 1_757_486_940_000,
   },
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description: '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 4,
     consultant: {
@@ -215,14 +201,11 @@ export const eventListData = [
     createTime: 1_757_486_940_000,
   },
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description: '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 5,
     consultant: {
@@ -233,14 +216,11 @@ export const eventListData = [
     createTime: 1_757_486_940_000,
   },
   {
-    eventPriority: {
-      eventId: 'CRI-2024-001',
-      description: '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤',
-    },
-    studentInfo: {
-      name: '张晓明',
-      className: '高一（3）班',
-    },
+    eventId: 'CRI-2024-001',
+    eventDescription:
+      '学生在课堂上情绪异常激动,出现自伤倾向,老师观察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤察到其用笔划伤',
+    studentName: '张晓明',
+    className: '高一（3）班',
     priority: '高',
     status: 6,
     consultant: {

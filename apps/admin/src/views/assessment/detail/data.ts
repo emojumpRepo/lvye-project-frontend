@@ -13,7 +13,7 @@ import { getDictOptions } from '#/utils';
 export function useGridFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = sessionStorage.getItem('deptList');
+  const stored = localStorage.getItem('deptList');
   deptList.value = stored ? JSON.parse(stored) : [];
   const deptOptions = deptList.value?.map((dept) => ({
     label: dept.label,

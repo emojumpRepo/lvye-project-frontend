@@ -12,7 +12,7 @@ import { getDictOptions } from '#/utils/dict';
 export function useSearchFormSchema(): VbenFormSchema[] {
   /** 年级列表 */
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = sessionStorage.getItem('deptList');
+  const stored = localStorage.getItem('deptList');
   if (stored) {
     deptList.value = JSON.parse(stored);
   }

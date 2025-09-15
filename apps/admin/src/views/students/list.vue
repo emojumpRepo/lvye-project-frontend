@@ -34,8 +34,8 @@ import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
 import {
   formatDeptListToTree,
+  getDeptListCache,
   getDeptTreeList,
-  loadDeptList,
 } from '#/utils/transformDeptToTree';
 
 import StudentSearch from './components/StudentSearch.vue';
@@ -321,10 +321,7 @@ function refresh() {
 
 // 组件挂载时加载数据
 onMounted(async () => {
-  const stored = sessionStorage.getItem('deptList');
-  if (!stored) {
-    await loadDeptList();
-  }
+  await getDeptListCache();
   deptListLoaded.value = true;
 });
 </script>
