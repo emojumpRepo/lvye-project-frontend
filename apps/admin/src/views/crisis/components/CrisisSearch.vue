@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import type { DeptGradeClassOption } from '@vben/types';
+
+import { onMounted, ref } from 'vue';
 
 import { Badge as ABadge, Tabs as ATabs, message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyButton from '#/components/LyButton/index.vue';
+import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
@@ -23,6 +26,7 @@ const emit = defineEmits<{
 }>();
 
 const activeTabKey = defineModel<string>('activeKey');
+const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 // 搜索参数
 const searchParams = ref<SearchParams>({
@@ -30,8 +34,8 @@ const searchParams = ref<SearchParams>({
   pageSize: 10,
 });
 
-const [Form] = useVbenForm({
-  schema: useSearchFormSchema(),
+const [Form, formApi] = useVbenForm({
+  schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   commonConfig: {
     componentProps: {
@@ -93,6 +97,11 @@ function parseSearchKeyword(keyword?: string) {
     ? { studentNo: trimmedKeyword, name: undefined }
     : { studentNo: undefined, name: trimmedKeyword };
 }
+
+onMounted(async () => {
+  deptOptions.value = await getDeptGradeClassDictOptions();
+  formApi.updateSchema(useSearchFormSchema({ deptOptions: deptOptions.value }));
+});
 </script>
 
 <template>

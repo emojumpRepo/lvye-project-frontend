@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import type { DeptGradeClassOption } from '@vben/types';
+
+import { onMounted, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
+import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
@@ -23,6 +26,8 @@ const emit = defineEmits<{
   search: [params: SearchParams];
 }>();
 
+const deptOptions = ref<DeptGradeClassOption[]>([]);
+
 // 搜索参数
 const searchParams = ref<SearchParams>({
   pageNo: 1,
@@ -30,7 +35,7 @@ const searchParams = ref<SearchParams>({
 });
 
 const [Form, formApi] = useVbenForm({
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   commonConfig: {
@@ -64,6 +69,11 @@ async function handleSearch(values: any) {
     message.error('搜索失败，请重试');
   }
 }
+
+onMounted(async () => {
+  deptOptions.value = await getDeptGradeClassDictOptions();
+  formApi.updateSchema(useSearchFormSchema({ deptOptions: deptOptions.value }));
+});
 </script>
 
 <template>

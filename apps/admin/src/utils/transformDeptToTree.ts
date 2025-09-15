@@ -1,3 +1,7 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
 import {
   getDeptById,
   getDeptSimpleList,
@@ -188,7 +192,9 @@ export async function getDeptTreeListByStudentName(name: string) {
 /**
  * 获取部门列表（缓存）
  */
-export async function getDeptListCache() {
+export async function getDeptListCache(): Promise<
+  PsychologyStudentProfileApi.DeptTree[]
+> {
   const stored = localStorage.getItem('deptList');
   // 获取班级选项
   if (stored) {
@@ -201,4 +207,23 @@ export async function getDeptListCache() {
       return [];
     }
   }
+}
+
+/**
+ * 获取部门年级-班级字典选项
+ */
+export async function getDeptGradeClassDictOptions(): Promise<
+  DeptGradeClassOption[]
+> {
+  const deptList = await getDeptListCache();
+  return deptList?.map((dept) => ({
+    label: dept.label,
+    value: dept.value,
+    children:
+      dept.children?.map((cls) => ({
+        label: cls.label,
+        value: cls.value,
+        isLeaf: true,
+      })) || [],
+  }));
 }
