@@ -131,13 +131,13 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       component: 'VbenInput',
       componentProps: {
-        placeholder: $t('authentication.usernameTip'),
+        placeholder: $t('authentication.studentNoTip'),
       },
       fieldName: 'username',
-      label: $t('authentication.username'),
+      label: $t('authentication.studentNo'),
       rules: z
         .string()
-        .min(1, { message: $t('authentication.usernameTip') })
+        .min(1, { message: $t('authentication.studentNoTip') })
         .default(import.meta.env.VITE_APP_DEFAULT_USERNAME),
     },
     {

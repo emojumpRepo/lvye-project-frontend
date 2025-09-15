@@ -169,7 +169,7 @@ function handleViewModeChange({ target }: { target: any }) {
       },
       rowConfig: {
         resizable: true,
-        isHover: true,
+        isHover: false,
       },
       proxyConfig: {
         ajax: {

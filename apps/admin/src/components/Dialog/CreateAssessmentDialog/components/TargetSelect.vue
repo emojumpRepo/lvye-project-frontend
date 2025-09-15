@@ -79,7 +79,7 @@ const appliedKeyword = ref('');
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     height: '275px',
-    rowConfig: { keyField: 'id', isHover: true },
+    rowConfig: { keyField: 'id', isHover: false },
     checkboxConfig: { reserve: true },
     pagerConfig: { enabled: false },
     columns: useStudentProfileGroupGridSchema(),
