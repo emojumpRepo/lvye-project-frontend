@@ -188,7 +188,7 @@ function handleAdjustTime() {
         </template>
       </Grid>
     </div>
-    <AppointmentDetailDrawer />
+
     <AdjustAppointmentTimeModal />
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalConsultDialogModal"

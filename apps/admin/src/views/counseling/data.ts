@@ -1,8 +1,9 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { h, ref } from 'vue';
+import { h } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -103,22 +104,11 @@ export function mockQuery({
 }
 
 /** 搜索表单 */
-export function useSearchFormSchema(): VbenFormSchema[] {
-  /** 年级列表 */
-  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = localStorage.getItem('deptList');
-  deptList.value = stored ? JSON.parse(stored) : [];
-  const deptOptions = deptList.value?.map((dept) => ({
-    label: dept.label,
-    value: dept.value,
-    children:
-      dept.children?.map((cls) => ({
-        label: cls.label,
-        value: cls.value,
-        isLeaf: true,
-      })) || [],
-  }));
-
+export function useSearchFormSchema({
+  deptOptions,
+}: {
+  deptOptions: DeptGradeClassOption[];
+}): VbenFormSchema[] {
   /** 咨询状态 */
   const counselingStatusList = getDictOptions('counseling_status');
 
