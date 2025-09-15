@@ -14,6 +14,7 @@ import {
 } from 'ant-design-vue';
 
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 interface DeptOption {
   value: number;
@@ -94,11 +95,8 @@ function handleRemoveStudent(
   );
 }
 
-onMounted(() => {
-  const stored = sessionStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  }
+onMounted(async () => {
+  deptList.value = await getDeptListCache();
 });
 </script>
 

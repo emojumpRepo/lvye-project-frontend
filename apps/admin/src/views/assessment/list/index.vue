@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 
 import CreateAssessmentDialog from '#/components/Dialog/CreateAssessmentDialog/index.vue';
-import { loadDeptList } from '#/utils/transformDeptToTree';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 import AssessmentListGrid from './components/AssessmentListGrid.vue';
 import AssessmentListSearch from './components/AssessmentListSearch.vue';
@@ -48,9 +48,7 @@ watch(
 );
 
 onMounted(async () => {
-  const stored = sessionStorage.getItem('deptList');
-  if (stored) return;
-  await loadDeptList();
+  await getDeptListCache();
 });
 </script>
 

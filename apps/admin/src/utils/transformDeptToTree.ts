@@ -48,7 +48,7 @@ export async function loadDeptList() {
       isGrade: true,
     }));
 
-    sessionStorage.setItem('deptList', JSON.stringify(treeData));
+    localStorage.setItem('deptList', JSON.stringify(treeData));
     return treeData;
   }
 
@@ -56,7 +56,7 @@ export async function loadDeptList() {
 }
 
 // 格式化班级名称
-function simplifyClassName(name: string): string {
+export function simplifyClassName(name: string): string {
   if (!name) return '';
 
   // 匹配年级+括号数字+班的格式
@@ -94,7 +94,7 @@ export async function getDeptTreeList(
 
     return children.map((child: any) => ({
       id: child.value,
-      name: simplifyClassName(child.label),
+      name: child.label,
       classDeptId: child.value,
       gradeDeptId: classDeptId,
       count: child.count,
@@ -183,4 +183,22 @@ export async function getDeptTreeListByStudentName(name: string) {
     (dept, index, self) => index === self.findIndex((d) => d.id === dept.id),
   );
   return _uniqueDeptList;
+}
+
+/**
+ * 获取部门列表（缓存）
+ */
+export async function getDeptListCache() {
+  const stored = localStorage.getItem('deptList');
+  // 获取班级选项
+  if (stored) {
+    return JSON.parse(stored);
+  } else {
+    try {
+      return await loadDeptList();
+    } catch (error) {
+      console.error('加载部门列表失败:', error);
+      return [];
+    }
+  }
 }

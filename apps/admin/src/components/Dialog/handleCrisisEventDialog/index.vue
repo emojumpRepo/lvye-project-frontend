@@ -187,7 +187,7 @@ function handleClose() {
       <!-- 事件详情 -->
       <div class="h-full">
         <div class="flex h-full flex-col rounded-xl bg-white">
-          <div class="box-border flex-1 overflow-hidden p-8">
+          <div class="box-border flex-1 overflow-hidden px-10 py-8">
             <EventReporting />
           </div>
         </div>

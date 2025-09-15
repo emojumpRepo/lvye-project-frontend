@@ -15,7 +15,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useVbenForm } from '#/adapter/form';
 import { updateStudentProfile } from '#/api/psychology/student-profile';
 import { getDictOptions } from '#/utils/dict';
-import { loadDeptList } from '#/utils/transformDeptToTree';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 import {
   useFamilyBackgroundFormSchema,
@@ -202,20 +202,7 @@ function formatFormData(
 // 获取类型字典
 async function getDictTypeOptions() {
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = sessionStorage.getItem('deptList');
-
-  // 获取班级选项
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  } else {
-    try {
-      const treeData = await loadDeptList();
-      deptList.value = treeData;
-    } catch (error) {
-      console.error('加载部门列表失败:', error);
-      return [];
-    }
-  }
+  deptList.value = await getDeptListCache();
 
   const gradeDept = deptList.value.find((item) => {
     return item.value === props.studentInfo?.gradeDeptId;

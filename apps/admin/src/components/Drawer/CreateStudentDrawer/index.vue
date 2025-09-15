@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 
 import { createStudentProfile } from '#/api/psychology/student-profile/index';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
@@ -161,13 +162,8 @@ async function handleCreateStudent() {
   drawerApi.close();
 }
 
-onMounted(() => {
-  const stored = sessionStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(
-      stored,
-    ) as PsychologyStudentProfileApi.DeptTree[];
-  }
+onMounted(async () => {
+  deptList.value = await getDeptListCache();
 });
 </script>
 

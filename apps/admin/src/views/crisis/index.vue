@@ -151,27 +151,27 @@ function handleReportFast() {
       <!-- 事件列表 -->
       <Grid>
         <!-- 事件优先级 -->
-        <template #eventPriority="{ row }">
+        <template #eventId="{ row }">
           <div class="flex flex-col gap-1 px-2">
             <div class="font-bold text-[#4C4C4D]">
-              {{ row.eventPriority.eventId }}
+              {{ row.eventId }}
             </div>
             <p
               class="line-clamp-2 whitespace-normal text-xs leading-normal text-[#979899]"
             >
-              {{ row.eventPriority.description }}
+              {{ row.eventDescription }}
             </p>
           </div>
         </template>
 
         <!-- 学生信息 -->
-        <template #studentInfo="{ row }">
+        <template #studentName="{ row }">
           <div class="flex flex-col gap-1">
             <div class="font-bold text-[#4C4C4D]">
-              {{ row.studentInfo.name }}
+              {{ row.studentName }}
             </div>
             <p class="text-xs text-[#4C4C4D]">
-              {{ row.studentInfo.className }}
+              {{ row.className }}
             </p>
           </div>
         </template>
