@@ -1,11 +1,17 @@
 <script lang="ts" setup>
+import type { CrisisEvent, CrisisEventRecord } from '@vben/types';
+
 import { ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Flex as AFlex } from 'ant-design-vue';
+import { Flex as AFlex, message } from 'ant-design-vue';
 
+import {
+  getCrisisEventDetail,
+  getCrisisEventProcessHistory,
+} from '#/api/psychology/crisis';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
 import EditEventRecord from '#/components/Dialog/EditEventRecord.vue/index.vue';
 import SelectHandleMethodDrawer from '#/components/Drawer/SelectHandleMethodDrawer/index.vue';
@@ -13,6 +19,9 @@ import LyButton from '#/components/LyButton/index.vue';
 
 import EventReporting from './components/EventReporting.vue';
 import StepEventCard from './components/StepEventCard.vue';
+
+const crisisEventDetail = ref<CrisisEvent | null>(null);
+const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
 
 // 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
@@ -22,6 +31,12 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   footer: false,
   contentClass: '!bg-[#F7F8FB] box-border py-10',
   destroyOnClose: true,
+  onOpenChange: async () => {
+    const data = handleCrisisEventModalApi.getData();
+    if (!data.id) return message.error('缺少事件ID');
+    await loadCrisisEventDetail(data.id);
+    await loadCrisisEventProcessHistory(data.id);
+  },
 });
 
 // 负责人快速分配弹窗
@@ -64,6 +79,36 @@ const crisisEventHandlingSteps = ref([
     key: 5,
   },
 ]);
+
+/**
+ * 获取危机事件详情
+ * @param id 事件id
+ */
+async function loadCrisisEventDetail(id: number) {
+  try {
+    const response = await getCrisisEventDetail(id);
+    if (!response) return message.error('获取危机事件详情失败');
+    crisisEventDetail.value = response;
+  } catch (error) {
+    console.error('加载危机事件详情失败', error);
+    message.error('加载危机事件详情失败');
+  }
+}
+
+async function loadCrisisEventProcessHistory(id: number) {
+  try {
+    const response = await getCrisisEventProcessHistory({
+      pageNo: 1,
+      pageSize: 10,
+      id,
+    });
+    if (response.total === 0) return;
+    crisisEventProcessHistory.value = response.list;
+  } catch (error) {
+    console.error('加载事件历史记录失败', error);
+    message.error('加载事件历史记录失败');
+  }
+}
 
 /** 快速分配 */
 function handleQuickAssign(index: number) {
@@ -188,7 +233,10 @@ function handleClose() {
       <div class="h-full">
         <div class="flex h-full flex-col rounded-xl bg-white">
           <div class="box-border flex-1 overflow-hidden px-10 py-8">
-            <EventReporting />
+            <EventReporting
+              :crisis-event-detail="crisisEventDetail"
+              :crisis-event-process-history="crisisEventProcessHistory"
+            />
           </div>
         </div>
       </div>

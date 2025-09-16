@@ -5,15 +5,19 @@ import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-import { Select as ASelect } from 'ant-design-vue';
+import { Select as ASelect, message } from 'ant-design-vue';
 
+import {
+  crisisInterventionSystemSetting,
+  getCrisisInterventionSystemSetting,
+} from '#/api/psychology/crisis';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 import CrisisModeAutoIcon from '../../../static/icons/crisis/crisis_mode_auto_icon.png';
 import CrisisModeManualIcon from '../../../static/icons/crisis/crisis_mode_manual_icon.png';
 
-const currentModeKey = ref<number>(0);
+const currentModeKey = ref<string>('');
 const defaultTeacherId = ref<number | undefined>(undefined);
 
 const allocationModes = ref<CategoryCard[]>([
@@ -23,7 +27,7 @@ const allocationModes = ref<CategoryCard[]>([
       '新增事件保持 "待分配" 状态, 由年级管理员手动选择最合适的处理人员',
     text: '灵活性高:可根据事件性质、人员负荷等因素灵活分配',
     icon: CrisisModeManualIcon,
-    key: 1,
+    key: 'manual',
   },
   {
     title: '自动分配模式',
@@ -31,7 +35,7 @@ const allocationModes = ref<CategoryCard[]>([
       '系统跟据学生档案中的责任心理老师自动分配, 无绑定时分配给默认老师',
     text: '推荐: 响应迅速, 减少人工干预',
     icon: CrisisModeAutoIcon,
-    key: 2,
+    key: 'auto',
   },
 ]);
 
@@ -39,6 +43,35 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
   useVbenDrawer({
     class: 'w-[720px]',
     destroyOnClose: true,
+    onOpenChange: async () => {
+      try {
+        const response = await getCrisisInterventionSystemSetting();
+        if (response) {
+          currentModeKey.value = response;
+        }
+      } catch (error) {
+        console.error('获取分配模式失败', error);
+        message.error('获取分配模式失败');
+      }
+    },
+    onConfirm: async () => {
+      try {
+        const response = await crisisInterventionSystemSetting(
+          currentModeKey.value,
+        );
+        if (response) {
+          message.success('分配成功');
+          crisisInterventionSettingDrawerApi.close();
+        } else {
+          message.error('分配失败');
+        }
+      } catch (error) {
+        console.error('分配失败', error);
+        message.error('分配失败');
+      } finally {
+        crisisInterventionSettingDrawerApi.close();
+      }
+    },
   });
 </script>
 <template>
@@ -66,7 +99,7 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
           <div
             v-for="mode in allocationModes"
             :key="mode.key"
-            class="space-y-5"
+            class="space-y-4"
           >
             <LyCategoryCard
               :category="mode"

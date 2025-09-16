@@ -55,10 +55,10 @@ const showConfirmDialog = ref(false);
 
 // ==================== 表单相关 ====================
 const consultTypeOptions = ref([
-  '初次咨询',
-  '复诊咨询',
-  '紧急咨询',
-  '家长咨询',
+  '初次访谈',
+  '复诊访谈',
+  '紧急访谈',
+  '家长访谈',
 ]);
 
 const teacherOptions = [
@@ -88,13 +88,13 @@ const form = ref({
 
 const rules = ref({
   student: [{ required: true, message: '请选择学生' }],
-  consultDate: [{ required: true, message: '请选择咨询日期' }],
-  consultTime: [{ required: true, message: '请选择咨询时间' }],
-  consultType: [{ required: true, message: '请选择咨询类型' }],
-  consultTeacher: [{ required: true, message: '请选择咨询老师' }],
+  consultDate: [{ required: true, message: '请选择访谈日期' }],
+  consultTime: [{ required: true, message: '请选择访谈时间' }],
+  consultType: [{ required: true, message: '请选择访谈类型' }],
+  consultTeacher: [{ required: true, message: '请选择访谈老师' }],
 });
 
-// ==================== 自定义咨询类型 ====================
+// ==================== 自定义访谈类型 ====================
 const showAddTypeInput = ref(false);
 const newTypeName = ref('');
 
@@ -152,7 +152,7 @@ function getWeekDays() {
   return days;
 }
 
-// ==================== 自定义咨询类型函数 ====================
+// ==================== 自定义访谈类型函数 ====================
 function showAddCustomType() {
   showAddTypeInput.value = true;
   newTypeName.value = '';
@@ -332,12 +332,12 @@ function disabledRangeTime(
           src="../../../static/icons/consulting/icon_yuyue.svg"
           class="w-5"
         />
-        <span>新建咨询预约</span>
+        <span>新建预约</span>
       </div>
     </template>
     <!-- 抽屉内容 -->
     <div class="grid h-full w-full grid-cols-2 overflow-hidden">
-      <!-- 左侧预约咨询部分 -->
+      <!-- 左侧预约访谈部分 -->
       <div class="col-span-1 overflow-y-auto border-r border-[#F2F3F5] p-6">
         <Form ref="formRef" :model="form" :rules="rules" class="w-full">
           <!-- 学生选择 -->
@@ -390,9 +390,9 @@ function disabledRangeTime(
             </div>
           </Form.Item>
 
-          <!-- 咨询时间 -->
+          <!-- 访谈时间 -->
           <LyLabel
-            title="咨询时间"
+            title="访谈时间"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -400,7 +400,7 @@ function disabledRangeTime(
             <Form.Item name="consultDate" :class="{ 'mb-0': durationText }">
               <DatePicker
                 v-model:value="form.consultDate"
-                placeholder="请选择咨询日期"
+                placeholder="请选择访谈日期"
                 show-today
                 class="w-full"
                 :disabled-date="
@@ -434,9 +434,9 @@ function disabledRangeTime(
             {{ durationText }}
           </div>
 
-          <!-- 咨询类型 -->
+          <!-- 访谈类型 -->
           <LyLabel
-            title="咨询类型"
+            title="访谈类型"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -489,9 +489,9 @@ function disabledRangeTime(
             </div>
           </Form.Item>
 
-          <!-- 咨询老师 -->
+          <!-- 访谈老师 -->
           <LyLabel
-            title="咨询老师"
+            title="访谈老师"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -504,9 +504,9 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询地点 -->
+          <!-- 访谈地点 -->
           <LyLabel
-            title="咨询地点"
+            title="访谈地点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultLocation">
@@ -517,9 +517,9 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询重点 -->
+          <!-- 访谈重点 -->
           <LyLabel
-            title="咨询重点"
+            title="访谈重点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultFocus">
@@ -624,7 +624,7 @@ function disabledRangeTime(
           icon="tabler:calendar-check"
           class="size-5 text-[#04DC70]"
         />
-        确认创建咨询预约
+        确认创建访谈预约
       </div>
 
       <div class="py-4">
@@ -657,7 +657,7 @@ function disabledRangeTime(
                 />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询时间</div>
+                <div class="text-sm text-[#6B7280]">访谈时间</div>
                 <div class="font-medium text-[#1F2937]">
                   {{
                     form.consultDate
@@ -682,7 +682,7 @@ function disabledRangeTime(
                 />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询地点</div>
+                <div class="text-sm text-[#6B7280]">访谈地点</div>
                 <div class="font-medium text-[#1F2937]">
                   {{ form.consultLocation }}
                 </div>
@@ -697,7 +697,7 @@ function disabledRangeTime(
                 <IconifyIcon icon="tabler:tag" class="size-4 text-[#8B5CF6]" />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询类型</div>
+                <div class="text-sm text-[#6B7280]">访谈类型</div>
                 <div class="font-medium text-[#1F2937]">
                   {{ form.consultType || '未选择' }}
                 </div>

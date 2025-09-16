@@ -19,13 +19,13 @@ import CounselingList from './list.vue';
 defineOptions({ name: 'CounselingCenter' });
 
 const viewTypeOptions = [
-  { label: '咨询记录', value: 1 },
+  { label: '访谈记录', value: 1 },
   { label: '日历视图', value: 2 },
 ];
 
 const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
 
-// 创建咨询预约抽屉
+// 创建访谈预约抽屉
 const [CreateConsultDrawer, createConsultDrawerApi] = useVbenDrawer({
   connectedComponent: CreateConsultDrawerComponent,
 });
@@ -40,13 +40,13 @@ const [AppointmentDetailDrawer, appointmentDetailDrawerApi] = useVbenDrawer({
   connectedComponent: StudentAppointmentDetailDrawer,
 });
 
-const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
+const viewType = ref(1); // 视图类型，1:访谈记录，2:日历视图
 
 const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
 
-/** 打开创建咨询预约抽屉 */
+/** 打开创建访谈预约抽屉 */
 function handleCreateConsult(
   payload?:
     | dayjs.Dayjs
@@ -118,7 +118,7 @@ function handleViewDetail() {
   <Page auto-content-height :height-offset="50">
     <div class="flex h-full flex-col overflow-hidden px-4">
       <!-- 页面标题 -->
-      <PageTitle title="咨询管理" :description="today" margin-bottom="mb-4">
+      <PageTitle title="访谈管理" :description="today" margin-bottom="mb-4">
         <template #action>
           <div class="custom-radio-group flex items-center gap-4">
             <RadioGroup v-model:value="viewType">
@@ -148,7 +148,7 @@ function handleViewDetail() {
           icon-bg="#f3f6ff"
           icon-color="#247eff"
           icon-src="flowbite:messages-solid"
-          title="今天咨询数"
+          title="今天访谈数"
           :value="12000"
         />
 
@@ -179,7 +179,7 @@ function handleViewDetail() {
 
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
-          <!-- 咨询记录列表 -->
+          <!-- 访谈记录列表 -->
           <CounselingList @view-detail="handleViewDetail" />
         </template>
         <template v-else>

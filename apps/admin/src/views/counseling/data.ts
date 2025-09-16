@@ -15,8 +15,8 @@ export interface CounselingRecordRow {
   studentClass: string;
   time: number; // timestamp
   duration: number; // minutes
-  type: string; // 咨询类型
-  teacher: string; // 咨询老师
+  type: string; // 访谈类型
+  teacher: string; // 访谈老师
   location: string; // 地点
   status: '已取消' | '已完成' | '已逾期' | '已预约';
   progress: number; // 0-100
@@ -50,10 +50,10 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'consultType',
-      title: '咨询类型',
+      title: '访谈类型',
       width: '10%',
     },
-    { field: 'consultant', title: '咨询老师', width: '10%' },
+    { field: 'consultant', title: '访谈老师', width: '10%' },
     { field: 'location', title: '地点', width: '13%' },
     {
       field: 'stauts',
@@ -92,9 +92,9 @@ export function mockQuery({
         className: '高一（3）班',
         consultTime: 1_757_492_748_000,
         consultDuration: 60,
-        consultType: '初次咨询',
+        consultType: '初次访谈',
         consultant: '李老师',
-        location: '心理咨询室A',
+        location: '心理访谈室A',
         status: ([1, 2, 3, 4] as const)[id % 4],
         progress: [10, 30, 60, 90, 100][id % 5],
       };
@@ -109,7 +109,7 @@ export function useSearchFormSchema({
 }: {
   deptOptions: DeptGradeClassOption[];
 }): VbenFormSchema[] {
-  /** 咨询状态 */
+  /** 访谈状态 */
   const counselingStatusList = getDictOptions('counseling_status');
 
   return [
@@ -128,6 +128,7 @@ export function useSearchFormSchema({
         showSearch: false,
         style: { cursor: 'pointer' },
       },
+      defaultValue: [''],
     },
     {
       fieldName: 'status',
@@ -141,7 +142,7 @@ export function useSearchFormSchema({
       fieldName: 'consultTime',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '咨询时间',
+        placeholder: '访谈时间',
         valueFormat: 'YYYY-MM-DD',
       },
       defaultValue: '',
