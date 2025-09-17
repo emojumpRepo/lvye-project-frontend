@@ -30,12 +30,15 @@ dayjs.extend(customParseFormat);
 export const STUDENT_EXPORT_COLUMNS = [
   { key: 'name', label: '学生姓名' },
   { key: 'studentNo', label: '学号' },
+  { key: 'idCard', label: '身份证' },
   { key: 'sex', label: '性别' },
   { key: 'gradeName', label: '年级' },
   { key: 'className', label: '班级' },
+  { key: 'enrollmentYear', label: '届别' },
   { key: 'psychologicalStatus', label: '心理状态' },
   { key: 'mobile', label: '联系电话' },
   { key: 'graduationStatus', label: '毕业状态' },
+  { key: 'isGraduated', label: '是否毕业' },
   { key: 'homeAddress', label: '家庭住址' },
   { key: 'birthDate', label: '出生日期' },
   { key: 'remark', label: '备注' },
@@ -237,27 +240,29 @@ export async function downloadTemplate() {
   const worksheet = workbook.addWorksheet('学生信息');
 
   worksheet.columns = [
-    { header: '学生姓名', key: 'name', width: 20 },
-    { header: '学号', key: 'studentId', width: 35 },
-    { header: '性别', key: 'sex', width: 10 },
-    { header: '年级', key: 'gradeName', width: 15 },
-    { header: '班级', key: 'className', width: 20 },
-    { header: '出生日期', key: 'birthDate', width: 15 },
+    { header: '学生姓名', key: 'name', width: 25 },
+    { header: '学号', key: 'studentNo', width: 40 },
+    { header: '届别', key: 'enrollmentYear', width: 20 },
+    { header: '身份证', key: 'idCard', width: 25 },
+    { header: '年级', key: 'gradeName', width: 20 },
+    { header: '班级', key: 'className', width: 25 },
     { header: '联系电话', key: 'mobile', width: 20 },
     { header: '家庭住址', key: 'homeAddress', width: 25 },
     { header: '备注', key: 'remark', width: 20 },
+    { header: '是否毕业', key: 'isGraduated', width: 20 },
   ];
 
   worksheet.addRow([
-    '文本，2-30个字符',
-    '数字或字母数字组合，不超过20位',
-    '男/女',
-    '只填写年级',
-    '填写年级和班级',
-    'YYYY/M/D',
+    '必填，文本，2-30个字符',
+    '必填，数字或字母数字组合，不超过20位',
+    '必填，4位数字',
+    '必填，身份证',
+    '必填，只填写年级',
+    '必填，填写年级和班级',
     '11位数字',
     '不超过200个字符',
     '不超过100个字符',
+    '是或否，默认为否',
   ]);
 
   const headerRow = worksheet.getRow(1);

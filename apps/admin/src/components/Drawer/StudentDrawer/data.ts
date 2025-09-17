@@ -3,7 +3,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import dayjs from 'dayjs';
 
 import { z } from '#/adapter/form';
-import { calculateAge } from '#/utils/calculateAge';
+import { calculateAge } from '#/utils/calculateTool';
 
 export interface SelectOptions {
   label: string;

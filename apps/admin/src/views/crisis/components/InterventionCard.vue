@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
-import { truncateText } from '#/utils/calculateAge';
+import { truncateText } from '#/utils/calculateTool';
 
 import crisisContinuousIcon from '../../../static/icons/crisis/crisis_continuous_icon.png';
 import crisisCriticalIcon from '../../../static/icons/crisis/crisis_critical_icon.png';

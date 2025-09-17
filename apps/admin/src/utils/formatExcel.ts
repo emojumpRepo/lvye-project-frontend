@@ -4,6 +4,7 @@ import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 
+import { getInfoFromIdCard } from './calculateTool';
 import { STUDENT_EXPORT_COLUMNS } from './export';
 import { getDeptListCache } from './transformDeptToTree';
 
@@ -14,12 +15,16 @@ type ValidationError = { field: keyof typeof _rules | string; message: string };
 export interface StudentRecord {
   studentNo?: string;
   name?: string;
+  idCard?: string;
   birthDate?: string;
   sex?: string;
   gradeName?: string;
   className?: string;
   gradeDeptId?: number;
   classDeptId?: number;
+  enrollmentYear?: number;
+  graduationStatus?: number;
+  isGraduated?: string;
   errorMessage?: string;
   mobile?: string;
   homeAddress?: string;
@@ -49,6 +54,9 @@ export interface ValidationRecordResult {
 
 // 部门列表缓存
 const deptList = ref<any[]>();
+// 身份证正则表达式
+const idCardReg =
+  /^(?:[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[0-9X]|[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3})$/i;
 
 // 计算字符串长度（支持中文字符）
 function getStringLength(value: string): number {
@@ -73,10 +81,18 @@ const _rules = {
     },
     message: '姓名应为2-30个字符',
   },
-  birthDate: {
+  idCard: {
     required: true,
     validator: (value: string): boolean => {
       if (!value) return false;
+      return idCardReg.test(value);
+    },
+    message: '身份证格式不正确',
+  },
+  birthDate: {
+    required: false,
+    validator: (value: string): boolean => {
+      if (!value) return true;
       const re = /^\d{4}-\d{1,2}-\d{1,2}$/;
       if (!re.test(value)) return false;
       const [y, m, d] = value.split('-').map((x) => Number.parseInt(x, 10));
@@ -91,9 +107,18 @@ const _rules = {
     },
     message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在1-30岁之间',
   },
-  sex: {
+  enrollmentYear: {
     required: true,
+    validator: (value: number): boolean => {
+      if (!value) return false;
+      return /^\d{4}$/.test(value.toString());
+    },
+    message: '届别需为4位数字',
+  },
+  sex: {
+    required: false,
     validator: (value: string): boolean => {
+      if (!value) return true;
       return value === '男' || value === '女';
     },
     message: '性别只能为男或女',
@@ -115,6 +140,14 @@ const _rules = {
       return grade.children.some((c: any) => c?.label === className);
     },
     message: '班级不存在',
+  },
+  isGraduated: {
+    required: false,
+    validator: (value: string): boolean => {
+      if (!value) return true;
+      return value === '是' || value === '否';
+    },
+    message: '就读状态只能为是或否',
   },
   mobile: {
     required: false,
@@ -148,8 +181,6 @@ export async function validateStudentRecord(
   const requiredFields: Array<keyof StudentRecord> = [
     'studentNo',
     'name',
-    'birthDate',
-    'sex',
     'gradeName',
     'className',
   ];
@@ -159,12 +190,16 @@ export async function validateStudentRecord(
       const fieldNames: Record<keyof StudentRecord, string> = {
         studentNo: '学号',
         name: '学生姓名',
+        idCard: '身份证',
         birthDate: '出生日期',
         sex: '性别',
         gradeName: '年级',
         className: '班级',
         gradeDeptId: '',
         classDeptId: '',
+        enrollmentYear: '届别',
+        graduationStatus: '就读状态',
+        isGraduated: '是否毕业',
         errorMessage: '',
         mobile: '手机号码',
         homeAddress: '家庭住址',
@@ -184,12 +219,14 @@ export async function validateStudentRecord(
     errors.push({ field: 'name', message: _rules.name.message });
   }
 
-  if (record.birthDate && !_rules.birthDate.validator(record.birthDate)) {
-    errors.push({ field: 'birthDate', message: _rules.birthDate.message });
-  }
-
-  if (record.sex && !_rules.sex.validator(record.sex)) {
-    errors.push({ field: 'sex', message: _rules.sex.message });
+  if (
+    record.enrollmentYear &&
+    !_rules.enrollmentYear.validator(record.enrollmentYear)
+  ) {
+    errors.push({
+      field: 'enrollmentYear',
+      message: _rules.enrollmentYear.message,
+    });
   }
 
   // 年级验证
@@ -207,6 +244,25 @@ export async function validateStudentRecord(
   }
 
   // 可选字段验证
+  if (record.idCard && !_rules.idCard.validator(record.idCard)) {
+    errors.push({ field: 'idCard', message: _rules.idCard.message });
+  }
+
+  if (record.birthDate && !_rules.birthDate.validator(record.birthDate)) {
+    errors.push({ field: 'birthDate', message: _rules.birthDate.message });
+  }
+
+  if (record.sex && !_rules.sex.validator(record.sex)) {
+    errors.push({ field: 'sex', message: _rules.sex.message });
+  }
+
+  if (record.isGraduated && !_rules.isGraduated.validator(record.isGraduated)) {
+    errors.push({
+      field: 'isGraduated',
+      message: _rules.isGraduated.message,
+    });
+  }
+
   if (record.mobile && !_rules.mobile.validator(record.mobile)) {
     errors.push({ field: 'mobile', message: _rules.mobile.message });
   }
@@ -235,7 +291,7 @@ export async function validateStudentRecords(
     !Array.isArray(deptList.value) ||
     deptList.value.length === 0
   ) {
-    await getDeptListCache();
+    deptList.value = await getDeptListCache();
   }
 
   for (const record of records) {
@@ -334,6 +390,8 @@ function formatDate(value: any): string {
  * 解析Excel文件
  * @param file 文件
  * @param options 选项
+ * @param options.maxRows 最大读取行数
+ * @param options.sheetIndex 读取的工作表索引，默认0
  * @returns 解析后的数据
  */
 export async function parseExcel(
@@ -479,11 +537,12 @@ export async function parseExcel(
     const requiredHeaders = [
       '学号',
       '学生姓名',
-      '出生日期',
-      '性别',
+      '届别',
+      '身份证',
       '年级',
       '班级',
       '联系电话',
+      '是否毕业',
       '家庭住址',
       '备注',
     ];
@@ -541,7 +600,33 @@ export async function parseExcel(
         const key = matchedColumn ? matchedColumn.key : header;
         rowObject[key as keyof StudentRecord] = row[headerIndex] || '';
       });
-      return { ...rowObject, rowNumber: index + 2 } as StudentRecord;
+
+      // 如果填写了身份证且格式校验通过，则根据身份证回填出生日期与性别
+      const idCard = String(rowObject.idCard || '').trim();
+      if (idCard && idCardReg.test(idCard)) {
+        const info = getInfoFromIdCard(idCard);
+        if (info) {
+          rowObject.birthDate = info.birthDate;
+          rowObject.sex = info.gender;
+        }
+      }
+
+      // 依据“是否在校”自动计算“毕业状态”
+      const computeGraduationStatus = (isGraduated?: string): number => {
+        const val = String(isGraduated || '').trim();
+        if (!val) return 0; // 未填写默认在校
+        return val === '是' ? 0 : 1; // 是=在校(0)，否=毕业(1)
+      };
+
+      const graduationStatus = computeGraduationStatus(
+        rowObject.isGraduated as string,
+      );
+
+      return {
+        ...rowObject,
+        graduationStatus,
+        rowNumber: index + 2,
+      } as StudentRecord;
     });
 
     // 验证数据
@@ -561,6 +646,15 @@ export async function parseExcel(
         gradeDeptId: gradeDept?.value,
         classDeptId: classDept?.value,
         birthDate: item.birthDate,
+        // 再保险：确保毕业状态被设置（当上一步已设置则保持）
+        graduationStatus:
+          typeof item.graduationStatus === 'number'
+            ? item.graduationStatus
+            : ((): number => {
+                const val = String(item.isGraduated || '').trim();
+                if (!val) return 0;
+                return val === '是' ? 1 : 0;
+              })(),
       };
     });
 

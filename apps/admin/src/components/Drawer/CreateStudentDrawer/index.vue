@@ -6,7 +6,6 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
 import { GenderEnum } from '@vben/types';
 
 import {
@@ -22,16 +21,19 @@ import dayjs from 'dayjs';
 
 import { createStudentProfile } from '#/api/psychology/student-profile/index';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getInfoFromIdCard } from '#/utils/calculateTool';
+import { getDictOptions } from '#/utils/dict';
 import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
 }>();
 
-const validateName = ref(false);
-const validateStudentId = ref(false);
 const formRef = ref();
 const loading = ref(false);
+const graduationStatusOptions = ref<{ label: string; value: number }[]>([]);
+const idCardReg =
+  /^(?:[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[0-9X]|[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3})$/i;
 
 const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
 
@@ -49,9 +51,12 @@ const studentForm = reactive<PsychologyStudentProfileApi.StudentProfileSaveReq>(
     sex: undefined,
     gradeDeptId: undefined,
     classDeptId: undefined,
+    idCard: '',
     birthDate: '',
+    enrollmentYear: undefined,
     mobile: '',
     homeAddress: '',
+    graduationStatus: 0, // 在校
     isMark: undefined,
     specialMarks: '',
     remark: '',
@@ -63,6 +68,16 @@ const classList = computed(() => {
     deptList.value.find((dept) => dept.value === studentForm.gradeDeptId)
       ?.children || []
   );
+});
+
+const enrollmentYearList = computed(() => {
+  const startYear = 2015;
+  const endYear = new Date().getFullYear();
+  const options: { label: string; value: number }[] = [];
+  for (let year = endYear; year >= startYear; year--) {
+    options.push({ label: `${year}届`, value: year });
+  }
+  return options;
 });
 
 // const specialRemarkOptions = [
@@ -77,7 +92,6 @@ const rules: Record<string, Rule[]> = {
   name: [
     {
       validator: (_, value) => {
-        validateName.value = false;
         if (!value) {
           return Promise.reject(new Error('请输入学生姓名'));
         }
@@ -87,7 +101,7 @@ const rules: Record<string, Rule[]> = {
         // if (!/^[\u4E00-\u9FA5]+$/.test(value)) {
         //   return Promise.reject(new Error('姓名格式不正确'));
         // }
-        validateName.value = true;
+
         return Promise.resolve();
       },
     },
@@ -95,23 +109,37 @@ const rules: Record<string, Rule[]> = {
   studentNo: [
     {
       validator: (_, value) => {
-        validateStudentId.value = false;
         if (!value) {
           return Promise.reject(new Error('请输入学号'));
         }
         if (!/^[a-z0-9]+$/i.test(value)) {
           return Promise.reject(new Error('学号格式不符合规范'));
         }
-        validateStudentId.value = true;
         return Promise.resolve();
       },
     },
   ],
-  sex: [{ required: true, message: '请选择性别' }],
+  idCard: [
+    { required: true, message: '请填写身份证' },
+    {
+      validator: (_, value) => {
+        if (value && !idCardReg.test(value)) {
+          return Promise.reject(new Error('身份证格式不符合规范'));
+        }
+        const data = getInfoFromIdCard(value);
+        if (data) {
+          studentForm.birthDate = dayjs(data.birthDate);
+          studentForm.sex = data.gender === '男' ? 1 : 2;
+        }
+        return Promise.resolve();
+      },
+    },
+  ],
+  sex: [{ required: false, message: '请选择性别' }],
   gradeDeptId: [{ required: true, message: '请选择年级' }],
   classDeptId: [{ required: true, message: '请选择班级' }],
   birthDate: [
-    { required: true, message: '请选择出生日期' },
+    { required: false, message: '请选择出生日期' },
     {
       validator: (_, value) => {
         if (value) {
@@ -126,6 +154,7 @@ const rules: Record<string, Rule[]> = {
       },
     },
   ],
+  enrollmentYear: [{ required: true, message: '请选择届别' }],
   mobile: [
     {
       validator: (_, value) => {
@@ -138,32 +167,42 @@ const rules: Record<string, Rule[]> = {
   ],
 };
 
+/** 创建学生档案 */
 async function handleCreateStudent() {
-  loading.value = true;
-  const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
-  const params = {
-    ...studentForm,
-    birthDate: formatBirthDate.toString(),
-  };
-  try {
-    const res = await createStudentProfile(params);
-    if (res) {
-      message.success('学生档案创建成功');
-    } else {
+  formRef.value?.validate().then(async () => {
+    loading.value = true;
+    const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
+    const params = {
+      ...studentForm,
+      birthDate: formatBirthDate.toString(),
+    };
+
+    try {
+      const res = await createStudentProfile(params);
+      if (res) {
+        message.success('学生档案创建成功');
+      } else {
+        message.error('学生档案创建失败');
+      }
+    } catch (error) {
+      console.error('学生档案创建失败', error);
       message.error('学生档案创建失败');
     }
-  } catch (error) {
-    console.error('学生档案创建失败', error);
-    message.error('学生档案创建失败');
-  }
-  emit('refresh');
-  formRef.value?.resetFields();
-  loading.value = false;
-  drawerApi.close();
+    emit('refresh');
+    formRef.value?.resetFields();
+    loading.value = false;
+    drawerApi.close();
+  });
 }
 
 onMounted(async () => {
   deptList.value = await getDeptListCache();
+  graduationStatusOptions.value = await getDictOptions(
+    'student_graduation_status',
+  ).map((item) => ({
+    label: item.label,
+    value: Number(item.value),
+  }));
 });
 </script>
 
@@ -182,41 +221,38 @@ onMounted(async () => {
       <AForm ref="formRef" :model="studentForm" :rules="rules">
         <div>
           <LyLabel title="学生姓名" required custom-title-class="font-normal" />
-          <AForm.Item name="name">
-            <div class="flex items-center gap-2">
-              <AInput
-                v-model:value="studentForm.name"
-                placeholder="请填写"
-                :maxlength="30"
-              />
-              <IconifyIcon
-                v-if="validateName"
-                icon="lets-icons:check-fill"
-                color="#04DC70"
-              />
-            </div>
+          <AForm.Item name="name" has-feedback>
+            <AInput
+              v-model:value="studentForm.name"
+              placeholder="请填写"
+              :maxlength="30"
+            />
           </AForm.Item>
         </div>
 
         <div>
           <LyLabel title="学号" required custom-title-class="font-normal" />
-          <AForm.Item name="studentNo">
-            <div class="flex items-center gap-2">
-              <AInput
-                v-model:value="studentForm.studentNo"
-                placeholder="请填写"
-              />
-              <IconifyIcon
-                v-if="validateStudentId"
-                icon="lets-icons:check-fill"
-                color="#04DC70"
-              />
-            </div>
+          <AForm.Item name="studentNo" has-feedback>
+            <AInput
+              v-model:value="studentForm.studentNo"
+              placeholder="请填写"
+            />
           </AForm.Item>
         </div>
 
         <div>
-          <LyLabel title="出生日期" required custom-title-class="font-normal" />
+          <LyLabel title="身份证" required custom-title-class="font-normal" />
+          <AForm.Item name="idCard" has-feedback>
+            <AInput
+              v-model:value="studentForm.idCard"
+              placeholder="请填写"
+              style="width: 100%"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="出生日期" custom-title-class="font-normal" />
           <AForm.Item name="birthDate">
             <ADatePicker
               v-model:value="studentForm.birthDate"
@@ -227,7 +263,7 @@ onMounted(async () => {
         </div>
 
         <div>
-          <LyLabel title="性别" required custom-title-class="font-normal" />
+          <LyLabel title="性别" custom-title-class="font-normal" />
           <AForm.Item name="sex">
             <ARadio.Group v-model:value="studentForm.sex">
               <ARadio :value="GenderEnum.MALE">男</ARadio>
@@ -254,6 +290,28 @@ onMounted(async () => {
               v-model:value="studentForm.classDeptId"
               placeholder="请选择班级"
               :options="classList"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="届别" required custom-title-class="font-normal" />
+          <AForm.Item name="enrollmentYear">
+            <ASelect
+              v-model:value="studentForm.enrollmentYear"
+              placeholder="请选择届别"
+              :options="enrollmentYearList"
+            />
+          </AForm.Item>
+        </div>
+
+        <div>
+          <LyLabel title="就读状态" required custom-title-class="font-normal" />
+          <AForm.Item name="graduationStatus">
+            <ASelect
+              v-model:value="studentForm.graduationStatus"
+              placeholder="请选择就读状态"
+              :options="graduationStatusOptions"
             />
           </AForm.Item>
         </div>
@@ -300,16 +358,22 @@ onMounted(async () => {
         </AForm.Item>
       </div> -->
 
-        <!-- <div>
-        <LyLabel title="备注说明" custom-title-class="font-normal" />
-        <AForm.Item name="remark">
-          <AInput
-            v-model:value="studentForm.remark"
-            placeholder="可填写具体情况说明"
-          />
-        </AForm.Item>
-      </div> -->
+        <div>
+          <LyLabel title="备注说明" custom-title-class="font-normal" />
+          <AForm.Item name="remark">
+            <AInput.TextArea
+              v-model:value="studentForm.remark"
+              placeholder="可填写具体情况说明"
+            />
+          </AForm.Item>
+        </div>
       </AForm>
     </ASpin>
   </Drawer>
 </template>
+
+<style lang="scss" scoped>
+textarea {
+  resize: none;
+}
+</style>

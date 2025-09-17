@@ -196,6 +196,8 @@ async function parseStudentProfileExcel() {
       return message.error('文件读取失败');
     }
 
+    console.log('parseData', parseData.value);
+
     importResult.value.summary.total = parseData.value?.success.length || 0;
   } catch (error) {
     console.error('文件读取失败', error);
