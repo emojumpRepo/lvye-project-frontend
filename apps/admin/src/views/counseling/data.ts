@@ -1,11 +1,17 @@
+import type { PageResult } from '@vben/request';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { h, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
+import dayjs from 'dayjs';
+
+import { getConsultationPage } from '#/api/psychology/consultation';
 import { getDictOptions } from '#/utils/dict';
 
 export interface CounselingRecordRow {
@@ -38,21 +44,21 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'consultTime',
       title: '时间',
-      width: '15%',
+      width: '25%',
       slots: { default: 'consultTime' },
     },
     {
-      field: 'consultDuration',
+      field: 'durationMinutes',
       title: '时长',
       width: '10%',
       visible: false,
     },
     {
-      field: 'consultType',
+      field: 'consultationType',
       title: '咨询类型',
       width: '10%',
     },
-    { field: 'consultant', title: '咨询老师', width: '10%' },
+    { field: 'counselorName', title: '咨询老师', width: '10%' },
     { field: 'location', title: '地点', width: '13%' },
     {
       field: 'stauts',
@@ -68,38 +74,64 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       title: '操作',
-      width: '13%',
       fixed: 'right',
+      width: '16%',
+      resizable: false,
       slots: { default: 'actions' },
     },
   ];
 }
 
-// 临时模拟数据，后续可替换为真实接口
-export function mockQuery({
-  page,
-}: {
-  page: { currentPage: number; pageSize: number };
-}) {
-  const total = 200;
-  const list: CounselingRecordRow[] = Array.from({ length: page.pageSize }).map(
-    (_, idx) => {
-      const id = (page.currentPage - 1) * page.pageSize + idx + 1;
-      return {
-        id,
-        studentName: '张晓明',
-        className: '高一（3）班',
-        consultTime: 1_757_492_748_000,
-        consultDuration: 60,
-        consultType: '初次咨询',
-        consultant: '李老师',
-        location: '心理咨询室A',
-        status: ([1, 2, 3, 4] as const)[id % 4],
-        progress: [10, 30, 60, 90, 100][id % 5],
-      };
-    },
-  );
-  return Promise.resolve({ list, total });
+export async function queryConsultationPage(
+  { page }: any,
+  formValues: any,
+): Promise<{ list: CounselingRecordRow[]; total: number }> {
+  const { teacherId, status, consultTime, searchKeyword, studentNo } =
+    formValues;
+
+  const params: PsychologyConsultationApi.ConsultationRecordPageReq = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    teacherId: teacherId || undefined,
+    studentName: studentNo || searchKeyword || undefined,
+    status: status !== undefined && status !== '' ? Number(status) : undefined,
+    // 这里的日期控件是单值，后端入参是时间范围数组，按同一天处理
+    startTime: consultTime ? [consultTime] : undefined,
+    endTime: consultTime ? [consultTime] : undefined,
+  } as any;
+
+  const res: PageResult<PsychologyConsultationApi.ConsultationRecord> =
+    await getConsultationPage(params);
+
+  const list: CounselingRecordRow[] = (res.list || []).map((item) => {
+    const start = item.appointmentStartTime
+      ? new Date(item.appointmentStartTime).getTime()
+      : 0;
+    const end = item.appointmentEndTime
+      ? new Date(item.appointmentEndTime).getTime()
+      : 0;
+    let duration = 0;
+    if (item.durationMinutes !== undefined && item.durationMinutes !== null) {
+      duration = item.durationMinutes;
+    } else if (start && end) {
+      duration = Math.max(0, Math.round((end - start) / 60_000));
+    }
+
+    return {
+      id: item.id ?? 0,
+      studentName: item.studentName || '-',
+      className: item.className || '-',
+      consultTime: `${dayjs(start).format('YYYY-MM-DD HH:mm:ss')} - ${dayjs(end).format('YYYY-MM-DD HH:mm:ss')}`,
+      durationMinutes: duration,
+      consultationType: String(item.consultationType ?? ''),
+      counselorName: item.counselorName || '-',
+      location: item.location || '-',
+      status: (item.status as any) ?? '',
+      progress: 0,
+    } as any;
+  });
+
+  return { list, total: res.total || 0 };
 }
 
 /** 搜索表单 */
@@ -124,11 +156,11 @@ export function useSearchFormSchema(): VbenFormSchema[] {
 
   return [
     {
-      fieldName: 'classDeptId',
+      fieldName: 'teacherId',
       component: 'Cascader',
       componentProps: {
         options: [
-          { label: '全部班级', value: '', isLeaf: true },
+          { label: '全部老师', value: '', isLeaf: true },
           ...deptOptions,
         ],
         defaultValue: [''],
@@ -150,10 +182,6 @@ export function useSearchFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'consultTime',
       component: 'DatePicker',
-      componentProps: {
-        placeholder: '咨询时间',
-        valueFormat: 'YYYY-MM-DD',
-      },
       defaultValue: '',
     },
     {

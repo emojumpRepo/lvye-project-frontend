@@ -11,7 +11,7 @@ import { useSearchFormSchema } from '../data';
 interface SearchParams {
   pageNo?: number;
   pageSize?: number;
-  classDeptId?: number;
+  teacherId?: number;
   status?: string;
   consultTime?: string;
   studentNo?: string;
@@ -29,7 +29,7 @@ const searchParams = ref<SearchParams>({
   pageSize: 10,
 });
 
-const [Form, formApi] = useVbenForm({
+const [Form] = useVbenForm({
   schema: useSearchFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
@@ -54,7 +54,7 @@ async function handleSearch(values: any) {
       studentNo: values.searchKeyword,
       status: values.status || undefined,
       consultTime: values.consultTime || undefined,
-      classDeptId: values.classDeptId || undefined,
+      teacherId: values.teacherId || undefined,
     };
 
     searchParams.value = params;
@@ -71,6 +71,7 @@ async function handleSearch(values: any) {
     <LyCardTitle
       icon="ix:user-filled"
       title="咨询记录管理"
+      :pb="3"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
 

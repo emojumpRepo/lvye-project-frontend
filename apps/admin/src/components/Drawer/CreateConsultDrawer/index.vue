@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
+
 import { computed, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -15,7 +17,7 @@ import {
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
-import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
+import { getConsultationRecord } from '#/api/psychology/consultation';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getEventStyleOptions } from '#/views/counseling/data';
@@ -30,6 +32,105 @@ const emit = defineEmits<{
 
 dayjs.extend(isBetween);
 
+// ==================== 内部类型定义与工具 ====================
+interface StudentOption {
+  class: string;
+  label: string;
+  name: string;
+  studentNo: string;
+  value: string;
+}
+
+interface FormModel {
+  student: StudentOption | undefined;
+  consultDate: dayjs.Dayjs | undefined;
+  consultTime: [dayjs.Dayjs, dayjs.Dayjs] | undefined;
+  consultType: string;
+  consultTeacher: string;
+  consultLocation: string;
+  consultFocus: string;
+}
+
+interface DrawerSnapshot {
+  currentDate: string;
+  form: FormModel;
+  timeRange:
+    | undefined
+    | { date: Date; end: Date | string; start: Date | string };
+}
+
+function buildStudentOption(res: any): StudentOption {
+  return {
+    label: [res.studentName, res.studentNumber, res.className]
+      .filter(Boolean)
+      .join(' - '),
+    name: res.studentName || '',
+    studentNo: res.studentNumber || '',
+    class: res.className || '',
+    value: String(res.studentProfileId ?? ''),
+  } as any;
+}
+
+function mapConsultType(
+  rawType: number | string | undefined,
+  options: string[],
+): string {
+  if (typeof rawType === 'string') {
+    const incoming = rawType.trim();
+    if (!incoming) return '';
+    if (!options.includes(incoming)) options.push(incoming);
+    return incoming;
+  }
+  if (typeof rawType === 'number') {
+    return options[rawType - 1] ?? options[rawType] ?? '';
+  }
+  return '';
+}
+
+function takeSnapshot(): DrawerSnapshot {
+  return {
+    currentDate: currentDate.value,
+    form: {
+      student: form.value.student ? { ...form.value.student } : undefined,
+      consultDate: form.value.consultDate
+        ? dayjs(form.value.consultDate)
+        : undefined,
+      consultTime: form.value.consultTime
+        ? [dayjs(form.value.consultTime[0]), dayjs(form.value.consultTime[1])]
+        : undefined,
+      consultType: form.value.consultType,
+      consultTeacher: form.value.consultTeacher,
+      consultLocation: form.value.consultLocation,
+      consultFocus: form.value.consultFocus,
+    },
+    timeRange: timeRange.value
+      ? {
+          date: new Date(timeRange.value.date),
+          start:
+            typeof timeRange.value.start === 'string'
+              ? timeRange.value.start
+              : new Date(timeRange.value.start as Date),
+          end:
+            typeof timeRange.value.end === 'string'
+              ? timeRange.value.end
+              : new Date(timeRange.value.end as Date),
+        }
+      : undefined,
+  };
+}
+
+function restoreSnapshot(snap: DrawerSnapshot) {
+  form.value.student = snap.form.student as any;
+  form.value.consultDate = snap.form.consultDate as any;
+  form.value.consultTime = snap.form.consultTime as any;
+  form.value.consultType = snap.form.consultType;
+  form.value.consultTeacher = snap.form.consultTeacher;
+  form.value.consultLocation = snap.form.consultLocation;
+  form.value.consultFocus = snap.form.consultFocus;
+  currentDate.value = snap.currentDate;
+  timeRange.value = snap.timeRange as any;
+}
+
 // ==================== 使用 composables ====================
 const { calculateDurationText, getDisabledTimeConfig } = useTimeCalculation();
 
@@ -42,7 +143,49 @@ const {
   clearSearchState,
 } = useStudentSearch();
 
-// ==================== 基础状态 ====================
+// ==================== 咨询预约详情基础状态 ====================
+const currentConsultationRecordId = ref<number>();
+const currentConsultationRecord =
+  ref<PsychologyConsultationApi.ConsultationRecord>();
+const isEdit = ref(false); // 是否是编辑状态
+const isReadOnly = computed(
+  () => !!currentConsultationRecordId.value && !isEdit.value,
+);
+// 用于“取消编辑”时恢复到详情初始状态
+const originalSnapshot = ref<DrawerSnapshot | null>(null);
+const isDetail = computed(() => !!currentConsultationRecordId.value);
+const footerSecondaryText = computed(() =>
+  isDetail.value ? (isReadOnly.value ? '关闭' : '取消') : '取消',
+);
+const footerPrimaryText = computed(() =>
+  isDetail.value ? (isReadOnly.value ? '编辑' : '保存') : '确认创建',
+);
+function onFooterSecondaryClick() {
+  // 详情只读：关闭
+  if (isDetail.value && isReadOnly.value) {
+    drawerApi.close();
+    return;
+  }
+  // 详情编辑：恢复快照并切回只读
+  if (isDetail.value && isEdit.value) {
+    if (originalSnapshot.value) {
+      restoreSnapshot(originalSnapshot.value);
+    }
+    isEdit.value = false;
+    return;
+  }
+  // 其他：关闭
+  drawerApi.close();
+}
+function onFooterPrimaryClick() {
+  if (isDetail.value && isReadOnly.value) {
+    isEdit.value = true;
+    return;
+  }
+  submitConsult();
+}
+
+// ==================== 创建咨询预约的基础状态 ====================
 const currentDate = ref('');
 const timeRange = ref<{
   date: Date;
@@ -68,18 +211,10 @@ const teacherOptions = [
   { label: '赵老师', value: 'teacher4' },
 ];
 
-const form = ref({
-  student: undefined as
-    | undefined
-    | {
-        class: string;
-        label: string;
-        name: string;
-        studentNo: string;
-        value: string;
-      },
-  consultDate: undefined as dayjs.Dayjs | undefined,
-  consultTime: undefined as [dayjs.Dayjs, dayjs.Dayjs] | undefined,
+const form = ref<FormModel>({
+  student: undefined,
+  consultDate: undefined,
+  consultTime: undefined,
   consultType: '',
   consultTeacher: '',
   consultLocation: '',
@@ -245,24 +380,96 @@ function resetForm() {
   dateTip.value = '';
 }
 
+// ==================== 咨询预约详情相关 ====================
+
+async function loadConsultationRecord() {
+  if (!currentConsultationRecordId.value) {
+    return;
+  }
+  const res = await getConsultationRecord(currentConsultationRecordId.value);
+  currentConsultationRecord.value = res;
+  // 将详情数据回填到表单
+  try {
+    const startMs = (res as any).appointmentStartTime as number | undefined;
+    const endMs = (res as any).appointmentEndTime as number | undefined;
+
+    // 回填学生信息（Select 使用 label-in-value）
+    form.value.student = buildStudentOption(res);
+
+    // 回填日期与时间
+    if (startMs) {
+      form.value.consultDate = dayjs(startMs);
+    }
+    if (startMs && endMs) {
+      form.value.consultTime = [dayjs(startMs), dayjs(endMs)] as any;
+    }
+
+    // 回填类型（后端可能返回字符串或数字），基于 consultTypeOptions 做映射
+    form.value.consultType = mapConsultType(
+      (res as any).consultationType,
+      consultTypeOptions.value,
+    );
+
+    // 回填老师与地点、重点
+    form.value.consultTeacher = (res as any).counselorName || '';
+    form.value.consultLocation = (res as any).location || '';
+    form.value.consultFocus = (res as any).notes || '';
+
+    // 同步周视图驱动数据
+    if (startMs) {
+      currentDate.value = dayjs(startMs).format('YYYY-MM-DD');
+    }
+    if (startMs && endMs) {
+      timeRange.value = {
+        date: new Date(startMs),
+        start: new Date(startMs),
+        end: new Date(endMs),
+      } as any;
+    }
+
+    // 记录原始快照用于“取消编辑”恢复
+    originalSnapshot.value = takeSnapshot();
+  } catch (error) {
+    console.error('回填预约详情到表单失败:', error);
+  }
+}
+
 // ==================== Drawer 配置 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[1200px]',
   contentClass: 'p-0',
   confirmText: '创建预约',
+  // 关闭时卸载内容，避免残留状态
+  destroyOnClose: true as any,
   onConfirm: submitConsult,
   onClosed: () => {
+    // 彻底清理所有本地状态
     resetForm();
-    drawerApi.close();
+    isEdit.value = false;
+    currentConsultationRecordId.value = undefined;
+    currentConsultationRecord.value = undefined as any;
+    currentDate.value = '';
+    timeRange.value = undefined;
+    weekViewDate.value = dayjs();
+    showConfirmDialog.value = false;
+    clearSearchState();
   },
   onOpenChange: (isOpen: boolean) => {
     if (isOpen) {
       const data = drawerApi.getData<{
-        currentDate: string;
+        currentDate?: string;
+        id?: number;
         timeRange?: { date: Date; end: Date | string; start: Date | string };
       }>();
-      currentDate.value = data.currentDate;
-      timeRange.value = data.timeRange;
+      if (data.id) {
+        currentConsultationRecordId.value = data.id;
+        isEdit.value = false;
+        loadConsultationRecord();
+      } else {
+        isEdit.value = true;
+        currentDate.value = data.currentDate || '';
+        timeRange.value = data.timeRange;
+      }
     }
   },
 });
@@ -332,7 +539,9 @@ function disabledRangeTime(
           src="../../../static/icons/consulting/icon_yuyue.svg"
           class="w-5"
         />
-        <span>新建咨询预约</span>
+        <span>{{
+          currentConsultationRecordId ? '咨询预约详情' : '新建咨询预约'
+        }}</span>
       </div>
     </template>
     <!-- 抽屉内容 -->
@@ -354,6 +563,7 @@ function disabledRangeTime(
               placeholder="输入学生姓名或学号进行搜索"
               style="width: 100%"
               :filter-option="false"
+              :disabled="isReadOnly"
               :not-found-content="
                 studentSearchState.fetching
                   ? undefined
@@ -403,6 +613,7 @@ function disabledRangeTime(
                 placeholder="请选择咨询日期"
                 show-today
                 class="w-full"
+                :disabled="isReadOnly"
                 :disabled-date="
                   (current) =>
                     current && current.isBefore(dayjs().startOf('day'))
@@ -418,6 +629,7 @@ function disabledRangeTime(
               <TimeRangePicker
                 v-model:value="form.consultTime"
                 class="w-full"
+                :disabled="isReadOnly"
                 :disabled-time="disabledRangeTime"
                 @change="onTimeRangeChange"
               />
@@ -444,7 +656,7 @@ function disabledRangeTime(
             name="consultType"
             :rules="showAddTypeInput ? [] : rules.consultType"
           >
-            <div class="flex flex-wrap gap-2">
+            <div class="consult-type-group flex flex-wrap gap-2">
               <LyButton
                 v-for="option in consultTypeOptions"
                 :key="option"
@@ -453,8 +665,10 @@ function disabledRangeTime(
                 :class="{
                   'border border-[#04DC70] bg-[#04DC7014] text-[#04DC70]':
                     form.consultType === option,
+                  'is-selected': form.consultType === option,
                 }"
-                @click="form.consultType = option"
+                :disabled="isReadOnly"
+                @click="isReadOnly ? undefined : (form.consultType = option)"
               >
                 {{ option }}
               </LyButton>
@@ -463,6 +677,7 @@ function disabledRangeTime(
                 <LyButton
                   size="middle"
                   class="w-18 h-9"
+                  :disabled="isReadOnly"
                   @click="showAddCustomType"
                 >
                   + 添加
@@ -476,12 +691,22 @@ function disabledRangeTime(
                     v-model:value="newTypeName"
                     placeholder="输入自定义类型名称"
                     class="w-40"
+                    :disabled="isReadOnly"
                     @keyup.enter="confirmAddType"
                   />
-                  <LyButton type="success" size="small" @click="confirmAddType">
+                  <LyButton
+                    type="success"
+                    size="small"
+                    :disabled="isReadOnly"
+                    @click="confirmAddType"
+                  >
                     确认
                   </LyButton>
-                  <LyButton size="small" @click="cancelAddType">
+                  <LyButton
+                    size="small"
+                    :disabled="isReadOnly"
+                    @click="cancelAddType"
+                  >
                     取消
                   </LyButton>
                 </div>
@@ -500,6 +725,7 @@ function disabledRangeTime(
               v-model:value="form.consultTeacher"
               placeholder="请选择老师"
               class="w-full"
+              :disabled="isReadOnly"
               :options="teacherOptions"
             />
           </Form.Item>
@@ -514,6 +740,7 @@ function disabledRangeTime(
               v-model:value="form.consultLocation"
               placeholder="请填写地点"
               class="w-full"
+              :disabled="isReadOnly"
             />
           </Form.Item>
 
@@ -530,6 +757,7 @@ function disabledRangeTime(
               :maxlength="200"
               show-count
               class="w-full"
+              :disabled="isReadOnly"
             />
           </Form.Item>
         </Form>
@@ -610,6 +838,17 @@ function disabledRangeTime(
         </div>
       </div>
     </div>
+    <!-- 自定义 Drawer footer：只读显示 关闭/编辑；可编辑显示 取消/确认创建 -->
+    <template #footer>
+      <div class="flex w-full items-center justify-end gap-3 px-4 py-2">
+        <LyButton size="middle" @click="onFooterSecondaryClick">
+          {{ footerSecondaryText }}
+        </LyButton>
+        <LyButton size="middle" type="success" @click="onFooterPrimaryClick">
+          {{ footerPrimaryText }}
+        </LyButton>
+      </div>
+    </template>
   </Drawer>
   <!-- 确认创建弹窗 -->
   <ConfirmDialog
@@ -717,3 +956,90 @@ function disabledRangeTime(
     </template>
   </ConfirmDialog>
 </template>
+
+<style lang="scss" scoped>
+/* 统一的禁用态优化：更柔和的颜色，允许文本选择，光标为默认 */
+:deep(
+  .ant-input[disabled],
+  .ant-picker-input > input[disabled],
+  .ant-select-disabled .ant-select-selector,
+  .ant-picker-disabled,
+  .ant-picker-range .ant-picker-input input[disabled],
+  textarea[disabled]
+) {
+  color: #4c4c4d !important;
+  cursor: default !important;
+  background-color: #f8f9fb !important;
+  border-color: #eceff5 !important;
+  opacity: 1 !important; /* 避免过度灰化 */
+  -webkit-text-fill-color: #4c4c4d !important; /* 修复 Safari 文本颜色 */
+}
+
+/* 日期/时间选择器容器在禁用时也使用默认光标 */
+:deep(.ant-picker.ant-picker-disabled),
+:deep(.ant-picker.ant-picker-disabled *),
+:deep(.ant-picker-range .ant-picker-input input[disabled]) {
+  color: #4c4c4d !important;
+  cursor: default !important;
+}
+
+/* 禁用的选择器也不显示禁用手势 */
+:deep(.ant-select-disabled .ant-select-selector) {
+  color: #4c4c4d !important;
+  cursor: default !important;
+  background-color: #f8f9fb !important; /* 与输入框保持一致 */
+  border-color: #eceff5 !important;
+}
+
+/* 禁用的按钮保持轻微可见但不可点 */
+:deep(.ant-btn[disabled]) {
+  cursor: not-allowed;
+  opacity: 1 !important; /* 避免过度灰化 */
+}
+
+/* 标签和只读区域的提示颜色更柔和 */
+:deep(.ant-form-item-label > label) {
+  color: #6b7280;
+}
+
+/* 日期选择器禁用态边框统一 */
+:deep(.ant-picker.ant-picker-disabled),
+:deep(.ant-picker.ant-picker-status-error.ant-picker-disabled) {
+  color: #4c4c4d !important;
+  background-color: #f8f9fb !important;
+  border-color: #eceff5 !important;
+}
+
+/* 自定义类型按钮的禁用态样式 */
+:deep(.ant-btn[disabled].ant-btn-default) {
+  color: #4c4c4d !important; /* 字体更清晰，用于预览 */
+  cursor: default !important; /* 光标默认，不要禁用手势 */
+  background-color: #f5f7fa !important; /* 轻灰背景 */
+  border-color: #e6e9f0 !important;
+}
+
+/* 咨询类型按钮：统一禁用态与选中态视觉，并在禁用时仍突出选中项 */
+:deep(.ant-btn.ant-btn-default.is-selected) {
+  color: #04dc70 !important;
+  background-color: #04dc7014 !important;
+  border-color: #04dc70 !important;
+}
+
+:deep(.ant-btn[disabled].ant-btn-default.is-selected) {
+  color: #04dc70 !important; /* 选中项在禁用时也明显 */
+  cursor: default !important;
+  background-color: #e8fbf3 !important;
+  border-color: #88e7b3 !important;
+}
+
+/* 组内所有被禁用的按钮，统一默认光标 */
+:deep(.consult-type-group .ant-btn[disabled]) {
+  cursor: default !important;
+}
+
+/* 让禁用态可以选中文本，便于查看信息 */
+:deep(.ant-input[disabled]),
+:deep(textarea[disabled]) {
+  user-select: text;
+}
+</style>
