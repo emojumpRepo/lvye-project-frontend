@@ -111,13 +111,19 @@ async function startImport() {
       }
       try {
         importResult.value.summary.pendingCount++;
+        const formatedSex = userSexMap.value?.find(
+          (s: any) => s?.label === item.sex,
+        )?.value;
 
         const apiData = {
           ...item,
-          sex: userSexMap.value?.find((s: any) => s?.label === item.sex)?.value,
+          sex: Number(formatedSex),
           gradeDeptId: item.gradeDeptId ? Number(item.gradeDeptId) : undefined,
           classDeptId: item.classDeptId ? Number(item.classDeptId) : undefined,
           birthDate: dayjs(item.birthDate).valueOf().toString(),
+          enrollmentYear: item.enrollmentYear
+            ? Number(item.enrollmentYear)
+            : undefined,
         };
 
         const response = await importStudentProfileSingle(apiData);

@@ -22,7 +22,7 @@ export interface StudentRecord {
   className?: string;
   gradeDeptId?: number;
   classDeptId?: number;
-  enrollmentYear?: number;
+  enrollmentYear?: string;
   graduationStatus?: number;
   isGraduated?: string;
   errorMessage?: string;
@@ -109,9 +109,9 @@ const _rules = {
   },
   enrollmentYear: {
     required: true,
-    validator: (value: number): boolean => {
+    validator: (value: string): boolean => {
       if (!value) return false;
-      return /^\d{4}$/.test(value.toString());
+      return /^\d{4}$/.test(value);
     },
     message: '届别需为4位数字',
   },
@@ -625,7 +625,7 @@ export async function parseExcel(
       return {
         ...rowObject,
         graduationStatus,
-        rowNumber: index + 2,
+        rowNumber: index + 3,
       } as StudentRecord;
     });
 

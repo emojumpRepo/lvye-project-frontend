@@ -177,6 +177,8 @@ async function handleCreateStudent() {
       birthDate: formatBirthDate.toString(),
     };
 
+    console.log('params', params);
+
     try {
       const res = await createStudentProfile(params);
       if (res) {
