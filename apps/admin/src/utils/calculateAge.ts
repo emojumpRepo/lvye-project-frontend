@@ -13,3 +13,16 @@ export function calculateAge(timestamp: Date | number | string): number {
 
   return today.diff(birthDate, 'year');
 }
+
+/**
+ * 截取字符串
+ * @param text 字符串
+ * @param maxLength 最大长度
+ */
+export function truncateText(
+  text: string | undefined,
+  maxLength: number = 10,
+): string {
+  if (!text) return '';
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}

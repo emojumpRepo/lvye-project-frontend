@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import type { CrisisBoardData } from '@vben/types';
+
 import type { CrisisEventListReq } from '#/api/psychology/crisis';
 
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
@@ -9,7 +11,10 @@ import { Progress as AProgress } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCrisisEventList } from '#/api/psychology/crisis';
+import {
+  getCrisisBoardData,
+  getCrisisEventList,
+} from '#/api/psychology/crisis';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import CrisisInterventionSettingDrawer from '#/components/Drawer/CrisisInterventionSettingDrawer/index.vue';
 import ReportQuickyDrawer from '#/components/Drawer/ReportQuickyDrawer/index.vue';
@@ -27,7 +32,6 @@ import crisisEventResolvedIcon from '../../static/icons/crisis/crisis_event_reso
 import CrisisSearch from './components/CrisisSearch.vue';
 import InterventionCard from './components/InterventionCard.vue';
 import { useEventGridSchema } from './data';
-import { interventionList } from './mockData';
 
 defineOptions({ name: 'CrisisIntervention' });
 
@@ -38,6 +42,7 @@ interface EventPanelData {
 
 const loading = ref(false);
 const activeTabKey = ref('board');
+const interventionList = ref<CrisisBoardData[]>([]);
 const eventpanelIconMap: Record<number, string> = {
   1: crisisEventHandlingIcon,
   2: crisisEventConsultIcon,
@@ -150,6 +155,21 @@ function handleSystemSetting() {
 function handleReportFast() {
   reportFastDrawerApi.open();
 }
+
+onMounted(async () => {
+  try {
+    const response = await getCrisisBoardData({
+      pageNo: 1,
+      pageSize: 10,
+    });
+    console.log('五级看板数据', response);
+    if (response.length > 0) {
+      interventionList.value = response;
+    }
+  } catch (error) {
+    console.error('五级看板数据', error);
+  }
+});
 </script>
 
 <template>

@@ -39,8 +39,8 @@ export interface CrisisEventProcessHistoryReq extends PageParam {
 /** 获取五级干预看板统计数据 */
 
 export function getCrisisBoardData(params: CrisisBoardDataPageReq) {
-  return requestClient.get<PageResult<CrisisBoardData>>(
-    '/psychology/intervention/dashboard/summary/page',
+  return requestClient.get<CrisisBoardData[]>(
+    '/psychology/intervention/dashboard/summary',
     { params },
   );
 }

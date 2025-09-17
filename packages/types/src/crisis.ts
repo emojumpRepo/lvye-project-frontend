@@ -9,7 +9,7 @@ export interface CategoryCard {
 }
 
 /** 学生页面数据 */
-export interface StudentPageItem {
+export interface StudentInterventionItem {
   studentProfileId: number;
   studentName: string;
   studentNumber: string;
@@ -25,6 +25,12 @@ export interface StudentPageItem {
   tags: string[];
 }
 
+/** 学生页面数据 */
+export interface StudentPageItem {
+  list: StudentInterventionItem[];
+  total: number;
+}
+
 /** 等级数据详情 */
 export interface LevelDetail {
   count: number;
@@ -32,26 +38,14 @@ export interface LevelDetail {
   percentage: number;
 }
 
-/** 等级数据类型 */
-type LevelDetails = Record<
-  'general' | 'major' | 'normal' | 'observation' | 'pending' | 'severe',
-  LevelDetail
->;
-
 /** 五级干预看板统计数据 */
 export interface CrisisBoardData {
-  majorCount: number;
-  severeCount: number;
-  generalCount: number;
-  observationCount: number;
-  normalCount: number;
-  pendingAssessmentCount: number;
-  totalCount: number;
-  levelDetails: LevelDetails;
-  studentPage: {
-    list: StudentPageItem[];
-    total: number;
-  };
+  type: string;
+  label: string;
+  dictValue: number;
+  count: number;
+  percentage: number;
+  studentPage: StudentPageItem;
 }
 
 /** 危机处理事件记录 */
