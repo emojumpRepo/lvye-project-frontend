@@ -127,7 +127,7 @@ function handleReset() {
 }
 
 function handleRemove(file: any) {
-  fileList.value = fileList.value.filter((item) => item.uid !== file.uid);
+  fileList.value = fileList.value?.filter((item) => item.uid !== file.uid);
 }
 
 onMounted(() => {

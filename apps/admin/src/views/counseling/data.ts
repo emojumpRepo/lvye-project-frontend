@@ -121,7 +121,7 @@ export async function queryConsultationPage(
       id: item.id ?? 0,
       studentName: item.studentName || '-',
       className: item.className || '-',
-      consultTime: `${dayjs(start).format('YYYY-MM-DD HH:mm:ss')} - ${dayjs(end).format('YYYY-MM-DD HH:mm:ss')}`,
+      consultTime: `${dayjs(start).format('MM月DD日 HH:mm')} - ${dayjs(end).format('HH:mm')}（${dayjs(start).format('ddd')}）`,
       durationMinutes: duration,
       consultationType: String(item.consultationType ?? ''),
       counselorName: item.counselorName || '-',

@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import { ChevronRight } from '@vben/icons';
 
-import { getConfigPage } from '#/api/infra/config';
+import { getConfigKey } from '#/api/infra/config';
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
@@ -156,14 +156,10 @@ function onAlertsRefresh() {
 
 onMounted(async () => {
   try {
-    const res = await getConfigPage({
-      pageNo: 1,
-      pageSize: 10,
-      key: 'system.welcome',
-    });
+    const res = await getConfigKey('system.welcome');
 
-    if (res.list.length > 0) {
-      systemWelcome.value = res.list[0].value || '欢迎使用心理健康管理系统';
+    if (res) {
+      systemWelcome.value = res || '欢迎使用心理健康管理系统';
     }
   } catch (error) {
     console.error('system.welcome', error);
