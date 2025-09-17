@@ -34,7 +34,7 @@ const searchParams = ref<SearchParams>({
   pageSize: 10,
 });
 
-const [Form] = useVbenForm({
+const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',

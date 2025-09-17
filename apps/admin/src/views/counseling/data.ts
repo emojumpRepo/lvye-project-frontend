@@ -1,9 +1,9 @@
 import type { PageResult } from '@vben/request';
+import type { DeptGradeClassOption } from '@vben/types';
 
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { h } from 'vue';
 
@@ -136,10 +136,8 @@ export async function queryConsultationPage(
 
 /** 搜索表单 */
 export function useSearchFormSchema({
-  deptOptions,
-}: {
-  deptOptions: DeptGradeClassOption[];
-}): VbenFormSchema[] {
+  deptOptions = [],
+}: { deptOptions?: DeptGradeClassOption[] } = {}): VbenFormSchema[] {
   /** 咨询状态 */
   const counselingStatusList = getDictOptions('counseling_status');
 
