@@ -14,6 +14,13 @@ export const overridesPreferences = defineOverridesPreferences({
     enableRefreshToken: true,
     authPageLayout: 'panel-center',
     contentCompact: 'compact',
+    enablePreferences: false,
+  },
+  widget: {
+    languageToggle: false,
+    lockScreen: false,
+    themeToggle: false,
+    fullscreen: false,
   },
   breadcrumb: {
     hideOnlyOne: true,

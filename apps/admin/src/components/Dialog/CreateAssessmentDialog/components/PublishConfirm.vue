@@ -77,7 +77,7 @@ const dateRange = computed(() => {
             <span>{{ dateRange || '—' }}</span>
           </div>
           <div>
-            <span class="desc-title">收件类型：</span>
+            <span class="desc-title">测评对象：</span>
             <span>{{
               target.type === ASSESSMENT_TARGET_TYPE.PARENT
                 ? '学生家长'
