@@ -1,3 +1,5 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
@@ -6,13 +8,17 @@ import { h } from 'vue';
 import { IconifyIcon } from '@vben/icons';
 
 /** 搜索表单 */
-export function useSearchFormSchema(): VbenFormSchema[] {
+export function useSearchFormSchema({
+  deptOptions,
+}: {
+  deptOptions: DeptGradeClassOption[];
+}): VbenFormSchema[] {
   return [
     {
       fieldName: 'gradeDeptId',
       component: 'Select',
       componentProps: {
-        options: [{ label: '全部年级', value: '' }],
+        options: [{ label: '全部年级', value: '' }, ...deptOptions],
       },
       defaultValue: '',
     },
