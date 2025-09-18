@@ -20,23 +20,9 @@ const emit = defineEmits<Emits>();
 
 const showTips = ref(false);
 
-const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
-
-// const bgUrl = computed(
-//   () =>
-//     new URL(`${imgBaseUrl}${props.sceneData?.type}.png`, import.meta.url).href,
-// );
-
 // 对话任务图片（对话气泡阶段）
 const koalaUrl = computed(() => {
-  const url = props.sceneData?.metadata?.introConfig.characterConfig.imageUrl;
-  if (url) {
-    return url;
-  }
-  return new URL(
-    `${imgBaseUrl}${props.sceneData?.slotKey}_teacher.png`,
-    import.meta.url,
-  ).href;
+  return props.sceneData?.metadata?.introConfig.characterConfig.imageUrl;
 });
 
 function handleIntroNext() {
