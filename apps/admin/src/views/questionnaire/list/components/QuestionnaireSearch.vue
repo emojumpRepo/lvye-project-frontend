@@ -17,10 +17,7 @@ const emit = defineEmits<{
 }>();
 
 // 搜索参数
-const searchParams = ref<QuestionnairePageReqVO>({
-  pageNo: 1,
-  pageSize: 10,
-});
+const searchParams = ref<QuestionnairePageReqVO>();
 
 const [Form, formApi] = useVbenForm({
   schema: useQuestionGridFormSchema(),
@@ -48,8 +45,6 @@ async function handleSearch(values: any) {
 
     // 构建搜索参数
     const params: QuestionnairePageReqVO = {
-      ...searchParams.value,
-      pageNo: 1, // 重置到第一页
       title: values.title || undefined,
       questionnaireType: values.questionnaireType || undefined,
       isOpen: values.isOpen || undefined,

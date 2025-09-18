@@ -2,7 +2,6 @@
 import type { QuestionnaireVO } from '@vben/types';
 
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire/index';
 
 import { onMounted, ref } from 'vue';
 
@@ -39,6 +38,7 @@ const selectQuestionnaire = ref<QuestionnaireVO>();
 // 配置弹窗相关
 const configDialogVisible = ref(false);
 const selectedQuestionnaire = ref<null | QuestionnaireVO>(null);
+const searchRef = ref();
 
 // 详情弹窗相关
 const [QuestionnaireDetailModal, questionnaireDetailModalApi] = useVbenModal({
@@ -158,8 +158,9 @@ function onDetail(row: QuestionnaireVO) {
 }
 
 // 处理搜索
-function handleSearch(params: QuestionnairePageReqVO) {
-  gridApi.query({ ...params, pageNo: 1 });
+function handleSearch() {
+  gridApi.grid.setCurrentPage(1);
+  gridApi.query({ pageNo: 1 });
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -173,10 +174,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues) => {
           return await getQuestionnaireList({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
+            ...formValues,
+            ...searchRef.value?.searchParams,
           });
         },
       },
@@ -233,7 +236,11 @@ onMounted(() => {
   <div class="flex h-full flex-col p-6">
     <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div>
-        <QuestionnaireSearch @loading="handleLoading" @search="handleSearch" />
+        <QuestionnaireSearch
+          ref="searchRef"
+          @loading="handleLoading"
+          @search="handleSearch"
+        />
       </div>
       <div>
         <Button type="primary" @click="handleSync">同步最新数据</Button>
