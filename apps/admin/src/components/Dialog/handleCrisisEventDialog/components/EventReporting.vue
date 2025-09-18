@@ -26,6 +26,8 @@ const emit = defineEmits<{
   (e: 'loadCrisisEventProcessHistory', id: number): void;
 }>();
 
+const loading = defineModel<boolean>('loading');
+
 const eventDescription = ref('');
 const isEditingDescription = ref(false);
 
@@ -83,6 +85,7 @@ async function handleEditDescription() {
     return;
   }
 
+  loading.value = true;
   isEditingDescription.value = false;
   if (!props.crisisEventDetail?.id) {
     message.error('事件ID不存在');
@@ -96,12 +99,15 @@ async function handleEditDescription() {
     if (result) {
       message.success('更新描述成功');
       emit('loadCrisisEventDetail', props.crisisEventDetail.id);
+      emit('loadCrisisEventProcessHistory', props.crisisEventDetail.id);
     } else {
       message.error('更新描述失败');
     }
   } catch (error) {
     console.error('更新描述失败', error);
     message.error('更新描述失败');
+  } finally {
+    loading.value = false;
   }
 }
 

@@ -22,7 +22,7 @@ import StepEventCard from './components/StepEventCard.vue';
 
 const crisisEventDetail = ref<CrisisEvent | null>(null);
 const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
-const loading = ref(false);
+const loading = ref(true);
 
 // 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
@@ -35,7 +35,6 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   onOpenChange: async () => {
     const data = handleCrisisEventModalApi.getData();
     if (!data.id) return message.error('缺少事件ID');
-    loading.value = true;
     await loadCrisisEventDetail(data.id);
     await loadCrisisEventProcessHistory(data.id);
     loading.value = false;
@@ -160,106 +159,104 @@ function handleClose() {
       </div>
     </template>
 
-    <ASpin :spinning="loading" class="flex-center h-full overflow-hidden">
-      <AFlex
-        v-if="!loading"
-        justify="center"
-        gap="large"
-        class="h-full overflow-hidden"
-      >
-        <!-- 步骤条 -->
-        <div class="h-full">
-          <CommonDialogSteps
-            :current-step="currentStep"
-            :steps="crisisEventHandlingSteps"
-            title-color="#04dc70"
-            type="tag"
-          >
-            <template #event="{ index }">
-              <div class="my-2">
-                <!-- step1 -->
-                <StepEventCard
-                  v-if="index === 1"
-                  name="李数学老师"
-                  :time="1757562878000"
-                />
+    <div class="h-full">
+      <ASpin :spinning="loading" class="flex-center h-full">
+        <AFlex justify="center" gap="large" class="h-full overflow-hidden">
+          <!-- 步骤条 -->
+          <div class="h-full">
+            <CommonDialogSteps
+              :current-step="currentStep"
+              :steps="crisisEventHandlingSteps"
+              title-color="#04dc70"
+              type="tag"
+            >
+              <template #event="{ index }">
+                <div class="my-2">
+                  <!-- step1 -->
+                  <StepEventCard
+                    v-if="index === 1"
+                    name="李数学老师"
+                    :time="1757562878000"
+                  />
 
-                <!-- step2 -->
-                <div v-if="index === 2" class="flex flex-col">
-                  <div class="mb-2 flex w-full gap-1">
-                    <StepEventCard name="心理测评师" :time="1757562878000" />
-                    <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                    />
+                  <!-- step2 -->
+                  <div v-if="index === 2" class="flex flex-col">
+                    <div class="mb-2 flex w-full gap-1">
+                      <StepEventCard name="心理测评师" :time="1757562878000" />
+                      <IconifyIcon
+                        icon="material-symbols-light:refresh-rounded"
+                        color="#1966FF"
+                        class="size-5 self-end"
+                      />
+                    </div>
+                    <button
+                      class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
+                      @click="handleQuickAssign(index)"
+                    >
+                      <span class="whitespace-nowrap">快速分配</span>
+                    </button>
                   </div>
-                  <button
-                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                    @click="handleQuickAssign(index)"
-                  >
-                    <span class="whitespace-nowrap">快速分配</span>
-                  </button>
-                </div>
 
-                <!-- step3 -->
-                <div v-if="index === 3" class="flex w-full flex-col gap-1">
-                  <div class="mb-2 flex w-full gap-1">
-                    <StepEventCard name="心理测评师" :time="1757562878000" />
-                    <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                    />
+                  <!-- step3 -->
+                  <div v-if="index === 3" class="flex w-full flex-col gap-1">
+                    <div class="mb-2 flex w-full gap-1">
+                      <StepEventCard name="心理测评师" :time="1757562878000" />
+                      <IconifyIcon
+                        icon="material-symbols-light:refresh-rounded"
+                        color="#1966FF"
+                        class="size-5 self-end"
+                      />
+                    </div>
+                    <button
+                      class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
+                      @click="handleSelectHandleMethod()"
+                    >
+                      <span class="whitespace-nowrap">开始选择</span>
+                    </button>
                   </div>
-                  <button
-                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                    @click="handleSelectHandleMethod()"
-                  >
-                    <span class="whitespace-nowrap">开始选择</span>
-                  </button>
-                </div>
 
-                <!-- step4 -->
-                <div v-if="index === 4" class="flex w-full flex-col gap-1">
-                  <div class="mb-2 flex w-full gap-1">
-                    <StepEventCard name="心理测评师" :time="1757562878000" />
-                    <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                    />
-                  </div>
-                  <!-- <button
+                  <!-- step4 -->
+                  <div v-if="index === 4" class="flex w-full flex-col gap-1">
+                    <div class="mb-2 flex w-full gap-1">
+                      <StepEventCard name="心理测评师" :time="1757562878000" />
+                      <IconifyIcon
+                        icon="material-symbols-light:refresh-rounded"
+                        color="#1966FF"
+                        class="size-5 self-end"
+                      />
+                    </div>
+                    <!-- <button
                   class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
                   @click="handleSelectHandleMethod()"
                 >
                   <span class="whitespace-nowrap">开始选择</span>
                 </button> -->
+                  </div>
                 </div>
-              </div>
-            </template>
-          </CommonDialogSteps>
-        </div>
+              </template>
+            </CommonDialogSteps>
+          </div>
 
-        <!-- 事件详情 -->
-        <div class="h-full">
-          <div class="flex h-full flex-col rounded-xl bg-white">
-            <div class="box-border flex-1 overflow-hidden px-10 py-8">
-              <EventReporting
-                v-if="crisisEventDetail"
-                :crisis-event-detail="crisisEventDetail"
-                :crisis-event-process-history="crisisEventProcessHistory"
-                @load-crisis-event-detail="loadCrisisEventDetail"
-                @load-crisis-event-process-history="
-                  loadCrisisEventProcessHistory
-                "
-              />
+          <!-- 事件详情 -->
+          <div class="h-full">
+            <div class="flex h-full flex-col rounded-xl bg-white">
+              <div class="box-border flex-1 overflow-hidden px-10 py-8">
+                <EventReporting
+                  v-if="crisisEventDetail"
+                  :crisis-event-detail="crisisEventDetail"
+                  :crisis-event-process-history="crisisEventProcessHistory"
+                  v-model:loading="loading"
+                  @load-crisis-event-detail="loadCrisisEventDetail"
+                  @load-crisis-event-process-history="
+                    loadCrisisEventProcessHistory
+                  "
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </AFlex>
-    </ASpin>
+        </AFlex>
+      </ASpin>
+    </div>
 
     <EditEventRecordModal />
     <HandleMethodDrawer />
@@ -268,6 +265,10 @@ function handleClose() {
 
 <style lang="scss" scoped>
 :deep(.ant-row) {
+  height: 100% !important;
+}
+
+:deep(.ant-spin) {
   height: 100% !important;
 }
 

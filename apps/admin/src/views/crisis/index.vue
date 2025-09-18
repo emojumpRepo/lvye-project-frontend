@@ -7,7 +7,7 @@ import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { Progress as AProgress } from 'ant-design-vue';
+import { Progress as AProgress, Spin as ASpin } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -40,7 +40,7 @@ interface EventPanelData {
   count: number;
 }
 
-const loading = ref(false);
+const loading = ref(true);
 const activeTabKey = ref('board');
 const interventionList = ref<CrisisBoardData[]>([]);
 const eventpanelIconMap: Record<number, string> = {
@@ -168,6 +168,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('五级看板数据', error);
+  } finally {
+    loading.value = false;
   }
 });
 </script>
@@ -210,11 +212,17 @@ onMounted(async () => {
     />
 
     <!-- 列表 -->
-    <div v-if="activeTabKey === 'board'" class="grid grid-cols-5 gap-5">
-      <template v-for="item in interventionList" :key="item.type">
-        <InterventionCard :intervention-item="item" />
-      </template>
-    </div>
+    <ASpin :spinning="loading" class="flex-center">
+      <div
+        v-if="activeTabKey === 'board'"
+        class="grid grid-cols-5 gap-5"
+        :class="{ 'h-[300px]': loading }"
+      >
+        <template v-for="item in interventionList" :key="item.type">
+          <InterventionCard :intervention-item="item" />
+        </template>
+      </div>
+    </ASpin>
 
     <div v-if="activeTabKey === 'list'" class="space-y-4">
       <!-- 事件面板 -->
