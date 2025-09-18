@@ -21,10 +21,7 @@ const emit = defineEmits<{
 }>();
 
 // 搜索参数
-const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>({
-  pageNo: 1,
-  pageSize: 10,
-});
+const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>();
 
 const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema(),
@@ -55,8 +52,6 @@ async function handleSearch(values: any) {
 
     // 构建搜索参数
     const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
-      ...searchParams.value,
-      pageNo: 1, // 重置到第一页
       studentNo,
       name,
       gradeDeptId: values.gradeDeptId || undefined,

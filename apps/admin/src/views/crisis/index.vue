@@ -271,7 +271,7 @@ onMounted(async () => {
         <!-- 当前状态 -->
         <template #status="{ row }">
           <LyTag
-            tag-category-key="crisis_event_type"
+            tag-category-key="crisis_event_status"
             :dict-value="row.status"
           />
         </template>

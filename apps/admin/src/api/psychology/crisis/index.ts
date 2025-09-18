@@ -81,3 +81,14 @@ export function getCrisisEventProcessHistory(
     { params },
   );
 }
+
+/** 更新危机事件描述 */
+export function updateCrisisEventDescription(id: number, description: string) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${id}/description`,
+    {
+      id,
+      description,
+    },
+  );
+}
