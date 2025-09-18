@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 
 import { STUDENT_EXPORT_COLUMNS } from './export';
-import { loadDeptList } from './transformDeptToTree';
+import { getDeptListCache } from './transformDeptToTree';
 
 // 类型定义
 type ValidationError = { field: keyof typeof _rules | string; message: string };
@@ -53,22 +53,6 @@ const deptList = ref<any[]>();
 // 计算字符串长度（支持中文字符）
 function getStringLength(value: string): number {
   return [...(value ?? '')].length;
-}
-
-// 获取部门列表
-async function getDeptList(): Promise<void> {
-  try {
-    const storedDeptList = localStorage.getItem('deptList');
-    if (storedDeptList) {
-      deptList.value = JSON.parse(storedDeptList);
-    } else {
-      deptList.value = await loadDeptList();
-      // 缓存到localStorage
-      localStorage.setItem('deptList', JSON.stringify(deptList.value));
-    }
-  } catch (error) {
-    console.error('获取部门列表失败:', error);
-  }
 }
 
 // 验证规则配置
@@ -251,7 +235,7 @@ export async function validateStudentRecords(
     !Array.isArray(deptList.value) ||
     deptList.value.length === 0
   ) {
-    await getDeptList();
+    await getDeptListCache();
   }
 
   for (const record of records) {

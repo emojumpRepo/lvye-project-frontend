@@ -14,6 +14,7 @@ export const overridesPreferences = defineOverridesPreferences({
     accessMode: 'backend',
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
+    enablePreferences: false,
   },
   footer: {
     enable: false,
@@ -33,6 +34,7 @@ export const overridesPreferences = defineOverridesPreferences({
     languageToggle: false,
     lockScreen: false,
     themeToggle: false,
+    fullscreen: false,
   },
   tabbar: {
     enable: false,

@@ -1,3 +1,5 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
@@ -6,13 +8,17 @@ import { h } from 'vue';
 import { IconifyIcon } from '@vben/icons';
 
 /** 搜索表单 */
-export function useSearchFormSchema(): VbenFormSchema[] {
+export function useSearchFormSchema({
+  deptOptions,
+}: {
+  deptOptions: DeptGradeClassOption[];
+}): VbenFormSchema[] {
   return [
     {
       fieldName: 'gradeDeptId',
       component: 'Select',
       componentProps: {
-        options: [{ label: '全部年级', value: '' }],
+        options: [{ label: '全部年级', value: '' }, ...deptOptions],
       },
       defaultValue: '',
     },
@@ -47,16 +53,28 @@ export function useSearchFormSchema(): VbenFormSchema[] {
 export function useEventGridSchema(): VxeTableGridOptions['columns'] {
   return [
     {
-      field: 'eventPriority',
+      field: 'eventId',
       title: '事件优先级',
-      slots: { default: 'eventPriority' },
+      slots: { default: 'eventId' },
       width: '15%',
     },
     {
-      field: 'studentInfo',
-      title: '学生信息',
-      slots: { default: 'studentInfo' },
+      field: 'eventDescription',
+      title: '事件描述',
       width: '15%',
+      visible: false,
+    },
+    {
+      field: 'studentName',
+      title: '学生信息',
+      slots: { default: 'studentName' },
+      width: '15%',
+    },
+    {
+      field: 'className',
+      title: '班级',
+      width: '10%',
+      visible: false,
     },
     {
       field: 'priority',

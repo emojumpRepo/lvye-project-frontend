@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
+
+import { onMounted, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
+import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useGridFormSchema } from '../data';
 
@@ -13,8 +18,10 @@ const emit = defineEmits<{
   search: [params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq];
 }>();
 
+const deptOptions = ref<DeptGradeClassOption[]>([]);
+
 const [Form, formApi] = useVbenForm({
-  schema: useGridFormSchema(),
+  schema: useGridFormSchema({ deptOptions: deptOptions.value }),
   layout: 'horizontal',
   wrapperClass: 'gap-2 grid-cols-8',
   commonConfig: { componentProps: { class: 'w-full' } },
@@ -61,6 +68,11 @@ async function handleSearch(values: any) {
 function handleReset() {
   formApi.form.resetForm();
 }
+
+onMounted(async () => {
+  deptOptions.value = await getDeptGradeClassDictOptions();
+  formApi.updateSchema(useGridFormSchema({ deptOptions: deptOptions.value }));
+});
 
 defineExpose({
   handleReset,

@@ -13,6 +13,7 @@ import { useGraduatedStudentFileGridSchema, useSearchFormSchema } from './data';
 const [Drawer, DrawerApi] = useVbenDrawer({
   title: '毕业学生档案',
   class: 'w-[1000px]',
+  destroyOnClose: true,
   onConfirm: () => {
     message.warning('即将上线');
   },

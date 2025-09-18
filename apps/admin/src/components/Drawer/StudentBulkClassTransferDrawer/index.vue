@@ -14,6 +14,7 @@ import {
 } from 'ant-design-vue';
 
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 interface DeptOption {
   value: number;
@@ -73,6 +74,7 @@ const reasonOptions = ref([
 // =================== 事件 ===================
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
+  destroyOnClose: true,
   confirmText: '确认换班',
   onOpenChange: async () => {
     const data = drawerApi.getData();
@@ -82,10 +84,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   },
   onConfirm: () => {
     message.warning('即将上线');
-  },
-  onClosed: () => {
-    formRef.value?.resetFields();
-    drawerApi.close();
   },
 });
 
@@ -97,11 +95,8 @@ function handleRemoveStudent(
   );
 }
 
-onMounted(() => {
-  const stored = sessionStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  }
+onMounted(async () => {
+  deptList.value = await getDeptListCache();
 });
 </script>
 

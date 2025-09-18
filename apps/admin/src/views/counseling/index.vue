@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
+
 import { computed, ref } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -8,7 +10,6 @@ import dayjs from 'dayjs';
 
 import ConsultMoreDrawerComponent from '#/components/Drawer/ConsultMoreDrawer/index.vue';
 import CreateConsultDrawerComponent from '#/components/Drawer/CreateConsultDrawer/index.vue';
-import StudentAppointmentDetailDrawer from '#/components/Drawer/StudentAppointmentDetailDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
 
@@ -26,7 +27,7 @@ const viewTypeOptions = [
 const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
 
 // 创建咨询预约抽屉
-const [CreateConsultDrawer, createConsultDrawerApi] = useVbenDrawer({
+const [ConsultRecordDrawer, consultRecordDrawerApi] = useVbenDrawer({
   connectedComponent: CreateConsultDrawerComponent,
 });
 
@@ -35,18 +36,13 @@ const [ConsultMoreDrawer, consultMoreDrawerApi] = useVbenDrawer({
   connectedComponent: ConsultMoreDrawerComponent,
 });
 
-/** 预约详情抽屉 */
-const [AppointmentDetailDrawer, appointmentDetailDrawerApi] = useVbenDrawer({
-  connectedComponent: StudentAppointmentDetailDrawer,
-});
-
 const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
 
 const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
 
-/** 打开创建咨询预约抽屉 */
+/** 打开咨询预约抽屉 */
 function handleCreateConsult(
   payload?:
     | dayjs.Dayjs
@@ -78,7 +74,7 @@ function handleCreateConsult(
           }
         : undefined;
 
-    createConsultDrawerApi
+    consultRecordDrawerApi
       .setData({
         currentDate,
         timeRange,
@@ -109,14 +105,18 @@ function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
 }
 
 /** 打开预约详情抽屉 */
-function handleViewDetail() {
-  appointmentDetailDrawerApi.open();
+function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
+  consultRecordDrawerApi
+    .setData({
+      id: row.id,
+    })
+    .open();
 }
 </script>
 
 <template>
   <Page auto-content-height :height-offset="50">
-    <div class="flex h-full flex-col overflow-hidden px-4">
+    <div class="flex h-full flex-col px-4">
       <!-- 页面标题 -->
       <PageTitle title="咨询管理" :description="today" margin-bottom="mb-4">
         <template #action>
@@ -193,9 +193,8 @@ function handleViewDetail() {
         </template>
       </Transition>
     </div>
-    <CreateConsultDrawer />
+    <ConsultRecordDrawer />
     <ConsultMoreDrawer />
-    <AppointmentDetailDrawer />
   </Page>
 </template>
 

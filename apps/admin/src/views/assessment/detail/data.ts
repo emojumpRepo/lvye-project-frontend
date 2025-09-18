@@ -1,31 +1,21 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { h, ref } from 'vue';
+import { h } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
 import { getDictOptions } from '#/utils';
 
 /** 列表的搜索表单 */
-export function useGridFormSchema(): VbenFormSchema[] {
-  /** 年级列表 */
-  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = sessionStorage.getItem('deptList');
-  deptList.value = stored ? JSON.parse(stored) : [];
-  const deptOptions = deptList.value?.map((dept) => ({
-    label: dept.label,
-    value: dept.value,
-    children:
-      dept.children?.map((cls) => ({
-        label: cls.label,
-        value: cls.value,
-        isLeaf: true,
-      })) || [],
-  }));
-
+export function useGridFormSchema({
+  deptOptions,
+}: {
+  deptOptions: DeptGradeClassOption[];
+}): VbenFormSchema[] {
   // 获取风险等级字典
   const riskLevelOptions = getDictOptions('questionnaire_result_risk_level');
 

@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import type { DeptGradeClassOption } from '@vben/types';
+
+import { onMounted, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
+import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
 interface SearchParams {
   pageNo?: number;
   pageSize?: number;
-  classDeptId?: number;
+  teacherId?: number;
   status?: string;
   consultTime?: string;
   studentNo?: string;
@@ -22,6 +25,8 @@ const emit = defineEmits<{
   loading: [loading: boolean];
   search: [params: SearchParams];
 }>();
+
+const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 // 搜索参数
 const searchParams = ref<SearchParams>({
@@ -54,7 +59,7 @@ async function handleSearch(values: any) {
       studentNo: values.searchKeyword,
       status: values.status || undefined,
       consultTime: values.consultTime || undefined,
-      classDeptId: values.classDeptId || undefined,
+      teacherId: values.teacherId || undefined,
     };
 
     searchParams.value = params;
@@ -64,6 +69,11 @@ async function handleSearch(values: any) {
     message.error('搜索失败，请重试');
   }
 }
+
+onMounted(async () => {
+  deptOptions.value = await getDeptGradeClassDictOptions();
+  formApi.updateSchema(useSearchFormSchema({ deptOptions: deptOptions.value }));
+});
 </script>
 
 <template>
@@ -71,6 +81,7 @@ async function handleSearch(values: any) {
     <LyCardTitle
       icon="ix:user-filled"
       title="咨询记录管理"
+      :pb="3"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { prompt, useVbenModal } from '@vben/common-ui';
 
@@ -10,7 +11,6 @@ import {
   Steps as ASteps,
   message,
 } from 'ant-design-vue';
-import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
@@ -18,12 +18,12 @@ import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsult
 import { getDictLabel } from '#/utils/dict';
 
 import CounselingSearch from './components/CounselSearch.vue';
-import { mockQuery, useGridColumns } from './data';
+import { queryConsultationPage, useGridColumns } from './data';
 
 defineOptions({ name: 'CounselingList' });
 
 const emit = defineEmits<{
-  (e: 'viewDetail'): void;
+  (e: 'viewDetail', row: PsychologyConsultationApi.ConsultationRecord): void;
 }>();
 
 const loading = ref(false);
@@ -38,10 +38,10 @@ const [AdjustAppointmentTimeModal, appointmentDetailModalApi] = useVbenModal({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    height: 'auto',
+    height: '520px',
     keepSource: true,
     proxyConfig: {
-      ajax: { query: mockQuery },
+      ajax: { query: queryConsultationPage },
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: {
@@ -62,8 +62,8 @@ function handleSearch(params: any) {
 }
 
 /** 查看详情 */
-function handleViewDetail() {
-  emit('viewDetail');
+function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
+  emit('viewDetail', row);
 }
 
 /** 完成 */
@@ -96,17 +96,20 @@ function handleEvalute() {
 
 /** 调整时间 */
 function handleAdjustTime() {
-  // message.warning('即将上线');
   appointmentDetailModalApi.open();
 }
+
+onMounted(() => {
+  gridApi.query();
+});
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col gap-4 overflow-hidden">
+  <div class="flex flex-1 flex-col gap-4">
     <!-- 咨询记录搜索栏 -->
     <CounselingSearch v-model:loading="loading" @search="handleSearch" />
     <!-- 表格 -->
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1">
       <Grid>
         <!-- 学生信息 -->
         <template #studentName="{ row }">
@@ -126,10 +129,10 @@ function handleAdjustTime() {
         <template #consultTime="{ row }">
           <div class="flex flex-col gap-1 px-2">
             <div class="font-bold text-[#4C4C4D]">
-              {{ dayjs(row.consultTime).format('YYYY-MM-DD HH:mm:ss') }}
+              {{ row.consultTime }}
             </div>
             <p class="w-full text-xs leading-normal text-[#4C4C4D]">
-              {{ row.consultDuration }}分钟
+              {{ row.durationMinutes }}分钟
             </p>
           </div>
         </template>
@@ -138,7 +141,7 @@ function handleAdjustTime() {
         <template #stauts="{ row }">
           <div class="text-[#4C4C4D]">
             <span>{{ getDictLabel('counseling_status', row.status) }}</span>
-            <span class="text-[#FF0831]">（评估预期）</span>
+            <span class="text-[#FF0831]" v-if="row.overdue">（评估预期）</span>
           </div>
         </template>
 
@@ -153,13 +156,13 @@ function handleAdjustTime() {
         </template>
 
         <!-- 操作 -->
-        <template #actions>
+        <template #actions="{ row }">
           <TableAction
             :actions="[
               {
                 label: '详情',
                 type: 'link',
-                onClick: handleViewDetail,
+                onClick: () => handleViewDetail(row),
               },
               {
                 label: '完成',
@@ -181,14 +184,14 @@ function handleAdjustTime() {
               {
                 label: '取消预约',
                 type: 'link',
-                onClick: handleViewDetail,
+                onClick: () => handleViewDetail(row),
               },
             ]"
           />
         </template>
       </Grid>
     </div>
-    <AppointmentDetailDrawer />
+
     <AdjustAppointmentTimeModal />
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalConsultDialogModal"

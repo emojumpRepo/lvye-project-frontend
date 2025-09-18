@@ -1,3 +1,7 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
 import {
   getDeptById,
   getDeptSimpleList,
@@ -48,7 +52,7 @@ export async function loadDeptList() {
       isGrade: true,
     }));
 
-    sessionStorage.setItem('deptList', JSON.stringify(treeData));
+    localStorage.setItem('deptList', JSON.stringify(treeData));
     return treeData;
   }
 
@@ -56,7 +60,7 @@ export async function loadDeptList() {
 }
 
 // 格式化班级名称
-function simplifyClassName(name: string): string {
+export function simplifyClassName(name: string): string {
   if (!name) return '';
 
   // 匹配年级+括号数字+班的格式
@@ -94,7 +98,7 @@ export async function getDeptTreeList(
 
     return children.map((child: any) => ({
       id: child.value,
-      name: simplifyClassName(child.label),
+      name: child.label,
       classDeptId: child.value,
       gradeDeptId: classDeptId,
       count: child.count,
@@ -183,4 +187,43 @@ export async function getDeptTreeListByStudentName(name: string) {
     (dept, index, self) => index === self.findIndex((d) => d.id === dept.id),
   );
   return _uniqueDeptList;
+}
+
+/**
+ * 获取部门列表（缓存）
+ */
+export async function getDeptListCache(): Promise<
+  PsychologyStudentProfileApi.DeptTree[]
+> {
+  const stored = localStorage.getItem('deptList');
+  // 获取班级选项
+  if (stored) {
+    return JSON.parse(stored);
+  } else {
+    try {
+      return await loadDeptList();
+    } catch (error) {
+      console.error('加载部门列表失败:', error);
+      return [];
+    }
+  }
+}
+
+/**
+ * 获取部门年级-班级字典选项
+ */
+export async function getDeptGradeClassDictOptions(): Promise<
+  DeptGradeClassOption[]
+> {
+  const deptList = await getDeptListCache();
+  return deptList?.map((dept) => ({
+    label: dept.label,
+    value: dept.value,
+    children:
+      dept.children?.map((cls) => ({
+        label: cls.label,
+        value: cls.value,
+        isLeaf: true,
+      })) || [],
+  }));
 }

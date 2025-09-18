@@ -80,7 +80,9 @@ function toggleCard(card: UICard) {
   if (card.__isScenario) {
     const idNum = Number(card.id);
     if (selectedScenarioId.value === idNum) {
+      // 取消选择场景：清空场景绑定的问卷选择
       selectedScenarioId.value = undefined;
+      selectedList.value = [];
     } else {
       // 选择场景后，用场景插槽绑定的问卷填充选择列表
       selectedScenarioId.value = idNum;
