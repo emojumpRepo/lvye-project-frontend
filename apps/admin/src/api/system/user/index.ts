@@ -86,3 +86,8 @@ export function updateUserStatus(id: number, status: number) {
 export function getSimpleUserList() {
   return requestClient.get<SystemUserApi.User[]>('/system/user/simple-list');
 }
+
+/** 获取教师用户列表 */
+export function getTeacherUserList() {
+  return requestClient.get<SystemUserApi.User[]>('/system/user/list-teachers');
+}

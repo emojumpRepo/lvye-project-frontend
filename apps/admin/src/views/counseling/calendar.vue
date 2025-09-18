@@ -51,6 +51,8 @@ const rightArrowTip = ref('下个月');
 const selectedDate = ref<Dayjs>(dayjs());
 const pickerType = ref<CalendarViewType>(CalendarViewType.Month);
 
+const isAllTeachers = ref(false);
+
 /**
  * 辅助函数：将 dayjs/Date/原始值统一转换为 Date
  */
@@ -58,13 +60,10 @@ function toDateLike(input: any): Date {
   return typeof input?.toDate === 'function' ? input.toDate() : new Date(input);
 }
 
-/**
- * 辅助函数：类型守卫，判断是否为 HTMLElement
- */
-// 保留占位以便后续扩展（目前未使用）
-// function isHTMLElement(node: any): node is HTMLElement {
-//   return node && typeof node === 'object' && 'classList' in node;
-// }
+function handleAllTeachers() {
+  isAllTeachers.value = !isAllTeachers.value;
+  console.log('全部老师');
+}
 
 /**
  * 辅助函数：判断点击目标是否为“更多”按钮（+N）
@@ -286,8 +285,8 @@ function initCalendar() {
       },
       allday: () => '全天',
       alldayTitle: () => '全天',
-      monthGridHeaderExceed() {
-        return `更多预约`;
+      monthGridHeaderExceed(hideEventCount: number) {
+        return `更多预约(${hideEventCount + 3})`;
       },
     },
     // 主题样式
@@ -585,13 +584,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col overflow-hidden rounded-xl bg-white">
+  <div
+    class="flex min-h-[685px] flex-1 flex-col overflow-hidden rounded-xl bg-white"
+  >
     <!-- 日历头部 -->
     <header class="flex shrink-0 items-center justify-between p-6">
       <!-- 左侧切换日期 -->
       <div class="flex items-center gap-4">
         <div class="mr-4 text-xl font-semibold">咨询日历</div>
         <LyButton size="middle" @click="handleToday">今日</LyButton>
+        <LyButton
+          size="middle"
+          @click="handleAllTeachers"
+          :type="isAllTeachers ? 'success' : 'default'"
+        >
+          全部老师
+        </LyButton>
         <Tooltip :title="leftArrowTip" placement="bottom">
           <LyButton
             type="text"

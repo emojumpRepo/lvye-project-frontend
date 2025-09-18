@@ -8,18 +8,21 @@ export namespace PsychologyConsultationApi {
     id?: number;
     studentProfileId: number;
     studentName?: string;
-    studentNo?: string;
+    studentNumber?: string;
+    className?: string;
     counselorUserId: number;
     counselorName?: string;
     type: number;
     method: number;
-    startTime: Date;
-    endTime?: Date;
+    appointmentStartTime: Date;
+    appointmentEndTime: Date;
     durationMinutes?: number;
-    content: string;
-    followUpPlan?: string;
+    consultationType: string;
+    overdue?: boolean;
+    location?: string;
+    notes?: string;
+    notifyStudent: boolean;
     status: number;
-    remark?: string;
     createTime?: Date;
     updateTime?: Date;
   }
@@ -29,11 +32,10 @@ export namespace PsychologyConsultationApi {
     studentProfileId?: number;
     studentName?: string;
     counselorUserId?: number;
-    type?: number;
-    method?: number;
+    teacherId?: number;
     status?: number;
     startTime?: Date[];
-    createTime?: Date[];
+    endTime?: Date[];
   }
 
   /** 心理咨询记录创建/更新请求 */
@@ -41,15 +43,13 @@ export namespace PsychologyConsultationApi {
     id?: number;
     studentProfileId: number;
     counselorUserId?: number;
-    type: number;
-    method: number;
-    startTime: Date;
-    endTime?: Date;
+    consultationType?: string;
+    location?: string;
+    appointmentStartTime: Date;
+    appointmentEndTime: Date;
     durationMinutes?: number;
-    content: string;
-    followUpPlan?: string;
+    notes?: string;
     status?: number;
-    remark?: string;
   }
 
   /** 危机干预事件信息 */
@@ -130,18 +130,18 @@ export namespace PsychologyConsultationApi {
 // ==================== 心理咨询记录管理 ====================
 
 /** 查询心理咨询记录分页列表 */
-export function getConsultationRecordPage(
+export function getConsultationPage(
   params: PsychologyConsultationApi.ConsultationRecordPageReq,
 ) {
   return requestClient.get<
     PageResult<PsychologyConsultationApi.ConsultationRecord>
-  >('/psychology/consultation-record/page', { params });
+  >('/psychology/consultation/appointment/page', { params });
 }
 
 /** 查询心理咨询记录详情 */
 export function getConsultationRecord(id: number) {
   return requestClient.get<PsychologyConsultationApi.ConsultationRecord>(
-    `/psychology/consultation-record/get?id=${id}`,
+    `/psychology/consultation/appointment/get?id=${id}`,
   );
 }
 
@@ -149,7 +149,10 @@ export function getConsultationRecord(id: number) {
 export function createConsultationRecord(
   data: PsychologyConsultationApi.ConsultationRecordSaveReq,
 ) {
-  return requestClient.post('/psychology/consultation-record/create', data);
+  return requestClient.post(
+    '/psychology/consultation/appointment/create',
+    data,
+  );
 }
 
 /** 更新心理咨询记录 */

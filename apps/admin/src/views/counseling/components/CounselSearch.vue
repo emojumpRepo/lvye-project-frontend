@@ -14,7 +14,7 @@ import { useSearchFormSchema } from '../data';
 interface SearchParams {
   pageNo?: number;
   pageSize?: number;
-  classDeptId?: number;
+  teacherId?: number;
   status?: string;
   consultTime?: string;
   studentNo?: string;
@@ -35,7 +35,7 @@ const searchParams = ref<SearchParams>({
 });
 
 const [Form, formApi] = useVbenForm({
-  schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
+  schema: useSearchFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   commonConfig: {
@@ -59,7 +59,7 @@ async function handleSearch(values: any) {
       studentNo: values.searchKeyword,
       status: values.status || undefined,
       consultTime: values.consultTime || undefined,
-      classDeptId: values.classDeptId || undefined,
+      teacherId: values.teacherId || undefined,
     };
 
     searchParams.value = params;

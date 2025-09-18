@@ -18,12 +18,12 @@ export interface QuestionnaireVO {
   completed?: boolean;
   accessible?: boolean;
   assessmentDimensionLabels?: string[];
-  isOpen?: boolean;
   validFrom?: number;
   validTo?: number;
   remark?: string;
   createTime?: string;
   creator?: string;
+  supportIndependentUse?: number;
 }
 
 export interface QuestionnaireResultDataVO {

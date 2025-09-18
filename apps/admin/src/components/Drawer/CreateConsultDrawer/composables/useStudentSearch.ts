@@ -1,11 +1,16 @@
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
 import { reactive, ref } from 'vue';
+
+import { getStudentProfileSimpleList } from '#/api/psychology/student-profile';
 
 export interface Student {
   class: string;
   label: string;
   name: string;
   studentNo: string;
-  value: string;
+  value: number;
+  display?: string;
 }
 
 export interface StudentSearchState {
@@ -32,8 +37,13 @@ export function useStudentSearch() {
     }) as T;
   }
 
+  // 是否包含中文字符
+  function hasChinese(input: string) {
+    return /[\u4E00-\u9FA5]/.test(input);
+  }
+
   // 搜索学生（防抖处理）
-  const fetchStudents = debounce((searchValue: string) => {
+  const fetchStudents = debounce(async (searchValue: string) => {
     searchingText.value = searchValue;
 
     if (!searchValue.trim()) {
@@ -47,36 +57,35 @@ export function useStudentSearch() {
     studentSearchState.data = [];
     studentSearchState.fetching = true;
 
-    // 模拟API调用
-    setTimeout(() => {
-      if (fetchId !== lastFetchId) {
-        return;
-      }
+    try {
+      const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
+        ...(hasChinese(searchValue)
+          ? { name: searchValue }
+          : { studentNo: searchValue }),
+      };
 
-      // 模拟学生数据
-      const mockStudents = [
-        { name: '张小明', studentNo: '2021001', class: '高一(3)班' },
-        { name: '李小红', studentNo: '2021002', class: '高一(2)班' },
-        { name: '王小强', studentNo: '2024001', class: '高二(1)班' },
-      ].filter(
-        (student) =>
-          student.name.includes(searchValue) ||
-          student.studentNo.includes(searchValue) ||
-          student.class.includes(searchValue),
-      );
+      const list = await getStudentProfileSimpleList(params);
 
-      const data = mockStudents.map((student) => ({
-        label: `${student.name}（${student.studentNo}）`,
-        value: student.studentNo,
-        studentNo: student.studentNo,
-        class: student.class,
-        name: student.name,
-        display: `${student.name} - ${student.class} - ${student.studentNo}`,
-      }));
+      if (fetchId !== lastFetchId) return;
+
+      const data: Student[] = (list || [])
+        .filter((student) => typeof student.id === 'number')
+        .map((student) => ({
+          label: `${student.name}（${student.studentNo}）`,
+          value: student.id as number,
+          studentNo: student.studentNo,
+          class: student.className || '',
+          name: student.name,
+          // 自定义展示字段，供 option 渲染与回填使用
+          display: `${student.name} - ${student.className || ''} - ${student.studentNo}`,
+        }));
 
       studentSearchState.data = data;
-      studentSearchState.fetching = false;
-    }, 300);
+    } finally {
+      if (fetchId === lastFetchId) {
+        studentSearchState.fetching = false;
+      }
+    }
   }, 300);
 
   // 处理学生选择变化
@@ -88,12 +97,6 @@ export function useStudentSearch() {
       if (matched && (matched as any).display) {
         (selectedStudent as any).label = (matched as any).display;
       }
-
-      // 检查是否为自己负责的学生
-      const responsibleNos = ['2021001', '2021002'];
-      studentWarning.value = responsibleNos.includes(selectedStudent.value)
-        ? ''
-        : '⚠️ 该学生非您负责，确认需要预约吗？';
     }
 
     studentSearchState.data = [];

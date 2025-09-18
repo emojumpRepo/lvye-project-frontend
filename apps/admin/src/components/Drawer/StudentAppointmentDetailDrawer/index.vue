@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { Dayjs } from 'dayjs';
 
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
+
 import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -14,42 +16,85 @@ import {
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getConsultationRecord } from '#/api/psychology/consultation';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDictLabel } from '#/utils/dict';
 
 type RangeValue = [Dayjs, Dayjs];
 
 interface Form {
   studentName: string;
   studentNo: string;
-  classDeptId: string;
+  className: string;
   consultantTime: RangeValue;
   duration: string;
   type: string;
   consultant: string;
   location: string;
   emphasis: string;
-  status: string;
+  status: number;
 }
 
 const [StudentAppointmentDetailDrawer, studentAppointmentDetailDrawerApi] =
   useVbenDrawer({
     class: 'w-[720px]',
     destroyOnClose: true,
+    onOpenChange(isOpen: boolean) {
+      if (isOpen) {
+        const data = studentAppointmentDetailDrawerApi.getData<{
+          id: number;
+        }>();
+        currentConsultationRecordId.value = data.id;
+        loadConsultationRecord();
+      }
+    },
   });
+
+const currentConsultationRecord =
+  ref<PsychologyConsultationApi.ConsultationRecord>();
+
+const currentConsultationRecordId = ref<number>();
 
 const form = ref<Form>({
   studentName: '',
   studentNo: '',
-  classDeptId: '',
+  className: '',
   consultantTime: [dayjs(), dayjs()],
   duration: '',
   type: '',
   consultant: '',
   location: '',
   emphasis: '',
-  status: '',
+  status: 0,
 });
+
+async function loadConsultationRecord() {
+  if (!currentConsultationRecordId.value) {
+    return;
+  }
+  const res = await getConsultationRecord(currentConsultationRecordId.value);
+  currentConsultationRecord.value = res;
+
+  console.log(
+    'currentConsultationRecord.value',
+    currentConsultationRecord.value,
+  );
+
+  form.value.studentName = currentConsultationRecord.value.studentName || '';
+  form.value.studentNo = currentConsultationRecord.value.studentNumber || '';
+  form.value.className = currentConsultationRecord.value.className || '';
+  form.value.type = currentConsultationRecord.value.consultationType || '';
+  form.value.consultant = currentConsultationRecord.value.counselorName || '';
+  form.value.location = currentConsultationRecord.value.location || '';
+  form.value.emphasis = currentConsultationRecord.value.notes || '';
+  form.value.status = currentConsultationRecord.value.status || 0;
+  form.value.consultantTime = [
+    dayjs(currentConsultationRecord.value.appointmentStartTime),
+    dayjs(currentConsultationRecord.value.appointmentEndTime),
+  ];
+}
 </script>
+
 <template>
   <StudentAppointmentDetailDrawer title="预约详情">
     <template #title>
@@ -83,15 +128,12 @@ const form = ref<Form>({
                 />
                 <AInput v-model:value="form.studentNo" placeholder="请填写" />
               </AForm.Item>
-              <AForm.Item name="classDeptId">
+              <AForm.Item name="className">
                 <LyLabel
                   title="班级"
                   custom-title-class="font-normal text-sm"
                 />
-                <ASelect
-                  v-model:value="form.classDeptId"
-                  placeholder="请选择"
-                />
+                <AInput v-model:value="form.className" placeholder="请选择" />
               </AForm.Item>
               <AForm.Item name="consultantTime" class="col-span-2 w-full">
                 <LyLabel
@@ -153,13 +195,15 @@ const form = ref<Form>({
             </div>
           </div>
 
-          <!-- 休息状态 -->
+          <!-- 状态信息 -->
           <div>
-            <LyLabel title="休息状态" has-indicator />
+            <LyLabel title="状态信息" has-indicator />
             <div class="mt-6 flex flex-col gap-6">
               <div class="text-sm">
                 <span class="font-medium">当前状态：</span>
-                <span class="text-[#4B4B4D]">{{ form.status }}</span>
+                <span class="text-[#4B4B4D]">{{
+                  getDictLabel('counseling_status', form.status)
+                }}</span>
               </div>
             </div>
           </div>

@@ -1,0 +1,98 @@
+.custom-disable {
+  .ant-input[disabled],
+  .ant-picker-input > input[disabled],
+  .ant-select-disabled .ant-select-selector,
+  .ant-picker-disabled,
+  .ant-picker-range .ant-picker-input input[disabled],
+  .ant-input-number-disabled,
+  textarea[disabled] {
+    color: #4c4c4d !important;
+    cursor: default !important;
+    background-color: #f8f9fb !important;
+    border-color: #eceff5 !important;
+    opacity: 1 !important; /* 避免过度灰化 */
+    -webkit-text-fill-color: #4c4c4d !important; /* 修复 Safari 文本颜色 */
+  }
+
+  /* 日期/时间选择器容器在禁用时也使用默认光标 */
+  .ant-picker.ant-picker-disabled,
+  .ant-picker.ant-picker-disabled *,
+  .ant-input-number-disabled .ant-input-number-input,
+  .ant-picker-range .ant-picker-input input[disabled] {
+    color: #4c4c4d !important;
+    cursor: default !important;
+  }
+
+  /* 禁用的选择器也不显示禁用手势 */
+  .ant-select-disabled .ant-select-selector {
+    color: #4c4c4d !important;
+    cursor: default !important;
+    background-color: #f8f9fb !important; /* 与输入框保持一致 */
+    border-color: #eceff5 !important;
+  }
+
+  /* 标签和只读区域的提示颜色更柔和 */
+  .ant-form-item-label > label {
+    color: #6b7280;
+  }
+
+  /* 日期选择器禁用态边框统一 */
+  .ant-picker.ant-picker-disabled,
+  .ant-picker.ant-picker-status-error.ant-picker-disabled {
+    color: #4c4c4d !important;
+    background-color: #f8f9fb !important;
+    border-color: #eceff5 !important;
+  }
+
+  /* 让禁用态可以选中文本，便于查看信息 */
+  .ant-input[disabled],
+  textarea[disabled] {
+    user-select: text;
+  }
+
+  /* 禁用的按钮保持轻微可见但不可点 */
+  .ant-btn[disabled] {
+    cursor: not-allowed;
+    opacity: 1 !important; /* 避免过度灰化 */
+  }
+
+  /* 自定义类型按钮的禁用态样式 */
+  .ant-btn[disabled].ant-btn-default, .ant-radio-button-wrapper-disabled {
+    color: #4c4c4d !important; /* 字体更清晰，用于预览 */
+    cursor: default !important; /* 光标默认，不要禁用手势 */
+    background-color: #f5f7fa !important; /* 轻灰背景 */
+    border-color: #e6e9f0 !important;
+  }
+
+  /* 咨询类型按钮：统一禁用态与选中态视觉，并在禁用时仍突出选中项 */
+  .ant-btn.ant-btn-default.is-selected {
+    color: #04dc70 !important;
+    background-color: #04dc7014 !important;
+    border-color: #04dc70 !important;
+  }
+
+  .ant-btn[disabled].ant-btn-default.is-selected {
+    color: #04dc70 !important; /* 选中项在禁用时也明显 */
+    cursor: default !important;
+    background-color: #e8fbf3 !important;
+    border-color: #88e7b3 !important;
+  }
+
+  /* 组内所有被禁用的按钮，统一默认光标 */
+  .consult-type-group .ant-btn[disabled] {
+    cursor: default !important;
+  }
+
+  /* 禁用的单选按钮 */
+  .ant-radio-button-wrapper-disabled.ant-radio-button-wrapper-checked {
+    background-color: #88e7b3 !important;
+    color: #fff !important; /* 选中项在禁用时也明显 */
+    border-color: #88e7b3 !important;
+  }
+
+  /* 禁用的单选按钮 */
+  .ant-radio-button-wrapper-disabled {
+    background-color: #f8f9fb !important;
+    border-color: #eceff5 !important;
+  }
+}
