@@ -63,6 +63,33 @@ function getStringLength(value: string): number {
   return [...(value ?? '')].length;
 }
 
+/**
+ * 标准化学生记录，确保所有字段都有值
+ * @param record 学生记录
+ * @returns 标准化后的学生记录
+ */
+function normalizeStudentRecord(record: Partial<StudentRecord>): StudentRecord {
+  return {
+    studentNo: record.studentNo || '',
+    name: record.name || '',
+    idCard: record.idCard || '',
+    birthDate: record.birthDate || '',
+    sex: record.sex || '',
+    gradeName: record.gradeName || '',
+    className: record.className || '',
+    gradeDeptId: record.gradeDeptId,
+    classDeptId: record.classDeptId,
+    enrollmentYear: record.enrollmentYear || '',
+    graduationStatus: record.graduationStatus,
+    isGraduated: record.isGraduated || '',
+    errorMessage: record.errorMessage || '',
+    mobile: record.mobile || '',
+    homeAddress: record.homeAddress || '',
+    rowNumber: record.rowNumber,
+    remark: record.remark || '',
+  };
+}
+
 // 验证规则配置
 const _rules = {
   studentNo: {
@@ -181,6 +208,8 @@ export async function validateStudentRecord(
   const requiredFields: Array<keyof StudentRecord> = [
     'studentNo',
     'name',
+    'enrollmentYear',
+    'idCard',
     'gradeName',
     'className',
   ];
@@ -229,6 +258,10 @@ export async function validateStudentRecord(
     });
   }
 
+  if (record.idCard && !_rules.idCard.validator(record.idCard)) {
+    errors.push({ field: 'idCard', message: _rules.idCard.message });
+  }
+
   // 年级验证
   if (record.gradeName && !_rules.gradeDeptName.validator(record.gradeName)) {
     errors.push({ field: 'gradeName', message: _rules.gradeDeptName.message });
@@ -244,10 +277,6 @@ export async function validateStudentRecord(
   }
 
   // 可选字段验证
-  if (record.idCard && !_rules.idCard.validator(record.idCard)) {
-    errors.push({ field: 'idCard', message: _rules.idCard.message });
-  }
-
   if (record.birthDate && !_rules.birthDate.validator(record.birthDate)) {
     errors.push({ field: 'birthDate', message: _rules.birthDate.message });
   }
@@ -507,7 +536,25 @@ export async function parseExcel(
       const firstRow = processedData[0];
       if (firstRow && firstRow.length > 0) {
         headers = firstRow.map((cell: any) => String(cell || ''));
-        dataRows = processedData.slice(2);
+
+        // 动态确定跳过行数
+        let skipRows = 1; // 默认跳过第一行（表头）
+
+        // 检查第二行是否包含"必填"字样
+        if (processedData.length > 1) {
+          const secondRow = processedData[1];
+          if (secondRow) {
+            const secondRowText = secondRow
+              .map((cell: any) => String(cell || ''))
+              .join(' ');
+
+            if (secondRowText.includes('必填')) {
+              skipRows = 2; // 如果第二行包含"必填"，跳过前两行
+            }
+          }
+        }
+
+        dataRows = processedData.slice(skipRows);
       } else {
         // 第一行存在但为空，生成默认列名
         const maxCols = Math.max(
@@ -541,10 +588,6 @@ export async function parseExcel(
       '身份证',
       '年级',
       '班级',
-      '联系电话',
-      '是否毕业',
-      '家庭住址',
-      '备注',
     ];
     const missingHeaders = requiredHeaders.filter(
       (requiredHeader) =>
@@ -615,7 +658,7 @@ export async function parseExcel(
       const computeGraduationStatus = (isGraduated?: string): number => {
         const val = String(isGraduated || '').trim();
         if (!val) return 0; // 未填写默认在校
-        return val === '是' ? 0 : 1; // 是=在校(0)，否=毕业(1)
+        return val === '是' ? 1 : 0; // 是=在校(0)，否=毕业(1)
       };
 
       const graduationStatus = computeGraduationStatus(
@@ -641,7 +684,7 @@ export async function parseExcel(
         (c: any) => c?.label === item.className,
       );
 
-      return {
+      const processedItem = {
         ...item,
         gradeDeptId: gradeDept?.value,
         classDeptId: classDept?.value,
@@ -656,11 +699,15 @@ export async function parseExcel(
                 return val === '是' ? 1 : 0;
               })(),
       };
+
+      return normalizeStudentRecord(processedItem);
     });
+
+    const formatFailed = failed.map((item) => normalizeStudentRecord(item));
 
     return {
       success: formatSuccess,
-      failed,
+      failed: formatFailed,
       sheetName,
       total: objectData.length,
     };

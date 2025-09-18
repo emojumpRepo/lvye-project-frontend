@@ -265,6 +265,10 @@ export async function downloadTemplate() {
     '是或否，默认为否',
   ]);
 
+  // 设置身份证列为文本格式，防止Excel自动转换
+  const idCardColumn = worksheet.getColumn('idCard');
+  idCardColumn.numFmt = '@'; // 设置为文本格式
+
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = {
