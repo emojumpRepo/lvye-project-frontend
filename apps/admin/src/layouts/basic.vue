@@ -12,6 +12,7 @@ import { AntdProfileOutlined } from '@vben/icons';
 import {
   BasicLayout,
   Help,
+  LockScreen,
   Notification,
   TenantDropdown,
   UserDropdown,

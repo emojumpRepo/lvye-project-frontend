@@ -117,10 +117,10 @@ export function useQuestionGridColumns() {
     },
     { field: 'completionCount', title: '完成次数', width: 100 },
     {
-      field: 'isOpen',
-      title: '是否开放',
+      field: 'supportIndependentUse',
+      title: '是否独立问卷',
       width: 100,
-      slots: { default: 'isOpen' },
+      slots: { default: 'supportIndependentUse' },
     },
     {
       field: 'createTime',

@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 import { getConsultationRecord } from '#/api/psychology/consultation';
+import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getEventStyleOptions } from '#/views/counseling/data';
@@ -548,7 +549,13 @@ function disabledRangeTime(
     <div class="grid h-full w-full grid-cols-2 overflow-hidden">
       <!-- 左侧预约咨询部分 -->
       <div class="col-span-1 overflow-y-auto border-r border-[#F2F3F5] p-6">
-        <Form ref="formRef" :model="form" :rules="rules" class="w-full">
+        <Form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="w-full"
+          :class="{ 'custom-disable': isReadOnly }"
+        >
           <!-- 学生选择 -->
           <LyLabel
             title="学生选择"
@@ -956,90 +963,3 @@ function disabledRangeTime(
     </template>
   </ConfirmDialog>
 </template>
-
-<style lang="scss" scoped>
-/* 统一的禁用态优化：更柔和的颜色，允许文本选择，光标为默认 */
-:deep(
-  .ant-input[disabled],
-  .ant-picker-input > input[disabled],
-  .ant-select-disabled .ant-select-selector,
-  .ant-picker-disabled,
-  .ant-picker-range .ant-picker-input input[disabled],
-  textarea[disabled]
-) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-  background-color: #f8f9fb !important;
-  border-color: #eceff5 !important;
-  opacity: 1 !important; /* 避免过度灰化 */
-  -webkit-text-fill-color: #4c4c4d !important; /* 修复 Safari 文本颜色 */
-}
-
-/* 日期/时间选择器容器在禁用时也使用默认光标 */
-:deep(.ant-picker.ant-picker-disabled),
-:deep(.ant-picker.ant-picker-disabled *),
-:deep(.ant-picker-range .ant-picker-input input[disabled]) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-}
-
-/* 禁用的选择器也不显示禁用手势 */
-:deep(.ant-select-disabled .ant-select-selector) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-  background-color: #f8f9fb !important; /* 与输入框保持一致 */
-  border-color: #eceff5 !important;
-}
-
-/* 禁用的按钮保持轻微可见但不可点 */
-:deep(.ant-btn[disabled]) {
-  cursor: not-allowed;
-  opacity: 1 !important; /* 避免过度灰化 */
-}
-
-/* 标签和只读区域的提示颜色更柔和 */
-:deep(.ant-form-item-label > label) {
-  color: #6b7280;
-}
-
-/* 日期选择器禁用态边框统一 */
-:deep(.ant-picker.ant-picker-disabled),
-:deep(.ant-picker.ant-picker-status-error.ant-picker-disabled) {
-  color: #4c4c4d !important;
-  background-color: #f8f9fb !important;
-  border-color: #eceff5 !important;
-}
-
-/* 自定义类型按钮的禁用态样式 */
-:deep(.ant-btn[disabled].ant-btn-default) {
-  color: #4c4c4d !important; /* 字体更清晰，用于预览 */
-  cursor: default !important; /* 光标默认，不要禁用手势 */
-  background-color: #f5f7fa !important; /* 轻灰背景 */
-  border-color: #e6e9f0 !important;
-}
-
-/* 咨询类型按钮：统一禁用态与选中态视觉，并在禁用时仍突出选中项 */
-:deep(.ant-btn.ant-btn-default.is-selected) {
-  color: #04dc70 !important;
-  background-color: #04dc7014 !important;
-  border-color: #04dc70 !important;
-}
-
-:deep(.ant-btn[disabled].ant-btn-default.is-selected) {
-  color: #04dc70 !important; /* 选中项在禁用时也明显 */
-  cursor: default !important;
-  background-color: #e8fbf3 !important;
-  border-color: #88e7b3 !important;
-}
-
-/* 组内所有被禁用的按钮，统一默认光标 */
-:deep(.consult-type-group .ant-btn[disabled]) {
-  cursor: default !important;
-}
-
-/* 让禁用态可以选中文本，便于查看信息 */
-:deep(.ant-input[disabled]),
-:deep(textarea[disabled]) {
-  user-select: text;
-}
-</style>
