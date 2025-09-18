@@ -46,7 +46,6 @@ const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
 const bgUrl = computed(() => {
   const introBgImgUrl =
     props.sceneData?.metadata?.introConfig.backgroundImageUrl;
-  console.log(introBgImgUrl);
   return showIntro.value
     ? introBgImgUrl
     : new URL(`${imgBaseUrl}answer_page_bg.png`, import.meta.url).href;

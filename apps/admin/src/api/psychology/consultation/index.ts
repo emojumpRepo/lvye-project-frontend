@@ -45,8 +45,8 @@ export namespace PsychologyConsultationApi {
     counselorUserId?: number;
     consultationType?: string;
     location?: string;
-    appointmentStartTime: Date;
-    appointmentEndTime: Date;
+    appointmentStartTime: Date | number;
+    appointmentEndTime: Date | number;
     durationMinutes?: number;
     notes?: string;
     status?: number;

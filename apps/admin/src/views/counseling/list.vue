@@ -99,6 +99,12 @@ function handleAdjustTime() {
   appointmentDetailModalApi.open();
 }
 
+defineExpose({
+  refresh: () => {
+    gridApi.query();
+  },
+});
+
 onMounted(() => {
   gridApi.query();
 });
