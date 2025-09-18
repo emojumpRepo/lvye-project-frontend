@@ -43,14 +43,13 @@ export namespace PsychologyConsultationApi {
     id?: number;
     studentProfileId: number;
     counselorUserId?: number;
-    type: number;
-    method: number;
+    consultationType?: string;
+    location?: string;
     appointmentStartTime: Date;
-    appointmentEndTime?: Date;
+    appointmentEndTime: Date;
     durationMinutes?: number;
     notes?: string;
     status?: number;
-    remark?: string;
   }
 
   /** 危机干预事件信息 */
@@ -150,7 +149,10 @@ export function getConsultationRecord(id: number) {
 export function createConsultationRecord(
   data: PsychologyConsultationApi.ConsultationRecordSaveReq,
 ) {
-  return requestClient.post('/psychology/consultation-record/create', data);
+  return requestClient.post(
+    '/psychology/consultation/appointment/create',
+    data,
+  );
 }
 
 /** 更新心理咨询记录 */

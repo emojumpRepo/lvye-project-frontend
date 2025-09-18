@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 import { getConsultationRecord } from '#/api/psychology/consultation';
+import { getTeacherUserList } from '#/api/system/user';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
@@ -39,7 +40,7 @@ interface StudentOption {
   label: string;
   name: string;
   studentNo: string;
-  value: string;
+  value: number;
 }
 
 interface FormModel {
@@ -47,7 +48,7 @@ interface FormModel {
   consultDate: dayjs.Dayjs | undefined;
   consultTime: [dayjs.Dayjs, dayjs.Dayjs] | undefined;
   consultType: string;
-  consultTeacher: string;
+  consultTeacher: number | undefined;
   consultLocation: string;
   consultFocus: string;
 }
@@ -205,19 +206,26 @@ const consultTypeOptions = ref([
   '家长咨询',
 ]);
 
-const teacherOptions = [
-  { label: '张老师', value: 'teacher1' },
-  { label: '李老师', value: 'teacher2' },
-  { label: '王老师', value: 'teacher3' },
-  { label: '赵老师', value: 'teacher4' },
-];
+const teacherOptions = ref<{ label: string; value: number }[]>([]);
+
+async function fetchTeacherOptions() {
+  try {
+    const list = await getTeacherUserList();
+    teacherOptions.value = (list || []).map((u: any) => ({
+      label: u.nickname,
+      value: u.id,
+    }));
+  } catch (error) {
+    console.error('获取教师列表失败:', error);
+  }
+}
 
 const form = ref<FormModel>({
   student: undefined,
   consultDate: undefined,
   consultTime: undefined,
   consultType: '',
-  consultTeacher: '',
+  consultTeacher: undefined,
   consultLocation: '',
   consultFocus: '',
 });
@@ -367,9 +375,9 @@ function submitConsult() {
 }
 
 function handleConfirmCreate() {
-  // 这里可以调用API创建预约
-  showConfirmDialog.value = false;
-  drawerApi.close();
+  console.log(form.value);
+  // showConfirmDialog.value = false;
+  // drawerApi.close();
   emit('refresh');
 }
 
@@ -437,7 +445,7 @@ async function loadConsultationRecord() {
 
 // ==================== Drawer 配置 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-[1200px]',
+  class: 'w-2/3',
   contentClass: 'p-0',
   confirmText: '创建预约',
   // 关闭时卸载内容，避免残留状态
@@ -462,6 +470,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id?: number;
         timeRange?: { date: Date; end: Date | string; start: Date | string };
       }>();
+      // 打开时加载教师数据
+      fetchTeacherOptions();
       if (data.id) {
         currentConsultationRecordId.value = data.id;
         isEdit.value = false;
