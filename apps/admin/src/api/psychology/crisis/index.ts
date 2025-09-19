@@ -32,7 +32,7 @@ export interface CrisisEventListReq extends PageParam {
 }
 
 /** 获取危机事件处理历史记录请求参数 */
-export interface CrisisEventProcessHistoryReq extends PageParam {
+export interface CrisisEventProcessHistoryReq {
   id: number;
 }
 
@@ -55,9 +55,11 @@ export function getCrisisEventList(params: CrisisEventListReq) {
 
 /** 获取危机干预系统设置 */
 export function getCrisisInterventionSystemSetting() {
-  return requestClient.get<string>(
-    '/psychology/intervention/admin/settings/intervention-assignment-mode',
-  );
+  return requestClient.get<{
+    defaultHandlerName: string;
+    defaultHandlerUserId: number;
+    mode: string;
+  }>('/psychology/intervention/admin/settings/intervention-assignment-mode');
 }
 
 /** 危机干预系统设置 */

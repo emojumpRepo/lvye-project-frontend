@@ -9,7 +9,7 @@ import { Textarea as ATextarea, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { updateCrisisEventDescription } from '#/api/psychology/crisis';
-import EditEventRecord from '#/components/Dialog/EditEventRecord.vue/index.vue';
+import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getDictLabel } from '#/utils/dict';
@@ -27,12 +27,11 @@ const emit = defineEmits<{
 }>();
 
 const loading = defineModel<boolean>('loading');
-
 const eventDescription = ref('');
 const isEditingDescription = ref(false);
 
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
-  connectedComponent: EditEventRecord,
+  connectedComponent: EditEventRecordDialog,
   destroyOnClose: true,
 });
 
@@ -129,10 +128,10 @@ watch(
 );
 
 /** 快速分配 */
-function handleEditEventRecord() {
+function handleEditEventRecord(title: string) {
   editEventRecordApi
     .setData({
-      type: 'edit',
+      title,
     })
     .open();
 }
@@ -159,18 +158,16 @@ function handleEditEventRecord() {
     <div class="row-span-2 h-full">
       <div class="flex h-full flex-col justify-between gap-3">
         <LyLabel has-indicator title="处理记录" />
-        <div class="flex-1 overflow-hidden">
-          <div class="scroll-area h-full space-y-4 overflow-y-auto">
-            <template
-              v-for="record in crisisEventProcessHistory"
-              :key="record.id"
-            >
-              <EventRecord
-                :event-processing-record="record"
-                @edit="handleEditEventRecord"
-              />
-            </template>
-          </div>
+        <div class="scroll-area h-full space-y-4 overflow-y-auto">
+          <template
+            v-for="record in crisisEventProcessHistory"
+            :key="record.id"
+          >
+            <EventRecord
+              :event-processing-record="record"
+              @edit="handleEditEventRecord"
+            />
+          </template>
         </div>
       </div>
     </div>

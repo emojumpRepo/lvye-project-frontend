@@ -6,14 +6,14 @@ import { ref } from 'vue';
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Flex as AFlex, Spin as ASpin, message } from 'ant-design-vue';
+import { Spin as ASpin, message } from 'ant-design-vue';
 
 import {
   getCrisisEventDetail,
   getCrisisEventProcessHistory,
 } from '#/api/psychology/crisis';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
-import EditEventRecord from '#/components/Dialog/EditEventRecord.vue/index.vue';
+import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import SelectHandleMethodDrawer from '#/components/Drawer/SelectHandleMethodDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -22,6 +22,7 @@ import StepEventCard from './components/StepEventCard.vue';
 
 const crisisEventDetail = ref<CrisisEvent | null>(null);
 const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
+const crisisEventTitle = ref('');
 const loading = ref(true);
 
 // 危机事件处理弹窗
@@ -30,11 +31,13 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   fullscreen: true,
   closable: false,
   footer: false,
-  contentClass: '!bg-[#F7F8FB] box-border py-10',
+  contentClass: '!bg-[#F7F8FB] box-border py-10 flex-center',
+  class: 'h-full overflow-hidden',
   destroyOnClose: true,
   onOpenChange: async () => {
     const data = handleCrisisEventModalApi.getData();
     if (!data.id) return message.error('缺少事件ID');
+    crisisEventTitle.value = data.title;
     await loadCrisisEventDetail(data.id);
     await loadCrisisEventProcessHistory(data.id);
     loading.value = false;
@@ -43,7 +46,7 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
 
 // 负责人快速分配弹窗
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
-  connectedComponent: EditEventRecord,
+  connectedComponent: EditEventRecordDialog,
   destroyOnClose: true,
 });
 
@@ -103,13 +106,9 @@ async function loadCrisisEventDetail(id: number) {
  */
 async function loadCrisisEventProcessHistory(id: number) {
   try {
-    const response = await getCrisisEventProcessHistory({
-      pageNo: 1,
-      pageSize: 10,
-      id,
-    });
+    const response = await getCrisisEventProcessHistory({ id });
     if (response.total === 0) return;
-    crisisEventProcessHistory.value = response.list;
+    crisisEventProcessHistory.value = response.list.reverse();
   } catch (error) {
     console.error('加载事件历史记录失败', error);
     message.error('加载事件历史记录失败');
@@ -120,7 +119,7 @@ async function loadCrisisEventProcessHistory(id: number) {
 function handleQuickAssign(index: number) {
   editEventRecordApi
     .setData({
-      type: 'allocate',
+      title: '分配负责人',
     })
     .open();
 }
@@ -153,15 +152,15 @@ function handleClose() {
             返回
           </LyButton>
           <div class="flex flex-col">
-            <div class="text-lg font-bold">危机事件处理-xxx</div>
+            <div class="text-lg font-bold">{{ crisisEventTitle }}</div>
           </div>
         </div>
       </div>
     </template>
 
-    <div class="h-full">
-      <ASpin :spinning="loading" class="flex-center h-full">
-        <AFlex justify="center" gap="large" class="h-full overflow-hidden">
+    <div class="h-full w-[1400px]">
+      <ASpin :spinning="loading" class="flex-center h-full w-full">
+        <div class="flex-center h-full w-full gap-8 overflow-hidden">
           <!-- 步骤条 -->
           <div class="h-full">
             <CommonDialogSteps
@@ -238,7 +237,7 @@ function handleClose() {
           </div>
 
           <!-- 事件详情 -->
-          <div class="h-full">
+          <div class="h-full flex-1">
             <div class="flex h-full flex-col rounded-xl bg-white">
               <div class="box-border flex-1 overflow-hidden px-10 py-8">
                 <EventReporting
@@ -254,7 +253,7 @@ function handleClose() {
               </div>
             </div>
           </div>
-        </AFlex>
+        </div>
       </ASpin>
     </div>
 

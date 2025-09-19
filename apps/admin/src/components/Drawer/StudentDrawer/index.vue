@@ -18,7 +18,7 @@ import {
   getStudentProfile,
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
-import CreateStudentEventRecord from '#/components/Dialog/CreateStudentEventRecord/index.vue';
+import CreateStudentEventRecordDialog from '#/components/Dialog/CreateStudentEventRecordDialog/index.vue';
 import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
@@ -143,7 +143,7 @@ const getSpecialMarkLabels = (specialMarks: string): string[] => {
 /** 新增记录弹窗 */
 const [CreateStudentEventRecordModal, createStudentEventRecordModalApi] =
   useVbenModal({
-    connectedComponent: CreateStudentEventRecord,
+    connectedComponent: CreateStudentEventRecordDialog,
   });
 
 /** 导出信息弹窗 */

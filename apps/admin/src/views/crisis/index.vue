@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { CrisisBoardData } from '@vben/types';
+import type { CrisisBoardData, CrisisEvent } from '@vben/types';
 
 import type { CrisisEventListReq } from '#/api/psychology/crisis';
 
@@ -138,10 +138,11 @@ function handleEventTypeSearch(status: number) {
 }
 
 /** 查看详情 */
-function handleViewDetail(row: any) {
+function handleViewDetail(row: CrisisEvent) {
   handleCrisisEventModalApi
     .setData({
       id: row.id,
+      title: row.title,
     })
     .open();
 }

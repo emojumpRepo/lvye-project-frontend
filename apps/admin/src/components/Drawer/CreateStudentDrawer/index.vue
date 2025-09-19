@@ -41,6 +41,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   destroyOnClose: true,
   confirmText: '创建',
+  closeOnClickModal: false,
   onConfirm: handleCreateStudent,
 });
 
@@ -169,6 +170,7 @@ const rules: Record<string, Rule[]> = {
 
 /** 创建学生档案 */
 async function handleCreateStudent() {
+  drawerApi.lock();
   formRef.value?.validate().then(async () => {
     loading.value = true;
     const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
@@ -176,8 +178,6 @@ async function handleCreateStudent() {
       ...studentForm,
       birthDate: formatBirthDate.toString(),
     };
-
-    console.log('params', params);
 
     try {
       const res = await createStudentProfile(params);
@@ -192,8 +192,8 @@ async function handleCreateStudent() {
     }
     emit('refresh');
     formRef.value?.resetFields();
+    drawerApi.unlock();
     loading.value = false;
-    drawerApi.close();
   });
 }
 

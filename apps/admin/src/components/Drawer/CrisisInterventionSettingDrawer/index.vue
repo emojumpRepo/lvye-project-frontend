@@ -11,14 +11,21 @@ import {
   crisisInterventionSystemSetting,
   getCrisisInterventionSystemSetting,
 } from '#/api/psychology/crisis';
+import { getTeacherUserList } from '#/api/system/user';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 import CrisisModeAutoIcon from '../../../static/icons/crisis/crisis_mode_auto_icon.png';
 import CrisisModeManualIcon from '../../../static/icons/crisis/crisis_mode_manual_icon.png';
 
+interface SelectOption {
+  label: string;
+  value: number;
+}
+
 const currentModeKey = ref<string>('');
-const defaultTeacherId = ref<number | undefined>(undefined);
+const defaultHandlerUserId = ref<number | undefined>(undefined);
+const teacherUserList = ref<SelectOption[]>([]);
 
 const allocationModes = ref<CategoryCard[]>([
   {
@@ -46,8 +53,10 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
     onOpenChange: async () => {
       try {
         const response = await getCrisisInterventionSystemSetting();
+        await loadTeacherUserList();
         if (response) {
-          currentModeKey.value = response;
+          currentModeKey.value = response.mode;
+          defaultHandlerUserId.value = response.defaultHandlerUserId;
         }
       } catch (error) {
         console.error('获取分配模式失败', error);
@@ -73,6 +82,17 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
       }
     },
   });
+
+/** 获取心理老师列表 */
+async function loadTeacherUserList() {
+  const response = await getTeacherUserList();
+  if (response) {
+    teacherUserList.value = response.map((item) => ({
+      label: item.nickname as string,
+      value: item.id,
+    })) as SelectOption[];
+  }
+}
 </script>
 <template>
   <CrisisInterventionSettingDrawer title="危机干预系统设置">
@@ -115,16 +135,17 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
           <div class="space-y-1">
             <LyLabel title="默认心理老师" has-indicator />
             <div class="text-xs text-[#979899]">
-              当学生档案中未绑定责任心理老师时,自动分配给此默认老师10
+              当学生档案中未绑定责任心理老师时,自动分配给此默认老师
             </div>
           </div>
         </div>
 
         <div>
           <ASelect
-            v-model:value="defaultTeacherId"
+            v-model:value="defaultHandlerUserId"
             placeholder="请选择"
             class="w-full"
+            :options="teacherUserList"
           />
         </div>
       </div>

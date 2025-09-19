@@ -12,7 +12,7 @@ defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'edit'): void;
+  (e: 'edit', title: string): void;
 }>();
 
 const isHover = ref(false);
@@ -37,7 +37,7 @@ const isHover = ref(false);
         class="size-5 cursor-pointer"
         @mouseenter="isHover = true"
         @mouseleave="isHover = false"
-        @click="emits('edit')"
+        @click="emits('edit', eventProcessingRecord.action ?? '编辑记录')"
       />
     </div>
 
