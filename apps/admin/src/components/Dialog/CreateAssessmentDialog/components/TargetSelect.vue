@@ -88,7 +88,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ _page }: any, formValues: any) => {
+        query: async (_: any, formValues: any) => {
           if (formValues.name) {
             return await getDeptTreeListByStudentName(formValues.name);
           }
@@ -153,29 +153,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
               });
             }
           } else if (r.isClass && count > 0) {
-            // 班级节点
-            if (children.length > 0) {
-              // 如果children不为空，直接使用这些学生
-              const studentIds = children
-                .filter((child: any) => child.userId)
-                .map((child: any) => child.userId);
-
-              selected.push({
-                classId: classDeptId,
-                className: r.name,
-                studentIds,
-                totalStudent: count,
-              });
-            } else {
-              // 如果children为空，直接添加班级到选择列表
-              // 这里需要特殊处理：即使没有展开节点，也要表示全选该班级
-              selected.push({
-                classId: classDeptId,
-                className: r.name,
-                studentIds: [], // 空数组表示全选该班级
-                totalStudent: count,
-              });
-            }
+            // 班级节点被选中
+            // 班级节点 - 无论是否有children，都表示全选该班级
+            selected.push({
+              classId: classDeptId,
+              className: r.name,
+              studentIds: [], // 空数组表示全选该班级
+              totalStudent: count,
+            });
           }
         } else {
           // 学生节点
@@ -443,7 +428,7 @@ async function handleSearch() {
 
 <template>
   <div class="mx-auto w-full max-w-[610px] space-y-6">
-    <!-- 收件类型 -->
+    <!-- 测评对象 -->
     <div>
       <LyLabel title="测评对象" required size="small" />
       <ARadio.Group v-model:value="type">

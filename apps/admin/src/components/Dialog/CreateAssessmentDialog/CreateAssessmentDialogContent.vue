@@ -249,6 +249,20 @@ async function handleCommit(publish: boolean) {
   try {
     isCommiting.value = true;
     isPublish.value = publish;
+    // 处理目标受众数据，区分全选班级和部分选择学生
+    const deptIdList: number[] = [];
+    const userIdList: number[] = [];
+
+    targetSelectData.value.selected.forEach((item) => {
+      if (item.studentIds.length === 0) {
+        // 全选班级：studentIds为空，传递classId
+        deptIdList.push(item.classId);
+      } else {
+        // 部分选择学生：studentIds有值，只传递studentIds，不传递classId
+        userIdList.push(...item.studentIds);
+      }
+    });
+
     const res = await createAssessmentTask({
       taskName: basicInfoFormData.value.name,
       startline:
@@ -257,8 +271,8 @@ async function handleCommit(publish: boolean) {
         basicInfoFormData.value.timeRange?.[1]?.valueOf?.() ?? undefined,
       questionnaireIds: selectedAssessments.value.map((i) => i.id ?? 0),
       targetAudience: targetSelectData.value.type,
-      deptIdList: targetSelectData.value.selected.flatMap((i) => i.classId),
-      userIdList: targetSelectData.value.selected.flatMap((i) => i.studentIds),
+      deptIdList,
+      userIdList,
       scenarioId: selectedScenarioId.value,
       isPublish: publish,
     });
