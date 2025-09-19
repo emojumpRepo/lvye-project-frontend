@@ -186,6 +186,16 @@ export function adjustConsultationRecordTime(
   );
 }
 
+/** 取消心理咨询记录 */
+export function cancelConsultationRecord(id: number, reason: string) {
+  return requestClient.put(
+    `/psychology/consultation/appointment/${id}/cancel`,
+    {
+      reason,
+    },
+  );
+}
+
 /** 删除心理咨询记录 */
 export function deleteConsultationRecord(id: number) {
   return requestClient.delete(

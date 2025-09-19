@@ -120,7 +120,11 @@ async function handleSaveConfirm() {
 }
 
 function handleSave() {
-  confirmModalApi.open();
+  confirmModalApi
+    .setData({
+      title: '此设置影响所有未完成的评估任务时限',
+    })
+    .open();
 }
 
 function handleReset() {
@@ -238,10 +242,7 @@ defineExpose({
       </section>
     </div>
 
-    <ConfirmModal
-      title="此设置影响所有未完成的评估任务时限"
-      @confirm="handleSaveConfirm"
-    />
+    <ConfirmModal @confirm="handleSaveConfirm" />
   </div>
 </template>
 

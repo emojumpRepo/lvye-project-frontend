@@ -17,6 +17,7 @@ import {
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
+import { COUNSELING_STATUS } from '#/api/constants';
 import {
   createConsultationRecord,
   getConsultationRecord,
@@ -26,6 +27,7 @@ import { getTeacherUserList } from '#/api/system/user';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDictLabel } from '#/utils/dict';
 import { getEventStyleOptions } from '#/views/counseling/data';
 
 // 导入 composables
@@ -207,10 +209,10 @@ const showConfirmDialog = ref(false);
 
 // ==================== 表单相关 ====================
 const consultTypeOptions = ref([
-  '初次咨询',
-  '复诊咨询',
-  '紧急咨询',
-  '家长咨询',
+  '初次访谈',
+  '复诊访谈',
+  '紧急访谈',
+  '家长访谈',
 ]);
 
 const teacherOptions = ref<{ label: string; value: number }[]>([]);
@@ -239,10 +241,10 @@ const form = ref<FormModel>({
 
 const rules = ref({
   student: [{ required: true, message: '请选择学生' }],
-  consultDate: [{ required: true, message: '请选择咨询日期' }],
-  consultTime: [{ required: true, message: '请选择咨询时间' }],
-  consultType: [{ required: true, message: '请选择咨询类型' }],
-  consultTeacher: [{ required: true, message: '请选择咨询老师' }],
+  consultDate: [{ required: true, message: '请选择访谈日期' }],
+  consultTime: [{ required: true, message: '请选择访谈时间' }],
+  consultType: [{ required: true, message: '请选择访谈类型' }],
+  consultTeacher: [{ required: true, message: '请选择访谈老师' }],
 });
 
 // ==================== 自定义咨询类型 ====================
@@ -572,7 +574,7 @@ function disabledRangeTime(
           class="w-5"
         />
         <span>{{
-          currentConsultationRecordId ? '咨询预约详情' : '新建咨询预约'
+          currentConsultationRecordId ? '访谈预约详情' : '新建访谈预约'
         }}</span>
       </div>
     </template>
@@ -637,7 +639,7 @@ function disabledRangeTime(
 
           <!-- 咨询时间 -->
           <LyLabel
-            title="咨询时间"
+            title="访谈时间"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -682,7 +684,7 @@ function disabledRangeTime(
 
           <!-- 咨询类型 -->
           <LyLabel
-            title="咨询类型"
+            title="访谈类型"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -750,7 +752,7 @@ function disabledRangeTime(
 
           <!-- 咨询老师 -->
           <LyLabel
-            title="咨询老师"
+            title="访谈老师"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -766,7 +768,7 @@ function disabledRangeTime(
 
           <!-- 咨询地点 -->
           <LyLabel
-            title="咨询地点"
+            title="访谈地点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultLocation">
@@ -780,7 +782,7 @@ function disabledRangeTime(
 
           <!-- 咨询重点 -->
           <LyLabel
-            title="咨询重点"
+            title="访谈重点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultFocus">
@@ -795,6 +797,26 @@ function disabledRangeTime(
             />
           </Form.Item>
         </Form>
+
+        <!-- 咨询详情的状态信息部分 -->
+        <template
+          v-if="currentConsultationRecordId && currentConsultationRecord"
+        >
+          <LyLabel
+            title="状态信息"
+            custom-title-class="font-semibold"
+            has-indicator
+          />
+          <div class="mt-5 text-sm text-gray-500">
+            <span class="font-semibold text-black">当前状态：</span>
+            {{
+              getDictLabel(
+                'counseling_status',
+                currentConsultationRecord.status,
+              )
+            }}
+          </div>
+        </template>
       </div>
 
       <!-- 右侧周视图部分 -->
@@ -878,9 +900,15 @@ function disabledRangeTime(
         <LyButton size="middle" @click="onFooterSecondaryClick">
           {{ footerSecondaryText }}
         </LyButton>
-        <LyButton size="middle" type="success" @click="onFooterPrimaryClick">
-          {{ footerPrimaryText }}
-        </LyButton>
+        <template
+          v-if="
+            currentConsultationRecord?.status === COUNSELING_STATUS.APPOINTMENT
+          "
+        >
+          <LyButton size="middle" type="success" @click="onFooterPrimaryClick">
+            {{ footerPrimaryText }}
+          </LyButton>
+        </template>
       </div>
     </template>
 
@@ -925,7 +953,7 @@ function disabledRangeTime(
               <IconifyIcon icon="tabler:clock" class="size-4 text-[#3B82F6]" />
             </div>
             <div>
-              <div class="text-sm text-[#6B7280]">咨询时间</div>
+              <div class="text-sm text-[#6B7280]">访谈时间</div>
               <div class="font-medium text-[#1F2937]">
                 {{
                   form.consultDate
@@ -950,7 +978,7 @@ function disabledRangeTime(
               />
             </div>
             <div>
-              <div class="text-sm text-[#6B7280]">咨询地点</div>
+              <div class="text-sm text-[#6B7280]">访谈地点</div>
               <div class="font-medium text-[#1F2937]">
                 {{ form.consultLocation }}
               </div>
@@ -965,7 +993,7 @@ function disabledRangeTime(
               <IconifyIcon icon="tabler:tag" class="size-4 text-[#8B5CF6]" />
             </div>
             <div>
-              <div class="text-sm text-[#6B7280]">咨询类型</div>
+              <div class="text-sm text-[#6B7280]">访谈类型</div>
               <div class="font-medium text-[#1F2937]">
                 {{ form.consultType || '未选择' }}
               </div>

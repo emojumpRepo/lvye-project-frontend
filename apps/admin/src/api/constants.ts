@@ -157,3 +157,11 @@ export enum QUESTIONNAIRE_CONFIG_CALCULATE_TYPE {
   MOST_CHOOSE = 3, // 最多选择
   SCORE = 1, // 分数区间
 }
+
+// 咨询状态
+export const COUNSELING_STATUS = {
+  APPOINTMENT: 1, // 已预约
+  CANCELED: 4, // 已取消
+  CLOSED: 3, // 已闭环
+  COMPLETED: 2, // 已完成
+};

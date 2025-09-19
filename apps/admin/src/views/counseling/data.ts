@@ -1,5 +1,4 @@
 import type { PageResult } from '@vben/request';
-import type { DeptGradeClassOption } from '@vben/types';
 
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
@@ -55,10 +54,10 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'consultationType',
-      title: '咨询类型',
+      title: '访谈类型',
       width: '10%',
     },
-    { field: 'counselorName', title: '咨询老师', width: '10%' },
+    { field: 'counselorName', title: '访谈老师', width: '10%' },
     { field: 'location', title: '地点', width: '13%' },
     {
       field: 'stauts',
@@ -86,13 +85,13 @@ export async function queryConsultationPage(
   { page }: any,
   formValues: any,
 ): Promise<{ list: CounselingRecordRow[]; total: number }> {
-  const { teacherId, status, consultTime, searchKeyword, studentNo } =
+  const { counselorUserId, status, consultTime, searchKeyword, studentNo } =
     formValues;
 
   const params: PsychologyConsultationApi.ConsultationRecordPageReq = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    teacherId: teacherId || undefined,
+    counselorUserId: counselorUserId || undefined,
     studentName: studentNo || searchKeyword || undefined,
     status: status !== undefined && status !== '' ? Number(status) : undefined,
     // 这里的日期控件是单值，后端入参是时间范围数组，按同一天处理
@@ -138,20 +137,19 @@ export async function queryConsultationPage(
 
 /** 搜索表单 */
 export function useSearchFormSchema({
-  deptOptions = [],
-}: { deptOptions?: DeptGradeClassOption[] } = {}): VbenFormSchema[] {
+  teacherOptions = [],
+}: {
+  teacherOptions?: { label: string; value: number }[];
+} = {}): VbenFormSchema[] {
   /** 咨询状态 */
   const counselingStatusList = getDictOptions('counseling_status');
 
   return [
     {
-      fieldName: 'teacherId',
-      component: 'Cascader',
+      fieldName: 'counselorUserId',
+      component: 'Select',
       componentProps: {
-        options: [
-          { label: '全部老师', value: '', isLeaf: true },
-          ...deptOptions,
-        ],
+        options: [{ label: '全部老师', value: '' }, ...teacherOptions],
         defaultValue: [''],
         expandTrigger: 'hover',
         changeOnSelect: true,

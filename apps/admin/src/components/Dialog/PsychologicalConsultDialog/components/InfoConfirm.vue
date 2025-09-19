@@ -93,15 +93,15 @@ const consultTimeText = computed(() =>
       <LyLabel title="咨询信息" has-indicator />
       <section class="section-container">
         <div>
-          <span class="desc-title">咨询时间：</span>
+          <span class="desc-title">访谈时间：</span>
           <span>{{ consultTimeText }}</span>
         </div>
         <div>
-          <span class="desc-title">咨询类型：</span>
+          <span class="desc-title">访谈类型：</span>
           <span>{{ consult.type || '—' }}</span>
         </div>
         <div>
-          <span class="desc-title">主咨询师：</span>
+          <span class="desc-title">访谈老师：</span>
           <span>{{ consult.counselor || '—' }}</span>
         </div>
       </section>

@@ -591,7 +591,7 @@ onUnmounted(() => {
     <header class="flex shrink-0 items-center justify-between p-6">
       <!-- 左侧切换日期 -->
       <div class="flex items-center gap-4">
-        <div class="mr-4 text-xl font-semibold">咨询日历</div>
+        <div class="mr-4 text-xl font-semibold">访谈日历</div>
         <LyButton size="middle" @click="handleToday">今日</LyButton>
         <LyButton
           size="middle"

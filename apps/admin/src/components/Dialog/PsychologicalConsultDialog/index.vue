@@ -41,6 +41,14 @@ function onPrev() {
 function onPublished() {
   hasPublished.value = true;
 }
+
+function handleOpenCancelConfirmModal() {
+  confirmModalApi
+    .setData({
+      title: '确定要放弃填写心理咨询评估吗？已填写的信息将丢失',
+    })
+    .open();
+}
 </script>
 
 <template>
@@ -51,7 +59,7 @@ function onPublished() {
     :closable="false"
     width="100%"
     wrap-class-name="full-modal"
-    @cancel="confirmModalApi.open()"
+    @cancel="handleOpenCancelConfirmModal"
   >
     <CommonDialogHeader
       title="心理咨询评估表单"
@@ -64,7 +72,7 @@ function onPublished() {
       :current-step="step"
       step-wrapper-class="px-8 py-6"
       @change="(v: number) => (step = v)"
-      @back="hasPublished ? handleClose() : confirmModalApi.open()"
+      @back="hasPublished ? handleClose() : handleOpenCancelConfirmModal()"
     />
 
     <div class="mt-6">
@@ -77,10 +85,7 @@ function onPublished() {
       />
     </div>
 
-    <ConfirmModal
-      title="确定要放弃填写心理咨询评估吗？已填写的信息将丢失"
-      @confirm="handleClose"
-    />
+    <ConfirmModal @confirm="handleClose" />
   </AModal>
 </template>
 
