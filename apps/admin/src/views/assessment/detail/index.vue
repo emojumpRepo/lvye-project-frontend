@@ -242,7 +242,7 @@ onMounted(async () => {
           </LyButton>
         </div>
       </template>
-      <template #rightExtra v-if="false">
+      <template #rightExtra>
         <ARadio.Group v-model:value="activeType">
           <ARadio.Button
             v-for="item in classType"
@@ -260,7 +260,7 @@ onMounted(async () => {
       <AssessmentDetailTask :task-no="taskNo" />
 
       <!-- 年级班级对比区域 -->
-      <AssessmentDetailCompare :task-no="taskNo" />
+      <AssessmentDetailCompare :task-no="taskNo" :active-type="activeType" />
     </div>
 
     <!-- 年级管理区域 -->

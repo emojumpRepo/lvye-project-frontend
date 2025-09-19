@@ -3,15 +3,22 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 
 import { computed } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { Divider, Empty, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import { getDictLabel } from '#/utils/dict';
+import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 
 const props = defineProps<{
   studentProfileTimeline: PsychologyStudentProfileApi.StudentProfileTimeline[];
   timelineTabs: { key: number; title: string }[];
 }>();
+
+const [QuestionnaireResultDialogModal, questionnaireResultDialogModalApi] =
+  useVbenModal({
+    connectedComponent: QuestionnaireResultDialog,
+  });
 
 const activeTimelineKey = defineModel<number>('activeTimelineKey');
 
@@ -26,6 +33,13 @@ function handleViewDetail(
   timeline: PsychologyStudentProfileApi.StudentProfileTimeline,
 ) {
   message.warning('即将上线');
+  // questionnaireResultDialogModalApi
+  //   .setData({
+  //     id: timeline.meta.taskId,
+  //     name: timeline.meta.studentName,
+  //     taskName: timeline.meta.taskName,
+  //   })
+  //   .open();
 }
 </script>
 
@@ -49,7 +63,7 @@ function handleViewDetail(
       </div>
       <div class="w-full flex-1 space-y-4 overflow-y-auto px-4">
         <div
-          class="relative flex items-start"
+          class="relative flex h-[140px] items-start"
           v-for="timeline in timelineList"
           :key="timeline.id"
         >
@@ -58,27 +72,24 @@ function handleViewDetail(
             <Divider type="vertical" class="h-[130px] bg-[#EAEBED]" />
           </div>
           <div
-            class="ml-6 box-border flex w-full flex-col gap-3 overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
+            class="ml-6 box-border flex h-full w-full flex-col justify-between overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
           >
             <div class="flex items-center justify-between text-xs">
               <span class="rounded bg-[#14E77E1F] p-1 text-[#04DC70]">
-                {{
-                  getDictLabel(
-                    'student_timeline_event_type',
-                    timeline.eventType,
-                  )
-                }}
+                {{ timeline.title }}
               </span>
               <span class="text-[#B0B1B2]">
                 {{ dayjs(timeline.createTime).format('YYYY-MM-DD') }}
               </span>
             </div>
-            <div class="text-sm font-bold">{{ timeline.operator }}</div>
+            <div class="text-sm font-bold">
+              {{ timeline.operator || '未知操作人' }}
+            </div>
             <div class="truncate text-xs text-[#979899]">
               {{ timeline.content || '暂无内容' }}
             </div>
             <div
-              v-if="timeline.eventType === 2 || timeline.eventType === 4"
+              v-if="timeline.title === '测评完成' || timeline.eventType === 4"
               class="cursor-pointer text-xs text-[#1966FF]"
               @click="handleViewDetail(timeline)"
             >
@@ -91,5 +102,7 @@ function handleViewDetail(
     <template v-else>
       <Empty description="暂无数据" />
     </template>
+
+    <QuestionnaireResultDialogModal />
   </div>
 </template>

@@ -97,7 +97,7 @@ const questionnaireResults = computed(() => {
 
       <!-- 评估标准 -->
       <div>
-        <div class="mb-2 font-medium text-gray-600">评估标准:</div>
+        <div class="mb-2 font-medium text-gray-600">维度:</div>
         <div class="rounded-md bg-white p-3">
           <p class="text-sm leading-relaxed text-gray-700">
             {{ assessmentResult.riskLevelIntervention.criteria }}
@@ -107,7 +107,7 @@ const questionnaireResults = computed(() => {
 
       <!-- 评估结果 -->
       <div>
-        <div class="mb-2 font-medium text-gray-600">评估结果:</div>
+        <div class="mb-2 font-medium text-gray-600">测评结果:</div>
         <div class="rounded-md bg-white p-3">
           <p class="leading-relaxed text-gray-700">
             {{ assessmentResult.riskLevelIntervention.evaluation }}
@@ -117,7 +117,7 @@ const questionnaireResults = computed(() => {
 
       <!-- 干预建议 -->
       <div>
-        <div class="mb-2 font-medium text-gray-600">评估结果:</div>
+        <div class="mb-2 font-medium text-gray-600">建议:</div>
         <div class="rounded-md bg-white p-3">
           <p class="leading-relaxed text-gray-700">
             {{ assessmentResult.riskLevelIntervention.suggestion }}

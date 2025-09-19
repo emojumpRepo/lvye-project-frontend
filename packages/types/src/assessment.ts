@@ -111,6 +111,14 @@ export interface GradeRiskLevel {
   gradeName: string;
   total: number;
   riskLevelList: RiskLevel[];
+  classList: ClassRiskLevel[];
+}
+
+export interface ClassRiskLevel {
+  classDeptId: number;
+  className: string;
+  total: number;
+  riskLevelList: RiskLevel[];
 }
 
 export interface AssessmentTaskRiskLevelStatistics {

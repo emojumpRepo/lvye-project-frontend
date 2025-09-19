@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { Divider } from 'ant-design-vue';
+import { Divider, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import LyButton from '#/components/LyButton/index.vue';
@@ -11,6 +11,10 @@ defineProps<{
   buttonText: string;
   cardInfo: PsychologyStudentProfileApi.StudentAssessmentHistory;
 }>();
+
+function handleClick() {
+  message.warning('即将上线');
+}
 </script>
 
 <template>
@@ -64,7 +68,7 @@ defineProps<{
           </div>
         </div> -->
       </div>
-      <div class="mt-4 flex justify-end">
+      <div class="mt-4 flex justify-end" @click="handleClick">
         <LyButton type="success" ghost size="middle">
           {{ buttonText }}
         </LyButton>
