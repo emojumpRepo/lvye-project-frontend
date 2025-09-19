@@ -68,6 +68,7 @@ const STUDENT_PSYCHOLOGICAL_STATUS = {
 /** 获取标签样式 */
 export function getTagByCategory(dictType: string, value: number | string) {
   const dictObj = getDictObj(dictType, value);
+
   if (!dictObj) {
     return null;
   }

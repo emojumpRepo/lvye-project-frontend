@@ -71,7 +71,7 @@ const loadingQuestionnaires = ref(false);
 async function loadQuestionnaireOptions() {
   try {
     loadingQuestionnaires.value = true;
-    const list = await getQuestionnaireListSimple();
+    const list = await getQuestionnaireListSimple(0);
     const arr = Array.isArray(list) ? list : [];
     questionnaireOptions.value = arr
       .map((q: any) => ({

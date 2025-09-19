@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
 import { ArrowLeft } from '@vben/icons';
 
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
-import LyButton from '#/components/LyButton/index.vue';
 
 interface Props {
   src: string;
@@ -33,7 +33,9 @@ const isComplete = ref(false); // 是否完成作答
 // iframe 通信相关
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const iframeHeight = ref<string>(props.height);
-const showConfirmDialog = ref(false);
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
 
 const allowedOrigin = computed(() => {
   try {
@@ -97,12 +99,12 @@ function handleBack() {
   if (isComplete.value) {
     props.onBack?.();
   } else {
-    showConfirmDialog.value = true;
+    confirmModalApi.open();
   }
 }
 
 function handleConfirm() {
-  showConfirmDialog.value = false;
+  confirmModalApi.close();
   props.onBack?.();
 }
 
@@ -138,26 +140,10 @@ defineExpose({
       @load="handleIframeLoad"
     ></iframe>
 
-    <ConfirmDialog
-      v-model:show="showConfirmDialog"
+    <ConfirmModal
       title="确定要放弃完成本次测评任务吗？已填写的信息将丢失"
       @confirm="handleConfirm"
-    >
-      <template #footer>
-        <div class="mt-4 flex items-center justify-end">
-          <LyButton
-            type="default"
-            size="middle"
-            @click="showConfirmDialog = false"
-          >
-            取消
-          </LyButton>
-          <LyButton type="success" size="middle" @click="handleConfirm">
-            确定
-          </LyButton>
-        </div>
-      </template>
-    </ConfirmDialog>
+    />
   </div>
 </template>
 

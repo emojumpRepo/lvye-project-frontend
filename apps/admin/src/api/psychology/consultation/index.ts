@@ -14,8 +14,8 @@ export namespace PsychologyConsultationApi {
     counselorName?: string;
     type: number;
     method: number;
-    appointmentStartTime: Date;
-    appointmentEndTime: Date;
+    appointmentStartTime: Date | number;
+    appointmentEndTime: Date | number;
     durationMinutes?: number;
     consultationType: string;
     overdue?: boolean;
@@ -50,6 +50,12 @@ export namespace PsychologyConsultationApi {
     durationMinutes?: number;
     notes?: string;
     status?: number;
+  }
+
+  /** 调整心理咨询记录时间请求 */
+  export interface ConsultationRecordTimeAdjustReq {
+    newAppointmentStartTime: Date | number;
+    newAppointmentEndTime: Date | number;
   }
 
   /** 危机干预事件信息 */
@@ -159,7 +165,25 @@ export function createConsultationRecord(
 export function updateConsultationRecord(
   data: PsychologyConsultationApi.ConsultationRecordSaveReq,
 ) {
-  return requestClient.put('/psychology/consultation-record/update', data);
+  return requestClient.put('/psychology/consultation/appointment/update', data);
+}
+
+/** 完成心理咨询 */
+export function completeConsultationRecord(id: number) {
+  return requestClient.put(
+    `/psychology/consultation/appointment/${id}/complete`,
+  );
+}
+
+/** 调整心理咨询记录时间 */
+export function adjustConsultationRecordTime(
+  id: number,
+  data: PsychologyConsultationApi.ConsultationRecordTimeAdjustReq,
+) {
+  return requestClient.put(
+    `/psychology/consultation/appointment/${id}/adjust-time`,
+    data,
+  );
 }
 
 /** 删除心理咨询记录 */

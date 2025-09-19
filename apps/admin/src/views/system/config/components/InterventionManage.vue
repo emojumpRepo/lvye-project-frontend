@@ -3,6 +3,7 @@ import type { UploadProps } from 'ant-design-vue';
 
 import { onMounted, reactive, ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -23,6 +24,10 @@ interface InterventionManageState {
   reportExpireTime: number;
 }
 
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
 const reportExpireTimeOptions = [
   { label: '24小时（适合专职心理老师，能及时处理）', value: 24 },
   { label: '48小时（适合兼职心理老师，给予充足时间）', value: 48 },
@@ -36,8 +41,6 @@ const form = reactive<InterventionManageState>({
 const initialSnapshot = ref<InterventionManageState | null>(null);
 const loading = ref(false);
 const fileList = ref<UploadProps['fileList']>([]);
-
-const openConfirmDialog = ref(false);
 
 // 默认值
 const DEFAULT_REPORT_EXPIRE_TIME = 24;
@@ -106,7 +109,7 @@ async function handleSaveConfirm() {
     );
 
     initialSnapshot.value = { ...form };
-    openConfirmDialog.value = false;
+    confirmModalApi.close();
     message.success('保存成功');
   } catch (error) {
     console.error('保存失败:', error);
@@ -117,7 +120,7 @@ async function handleSaveConfirm() {
 }
 
 function handleSave() {
-  openConfirmDialog.value = true;
+  confirmModalApi.open();
 }
 
 function handleReset() {
@@ -235,8 +238,7 @@ defineExpose({
       </section>
     </div>
 
-    <ConfirmDialog
-      v-model:show="openConfirmDialog"
+    <ConfirmModal
       title="此设置影响所有未完成的评估任务时限"
       @confirm="handleSaveConfirm"
     />

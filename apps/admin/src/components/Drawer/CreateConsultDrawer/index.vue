@@ -3,7 +3,7 @@ import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
 import { computed, ref, watch } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -20,6 +20,7 @@ import isBetween from 'dayjs/plugin/isBetween';
 import {
   createConsultationRecord,
   getConsultationRecord,
+  updateConsultationRecord,
 } from '#/api/psychology/consultation';
 import { getTeacherUserList } from '#/api/system/user';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
@@ -64,9 +65,13 @@ interface DrawerSnapshot {
     | { date: Date; end: Date | string; start: Date | string };
 }
 
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
 function buildStudentOption(res: any): StudentOption {
   return {
-    label: [res.studentName, res.studentNumber, res.className]
+    label: [res.studentName, res.className, res.studentNumber]
       .filter(Boolean)
       .join(' - '),
     name: res.studentName || '',
@@ -142,7 +147,6 @@ const { calculateDurationText, getDisabledTimeConfig } = useTimeCalculation();
 const {
   studentSearchState,
   searchingText,
-  studentWarning,
   fetchStudents,
   handleStudentChange,
   clearSearchState,
@@ -252,10 +256,6 @@ const weekViewDate = ref(dayjs());
 const timeError = ref('');
 const conflictError = ref('');
 const dateTip = ref('');
-const holidayDates = ['2025-01-01', '2025-10-01'];
-const myAppointments = [
-  { date: '2025-08-05', start: '15:00', end: '16:00', title: '李小红' },
-];
 
 // ==================== 计算属性 ====================
 const durationText = computed(() => {
@@ -327,14 +327,6 @@ function cancelAddType() {
 }
 
 // ==================== 时间冲突检查函数 ====================
-function onDateChange(value: dayjs.Dayjs | string, _dateString: string) {
-  dateTip.value = '';
-  const d = dayjs(typeof value === 'string' ? value : value.toString());
-  if (holidayDates.some((h) => d.isSame(dayjs(h), 'day'))) {
-    dateTip.value = '⚠️ 所选日期为节假日';
-  }
-}
-
 function onTimeRangeChange(
   value: [dayjs.Dayjs | null | string, dayjs.Dayjs | null | string] | null,
   _dateString?: [string, string],
@@ -348,36 +340,24 @@ function onTimeRangeChange(
   const startDT = dayjs.isDayjs(value[0])
     ? value[0]
     : dayjs(value[0] as string);
-  const endDT = dayjs.isDayjs(value[1]) ? value[1] : dayjs(value[1] as string);
 
   if (startDT.isBefore(dayjs())) {
     timeError.value = '不能选择过去时间';
-    return;
-  }
-
-  const conflicts = myAppointments.filter((a) =>
-    dayjs(a.date).isSame(dayjs(form.value.consultDate), 'day'),
-  );
-
-  for (const c of conflicts) {
-    const cStart = dayjs(`${c.date} ${c.start}`);
-    const cEnd = dayjs(`${c.date} ${c.end}`);
-    const overlap = startDT.isBefore(cEnd) && endDT.isAfter(cStart);
-    if (overlap) {
-      conflictError.value = `❌ 该时间段您已有其他预约：${c.title}(${c.start}-${c.end})`;
-      break;
-    }
   }
 }
 
 // ==================== 表单提交相关 ====================
 function submitConsult() {
   formRef.value?.validate().then(() => {
-    showConfirmDialog.value = true;
+    if (isDetail.value) {
+      handleConfirmCreateOrUpdate();
+    } else {
+      confirmModalApi.open();
+    }
   });
 }
 
-async function handleConfirmCreate() {
+async function handleConfirmCreateOrUpdate() {
   // 组合日期(年月日)与时间(时分秒)
   const dateStr = form.value.consultDate
     ? dayjs(form.value.consultDate).format('YYYY-MM-DD')
@@ -393,7 +373,7 @@ async function handleConfirmCreate() {
   const endDateTime =
     dateStr && endTimeStr ? dayjs(`${dateStr} ${endTimeStr}`) : undefined;
 
-  const params = {
+  const params: PsychologyConsultationApi.ConsultationRecordSaveReq = {
     studentProfileId: form.value.student?.value as number,
     counselorUserId: form.value.consultTeacher as number,
     consultationType: form.value.consultType,
@@ -403,8 +383,15 @@ async function handleConfirmCreate() {
     appointmentEndTime: endDateTime?.valueOf() as number,
     notes: form.value.consultFocus,
   };
+
   try {
-    await createConsultationRecord(params);
+    if (isDetail.value) {
+      params.id = currentConsultationRecordId.value as number;
+      await updateConsultationRecord(params);
+    } else {
+      await createConsultationRecord(params);
+    }
+
     showConfirmDialog.value = false;
     drawerApi.close();
     emit('refresh');
@@ -424,10 +411,12 @@ function resetForm() {
 // ==================== 咨询预约详情相关 ====================
 
 async function loadConsultationRecord() {
-  if (!currentConsultationRecordId.value) {
+  if (!isDetail.value) {
     return;
   }
-  const res = await getConsultationRecord(currentConsultationRecordId.value);
+  const res = await getConsultationRecord(
+    currentConsultationRecordId.value as number,
+  );
   currentConsultationRecord.value = res;
   // 将详情数据回填到表单
   try {
@@ -452,7 +441,7 @@ async function loadConsultationRecord() {
     );
 
     // 回填老师与地点、重点
-    form.value.consultTeacher = (res as any).counselorName || '';
+    form.value.consultTeacher = (res as any).counselorUserId || '';
     form.value.consultLocation = (res as any).location || '';
     form.value.consultFocus = (res as any).notes || '';
 
@@ -644,9 +633,6 @@ function disabledRangeTime(
                 />
               </template>
             </Select>
-            <div v-if="studentWarning" class="mt-1 text-xs text-[#faad14]">
-              {{ studentWarning }}
-            </div>
           </Form.Item>
 
           <!-- 访谈时间 -->
@@ -667,7 +653,6 @@ function disabledRangeTime(
                   (current) =>
                     current && current.isBefore(dayjs().startOf('day'))
                 "
-                @change="onDateChange"
               />
             </Form.Item>
             <Form.Item
@@ -898,110 +883,102 @@ function disabledRangeTime(
         </LyButton>
       </div>
     </template>
-  </Drawer>
-  <!-- 确认创建弹窗 -->
-  <ConfirmDialog
-    v-model:show="showConfirmDialog"
-    confirm-text="确认创建"
-    cancel-text="取消"
-    @confirm="handleConfirmCreate"
-  >
-    <template #title>
-      <div class="flex items-center gap-3 text-lg font-semibold">
-        <IconifyIcon
-          icon="tabler:calendar-check"
-          class="size-5 text-[#04DC70]"
-        />
-        确认创建访谈预约
-      </div>
 
-      <div class="py-4">
-        <!-- 预约信息卡片 -->
-        <div class="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] p-4">
-          <div class="space-y-3">
-            <!-- 学生信息 -->
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[#04DC7014]"
-              >
-                <IconifyIcon icon="tabler:user" class="size-4 text-[#04DC70]" />
-              </div>
-              <div>
-                <div class="text-sm text-[#6B7280]">学生选择</div>
-                <div class="font-medium text-[#1F2937]">
-                  {{ form.student?.label || '未选择' }}
-                </div>
+    <ConfirmModal
+      confirm-text="确认创建"
+      cancel-text="取消"
+      @confirm="handleConfirmCreateOrUpdate"
+    >
+      <template #title>
+        <div class="flex items-center gap-3 text-lg font-semibold">
+          <IconifyIcon
+            icon="tabler:calendar-check"
+            class="size-5 text-[#04DC70]"
+          />
+          确认创建咨询预约
+        </div>
+      </template>
+
+      <!-- 预约信息卡片 -->
+      <div class="rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-sm">
+        <div class="space-y-3">
+          <!-- 学生信息 -->
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-[#04DC7014]"
+            >
+              <IconifyIcon icon="tabler:user" class="size-4 text-[#04DC70]" />
+            </div>
+            <div>
+              <div class="text-sm text-[#6B7280]">学生选择</div>
+              <div class="font-medium text-[#1F2937]">
+                {{ form.student?.label || '未选择' }}
               </div>
             </div>
+          </div>
 
-            <!-- 时间信息 -->
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[#3B82F614]"
-              >
-                <IconifyIcon
-                  icon="tabler:clock"
-                  class="size-4 text-[#3B82F6]"
-                />
-              </div>
-              <div>
-                <div class="text-sm text-[#6B7280]">访谈时间</div>
-                <div class="font-medium text-[#1F2937]">
-                  {{
-                    form.consultDate
-                      ? dayjs(form.consultDate).format('YYYY年MM月DD日')
-                      : '未选择'
-                  }}
-                  {{ form.consultTime?.[0]?.format('HH:mm') }}-{{
-                    form.consultTime?.[1]?.format('HH:mm')
-                  }}
-                </div>
+          <!-- 时间信息 -->
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-[#3B82F614]"
+            >
+              <IconifyIcon icon="tabler:clock" class="size-4 text-[#3B82F6]" />
+            </div>
+            <div>
+              <div class="text-sm text-[#6B7280]">咨询时间</div>
+              <div class="font-medium text-[#1F2937]">
+                {{
+                  form.consultDate
+                    ? dayjs(form.consultDate).format('YYYY年MM月DD日')
+                    : '未选择'
+                }}
+                {{ form.consultTime?.[0]?.format('HH:mm') }}-{{
+                  form.consultTime?.[1]?.format('HH:mm')
+                }}
               </div>
             </div>
+          </div>
 
-            <!-- 地点信息 -->
-            <div v-if="form.consultLocation" class="flex items-center gap-3">
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[#F59E0B14]"
-              >
-                <IconifyIcon
-                  icon="tabler:map-pin"
-                  class="size-4 text-[#F59E0B]"
-                />
-              </div>
-              <div>
-                <div class="text-sm text-[#6B7280]">访谈地点</div>
-                <div class="font-medium text-[#1F2937]">
-                  {{ form.consultLocation }}
-                </div>
+          <!-- 地点信息 -->
+          <div v-if="form.consultLocation" class="flex items-center gap-3">
+            <div
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-[#F59E0B14]"
+            >
+              <IconifyIcon
+                icon="tabler:map-pin"
+                class="size-4 text-[#F59E0B]"
+              />
+            </div>
+            <div>
+              <div class="text-sm text-[#6B7280]">咨询地点</div>
+              <div class="font-medium text-[#1F2937]">
+                {{ form.consultLocation }}
               </div>
             </div>
+          </div>
 
-            <!-- 类型信息 -->
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-[#8B5CF614]"
-              >
-                <IconifyIcon icon="tabler:tag" class="size-4 text-[#8B5CF6]" />
-              </div>
-              <div>
-                <div class="text-sm text-[#6B7280]">访谈类型</div>
-                <div class="font-medium text-[#1F2937]">
-                  {{ form.consultType || '未选择' }}
-                </div>
+          <!-- 类型信息 -->
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-8 w-8 items-center justify-center rounded-full bg-[#8B5CF614]"
+            >
+              <IconifyIcon icon="tabler:tag" class="size-4 text-[#8B5CF6]" />
+            </div>
+            <div>
+              <div class="text-sm text-[#6B7280]">咨询类型</div>
+              <div class="font-medium text-[#1F2937]">
+                {{ form.consultType || '未选择' }}
               </div>
             </div>
           </div>
         </div>
-
-        <!-- 通知提示 -->
-        <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#04DC7014] p-3">
-          <IconifyIcon icon="tabler:bell" class="size-4 text-[#04DC70]" />
-          <span class="text-sm text-[#04DC70]">
-            确认后将向学生发送预约通知
-          </span>
-        </div>
       </div>
-    </template>
-  </ConfirmDialog>
+
+      <!-- 通知提示 -->
+      <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#04DC7014] p-3">
+        <IconifyIcon icon="tabler:bell" class="size-4 text-[#04DC70]" />
+        <span class="text-sm text-[#04DC70]"> 确认后将向学生发送预约通知 </span>
+      </div>
+    </ConfirmModal>
+  </Drawer>
 </template>

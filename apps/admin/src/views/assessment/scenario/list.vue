@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { AssessmentScenario } from '@vben/types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { PsychologyScenarioApi } from '#/api/psychology/scenario';
 
 import { onMounted, ref } from 'vue';
 
@@ -61,7 +62,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         },
       },
     },
-  } as VxeTableGridOptions<PsychologyScenarioApi.AssessmentScenario>,
+  } as VxeTableGridOptions<AssessmentScenario>,
 });
 
 // ============== 事件处理 ==============
@@ -71,7 +72,7 @@ function handleAdd() {
 }
 
 // 编辑场景
-async function handleEdit(row: PsychologyScenarioApi.AssessmentScenario) {
+async function handleEdit(row: AssessmentScenario) {
   // 预取详情与槽位，避免表单打开后槽位为空
   try {
     loading.value = true;
@@ -95,7 +96,7 @@ async function handleEdit(row: PsychologyScenarioApi.AssessmentScenario) {
 // 查看详情（如需启用请在操作列解注释触发）
 
 // 删除场景
-async function handleDelete(row: PsychologyScenarioApi.AssessmentScenario) {
+async function handleDelete(row: AssessmentScenario) {
   try {
     loading.value = true;
     await deleteAssessmentScenario(row.id!);
