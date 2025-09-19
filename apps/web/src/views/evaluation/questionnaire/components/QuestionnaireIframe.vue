@@ -21,7 +21,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  width: '65%',
+  width: '80%',
   height: '90%',
   showBackButton: true,
   onBack: undefined,

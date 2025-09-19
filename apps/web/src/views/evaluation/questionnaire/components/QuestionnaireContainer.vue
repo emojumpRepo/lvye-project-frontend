@@ -47,11 +47,7 @@ const bgUrl = computed(() => {
   const introBgImgUrl =
     props.sceneData?.metadata?.introConfig.backgroundImageUrl;
   return showIntro.value
-    ? introBgImgUrl ||
-        new URL(
-          `${imgBaseUrl}/${props.sceneData?.slotKey}.png`,
-          import.meta.url,
-        ).href
+    ? introBgImgUrl
     : new URL(`${imgBaseUrl}answer_page_bg.png`, import.meta.url).href;
 });
 

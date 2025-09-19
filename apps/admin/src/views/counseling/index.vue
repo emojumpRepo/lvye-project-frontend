@@ -24,6 +24,8 @@ const viewTypeOptions = [
   { label: '日历视图', value: 2 },
 ];
 
+const counselingListRef = ref<InstanceType<typeof CounselingList>>();
+
 const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
 
 // 创建咨询预约抽屉
@@ -41,6 +43,11 @@ const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
 const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
+
+/** 刷新咨询记录列表 */
+function onRefresh() {
+  counselingListRef.value?.refresh();
+}
 
 /** 打开咨询预约抽屉 */
 function handleCreateConsult(
@@ -180,7 +187,10 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
           <!-- 访谈记录列表 -->
-          <CounselingList @view-detail="handleViewDetail" />
+          <CounselingList
+            @view-detail="handleViewDetail"
+            ref="counselingListRef"
+          />
         </template>
         <template v-else>
           <!-- 日历视图 -->
@@ -193,7 +203,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
         </template>
       </Transition>
     </div>
-    <ConsultRecordDrawer />
+    <ConsultRecordDrawer @refresh="onRefresh" />
     <ConsultMoreDrawer />
   </Page>
 </template>

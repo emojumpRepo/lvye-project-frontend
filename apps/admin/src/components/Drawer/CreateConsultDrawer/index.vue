@@ -17,7 +17,10 @@ import {
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
-import { getConsultationRecord } from '#/api/psychology/consultation';
+import {
+  createConsultationRecord,
+  getConsultationRecord,
+} from '#/api/psychology/consultation';
 import { getTeacherUserList } from '#/api/system/user';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -374,11 +377,40 @@ function submitConsult() {
   });
 }
 
-function handleConfirmCreate() {
-  console.log(form.value);
-  // showConfirmDialog.value = false;
-  // drawerApi.close();
-  emit('refresh');
+async function handleConfirmCreate() {
+  // 组合日期(年月日)与时间(时分秒)
+  const dateStr = form.value.consultDate
+    ? dayjs(form.value.consultDate).format('YYYY-MM-DD')
+    : '';
+  const startTimeStr = form.value.consultTime?.[0]
+    ? dayjs(form.value.consultTime[0]).format('HH:mm:ss')
+    : '';
+  const endTimeStr = form.value.consultTime?.[1]
+    ? dayjs(form.value.consultTime[1]).format('HH:mm:ss')
+    : '';
+  const startDateTime =
+    dateStr && startTimeStr ? dayjs(`${dateStr} ${startTimeStr}`) : undefined;
+  const endDateTime =
+    dateStr && endTimeStr ? dayjs(`${dateStr} ${endTimeStr}`) : undefined;
+
+  const params = {
+    studentProfileId: form.value.student?.value as number,
+    counselorUserId: form.value.consultTeacher as number,
+    consultationType: form.value.consultType,
+    location: form.value.consultLocation,
+    // 使用时间戳(毫秒)以避免 toISOString 导致的时区偏移
+    appointmentStartTime: startDateTime?.valueOf() as number,
+    appointmentEndTime: endDateTime?.valueOf() as number,
+    notes: form.value.consultFocus,
+  };
+  try {
+    await createConsultationRecord(params);
+    showConfirmDialog.value = false;
+    drawerApi.close();
+    emit('refresh');
+  } catch (error) {
+    console.error('创建咨询预约失败:', error);
+  }
 }
 
 function resetForm() {
@@ -445,7 +477,7 @@ async function loadConsultationRecord() {
 
 // ==================== Drawer 配置 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-2/3',
+  class: 'w-3/4',
   contentClass: 'p-0',
   confirmText: '创建预约',
   // 关闭时卸载内容，避免残留状态

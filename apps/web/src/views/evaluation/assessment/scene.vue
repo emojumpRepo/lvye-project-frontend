@@ -12,7 +12,6 @@ import { getAssessmentParticipantStatus } from '#/api/psychology/assessment';
 import { useEvaluationStore } from '#/store/evaluation';
 
 // 导入背景图片
-import defaultSceneMapUrl from '../../../static/images/evaluation/junior_evaluation_map.png';
 
 const router = useRouter();
 const route = useRoute();
@@ -119,7 +118,9 @@ onMounted(async () => {
           <div
             class="map-background"
             :style="{
-              backgroundImage: `url(${defaultSceneMapUrl})`,
+              backgroundImage: scenarioData?.metadata?.sceneImageUrl
+                ? `url('${encodeURI(scenarioData.metadata.sceneImageUrl)}')`
+                : '',
             }"
           ></div>
 
@@ -215,11 +216,13 @@ onMounted(async () => {
                 <span
                   v-if="getSlotStatus(slot.id || 0) === 'locked'"
                   class="locked-text"
-                  >(未解锁)</span>
+                  >(未解锁)</span
+                >
                 <span
                   v-if="getSlotStatus(slot.id || 0) === 'completed'"
                   class="completed-text"
-                  >(已完成)</span>
+                  >(已完成)</span
+                >
               </div>
               <div class="building-pulse"></div>
             </div>
