@@ -145,6 +145,8 @@ async function handleSave() {
     } catch (error) {
       console.warn('updateStudentProfile failed', error);
     }
+  } else {
+    message.warning('即将上线');
   }
   emit('updateLoading', false);
 }
@@ -153,6 +155,7 @@ async function handleSave() {
 function handleCancel() {
   edit.value = false;
   setFormValues();
+  InfoFormApi.resetValidate();
   if (props.studentInfo) {
     InfoFormApi.setValues(studentFormInfo.value);
   }

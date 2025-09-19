@@ -25,7 +25,7 @@ import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/Co
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
 import TimelineTab from '#/components/Drawer/StudentDrawer/components/TimelineTab.vue';
 import LyButton from '#/components/LyButton/index.vue';
-import { calculateAge } from '#/utils/calculateAge';
+import { calculateAge } from '#/utils/calculateTool';
 import { getDictObj, getDictOptions } from '#/utils/dict';
 
 interface FooterButton {

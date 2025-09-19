@@ -50,6 +50,7 @@ defineOptions({ name: 'StudentArchive' });
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
 const deptListLoaded = ref(false);
+const studentSearchRef = ref();
 
 // ============== 抽屉 ==============
 // 详情抽屉
@@ -110,7 +111,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxConfig: { reserve: true },
     pagerConfig: {
       align: 'right',
-      pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
     },
     columns: useStudentProfileGridSchema(),
@@ -121,6 +121,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           const data = await getStudentProfilePage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
+            ...studentSearchRef.value?.searchParams,
             ...formValues,
           });
           return data;
@@ -152,11 +153,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // ============== 事件 ==============
 // 处理搜索
-async function handleSearch(
-  params: PsychologyStudentProfileApi.StudentProfilePageReq,
-) {
+async function handleSearch() {
   if (viewMode.value === 'group') return;
-  await gridApi.query({ ...params, pageNo: 1 });
+  gridApi.grid.setCurrentPage(1);
+  await gridApi.query({ pageNo: 1 });
 }
 
 // 处理视图模式切换
@@ -330,6 +330,7 @@ onMounted(async () => {
   <div class="flex h-full flex-col p-6">
     <!-- 搜索组件 -->
     <StudentSearch
+      ref="studentSearchRef"
       :dept-list-loaded="deptListLoaded"
       @search="handleSearch"
       @loading="handleLoading"

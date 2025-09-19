@@ -5,6 +5,8 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { Select as ASelect, Textarea as ATextarea } from 'ant-design-vue';
 
+import LyLabel from '#/components/LyLabel/index.vue';
+
 interface Params {
   type: 'allocate' | 'edit'; // 编辑 | 分配
 }
@@ -56,6 +58,9 @@ const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
 
     <!-- 事件内容编辑 -->
     <div v-if="params?.type === 'edit'">
+      <div>
+        <LyLabel title="负责人" required />
+      </div>
       <ATextarea
         v-model:value="eventContent"
         :rows="8"

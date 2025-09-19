@@ -80,8 +80,7 @@ onMounted(async () => {
   <div class="box-border rounded-xl bg-white p-6">
     <LyCardTitle
       icon="ix:user-filled"
-      title="咨询记录管理"
-      :pb="3"
+      title="访谈记录管理"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
 

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { CrisisEventRecord } from '@vben/types';
+
 import { ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
@@ -6,7 +8,7 @@ import { IconifyIcon } from '@vben/icons';
 import dayjs from 'dayjs';
 
 defineProps<{
-  eventProcessingRecord: any;
+  eventProcessingRecord: CrisisEventRecord;
 }>();
 
 const emits = defineEmits<{
@@ -17,12 +19,16 @@ const isHover = ref(false);
 </script>
 
 <template>
-  <div class="space-y-3 rounded-xl bg-[#F7F8FA] p-4 text-sm">
+  <div class="mr-1 space-y-3 rounded-xl bg-[#F7F8FA] p-4 text-sm">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="font-bold">{{ eventProcessingRecord.title }}</span>
+        <span class="font-bold">{{ eventProcessingRecord.action }}</span>
         <span class="text-xs text-[#979899]">
-          {{ dayjs(eventProcessingRecord.time).format('YYYY-MM-DD HH:mm:ss') }}
+          {{
+            dayjs(eventProcessingRecord.createTime).format(
+              'YYYY-MM-DD HH:mm:ss',
+            )
+          }}
         </span>
       </div>
       <IconifyIcon
@@ -38,6 +44,6 @@ const isHover = ref(false);
     <div class="line-clamp-2 text-[#17191A]">
       {{ eventProcessingRecord.content }}
     </div>
-    <div class="text-[#04DC70]">{{ eventProcessingRecord.operator }}</div>
+    <div class="text-[#04DC70]">{{ eventProcessingRecord.operatorName }}</div>
   </div>
 </template>

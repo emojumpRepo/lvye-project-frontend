@@ -112,7 +112,7 @@ export const deleteQuestionnaire = (id: number) => {
 // 获取问卷详情
 export const getQuestionnaire = (id: number) => {
   return requestClient.get<QuestionnaireVO>(
-    `/emojump/questionnaire/get?id=${id}`,
+    `/psychology/questionnaire/get?id=${id}`,
   );
 };
 
@@ -231,5 +231,10 @@ export const getQuestionnaireResult = (id: number) => {
 export const getQuestionnaireListSimple = () => {
   return requestClient.get<QuestionnaireVO[]>(
     '/psychology/questionnaire/list-all-simple',
+    {
+      params: {
+        supportIndependentUse: 1,
+      },
+    },
   );
 };

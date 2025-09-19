@@ -20,7 +20,7 @@ import CounselingList from './list.vue';
 defineOptions({ name: 'CounselingCenter' });
 
 const viewTypeOptions = [
-  { label: '咨询记录', value: 1 },
+  { label: '访谈记录', value: 1 },
   { label: '日历视图', value: 2 },
 ];
 
@@ -118,7 +118,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
   <Page auto-content-height :height-offset="50">
     <div class="flex h-full flex-col px-4">
       <!-- 页面标题 -->
-      <PageTitle title="咨询管理" :description="today" margin-bottom="mb-4">
+      <PageTitle title="访谈管理" :description="today" margin-bottom="mb-4">
         <template #action>
           <div class="custom-radio-group flex items-center gap-4">
             <RadioGroup v-model:value="viewType">
@@ -148,7 +148,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
           icon-bg="#f3f6ff"
           icon-color="#247eff"
           icon-src="flowbite:messages-solid"
-          title="今天咨询数"
+          title="今天访谈数"
           :value="12000"
         />
 
@@ -179,7 +179,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
 
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
-          <!-- 咨询记录列表 -->
+          <!-- 访谈记录列表 -->
           <CounselingList @view-detail="handleViewDetail" />
         </template>
         <template v-else>

@@ -15,15 +15,24 @@ export function useSearchFormSchema({
 }): VbenFormSchema[] {
   return [
     {
-      fieldName: 'gradeDeptId',
-      component: 'Select',
+      fieldName: 'classId',
+      component: 'Cascader',
       componentProps: {
-        options: [{ label: '全部年级', value: '' }, ...deptOptions],
+        options: [
+          { label: '全部班级', value: '', isLeaf: true },
+          ...deptOptions,
+        ],
+        defaultValue: [''],
+        expandTrigger: 'hover',
+        changeOnSelect: true,
+        allowClear: false,
+        showSearch: false,
+        style: { cursor: 'pointer' },
       },
-      defaultValue: '',
+      defaultValue: [''],
     },
     {
-      fieldName: 'consultantId',
+      fieldName: 'counselorUserId',
       component: 'Select',
       componentProps: {
         options: [{ label: '全部咨询师', value: '' }],
@@ -53,13 +62,13 @@ export function useSearchFormSchema({
 export function useEventGridSchema(): VxeTableGridOptions['columns'] {
   return [
     {
-      field: 'eventId',
+      field: 'id',
       title: '事件优先级',
-      slots: { default: 'eventId' },
+      slots: { default: 'id' },
       width: '15%',
     },
     {
-      field: 'eventDescription',
+      field: 'description',
       title: '事件描述',
       width: '15%',
       visible: false,
@@ -89,9 +98,9 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       width: '10%',
     },
     {
-      field: 'consultant',
+      field: 'handlerName',
       title: '负责人',
-      slots: { default: 'consultant' },
+      slots: { default: 'handlerName' },
       width: '15%',
     },
     {
@@ -101,9 +110,9 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       width: '15%',
     },
     {
-      field: 'createTime',
+      field: 'reportedAt',
       title: '上报时间',
-      slots: { default: 'createTime' },
+      slots: { default: 'reportedAt' },
       width: '12%',
     },
     {

@@ -162,16 +162,19 @@ onMounted(() => {
               {
                 label: '详情',
                 type: 'link',
+                color: 'success',
                 onClick: () => handleViewDetail(row),
               },
               {
                 label: '完成',
                 type: 'link',
+                color: 'success',
                 onClick: handleFinish,
               },
               {
                 label: '评估',
                 type: 'link',
+                color: 'success',
                 onClick: handleEvalute,
               },
             ]"
@@ -202,10 +205,6 @@ onMounted(() => {
 <style lang="scss" scoped>
 :deep(.vxe-cell--label) {
   color: #4c4c4d !important;
-}
-
-:deep(.ant-btn-link) {
-  color: #2c68ff !important;
 }
 
 :deep(.ant-steps-inline) {

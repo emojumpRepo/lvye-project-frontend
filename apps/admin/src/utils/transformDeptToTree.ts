@@ -14,7 +14,9 @@ import {
 export async function loadDeptList() {
   const data = await getDeptSimpleList();
   if (data.length > 0) {
-    const filteredData = data.filter((dept) => dept.parentId !== 110);
+    const filteredData = data.filter(
+      (dept) => dept.parentId !== 110 && dept.parentId !== 0,
+    );
 
     const childIds = new Set(filteredData.map((dept) => dept.id));
 

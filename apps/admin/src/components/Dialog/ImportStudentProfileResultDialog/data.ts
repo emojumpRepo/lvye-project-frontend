@@ -11,14 +11,9 @@ export const studentBulkImportColumns = [
     minWidth: 100,
   },
   {
-    title: '出生日期',
-    dataIndex: 'birthDate',
+    title: '身份证',
+    dataIndex: 'idCard',
     minWidth: 120,
-  },
-  {
-    title: '性别',
-    dataIndex: 'sex',
-    minWidth: 100,
   },
   {
     title: '班级',

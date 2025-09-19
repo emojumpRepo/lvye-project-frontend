@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { DeptGradeClassOption } from '@vben/types';
 
+import type { CrisisEventListReq } from '#/api/psychology/crisis';
+
 import { onMounted, ref } from 'vue';
 
 import { Badge as ABadge, Tabs as ATabs, message } from 'ant-design-vue';
@@ -11,25 +13,16 @@ import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
-interface SearchParams {
-  pageNo?: number;
-  pageSize?: number;
-  studentNo?: string;
-  name?: string;
-  counselorId?: number;
-  gradeDeptId?: number;
-}
-
 const emit = defineEmits<{
   loading: [loading: boolean];
-  search: [params: SearchParams];
+  search: [params: CrisisEventListReq];
 }>();
 
 const activeTabKey = defineModel<string>('activeKey');
 const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 // 搜索参数
-const searchParams = ref<SearchParams>({
+const crisisEventListReq = ref<CrisisEventListReq>({
   pageNo: 1,
   pageSize: 10,
 });
@@ -57,15 +50,15 @@ async function handleSearch(values: any) {
     const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
 
     // 构建搜索参数
-    const params: SearchParams = {
-      ...searchParams.value,
+    const params: CrisisEventListReq = {
+      ...crisisEventListReq.value,
       studentNo: studentNo || undefined,
-      name,
-      gradeDeptId: values.gradeDeptId || undefined,
-      counselorId: values.counselorId || undefined,
+      studentName: name || undefined,
+      classId: values.classId || undefined,
+      counselorUserId: values.counselorUserId || undefined,
     };
 
-    searchParams.value = params;
+    crisisEventListReq.value = params;
     emit('search', params);
   } catch (error) {
     console.error('搜索失败:', error);

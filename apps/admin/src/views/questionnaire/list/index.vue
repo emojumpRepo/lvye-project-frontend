@@ -2,11 +2,13 @@
 import type { QuestionnaireVO } from '@vben/types';
 
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { QuestionnairePageReqVO } from '#/api/psychology/questionnaire/index';
 
 import { onMounted, ref } from 'vue';
 
-import { Button, message } from 'ant-design-vue';
+import { useVbenModal } from '@vben/common-ui';
+import { IconifyIcon } from '@vben/icons';
+
+import { Button, Dropdown, Menu, message } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -17,6 +19,7 @@ import {
   syncQuestionnaireData,
   updateQuestionnaire,
 } from '#/api/psychology/questionnaire/index';
+import QuestionnaireDetailDialog from '#/components/Dialog/QuestionnaireDetailDialog/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
@@ -35,6 +38,13 @@ const selectQuestionnaire = ref<QuestionnaireVO>();
 // 配置弹窗相关
 const configDialogVisible = ref(false);
 const selectedQuestionnaire = ref<null | QuestionnaireVO>(null);
+const searchRef = ref();
+
+// 详情弹窗相关
+const [QuestionnaireDetailModal, questionnaireDetailModalApi] = useVbenModal({
+  connectedComponent: QuestionnaireDetailDialog,
+  destroyOnClose: true,
+});
 
 // 处理加载状态
 function handleLoading(isLoading: boolean) {
@@ -142,9 +152,15 @@ function onConfig(row: QuestionnaireVO) {
   configDialogVisible.value = true;
 }
 
+/** 问卷详情 */
+function onDetail(row: QuestionnaireVO) {
+  questionnaireDetailModalApi.setData(row).open();
+}
+
 // 处理搜索
-function handleSearch(params: QuestionnairePageReqVO) {
-  gridApi.query({ ...params, pageNo: 1 });
+function handleSearch() {
+  gridApi.grid.setCurrentPage(1);
+  gridApi.query({ pageNo: 1 });
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -158,10 +174,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues) => {
           return await getQuestionnaireList({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
+            ...formValues,
+            ...searchRef.value?.searchParams,
           });
         },
       },
@@ -170,7 +188,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
     },
     toolbarConfig: {
-      // refresh: { code: 'query' },
       refresh: false,
       search: false,
       zoom: false,
@@ -219,7 +236,11 @@ onMounted(() => {
   <div class="flex h-full flex-col p-6">
     <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <div>
-        <QuestionnaireSearch @loading="handleLoading" @search="handleSearch" />
+        <QuestionnaireSearch
+          ref="searchRef"
+          @loading="handleLoading"
+          @search="handleSearch"
+        />
       </div>
       <div>
         <Button type="primary" @click="handleSync">同步最新数据</Button>
@@ -252,11 +273,11 @@ onMounted(() => {
             />
           </template>
 
-          <!-- 是否开放列 -->
-          <template #isOpen="{ row }">
+          <!-- 是否独立问卷列 -->
+          <template #supportIndependentUse="{ row }">
             <LyTag
               tag-category-key="questionnaire_is_open"
-              :dict-value="String(row.isOpen)"
+              :dict-value="String(row.supportIndependentUse)"
             />
           </template>
 
@@ -269,9 +290,6 @@ onMounted(() => {
               <Button type="text" size="small" @click="cancelRowEvent(row)">
                 取消
               </Button>
-              <!-- <Button type="link" size="small" danger @click="onDelete(row)">
-                删除
-              </Button> -->
             </div>
             <div v-else class="flex w-full items-center">
               <Button
@@ -290,12 +308,23 @@ onMounted(() => {
               >
                 暂停
               </Button>
-              <Button type="link" size="small" @click="onConfig(row)">
-                评分配置
+              <Button type="link" size="small" @click="onDetail(row)">
+                详情
               </Button>
-              <Button type="link" size="small" danger @click="onDelete(row)">
-                删除
-              </Button>
+              <Dropdown>
+                <template #overlay>
+                  <Menu>
+                    <Menu.Item @click="onConfig(row)">评分配置</Menu.Item>
+                    <Menu.Item @click="onDelete(row)"> 删除 </Menu.Item>
+                  </Menu>
+                </template>
+                <Button type="link" size="small">
+                  <div class="flex items-center">
+                    更多
+                    <IconifyIcon icon="lucide:ellipsis-vertical" />
+                  </div>
+                </Button>
+              </Dropdown>
             </div>
           </template>
         </Grid>
@@ -308,6 +337,9 @@ onMounted(() => {
       :questionnaire="selectedQuestionnaire"
       @refresh="onRefresh"
     />
+
+    <!-- 问卷详情弹窗 -->
+    <QuestionnaireDetailModal @refresh="onRefresh" />
   </div>
 </template>
 

@@ -12,6 +12,7 @@ import { AntdProfileOutlined } from '@vben/icons';
 import {
   BasicLayout,
   Help,
+  LockScreen,
   Notification,
   TenantDropdown,
   UserDropdown,
@@ -33,6 +34,7 @@ import LyButton from '#/components/LyButton/index.vue';
 import { $t } from '#/locales';
 import { router } from '#/router';
 import { useAuthStore } from '#/store';
+import { loadDeptList } from '#/utils/transformDeptToTree';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 const userStore = useUserStore();
@@ -148,6 +150,8 @@ async function handleTenantChange(tenant: SystemTenantApi.Tenant) {
   accessStore.setVisitTenantId(tenant.id as number);
   // 关闭其他标签页，只保留当前页
   await closeOtherTabs();
+  // 获取部门列表选项
+  await loadDeptList();
   // 刷新当前页面
   await refreshTab();
   // 提示切换成功

@@ -1,3 +1,5 @@
+import type { Dayjs } from 'dayjs';
+
 import type { PageResult } from '@vben/request';
 
 import { requestClient } from '#/api/request';
@@ -50,14 +52,16 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo?: string;
     name?: string;
-    birthDate?: string;
+    birthDate?: Dayjs | string;
     homeAddress?: string;
+    idCard?: string;
     sex?: number;
     mobile?: string;
     gradeDeptId?: number;
     classDeptId?: number;
     graduationStatus?: number;
     psychologicalStatus?: number;
+    enrollmentYear?: number;
     isMark?: number;
     specialMarks?: string;
     riskLevel?: number;

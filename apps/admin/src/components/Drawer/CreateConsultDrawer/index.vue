@@ -18,6 +18,8 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 import { getConsultationRecord } from '#/api/psychology/consultation';
+import { getTeacherUserList } from '#/api/system/user';
+import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getEventStyleOptions } from '#/views/counseling/data';
@@ -38,7 +40,7 @@ interface StudentOption {
   label: string;
   name: string;
   studentNo: string;
-  value: string;
+  value: number;
 }
 
 interface FormModel {
@@ -46,7 +48,7 @@ interface FormModel {
   consultDate: dayjs.Dayjs | undefined;
   consultTime: [dayjs.Dayjs, dayjs.Dayjs] | undefined;
   consultType: string;
-  consultTeacher: string;
+  consultTeacher: number | undefined;
   consultLocation: string;
   consultFocus: string;
 }
@@ -198,38 +200,45 @@ const showConfirmDialog = ref(false);
 
 // ==================== 表单相关 ====================
 const consultTypeOptions = ref([
-  '初次咨询',
-  '复诊咨询',
-  '紧急咨询',
-  '家长咨询',
+  '初次访谈',
+  '复诊访谈',
+  '紧急访谈',
+  '家长访谈',
 ]);
 
-const teacherOptions = [
-  { label: '张老师', value: 'teacher1' },
-  { label: '李老师', value: 'teacher2' },
-  { label: '王老师', value: 'teacher3' },
-  { label: '赵老师', value: 'teacher4' },
-];
+const teacherOptions = ref<{ label: string; value: number }[]>([]);
+
+async function fetchTeacherOptions() {
+  try {
+    const list = await getTeacherUserList();
+    teacherOptions.value = (list || []).map((u: any) => ({
+      label: u.nickname,
+      value: u.id,
+    }));
+  } catch (error) {
+    console.error('获取教师列表失败:', error);
+  }
+}
 
 const form = ref<FormModel>({
   student: undefined,
   consultDate: undefined,
   consultTime: undefined,
   consultType: '',
-  consultTeacher: '',
+  consultTeacher: undefined,
   consultLocation: '',
   consultFocus: '',
 });
 
 const rules = ref({
   student: [{ required: true, message: '请选择学生' }],
-  consultDate: [{ required: true, message: '请选择咨询日期' }],
-  consultTime: [{ required: true, message: '请选择咨询时间' }],
-  consultType: [{ required: true, message: '请选择咨询类型' }],
-  consultTeacher: [{ required: true, message: '请选择咨询老师' }],
+  consultDate: [{ required: true, message: '请选择访谈日期' }],
+  consultTime: [{ required: true, message: '请选择访谈时间' }],
+  consultType: [{ required: true, message: '请选择访谈类型' }],
+  consultTeacher: [{ required: true, message: '请选择访谈老师' }],
 });
 
-// ==================== 自定义咨询类型 ====================
+// ==================== 自定义访谈类型 ====================
 const showAddTypeInput = ref(false);
 const newTypeName = ref('');
 
@@ -287,7 +296,7 @@ function getWeekDays() {
   return days;
 }
 
-// ==================== 自定义咨询类型函数 ====================
+// ==================== 自定义访谈类型函数 ====================
 function showAddCustomType() {
   showAddTypeInput.value = true;
   newTypeName.value = '';
@@ -366,9 +375,9 @@ function submitConsult() {
 }
 
 function handleConfirmCreate() {
-  // 这里可以调用API创建预约
-  showConfirmDialog.value = false;
-  drawerApi.close();
+  console.log(form.value);
+  // showConfirmDialog.value = false;
+  // drawerApi.close();
   emit('refresh');
 }
 
@@ -436,7 +445,7 @@ async function loadConsultationRecord() {
 
 // ==================== Drawer 配置 ====================
 const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-[1200px]',
+  class: 'w-2/3',
   contentClass: 'p-0',
   confirmText: '创建预约',
   // 关闭时卸载内容，避免残留状态
@@ -461,6 +470,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id?: number;
         timeRange?: { date: Date; end: Date | string; start: Date | string };
       }>();
+      // 打开时加载教师数据
+      fetchTeacherOptions();
       if (data.id) {
         currentConsultationRecordId.value = data.id;
         isEdit.value = false;
@@ -546,9 +557,15 @@ function disabledRangeTime(
     </template>
     <!-- 抽屉内容 -->
     <div class="grid h-full w-full grid-cols-2 overflow-hidden">
-      <!-- 左侧预约咨询部分 -->
+      <!-- 左侧预约访谈部分 -->
       <div class="col-span-1 overflow-y-auto border-r border-[#F2F3F5] p-6">
-        <Form ref="formRef" :model="form" :rules="rules" class="w-full">
+        <Form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="w-full"
+          :class="{ 'custom-disable': isReadOnly }"
+        >
           <!-- 学生选择 -->
           <LyLabel
             title="学生选择"
@@ -600,9 +617,9 @@ function disabledRangeTime(
             </div>
           </Form.Item>
 
-          <!-- 咨询时间 -->
+          <!-- 访谈时间 -->
           <LyLabel
-            title="咨询时间"
+            title="访谈时间"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -610,7 +627,7 @@ function disabledRangeTime(
             <Form.Item name="consultDate" :class="{ 'mb-0': durationText }">
               <DatePicker
                 v-model:value="form.consultDate"
-                placeholder="请选择咨询日期"
+                placeholder="请选择访谈日期"
                 show-today
                 class="w-full"
                 :disabled="isReadOnly"
@@ -646,9 +663,9 @@ function disabledRangeTime(
             {{ durationText }}
           </div>
 
-          <!-- 咨询类型 -->
+          <!-- 访谈类型 -->
           <LyLabel
-            title="咨询类型"
+            title="访谈类型"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -714,9 +731,9 @@ function disabledRangeTime(
             </div>
           </Form.Item>
 
-          <!-- 咨询老师 -->
+          <!-- 访谈老师 -->
           <LyLabel
-            title="咨询老师"
+            title="访谈老师"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -730,9 +747,9 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询地点 -->
+          <!-- 访谈地点 -->
           <LyLabel
-            title="咨询地点"
+            title="访谈地点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultLocation">
@@ -744,9 +761,9 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询重点 -->
+          <!-- 访谈重点 -->
           <LyLabel
-            title="咨询重点"
+            title="访谈重点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultFocus">
@@ -863,7 +880,7 @@ function disabledRangeTime(
           icon="tabler:calendar-check"
           class="size-5 text-[#04DC70]"
         />
-        确认创建咨询预约
+        确认创建访谈预约
       </div>
 
       <div class="py-4">
@@ -896,7 +913,7 @@ function disabledRangeTime(
                 />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询时间</div>
+                <div class="text-sm text-[#6B7280]">访谈时间</div>
                 <div class="font-medium text-[#1F2937]">
                   {{
                     form.consultDate
@@ -921,7 +938,7 @@ function disabledRangeTime(
                 />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询地点</div>
+                <div class="text-sm text-[#6B7280]">访谈地点</div>
                 <div class="font-medium text-[#1F2937]">
                   {{ form.consultLocation }}
                 </div>
@@ -936,7 +953,7 @@ function disabledRangeTime(
                 <IconifyIcon icon="tabler:tag" class="size-4 text-[#8B5CF6]" />
               </div>
               <div>
-                <div class="text-sm text-[#6B7280]">咨询类型</div>
+                <div class="text-sm text-[#6B7280]">访谈类型</div>
                 <div class="font-medium text-[#1F2937]">
                   {{ form.consultType || '未选择' }}
                 </div>
@@ -956,90 +973,3 @@ function disabledRangeTime(
     </template>
   </ConfirmDialog>
 </template>
-
-<style lang="scss" scoped>
-/* 统一的禁用态优化：更柔和的颜色，允许文本选择，光标为默认 */
-:deep(
-  .ant-input[disabled],
-  .ant-picker-input > input[disabled],
-  .ant-select-disabled .ant-select-selector,
-  .ant-picker-disabled,
-  .ant-picker-range .ant-picker-input input[disabled],
-  textarea[disabled]
-) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-  background-color: #f8f9fb !important;
-  border-color: #eceff5 !important;
-  opacity: 1 !important; /* 避免过度灰化 */
-  -webkit-text-fill-color: #4c4c4d !important; /* 修复 Safari 文本颜色 */
-}
-
-/* 日期/时间选择器容器在禁用时也使用默认光标 */
-:deep(.ant-picker.ant-picker-disabled),
-:deep(.ant-picker.ant-picker-disabled *),
-:deep(.ant-picker-range .ant-picker-input input[disabled]) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-}
-
-/* 禁用的选择器也不显示禁用手势 */
-:deep(.ant-select-disabled .ant-select-selector) {
-  color: #4c4c4d !important;
-  cursor: default !important;
-  background-color: #f8f9fb !important; /* 与输入框保持一致 */
-  border-color: #eceff5 !important;
-}
-
-/* 禁用的按钮保持轻微可见但不可点 */
-:deep(.ant-btn[disabled]) {
-  cursor: not-allowed;
-  opacity: 1 !important; /* 避免过度灰化 */
-}
-
-/* 标签和只读区域的提示颜色更柔和 */
-:deep(.ant-form-item-label > label) {
-  color: #6b7280;
-}
-
-/* 日期选择器禁用态边框统一 */
-:deep(.ant-picker.ant-picker-disabled),
-:deep(.ant-picker.ant-picker-status-error.ant-picker-disabled) {
-  color: #4c4c4d !important;
-  background-color: #f8f9fb !important;
-  border-color: #eceff5 !important;
-}
-
-/* 自定义类型按钮的禁用态样式 */
-:deep(.ant-btn[disabled].ant-btn-default) {
-  color: #4c4c4d !important; /* 字体更清晰，用于预览 */
-  cursor: default !important; /* 光标默认，不要禁用手势 */
-  background-color: #f5f7fa !important; /* 轻灰背景 */
-  border-color: #e6e9f0 !important;
-}
-
-/* 咨询类型按钮：统一禁用态与选中态视觉，并在禁用时仍突出选中项 */
-:deep(.ant-btn.ant-btn-default.is-selected) {
-  color: #04dc70 !important;
-  background-color: #04dc7014 !important;
-  border-color: #04dc70 !important;
-}
-
-:deep(.ant-btn[disabled].ant-btn-default.is-selected) {
-  color: #04dc70 !important; /* 选中项在禁用时也明显 */
-  cursor: default !important;
-  background-color: #e8fbf3 !important;
-  border-color: #88e7b3 !important;
-}
-
-/* 组内所有被禁用的按钮，统一默认光标 */
-:deep(.consult-type-group .ant-btn[disabled]) {
-  cursor: default !important;
-}
-
-/* 让禁用态可以选中文本，便于查看信息 */
-:deep(.ant-input[disabled]),
-:deep(textarea[disabled]) {
-  user-select: text;
-}
-</style>
