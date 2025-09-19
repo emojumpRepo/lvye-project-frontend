@@ -230,7 +230,9 @@ async function loadStudentProfileTimeline(id: number) {
     const timeline = await getStudentProfileTimeline(id);
     if (timeline.length === 0) return;
 
-    studentProfileTimeline.value = timeline;
+    studentProfileTimeline.value = timeline.sort(
+      (a, b) => b.createTime - a.createTime,
+    );
     timelineTabs.value = timeline.map((item) => {
       return {
         title: item.eventType === 2 ? '心理测评' : item.title,
