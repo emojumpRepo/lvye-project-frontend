@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type {
   AssessmentTaskRiskLevelStatistics,
+  ClassRiskLevel,
   GradeRiskLevel,
   RiskLevel,
 } from '@vben/types';
@@ -27,13 +28,14 @@ interface RiskLevelConfig {
 }
 
 const props = defineProps<{
+  activeType: 'all' | 'class' | 'grade';
   taskNo: string;
 }>();
 
 const assessmentTaskRiskLevelStatistics =
   ref<AssessmentTaskRiskLevelStatistics>();
-const activeKey = ref<number>();
 const loading = ref(true);
+const activeKey = ref<number>(0);
 
 // 风险等级配置
 const riskLevelConfigs: RiskLevelConfig[] = [
@@ -42,6 +44,20 @@ const riskLevelConfigs: RiskLevelConfig[] = [
   { level: 2, color: '#1966FF' },
   { level: 1, color: '#04DC70' },
 ];
+
+/** 根据类型获取风险等级列表 */
+const classRiskLevelDeptList = computed(() => {
+  if (props.activeType === 'class') {
+    const allClassList: ClassRiskLevel[] = [];
+    assessmentTaskRiskLevelStatistics.value?.gradeList.forEach((grade) => {
+      if (grade.classList) {
+        allClassList.push(...grade.classList);
+      }
+    });
+    return allClassList as ClassRiskLevel[];
+  }
+  return [];
+});
 
 // 计算风险等级统计数据
 const riskLevelStats = computed(() => {
@@ -68,7 +84,7 @@ const riskLevelStats = computed(() => {
  * @param grade 班级风险等级列表
  * @returns 风险等级进度
  */
-function getRiskLevelProgress(grade: GradeRiskLevel) {
+function getRiskLevelProgress(grade: ClassRiskLevel | GradeRiskLevel) {
   const result: Record<string, string> = {};
 
   grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
@@ -84,6 +100,7 @@ function getRiskLevelProgress(grade: GradeRiskLevel) {
   if (Object.keys(result).length === 0) {
     result['100%'] = '#e9eaec';
   }
+
   return result;
 }
 
@@ -99,14 +116,34 @@ watch(
           return message.error('获取风险统计信息失败');
         }
         assessmentTaskRiskLevelStatistics.value = response;
-        activeKey.value = response.gradeList[0]?.gradeDeptId;
+        // 根据 activeType 设置 activeKey
+        if (props.activeType === 'class') {
+          const firstClass =
+            assessmentTaskRiskLevelStatistics.value?.gradeList[0]?.classList[0];
+          activeKey.value = firstClass?.classDeptId || 0;
+        } else {
+          activeKey.value =
+            assessmentTaskRiskLevelStatistics.value?.gradeList[0]
+              ?.gradeDeptId || 0;
+        }
+
+        // 处理风险等级颜色
         assessmentTaskRiskLevelStatistics.value.gradeList.forEach((grade) => {
-          grade.total = 20;
           grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
             riskLevel.color = riskLevelConfigs.find(
               (config) => config.level === riskLevel.riskLevel,
             )?.color;
           });
+          // 处理班级数据
+          if (grade.classList) {
+            grade.classList.forEach((classItem) => {
+              classItem.riskLevelList?.forEach((riskLevel: RiskLevel) => {
+                riskLevel.color = riskLevelConfigs.find(
+                  (config) => config.level === riskLevel.riskLevel,
+                )?.color;
+              });
+            });
+          }
         });
       } catch (error) {
         console.error('获取风险统计信息失败', error);
@@ -165,32 +202,133 @@ watch(
                     class="size-2.5"
                   />
                 </template>
-                <ACollapse.Panel
-                  v-for="grade in assessmentTaskRiskLevelStatistics?.gradeList"
-                  :key="grade.gradeDeptId"
-                  :header="grade.gradeName"
-                >
-                  <div class="flex items-center justify-center gap-12">
-                    <div
-                      v-for="child in grade.riskLevelList"
-                      :key="child.riskLevel"
-                      class="flex items-center justify-between"
-                    >
-                      <span
-                        class="text-primary whitespace-nowrap text-sm"
-                        :style="{ color: child.color }"
+                <!-- 当 activeType 为 class 时，渲染班级列表 -->
+                <template v-if="activeType === 'class'">
+                  <ACollapse.Panel
+                    v-for="classItem in classRiskLevelDeptList"
+                    :key="classItem.classDeptId"
+                    :header="classItem.className"
+                  >
+                    <div class="flex items-center justify-center gap-12">
+                      <div
+                        v-for="child in classItem.riskLevelList"
+                        :key="child.riskLevel"
+                        class="flex items-center justify-between"
                       >
-                        {{ child.count }}
-                      </span>
+                        <span
+                          class="text-primary whitespace-nowrap text-sm"
+                          :style="{ color: child.color }"
+                        >
+                          {{ child.count }}
+                        </span>
+                      </div>
+                      <AProgress
+                        :percent="100"
+                        :size="14"
+                        :show-info="false"
+                        :stroke-color="getRiskLevelProgress(classItem)"
+                      />
                     </div>
-                    <AProgress
-                      :percent="100"
-                      :size="14"
-                      :show-info="false"
-                      :stroke-color="getRiskLevelProgress(grade)"
-                    />
-                  </div>
-                </ACollapse.Panel>
+                  </ACollapse.Panel>
+                </template>
+                <!-- 当 activeType 为 grade 或 all 时，渲染年级列表 -->
+                <template v-else>
+                  <ACollapse.Panel
+                    v-for="grade in assessmentTaskRiskLevelStatistics.gradeList"
+                    :key="grade.gradeDeptId"
+                  >
+                    <template #header>
+                      <div class="flex items-center justify-between gap-8">
+                        <div class="whitespace-nowrap">
+                          {{ grade.gradeName }}
+                        </div>
+                        <template v-if="activeType === 'all'">
+                          <div
+                            class="flex w-full items-center justify-center gap-12"
+                          >
+                            <div
+                              v-for="child in grade.riskLevelList"
+                              :key="child.riskLevel"
+                              class="flex items-center justify-between"
+                            >
+                              <span
+                                class="text-primary whitespace-nowrap text-sm"
+                                :style="{ color: child.color }"
+                              >
+                                {{ child.count }}
+                              </span>
+                            </div>
+                            <AProgress
+                              :percent="100"
+                              :size="14"
+                              :show-info="false"
+                              :stroke-color="getRiskLevelProgress(grade)"
+                            />
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+
+                    <div class="flex flex-col gap-4">
+                      <template v-if="activeType === 'grade'">
+                        <div class="flex items-center justify-center gap-8">
+                          <div
+                            v-for="child in grade.riskLevelList"
+                            :key="child.riskLevel"
+                            class="flex items-center justify-between"
+                          >
+                            <span
+                              class="text-primary whitespace-nowrap text-sm"
+                              :style="{ color: child.color }"
+                            >
+                              {{ child.count }}
+                            </span>
+                          </div>
+                          <AProgress
+                            :percent="100"
+                            :size="14"
+                            :show-info="false"
+                            :stroke-color="getRiskLevelProgress(grade)"
+                          />
+                        </div>
+                      </template>
+
+                      <template v-else>
+                        <div
+                          class="flex items-center justify-between gap-8"
+                          v-for="classItem in grade.classList"
+                          :key="classItem.classDeptId"
+                        >
+                          <span class="whitespace-nowrap">
+                            {{ classItem.className }}
+                          </span>
+                          <div
+                            class="flex w-full items-center justify-center gap-12"
+                          >
+                            <div
+                              v-for="child in classItem.riskLevelList"
+                              :key="child.riskLevel"
+                              class="flex items-center justify-between"
+                            >
+                              <span
+                                class="text-primary whitespace-nowrap text-sm"
+                                :style="{ color: child.color }"
+                              >
+                                {{ child.count }}
+                              </span>
+                            </div>
+                            <AProgress
+                              :percent="100"
+                              :size="14"
+                              :show-info="false"
+                              :stroke-color="getRiskLevelProgress(grade)"
+                            />
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </ACollapse.Panel>
+                </template>
               </ACollapse>
             </div>
           </div>

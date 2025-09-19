@@ -20,6 +20,8 @@ export namespace PsychologyStudentProfileApi {
     graduationStatus?: number;
     psychologicalStatus?: number;
     riskLevel?: number;
+    idCard?: string; // 身份证
+    enrollmentYear?: number; // 届别
     isMark?: number;
     specialMarks?: string;
     remark?: string;
@@ -101,6 +103,19 @@ export namespace PsychologyStudentProfileApi {
     operator: string;
     createTime: number;
     updateTime: number;
+    meta: {
+      isParent: number;
+      questionnaireCount: number;
+      questionnaireIds: number[];
+      scenarioId: number;
+      studentId: number;
+      studentName: string;
+      studentNo: string;
+      targetAudience: number;
+      taskId: number;
+      taskName: string;
+      taskNo: string;
+    };
   }
 
   /** 学生测评历史 */

@@ -73,6 +73,7 @@ watch(
   () => props.studentInfo,
   async (newStudentInfo) => {
     if (!newStudentInfo) return;
+    console.log('newStudentInfo', newStudentInfo);
     if (!dictLoaded.value) {
       await getDictTypeOptions();
     }
@@ -141,6 +142,8 @@ async function handleSave() {
         gradeDeptId: props.studentInfo?.gradeDeptId,
         ...values,
         birthDate: dayjs(formatBirthDate).valueOf().toString(),
+        idCard: props.studentInfo?.idCard,
+        enrollmentYear: props.studentInfo?.enrollmentYear,
       });
     } catch (error) {
       console.warn('updateStudentProfile failed', error);

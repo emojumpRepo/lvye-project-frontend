@@ -200,10 +200,16 @@ async function handleExport() {
       return;
     }
 
-    const selectedStudents = gridApi.grid.getCheckboxRecords();
-    if (selectedStudents && selectedStudents.length > 0) {
-      exportAssessmentParticipantsToExcel(selectedStudents);
+    const completedStudents = gridApi.grid
+      .getCheckboxRecords()
+      .filter((item) => item.status === 1);
+
+    if (completedStudents.length === 0) {
+      message.warning('学生未完成测评，无法导出');
+      return;
     }
+
+    exportAssessmentParticipantsToExcel(completedStudents);
   } catch (error) {
     console.error(error);
     message.error('导出失败，请重试');
