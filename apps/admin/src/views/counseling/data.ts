@@ -85,14 +85,13 @@ export async function queryConsultationPage(
   { page }: any,
   formValues: any,
 ): Promise<{ list: CounselingRecordRow[]; total: number }> {
-  const { counselorUserId, status, consultTime, searchKeyword, studentNo } =
-    formValues;
+  const { counselorUserId, status, consultTime, studentName } = formValues;
 
   const params: PsychologyConsultationApi.ConsultationRecordPageReq = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     counselorUserId: counselorUserId || undefined,
-    studentName: studentNo || searchKeyword || undefined,
+    studentName: studentName || undefined,
     status: status !== undefined && status !== '' ? Number(status) : undefined,
     // 这里的日期控件是单值，后端入参是时间范围数组，按同一天处理
     startTime: consultTime ? [consultTime] : undefined,
@@ -150,13 +149,8 @@ export function useSearchFormSchema({
       component: 'Select',
       componentProps: {
         options: [{ label: '全部老师', value: '' }, ...teacherOptions],
-        defaultValue: [''],
-        expandTrigger: 'hover',
-        changeOnSelect: true,
-        allowClear: false,
-        showSearch: false,
-        style: { cursor: 'pointer' },
       },
+      defaultValue: '',
     },
     {
       fieldName: 'status',

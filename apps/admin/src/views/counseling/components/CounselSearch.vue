@@ -15,7 +15,7 @@ interface SearchParams {
   counselorUserId?: number;
   status?: string;
   consultTime?: string;
-  studentNo?: string;
+  studentName?: string;
 }
 
 // 定义 emit 事件
@@ -45,7 +45,8 @@ const [Form, formApi] = useVbenForm({
   handleSubmit: async (values) => {
     await handleSearch(values);
   },
-  onReset: async () => {
+  handleReset: async () => {
+    formApi.resetForm();
     await handleSearch({});
   },
 });
@@ -58,7 +59,7 @@ async function handleSearch(values: any) {
     const params: SearchParams = {
       ...searchParams.value,
       pageNo: 1, // 重置到第一页
-      studentNo: values.searchKeyword,
+      studentName: values.searchKeyword,
       status: values.status || undefined,
       consultTime: values.consultTime || undefined,
       counselorUserId: values.counselorUserId || undefined,
