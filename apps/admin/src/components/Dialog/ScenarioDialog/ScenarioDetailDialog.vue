@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PsychologyScenarioApi } from '#/api/psychology/scenario';
+import type { AssessmentScenario, AssessmentScenarioSlot } from '@vben/types';
 
 import { onMounted, ref, watch } from 'vue';
 
@@ -10,7 +10,7 @@ import { Descriptions, DescriptionsItem, Table, Tag } from 'ant-design-vue';
 import { getAssessmentScenarioSlots } from '#/api/psychology/scenario';
 
 interface Props {
-  record?: PsychologyScenarioApi.AssessmentScenario;
+  record?: AssessmentScenario;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ============== 数据状态 ==============
 const loading = ref(false);
-const slots = ref<PsychologyScenarioApi.AssessmentScenarioSlot[]>([]);
+const slots = ref<AssessmentScenarioSlot[]>([]);
 
 // ============== 槽位表格配置 ==============
 const slotColumns = [

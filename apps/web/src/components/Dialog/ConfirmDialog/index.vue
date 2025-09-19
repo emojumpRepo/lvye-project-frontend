@@ -1,64 +1,56 @@
 <script setup lang="ts">
-import { Modal as AModal } from 'ant-design-vue';
+import { useVbenModal } from '@vben/common-ui';
 
-import LyButton from '#/components/LyButton/index.vue';
+interface ConfirmDialogProps {
+  cancelText?: string;
+  confirmText?: string;
+  showCancel?: boolean;
+  showConfirm?: boolean;
+  title?: string;
+  contentClass?: string;
+}
 
-withDefaults(
-  defineProps<{
-    cancelText?: string;
-    confirmText?: string;
-    showCancel?: boolean;
-    showConfirm?: boolean;
-    title?: string;
-  }>(),
-  {
-    confirmText: '确定',
-    cancelText: '取消',
-    showCancel: true,
-    showConfirm: true,
-    title: '提示',
-  },
-);
+const props = withDefaults(defineProps<ConfirmDialogProps>(), {
+  confirmText: '确定',
+  cancelText: '取消',
+  showCancel: true,
+  showConfirm: true,
+  title: '提示',
+  contentClass: 'min-h-0',
+});
 
 const emit = defineEmits<{
   (e: 'confirm'): void;
   (e: 'cancel'): void;
 }>();
 
-function handleCancel() {
-  emit('cancel');
-  show.value = false;
-}
-
-const show = defineModel<boolean>('show', { required: true });
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  bordered: false,
+  fullscreenButton: false,
+  centered: true,
+  contentClass: props.contentClass,
+  onConfirm: () => {
+    emit('confirm');
+    confirmModalApi.close();
+  },
+  onCancel: () => {
+    emit('cancel');
+    confirmModalApi.close();
+  },
+});
 </script>
 
 <template>
-  <AModal v-model:open="show" :title="null" centered :closable="false">
-    <slot name="title">{{ title }}</slot>
-    <template #footer>
-      <slot name="footer">
-        <div class="mt-4 flex items-center justify-end">
-          <LyButton
-            v-if="showCancel"
-            type="default"
-            size="middle"
-            class="rounded-[4px] px-[12px]"
-            @click="handleCancel"
-          >
-            {{ cancelText }}
-          </LyButton>
-          <LyButton
-            v-if="showConfirm"
-            type="success"
-            size="middle"
-            class="rounded-[4px] px-[12px]"
-            @click="emit('confirm')"
-          >
-            {{ confirmText }}
-          </LyButton>
-        </div>
+  <ConfirmModal>
+    <template #title>
+      <slot name="title">
+        <div></div>
       </slot>
     </template>
-  </AModal>
+    <slot>
+      <div class="px-4 text-[15px] text-[#4B4B4D]">
+        {{ props.title }}
+      </div>
+    </slot>
+  </ConfirmModal>
 </template>

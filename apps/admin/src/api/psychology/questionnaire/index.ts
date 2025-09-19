@@ -228,12 +228,12 @@ export const getQuestionnaireResult = (id: number) => {
 };
 
 // 获取问卷精简列表
-export const getQuestionnaireListSimple = () => {
+export const getQuestionnaireListSimple = (supportIndependentUse = 1) => {
   return requestClient.get<QuestionnaireVO[]>(
     '/psychology/questionnaire/list-all-simple',
     {
       params: {
-        supportIndependentUse: 1,
+        supportIndependentUse,
       },
     },
   );

@@ -1,23 +1,29 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { Modal as AModal } from 'ant-design-vue';
 
 import { CommonDialogHeader } from '#/components/Dialog/CommonDialog';
-import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
+import ConfirmModal from '#/components/Dialog/ConfirmDialog/index.vue';
 
 import CreateAssessmentDialogContent from './CreateAssessmentDialogContent.vue';
 
 const open = defineModel<boolean>('open', { default: false });
 
-const openCancelModal = ref(false);
 const hasPublished = ref(false);
+
+// 使用useVbenModal管理确认框
+const [CancelConfirmModal, cancelConfirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmModal,
+});
 
 const step = ref(1);
 function handleClose() {
   open.value = false;
   step.value = 1;
-  openCancelModal.value = false;
+  cancelConfirmModalApi.close();
   resetKey.value++;
   hasPublished.value = false;
 }
@@ -50,7 +56,7 @@ function onPublished() {
     :closable="false"
     width="100%"
     wrap-class-name="full-modal"
-    @cancel="openCancelModal = true"
+    @cancel="cancelConfirmModalApi.open()"
   >
     <CommonDialogHeader
       title="创建测评任务"
@@ -62,7 +68,7 @@ function onPublished() {
       ]"
       :current-step="step"
       @change="(v: number) => (step = v)"
-      @back="hasPublished ? handleClose() : (openCancelModal = true)"
+      @back="hasPublished ? handleClose() : cancelConfirmModalApi.open()"
     />
 
     <div class="mt-6">
@@ -76,13 +82,12 @@ function onPublished() {
         @close="handleClose"
       />
     </div>
-  </AModal>
 
-  <ConfirmDialog
-    v-model:show="openCancelModal"
-    title="确定要放弃创建测评任务吗？已填写的信息将丢失"
-    @confirm="handleClose"
-  />
+    <CancelConfirmModal
+      title="确定要放弃创建测评任务吗？已填写的信息将丢失"
+      @confirm="handleClose"
+    />
+  </AModal>
 </template>
 
 <style lang="scss">

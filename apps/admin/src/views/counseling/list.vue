@@ -7,14 +7,17 @@ import { onMounted, ref } from 'vue';
 import { prompt, useVbenModal } from '@vben/common-ui';
 
 import {
+  Input as AInput,
   RadioGroup as ARadioGroup,
   Steps as ASteps,
   message,
 } from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { completeConsultationRecord } from '#/api/psychology/consultation';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
 import CounselingSearch from './components/CounselSearch.vue';
@@ -25,6 +28,14 @@ defineOptions({ name: 'CounselingList' });
 const emit = defineEmits<{
   (e: 'viewDetail', row: PsychologyConsultationApi.ConsultationRecord): void;
 }>();
+
+// 咨询状态
+const COUNSELING_STATUS = {
+  APPOINTMENT: 1, // 已预约
+  CANCELED: 4, // 已取消
+  CLOSED: 3, // 已闭环
+  COMPLETED: 2, // 已完成
+};
 
 const loading = ref(false);
 const isOpenPsychologicalConsultDialogModal = ref(false);
@@ -66,8 +77,8 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
   emit('viewDetail', row);
 }
 
-/** 完成 */
-function handleFinish() {
+/** 完成心理咨询预约 */
+function handleFinish(row: PsychologyConsultationApi.ConsultationRecord) {
   prompt({
     component: ARadioGroup,
     componentProps: {
@@ -80,11 +91,21 @@ function handleFinish() {
     icon: 'success',
     title: '完成咨询',
     modelPropName: 'value',
-  }).then((val) => {
+    beforeClose: (scope) => {
+      // 如果是确认操作但没有选择值，则阻拦关闭
+      if (scope.isConfirm && !scope.value) {
+        message.warning('请选择后续处理方式');
+        return false; // 返回false阻拦关闭
+      }
+      return true; // 返回true允许关闭
+    },
+  }).then(async (val) => {
     if (val) {
-      // noop
-    } else {
-      message.warning('请选择后续处理方式');
+      await completeConsultationRecord(row.id as number);
+    }
+    gridApi.query();
+    if (val === 1) {
+      handleEvalute();
     }
   });
 }
@@ -95,8 +116,38 @@ function handleEvalute() {
 }
 
 /** 调整时间 */
-function handleAdjustTime() {
-  appointmentDetailModalApi.open();
+function handleAdjustTime(row: PsychologyConsultationApi.ConsultationRecord) {
+  appointmentDetailModalApi.setData(row).open();
+}
+
+/** 取消预约 */
+function handleCancel(row: PsychologyConsultationApi.ConsultationRecord) {
+  prompt({
+    component: AInput.TextArea,
+    componentProps: {
+      placeholder: '请输入取消原因',
+      rows: 4,
+      showCount: true,
+      maxLength: 200,
+    },
+    content: '请输入取消原因，取消原因会同步给学生',
+    icon: 'warning',
+    title: '取消预约',
+    modelPropName: 'value',
+    beforeClose: (scope) => {
+      // 如果是确认操作但没有选择值，则阻拦关闭
+      if (scope.isConfirm) {
+        if (!scope.value) {
+          message.warning('请输入取消原因');
+          return false; // 返回false阻拦关闭
+        }
+        return true;
+      }
+      return true; // 返回true允许关闭
+    },
+  }).then(async (val) => {
+    console.log(val);
+  });
 }
 
 defineExpose({
@@ -146,8 +197,12 @@ onMounted(() => {
         <!-- 状态 -->
         <template #stauts="{ row }">
           <div class="text-[#4C4C4D]">
-            <span>{{ getDictLabel('counseling_status', row.status) }}</span>
-            <span class="text-[#FF0831]" v-if="row.overdue">（评估预期）</span>
+            <LyTag
+              :dict-value="row.status"
+              tag-category-key="counseling_status"
+              :tag-label="getDictLabel('counseling_status', row.status)"
+            />
+            <span class="text-[#FF0831]" v-if="row.overdue">（评估逾期）</span>
           </div>
         </template>
 
@@ -175,12 +230,14 @@ onMounted(() => {
                 label: '完成',
                 type: 'link',
                 color: 'success',
-                onClick: handleFinish,
+                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                onClick: () => handleFinish(row),
               },
               {
                 label: '评估',
                 type: 'link',
                 color: 'success',
+                ifShow: () => row.status === COUNSELING_STATUS.COMPLETED,
                 onClick: handleEvalute,
               },
             ]"
@@ -188,12 +245,14 @@ onMounted(() => {
               {
                 label: '调整时间',
                 type: 'link',
-                onClick: handleAdjustTime,
+                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                onClick: () => handleAdjustTime(row),
               },
               {
                 label: '取消预约',
                 type: 'link',
-                onClick: () => handleViewDetail(row),
+                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                onClick: () => handleCancel(row),
               },
             ]"
           />
@@ -201,7 +260,7 @@ onMounted(() => {
       </Grid>
     </div>
 
-    <AdjustAppointmentTimeModal />
+    <AdjustAppointmentTimeModal @refresh="gridApi.query()" />
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalConsultDialogModal"
     />

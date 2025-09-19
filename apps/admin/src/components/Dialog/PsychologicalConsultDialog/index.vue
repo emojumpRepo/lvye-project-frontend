@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { Modal as AModal } from 'ant-design-vue';
 
 import { CommonDialogHeader } from '#/components/Dialog/CommonDialog';
@@ -10,14 +12,17 @@ import PsychologicalConsultDialogContent from './PsychologicalConsultDialogConte
 
 const open = defineModel<boolean>('open', { default: false });
 
-const openCancelModal = ref(false);
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
 const hasPublished = ref(false);
 
 const step = ref(1);
 function handleClose() {
   open.value = false;
   step.value = 1;
-  openCancelModal.value = false;
+  confirmModalApi.close();
   resetKey.value++;
   hasPublished.value = false;
 }
@@ -46,7 +51,7 @@ function onPublished() {
     :closable="false"
     width="100%"
     wrap-class-name="full-modal"
-    @cancel="openCancelModal = true"
+    @cancel="confirmModalApi.open()"
   >
     <CommonDialogHeader
       title="心理咨询评估表单"
@@ -59,7 +64,7 @@ function onPublished() {
       :current-step="step"
       step-wrapper-class="px-8 py-6"
       @change="(v: number) => (step = v)"
-      @back="hasPublished ? handleClose() : (openCancelModal = true)"
+      @back="hasPublished ? handleClose() : confirmModalApi.open()"
     />
 
     <div class="mt-6">
@@ -71,13 +76,12 @@ function onPublished() {
         @publish="onPublished"
       />
     </div>
-  </AModal>
 
-  <ConfirmDialog
-    v-model:show="openCancelModal"
-    title="确定要放弃填写心理咨询评估吗？已填写的信息将丢失"
-    @confirm="handleClose"
-  />
+    <ConfirmModal
+      title="确定要放弃填写心理咨询评估吗？已填写的信息将丢失"
+      @confirm="handleClose"
+    />
+  </AModal>
 </template>
 
 <style lang="scss">

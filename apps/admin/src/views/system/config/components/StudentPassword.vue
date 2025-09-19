@@ -3,6 +3,8 @@ import type { Rule } from 'ant-design-vue/es/form';
 
 import { onMounted, reactive, ref, watch } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import {
   Form as AForm,
   Input as AInput,
@@ -24,6 +26,14 @@ interface StudentPasswordState {
   defaultPassword: string;
 }
 
+const [ConfirmSaveModal, confirmSaveModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
+const [ConfirmToggleModal, confirmToggleModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
 const form = reactive<StudentPasswordState>({
   enablePasswordLogin: true,
   defaultPassword: '123456',
@@ -35,8 +45,6 @@ const loading = ref(false);
 
 const formRef = ref();
 
-const openConfirmDialog = ref(false); // 保存确认
-const openToggleDialog = ref(false); // 切换开关确认
 const pendingEnableValue = ref<boolean | null>(null);
 
 // 默认值
@@ -118,7 +126,7 @@ async function handleSaveConfirm() {
       }),
     ]);
 
-    openConfirmDialog.value = false;
+    confirmSaveModalApi.close();
     initialSnapshot.value = { ...form };
     message.success('已保存');
   } catch (error) {
@@ -130,7 +138,7 @@ async function handleSaveConfirm() {
 }
 
 function handleSave() {
-  openConfirmDialog.value = true;
+  confirmSaveModalApi.open();
 }
 
 function handleReset() {
@@ -142,19 +150,19 @@ function handleReset() {
 function handleEnableChange(e: any) {
   const val = (e?.target?.value ?? e) as boolean;
   pendingEnableValue.value = val;
-  openToggleDialog.value = true;
+  confirmToggleModalApi.open();
 }
 
 function handleEnableConfirm() {
   if (pendingEnableValue.value === null) return;
   form.enablePasswordLogin = pendingEnableValue.value as boolean;
   initialSnapshot.value = { ...form };
-  openToggleDialog.value = false;
+  confirmToggleModalApi.close();
   pendingEnableValue.value = null;
 }
 
 function handleEnableCancel() {
-  openToggleDialog.value = false;
+  confirmToggleModalApi.close();
   pendingEnableValue.value = null;
 }
 
@@ -260,43 +268,40 @@ defineExpose({
     </section>
 
     <!-- 保存确认 -->
-    <ConfirmDialog
-      v-model:show="openConfirmDialog"
-      @confirm="handleSaveConfirm"
-    >
+    <ConfirmSaveModal @confirm="handleSaveConfirm">
       <template #title>
         <div class="confirm-dialog-title">确认保存学生登录密码策略？</div>
-        <div class="confirm-dialog-description">
-          修改默认密码将影响新建的学生账户，现有账户密码不变.
-        </div>
       </template>
-    </ConfirmDialog>
+      <div class="confirm-dialog-description">
+        修改默认密码将影响新建的学生账户，现有账户密码不变.
+      </div>
+    </ConfirmSaveModal>
 
     <!-- 切换开关确认 -->
-    <ConfirmDialog
-      v-model:show="openToggleDialog"
+    <ConfirmToggleModal
       @confirm="handleEnableConfirm"
       @cancel="handleEnableCancel"
     >
       <template #title>
-        <template v-if="pendingEnableValue">
-          <div>
-            <div class="confirm-dialog-title">确定启用学生密码验证？</div>
-            <div class="confirm-dialog-description">
-              学生登录时需要验证密码，默认密码为123456
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <div>
-            <div class="confirm-dialog-title">确定不启用学生密码验证？</div>
-            <div class="confirm-dialog-description">
-              学生仅需输入学号即可登录，适用于内网环境或低安全要求场景
-            </div>
-          </div>
-        </template>
+        <div class="confirm-dialog-title">
+          {{
+            pendingEnableValue
+              ? '确定启用学生密码验证？'
+              : '确定不启用学生密码验证？'
+          }}
+        </div>
       </template>
-    </ConfirmDialog>
+      <template v-if="pendingEnableValue">
+        <div class="confirm-dialog-description">
+          学生登录时需要验证密码，默认密码为123456
+        </div>
+      </template>
+      <template v-else>
+        <div class="confirm-dialog-description">
+          学生仅需输入学号即可登录，适用于内网环境或低安全要求场景
+        </div>
+      </template>
+    </ConfirmToggleModal>
   </div>
 </template>
 
@@ -310,7 +315,7 @@ defineExpose({
 }
 
 .confirm-dialog-description {
-  @apply text-[14px] leading-[12px] text-[#979899];
+  @apply px-2 text-[14px] leading-[12px] text-[#979899];
 }
 
 :deep(.ant-select-selector) {

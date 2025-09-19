@@ -128,6 +128,8 @@ export async function queryConsultationPage(
       location: item.location || '-',
       status: (item.status as any) ?? '',
       progress: 0,
+      appointmentStartTime: item.appointmentStartTime,
+      appointmentEndTime: item.appointmentEndTime,
     } as any;
   });
 

@@ -5,6 +5,8 @@ import type { QuestionnaireConfigVO } from '#/api/psychology/questionnaire/index
 
 import { nextTick, onMounted, ref, watch } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
+
 import { Button, message, Modal, Tag } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -12,7 +14,7 @@ import {
   deleteQuestionnaireConfig,
   getQuestionnaireConfigList,
 } from '#/api/psychology/questionnaire/index';
-import ConfirmDeleteDialog from '#/components/Dialog/ConfirmDialog/index.vue';
+import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 
 import { useQuestionConfigGridColumns } from '../data';
 import QuestionnaireConfigDetail from './QuestionnaireConfigDetail.vue';
@@ -32,6 +34,10 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<Emits>();
 
+const [ConfirmModal, confirmModalApi] = useVbenModal({
+  connectedComponent: ConfirmDialog,
+});
+
 const isAbnormalOptions = [
   { label: '正常', value: 0 },
   { label: '异常', value: 1 },
@@ -44,9 +50,6 @@ const selectedConfig = ref<null | QuestionnaireConfigVO>(null);
 // 详情弹窗相关
 const detailDialogVisible = ref(false);
 const selectedDetailConfig = ref<null | QuestionnaireConfigVO>(null);
-
-// 确认删除弹窗相关
-const confirmDeleteDialogVisible = ref(false);
 
 // 使用vben表格
 const [ConfigGrid, configGridApi] = useVbenVxeGrid({
@@ -102,7 +105,7 @@ function handleEdit(row: QuestionnaireConfigVO) {
 // 删除配置
 async function handleDelete(row: QuestionnaireConfigVO) {
   selectedConfig.value = row;
-  confirmDeleteDialogVisible.value = true;
+  confirmModalApi.open();
 }
 
 async function handleConfirmDelete() {
@@ -114,7 +117,7 @@ async function handleConfirmDelete() {
   } catch {
     message.error('删除失败');
   } finally {
-    confirmDeleteDialogVisible.value = false;
+    confirmModalApi.close();
   }
 }
 
@@ -248,8 +251,7 @@ onMounted(() => {
     />
 
     <!-- 确认删除弹窗 -->
-    <ConfirmDeleteDialog
-      v-model:show="confirmDeleteDialogVisible"
+    <ConfirmModal
       :title="`确定要删除评分配置 - ${selectedConfig?.dimensionName || ''}吗？此操作会影响线上问卷结果生成。`"
       @confirm="handleConfirmDelete"
     />
