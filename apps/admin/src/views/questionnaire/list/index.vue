@@ -265,6 +265,14 @@ onMounted(() => {
             />
           </template>
 
+          <!-- 是否启用列 -->
+          <template #isOpen="{ row }">
+            <LyTag
+              :color-type="row.isOpen === 1 ? 'success' : 'default'"
+              :tag-label="row.isOpen === 1 ? '已启用' : '未启用'"
+            />
+          </template>
+
           <!-- 目标受众列 -->
           <template #targetAudience="{ row }">
             <LyTag
