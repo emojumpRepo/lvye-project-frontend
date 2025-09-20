@@ -147,7 +147,7 @@ watch(
           <Form.Item name="consultDate" label="选择时间">
             <DatePicker
               v-model:value="form.consultDate"
-              placeholder="请选择咨询日期"
+              placeholder="请选择访谈日期"
               show-today
               class="w-full"
               :disabled-date="

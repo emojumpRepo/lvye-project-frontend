@@ -105,7 +105,11 @@ function handleEdit(row: QuestionnaireConfigVO) {
 // 删除配置
 async function handleDelete(row: QuestionnaireConfigVO) {
   selectedConfig.value = row;
-  confirmModalApi.open();
+  confirmModalApi
+    .setData({
+      title: `确定要删除评分配置 - ${row.dimensionName || ''}吗？此操作会影响线上问卷结果生成。`,
+    })
+    .open();
 }
 
 async function handleConfirmDelete() {
@@ -251,9 +255,6 @@ onMounted(() => {
     />
 
     <!-- 确认删除弹窗 -->
-    <ConfirmModal
-      :title="`确定要删除评分配置 - ${selectedConfig?.dimensionName || ''}吗？此操作会影响线上问卷结果生成。`"
-      @confirm="handleConfirmDelete"
-    />
+    <ConfirmModal @confirm="handleConfirmDelete" />
   </Modal>
 </template>

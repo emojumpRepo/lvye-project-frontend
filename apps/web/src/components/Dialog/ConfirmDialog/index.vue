@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+
 import { useVbenModal } from '@vben/common-ui';
 
 interface ConfirmDialogProps {
@@ -6,7 +8,6 @@ interface ConfirmDialogProps {
   confirmText?: string;
   showCancel?: boolean;
   showConfirm?: boolean;
-  title?: string;
   contentClass?: string;
 }
 
@@ -15,7 +16,6 @@ const props = withDefaults(defineProps<ConfirmDialogProps>(), {
   cancelText: '取消',
   showCancel: true,
   showConfirm: true,
-  title: '提示',
   contentClass: 'min-h-0',
 });
 
@@ -24,11 +24,25 @@ const emit = defineEmits<{
   (e: 'cancel'): void;
 }>();
 
+const dialogTitle = ref<string>('提示');
+const dialogZIndex = ref<number>(5000);
+
 const [ConfirmModal, confirmModalApi] = useVbenModal({
   bordered: false,
   fullscreenButton: false,
   centered: true,
   contentClass: props.contentClass,
+  zIndex: dialogZIndex.value,
+  onOpenChange: (open: boolean) => {
+    if (open) {
+      const data = confirmModalApi.getData<{
+        title?: string;
+        zIndex?: number;
+      }>();
+      dialogTitle.value = data?.title || dialogTitle.value;
+      dialogZIndex.value = data?.zIndex || dialogZIndex.value;
+    }
+  },
   onConfirm: () => {
     emit('confirm');
     confirmModalApi.close();
@@ -49,7 +63,7 @@ const [ConfirmModal, confirmModalApi] = useVbenModal({
     </template>
     <slot>
       <div class="px-4 text-[15px] text-[#4B4B4D]">
-        {{ props.title }}
+        {{ dialogTitle }}
       </div>
     </slot>
   </ConfirmModal>

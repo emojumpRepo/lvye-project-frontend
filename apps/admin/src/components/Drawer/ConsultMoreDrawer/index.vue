@@ -181,15 +181,15 @@ defineExpose({
           <!-- 详情信息 -->
           <div class="flex flex-wrap gap-12 text-sm">
             <div class="flex items-center">
-              <span>咨询类型：</span>
+              <span>访谈类型：</span>
               <span class="text-[#979899]">{{ appointment.type }}</span>
             </div>
             <div class="flex items-center">
-              <span>咨询老师：</span>
+              <span>访谈老师：</span>
               <span class="text-[#979899]">{{ appointment.teacher }}</span>
             </div>
             <div class="flex items-center">
-              <span>咨询地点：</span>
+              <span>访谈地点：</span>
               <span class="text-[#979899]">{{ appointment.location }}</span>
             </div>
             <div class="flex items-center">

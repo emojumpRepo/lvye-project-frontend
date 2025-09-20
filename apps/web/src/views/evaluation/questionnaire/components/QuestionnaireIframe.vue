@@ -99,7 +99,11 @@ function handleBack() {
   if (isComplete.value) {
     props.onBack?.();
   } else {
-    confirmModalApi.open();
+    confirmModalApi
+      .setData({
+        title: '确定要放弃完成本次测评任务吗？已填写的信息将丢失',
+      })
+      .open();
   }
 }
 
@@ -140,10 +144,7 @@ defineExpose({
       @load="handleIframeLoad"
     ></iframe>
 
-    <ConfirmModal
-      title="确定要放弃完成本次测评任务吗？已填写的信息将丢失"
-      @confirm="handleConfirm"
-    />
+    <ConfirmModal @confirm="handleConfirm" />
   </div>
 </template>
 
