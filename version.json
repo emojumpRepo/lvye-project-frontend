@@ -1,6 +1,6 @@
 {
   "name": "mindtrip-frontend",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "心之旅心理健康管理平台前端",
   "framework": "vben-5.5.9",
   "buildTime": "2025-09-22"

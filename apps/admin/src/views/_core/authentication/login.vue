@@ -11,7 +11,11 @@ import { isCaptchaEnable, isTenantEnable } from '@vben/hooks';
 import { $t } from '@vben/locales';
 import { useAccessStore } from '@vben/stores';
 
-import { getTenantById, getTenantByWebsite, getTenantSimpleList } from '#/api/core/auth';
+import {
+  getTenantById,
+  getTenantByWebsite,
+  getTenantSimpleList,
+} from '#/api/core/auth';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Login' });
@@ -35,29 +39,31 @@ async function fetchTenantList() {
   if (!tenantEnable) {
     return;
   }
-  
+
   tenantLoading.value = true;
   try {
     // 优先从URL参数获取租户ID（使用简洁的 id 参数）
     const tenantIdFromUrl = route.query.id as string;
-    
+
     if (tenantIdFromUrl) {
       // 如果URL中有租户ID，直接使用免鉴权接口查询
       try {
         const tenantData = await getTenantById(Number(tenantIdFromUrl));
-        
+
         if (tenantData) {
           // 成功获取租户信息
           hasTenantFromUrl.value = true;
           tenantInfo.value = {
             id: tenantData.id,
-            name: tenantData.name
+            name: tenantData.name,
           };
-          
+
           // 设置租户ID
           accessStore.setTenantId(tenantData.id);
-          loginRef.value?.getFormApi()?.setFieldValue('tenantId', tenantData.id.toString());
-          
+          loginRef.value
+            ?.getFormApi()
+            ?.setFieldValue('tenantId', tenantData.id.toString());
+
           // 不需要获取租户列表，直接返回
           return;
         } else {
@@ -73,14 +79,14 @@ async function fetchTenantList() {
         return;
       }
     }
-    
+
     // 如果没有URL参数，直接显示无租户提示
     if (!tenantIdFromUrl) {
       // 没有提供租户ID，显示提示信息
       noTenantProvided.value = true;
       return;
     }
-    
+
     // 以下是原有的域名获取租户逻辑（作为备用方案）
     const websiteTenantPromise = getTenantByWebsite(window.location.hostname);
     tenantList.value = await getTenantSimpleList();
@@ -102,7 +108,9 @@ async function fetchTenantList() {
 
     // 设置选中的租户编号
     accessStore.setTenantId(tenantId);
-    loginRef.value?.getFormApi()?.setFieldValue('tenantId', tenantId?.toString());
+    loginRef.value
+      ?.getFormApi()
+      ?.setFieldValue('tenantId', tenantId?.toString());
   } catch (error) {
     console.error('获取租户列表失败:', error);
     noTenantProvided.value = true;
@@ -114,7 +122,7 @@ async function fetchTenantList() {
 /** 处理登录 */
 async function handleLogin(values: any) {
   // 如果开启验证码，则先验证验证码
-  if (captchaEnable) {
+  if (!captchaEnable) {
     verifyRef.value.show();
     return;
   }
@@ -129,7 +137,7 @@ onMounted(() => {
 
 const formSchema = computed((): VbenFormSchema[] => {
   const schema: VbenFormSchema[] = [];
-  
+
   // 只有在没有从URL获取租户时才显示租户选择字段
   if (tenantEnable && !hasTenantFromUrl.value && !noTenantProvided.value) {
     schema.push({
@@ -155,7 +163,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       },
     });
   }
-  
+
   // 如果从URL获取了租户，显示租户名称（只读）
   if (hasTenantFromUrl.value && tenantInfo.value) {
     schema.push({
@@ -170,7 +178,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       defaultValue: tenantInfo.value.name,
     });
   }
-  
+
   // 其他字段保持不变
   schema.push(
     {
@@ -196,9 +204,9 @@ const formSchema = computed((): VbenFormSchema[] => {
         .string()
         .min(1, { message: $t('authentication.passwordTip') })
         .default(import.meta.env.VITE_APP_DEFAULT_PASSWORD),
-    }
+    },
   );
-  
+
   return schema;
 });
 </script>
@@ -210,7 +218,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       <div class="text-center">
         <div class="mb-4">
           <svg
-            class="mx-auto h-12 w-12 animate-spin text-primary"
+            class="text-primary mx-auto h-12 w-12 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -230,16 +238,16 @@ const formSchema = computed((): VbenFormSchema[] => {
             />
           </svg>
         </div>
-        <p class="text-lg text-muted-foreground">正在加载...</p>
+        <p class="text-muted-foreground text-lg">正在加载...</p>
       </div>
     </div>
-    
+
     <!-- 无租户提示 -->
     <div
       v-else-if="noTenantProvided"
       class="flex h-full items-center justify-center"
     >
-      <div class="mx-auto max-w-md rounded-lg bg-card p-8 text-center">
+      <div class="bg-card mx-auto max-w-md rounded-lg p-8 text-center">
         <div class="mb-6">
           <svg
             class="mx-auto h-20 w-20 text-yellow-500 opacity-80"
@@ -256,39 +264,45 @@ const formSchema = computed((): VbenFormSchema[] => {
             />
           </svg>
         </div>
-        
-        <h2 class="mb-3 text-2xl font-semibold text-foreground">
+
+        <h2 class="text-foreground mb-3 text-2xl font-semibold">
           无法识别学校信息
         </h2>
-        
-        <p class="mb-8 text-base font-normal leading-relaxed text-muted-foreground">
+
+        <p
+          class="text-muted-foreground mb-8 text-base font-normal leading-relaxed"
+        >
           系统无法识别您的学校信息，请确认访问链接是否正确。
         </p>
-        
-        <div class="space-y-4 rounded-md bg-muted/30 p-4">
+
+        <div class="bg-muted/30 space-y-4 rounded-md p-4">
           <div class="text-left">
-            <h3 class="mb-2 text-sm font-medium text-foreground">
+            <h3 class="text-foreground mb-2 text-sm font-medium">
               如果您是管理员
             </h3>
-            <p class="text-sm font-normal leading-relaxed text-muted-foreground">
+            <p
+              class="text-muted-foreground text-sm font-normal leading-relaxed"
+            >
               请确认链接中包含正确的学校标识参数
             </p>
           </div>
-          
-          <div class="my-3 border-t border-border/50"></div>
-          
+
+          <div class="border-border/50 my-3 border-t"></div>
+
           <div class="text-left">
-            <h3 class="mb-2 text-sm font-medium text-foreground">
+            <h3 class="text-foreground mb-2 text-sm font-medium">
               正确的访问格式
             </h3>
-            <p class="text-sm font-normal leading-relaxed text-muted-foreground">
+            <p
+              class="text-muted-foreground text-sm font-normal leading-relaxed"
+            >
               /auth/login?id=您的学校ID
             </p>
           </div>
         </div>
-        
+
         <div class="mt-6">
-          <p class="text-xs text-muted-foreground/70">
+          <p class="text-muted-foreground/70 text-xs">
             需要帮助？请联系系统管理员
           </p>
         </div>

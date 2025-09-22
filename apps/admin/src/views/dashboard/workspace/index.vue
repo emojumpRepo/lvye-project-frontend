@@ -168,10 +168,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10">
+  <div
+    class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10"
+  >
     <PageTitle :title="systemWelcome" />
     <!-- Responsive grid with better breakpoints -->
-    <div class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3">
+    <div
+      class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3"
+    >
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
@@ -220,7 +224,10 @@ onMounted(async () => {
             v-bind="item as any"
           >
             <template #rightAction>
-              <ChevronRight class="size-4 cursor-pointer hover:opacity-70" color="#959599" />
+              <ChevronRight
+                class="size-4 cursor-pointer hover:opacity-70"
+                color="#959599"
+              />
             </template>
           </WorkSpaceItem>
         </div>
