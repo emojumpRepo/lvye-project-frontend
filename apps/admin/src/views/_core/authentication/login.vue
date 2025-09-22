@@ -122,7 +122,7 @@ async function fetchTenantList() {
 /** 处理登录 */
 async function handleLogin(values: any) {
   // 如果开启验证码，则先验证验证码
-  if (!captchaEnable) {
+  if (captchaEnable) {
     verifyRef.value.show();
     return;
   }
