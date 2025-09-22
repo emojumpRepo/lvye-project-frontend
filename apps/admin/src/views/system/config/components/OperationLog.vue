@@ -213,21 +213,18 @@ function handleDetail(row: SystemOperateLogApi.OperateLog) {
         <div class="mb-2 flex flex-wrap items-center gap-2 lg:flex-nowrap">
           <LyButton
             size="middle"
-            class="h-10 w-20 text-[13px]"
             @click="handleResetClick"
           >
             重置
           </LyButton>
           <LyButton
             size="middle"
-            class="h-10 w-20 text-[13px]"
             @click="handleShowSensitive"
           >
             显示敏感
           </LyButton>
           <LyButton
             size="middle"
-            class="h-10 w-20 text-[13px]"
             @click="handleExport"
           >
             导出日志
@@ -235,7 +232,6 @@ function handleDetail(row: SystemOperateLogApi.OperateLog) {
           <LyButton
             type="success"
             size="middle"
-            class="h-10 w-20 text-[13px]"
             @click="formApi.submitForm()"
           >
             查询

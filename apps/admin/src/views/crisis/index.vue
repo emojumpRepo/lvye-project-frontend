@@ -188,7 +188,6 @@ onMounted(async () => {
           <LyButton
             size="middle"
             type="default"
-            class="h-10 w-[96px]"
             @click="handleSystemSetting"
           >
             系统设置
@@ -196,7 +195,6 @@ onMounted(async () => {
           <LyButton
             size="middle"
             type="success"
-            class="h-10 w-[96px]"
             @click="handleReportFast"
           >
             快速上报

@@ -238,7 +238,7 @@ watch(
     </template>
     <template #sidebar-bottom-custom>
       <div class="mb-4 px-2 text-center text-sm text-gray-500">
-        <LyButton type="default" size="large" block v-if="!sidebarCollapsed">
+        <LyButton type="default" size="middle" block v-if="!sidebarCollapsed">
           <span>使用说明</span>
         </LyButton>
       </div>

@@ -120,7 +120,6 @@ function handleSave() {
           v-if="!['operationLog'].includes(selectedKeys[0] ?? '')"
         >
           <LyButton
-            class="h-[42px] w-[100px]"
             size="middle"
             @click="handleReset"
           >
@@ -128,7 +127,6 @@ function handleSave() {
           </LyButton>
           <LyButton
             type="success"
-            class="h-[42px] w-[100px]"
             size="middle"
             @click="handleSave"
           >
