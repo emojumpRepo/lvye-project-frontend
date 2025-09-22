@@ -20,8 +20,8 @@ const containerClasses = computed(() => {
     return `${baseClasses} pb-0 mb-0`;
   } else {
     const borderClass = 'border-b border-gray-100';
-    const pbClass = props.pb ? `pb-${props.pb}` : 'pb-5';
-    const mbClass = props.mb ? `mb-${props.mb}` : 'mb-4';
+    const pbClass = props.pb !== undefined ? `pb-${props.pb}` : 'pb-3 sm:pb-4 md:pb-5';
+    const mbClass = props.mb !== undefined ? `mb-${props.mb}` : 'mb-3 sm:mb-4';
     return `${baseClasses} ${borderClass} ${pbClass} ${mbClass}`;
   }
 });
@@ -29,14 +29,14 @@ const containerClasses = computed(() => {
 
 <template>
   <div :class="containerClasses">
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       <div
-        class="flex size-5 items-center justify-center rounded-full"
+        class="flex size-4 items-center justify-center rounded-full sm:size-5"
         :style="{ background: iconBg }"
       >
-        <IconifyIcon :icon="icon" color="#fff" :size="10" />
+        <IconifyIcon :icon="icon" color="#fff" :size="8" class="sm:size-2.5" />
       </div>
-      <h3 :class="titleClass || 'font-bold'">{{ title }}</h3>
+      <h3 :class="titleClass || 'text-sm font-bold sm:text-base'">{{ title }}</h3>
       <slot name="extra"></slot>
     </div>
     <slot name="right"></slot>

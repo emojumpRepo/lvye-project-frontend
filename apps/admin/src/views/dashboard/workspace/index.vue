@@ -168,10 +168,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-8 pb-10 pt-5">
+  <div class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10">
     <PageTitle :title="systemWelcome" />
-    <!-- New cards from Figma design -->
-    <div class="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-10">
+    <!-- Responsive grid with better breakpoints -->
+    <div class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3">
       <WorkSpaceCard
         :with-gradient="true"
         :count="19"
@@ -184,11 +184,11 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="今日心理咨询任务"
-        class="lg:col-span-3"
+        class="min-h-[400px] md:col-span-1"
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
-        <div class="flex max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedTaskList"
             :key="idx"
@@ -209,18 +209,18 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="重点干预学生"
-        class="lg:col-span-3"
+        class="min-h-[400px] md:col-span-1"
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedInterveneList"
             :key="idx"
             v-bind="item as any"
           >
             <template #rightAction>
-              <ChevronRight class="size-4 cursor-pointer" color="#959599" />
+              <ChevronRight class="size-4 cursor-pointer hover:opacity-70" color="#959599" />
             </template>
           </WorkSpaceItem>
         </div>
@@ -238,11 +238,11 @@ onMounted(async () => {
           showSizeChanger: false,
         }"
         title="待处理预警事件"
-        class="lg:col-span-4"
+        class="min-h-[400px] md:col-span-2 xl:col-span-1"
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex max-w-full flex-col gap-4">
+        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
           <WorkSpaceItem
             v-for="(item, idx) in pagedAlertsList"
             :key="idx"
