@@ -18,6 +18,7 @@ export interface StudentRecord {
   idCard?: string;
   birthDate?: string;
   sex?: string;
+  ethnicity?: string;
   gradeName?: string;
   className?: string;
   gradeDeptId?: number;
@@ -27,6 +28,7 @@ export interface StudentRecord {
   isGraduated?: string;
   errorMessage?: string;
   mobile?: string;
+  guardianMobile?: string;
   homeAddress?: string;
   rowNumber?: number;
   remark?: string;
@@ -75,6 +77,7 @@ function normalizeStudentRecord(record: Partial<StudentRecord>): StudentRecord {
     idCard: record.idCard || '',
     birthDate: record.birthDate || '',
     sex: record.sex || '',
+    ethnicity: record.ethnicity || '',
     gradeName: record.gradeName || '',
     className: record.className || '',
     gradeDeptId: record.gradeDeptId,
@@ -84,6 +87,7 @@ function normalizeStudentRecord(record: Partial<StudentRecord>): StudentRecord {
     isGraduated: record.isGraduated || '',
     errorMessage: record.errorMessage || '',
     mobile: record.mobile || '',
+    guardianMobile: record.guardianMobile || '',
     homeAddress: record.homeAddress || '',
     rowNumber: record.rowNumber,
     remark: record.remark || '',
@@ -184,6 +188,14 @@ const _rules = {
     },
     message: '联系电话需为11位数字',
   },
+  guardianMobile: {
+    required: false,
+    validator: (value: string): boolean => {
+      if (!value) return true; // 非必填字段，空值通过验证
+      return /^\d{11}$/.test(value);
+    },
+    message: '监护人联系电话需为11位数字',
+  },
   homeAddress: {
     required: false,
     validator: (value: string): boolean => {
@@ -222,6 +234,7 @@ export async function validateStudentRecord(
         idCard: '身份证',
         birthDate: '出生日期',
         sex: '性别',
+        ethnicity: '民族',
         gradeName: '年级',
         className: '班级',
         gradeDeptId: '',
@@ -230,7 +243,8 @@ export async function validateStudentRecord(
         graduationStatus: '就读状态',
         isGraduated: '是否毕业',
         errorMessage: '',
-        mobile: '手机号码',
+        mobile: '联系电话',
+        guardianMobile: '监护人联系电话',
         homeAddress: '家庭住址',
         rowNumber: '',
         remark: '备注',
@@ -285,19 +299,29 @@ export async function validateStudentRecord(
     errors.push({ field: 'sex', message: _rules.sex.message });
   }
 
+  if (record.mobile && !_rules.mobile.validator(record.mobile)) {
+    errors.push({ field: 'mobile', message: _rules.mobile.message });
+  }
+
+  if (
+    record.guardianMobile &&
+    !_rules.guardianMobile.validator(record.guardianMobile)
+  ) {
+    errors.push({
+      field: 'guardianMobile',
+      message: _rules.guardianMobile.message,
+    });
+  }
+
+  if (record.homeAddress && !_rules.homeAddress.validator(record.homeAddress)) {
+    errors.push({ field: 'homeAddress', message: _rules.homeAddress.message });
+  }
+
   if (record.isGraduated && !_rules.isGraduated.validator(record.isGraduated)) {
     errors.push({
       field: 'isGraduated',
       message: _rules.isGraduated.message,
     });
-  }
-
-  if (record.mobile && !_rules.mobile.validator(record.mobile)) {
-    errors.push({ field: 'mobile', message: _rules.mobile.message });
-  }
-
-  if (record.homeAddress && !_rules.homeAddress.validator(record.homeAddress)) {
-    errors.push({ field: 'homeAddress', message: _rules.homeAddress.message });
   }
 
   return { valid: errors.length === 0, errors };
@@ -689,7 +713,6 @@ export async function parseExcel(
         gradeDeptId: gradeDept?.value,
         classDeptId: classDept?.value,
         birthDate: item.birthDate,
-        // 再保险：确保毕业状态被设置（当上一步已设置则保持）
         graduationStatus:
           typeof item.graduationStatus === 'number'
             ? item.graduationStatus

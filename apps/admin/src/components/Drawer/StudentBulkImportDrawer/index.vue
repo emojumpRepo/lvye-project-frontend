@@ -110,29 +110,34 @@ async function startImport() {
       return;
     }
 
+    // 格式化数据
+    const successData = parseData.value!.success.map((item) => ({
+      ...item,
+      sex: Number(
+        userSexMap.value?.find((s: any) => s?.label === item.sex)?.value,
+      ),
+      gradeDeptId: item.gradeDeptId ? Number(item.gradeDeptId) : undefined,
+      classDeptId: item.classDeptId ? Number(item.classDeptId) : undefined,
+      birthDate: dayjs(item.birthDate).valueOf().toString(),
+      enrollmentYear: item.enrollmentYear
+        ? Number(item.enrollmentYear)
+        : undefined,
+      ethnicity: (() => {
+        const val = String(item.ethnicity || '').trim();
+        if (!val) return undefined;
+        return val.includes('汉') ? 1 : 2;
+      })(),
+    }));
+
     // 逐个处理每条数据
-    for (const item of parseData.value!.success) {
+    for (const item of successData) {
       if (isCancelled.value) {
         break;
       }
       try {
         importResult.value.summary.pendingCount++;
-        const formatedSex = userSexMap.value?.find(
-          (s: any) => s?.label === item.sex,
-        )?.value;
 
-        const apiData = {
-          ...item,
-          sex: Number(formatedSex),
-          gradeDeptId: item.gradeDeptId ? Number(item.gradeDeptId) : undefined,
-          classDeptId: item.classDeptId ? Number(item.classDeptId) : undefined,
-          birthDate: dayjs(item.birthDate).valueOf().toString(),
-          enrollmentYear: item.enrollmentYear
-            ? Number(item.enrollmentYear)
-            : undefined,
-        };
-
-        const response = await importStudentProfileSingle(apiData);
+        const response = await importStudentProfileSingle(item);
 
         if (response?.success) {
           // 记录成功
@@ -208,7 +213,7 @@ async function parseStudentProfileExcel() {
       return message.error('文件读取失败');
     }
 
-    console.log('parseData', parseData.value);
+    console.warn('parseData', parseData.value);
 
     importResult.value.summary.total = parseData.value?.success.length || 0;
   } catch (error) {
@@ -326,6 +331,7 @@ onMounted(async () => {
       :pending-count="importResult.summary.pendingCount"
       :total="importResult.summary.total"
       :success-count="importResult.summary.successCount"
+      :import-completed="importCompleted"
       @cancel="cancelImport"
       @complete="completeImport"
     />

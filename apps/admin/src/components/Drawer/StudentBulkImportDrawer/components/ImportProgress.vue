@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { Button as AButton, Progress as AProgress } from 'ant-design-vue';
 
 const props = defineProps<{
+  importCompleted: boolean;
   pendingCount: number;
   successCount: number;
   total: number;
@@ -18,12 +19,8 @@ const percent = computed(() => {
   return Math.round((props.pendingCount / props.total) * 100);
 });
 
-const isCompleted = computed(() => {
-  return props.pendingCount === props.total;
-});
-
 function handleAction() {
-  if (isCompleted.value) {
+  if (props.importCompleted) {
     emit('complete');
   } else {
     emit('cancel');
@@ -46,7 +43,7 @@ function handleAction() {
           :show-info="false"
           :stroke-color="pendingCount === total ? '#04DC70' : '#1966FF'"
         />
-        <div v-if="!isCompleted" class="text-center text-sm text-gray-600">
+        <div v-if="!importCompleted" class="text-center text-sm text-gray-600">
           <span>已处理 </span>
           <span class="font-semibold text-blue-600">{{ pendingCount }}</span>
           <span> / </span>
@@ -63,10 +60,10 @@ function handleAction() {
     <!-- 操作按钮 -->
     <div class="z-999 mt-6 flex justify-end">
       <AButton
-        :type="isCompleted ? 'primary' : 'default'"
+        :type="importCompleted ? 'primary' : 'default'"
         @click="handleAction"
       >
-        {{ isCompleted ? '完成' : '取消导入' }}
+        {{ importCompleted ? '完成' : '取消导入' }}
       </AButton>
     </div>
   </div>

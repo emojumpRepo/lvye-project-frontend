@@ -32,11 +32,13 @@ export const STUDENT_EXPORT_COLUMNS = [
   { key: 'studentNo', label: '学号' },
   { key: 'idCard', label: '身份证' },
   { key: 'sex', label: '性别' },
+  { key: 'ethnicity', label: '民族' },
   { key: 'gradeName', label: '年级' },
   { key: 'className', label: '班级' },
   { key: 'enrollmentYear', label: '届别' },
   { key: 'psychologicalStatus', label: '心理状态' },
   { key: 'mobile', label: '联系电话' },
+  { key: 'guardianMobile', label: '监护人联系电话' },
   { key: 'graduationStatus', label: '毕业状态' },
   { key: 'isGraduated', label: '是否毕业' },
   { key: 'homeAddress', label: '家庭住址' },
@@ -63,17 +65,21 @@ function formatStudentDataForExport(
           value = value ? new Date(value).toLocaleDateString('zh-CN') : '---';
           break;
         }
+        case 'ethnicity': {
+          value = getDictLabel('student_ethnicity', value);
+          break;
+        }
         case 'graduationStatus': {
           value = getDictLabel('student_graduation_status', value);
           break;
         }
         case 'homeAddress':
         case 'remark': {
-          value = value || '---';
+          value = value || '--';
           break;
         }
         case 'mobile': {
-          value = value || '---';
+          value = value || '--';
           break;
         }
         case 'psychologicalStatus': {
@@ -81,7 +87,7 @@ function formatStudentDataForExport(
           break;
         }
         case 'sex': {
-          value = getDictLabel('system_user_sex', value);
+          value = getDictLabel('system_user_sex', value) || '--';
           break;
         }
         default: {
@@ -243,26 +249,30 @@ export async function downloadTemplate() {
     { header: '学生姓名', key: 'name', width: 25 },
     { header: '学号', key: 'studentNo', width: 40 },
     { header: '届别', key: 'enrollmentYear', width: 20 },
-    { header: '身份证', key: 'idCard', width: 25 },
+    { header: '身份证', key: 'idCard', width: 28 },
     { header: '年级', key: 'gradeName', width: 20 },
     { header: '班级', key: 'className', width: 25 },
-    { header: '联系电话', key: 'mobile', width: 20 },
+    { header: '民族', key: 'ethnicity', width: 20 },
+    { header: '联系电话', key: 'mobile', width: 25 },
     { header: '家庭住址', key: 'homeAddress', width: 25 },
-    { header: '备注', key: 'remark', width: 20 },
-    { header: '是否毕业', key: 'isGraduated', width: 20 },
+    { header: '监护人联系电话', key: 'guardianMobile', width: 30 },
+    { header: '备注', key: 'remark', width: 25 },
+    { header: '是否毕业', key: 'isGraduated', width: 25 },
   ];
 
   worksheet.addRow([
     '必填，文本，2-30个字符',
     '必填，数字或字母数字组合，不超过20位',
     '必填，4位数字',
-    '必填，身份证',
+    '必填，中国居民身份证号码',
     '必填，只填写年级',
     '必填，填写年级和班级',
-    '11位数字',
-    '不超过200个字符',
-    '不超过100个字符',
-    '是或否，默认为否',
+    '选填，汉族/少数民族',
+    '选填，个人联系电话，11位数字',
+    '选填，不超过200个字符',
+    '选填，11位数字',
+    '选填，不超过100个字符',
+    '选填，是/否，默认为否',
   ]);
 
   // 设置身份证列为文本格式，防止Excel自动转换
