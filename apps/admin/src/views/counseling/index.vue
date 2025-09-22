@@ -112,10 +112,27 @@ function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
 }
 
 /** 打开预约详情抽屉 */
-function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
+function handleViewDetail(
+  payload:
+    | PsychologyConsultationApi.ConsultationRecord
+    | { date: Date; event: any },
+) {
+  // 判断是从日历视图还是列表视图触发的
+  const record =
+    'event' in payload
+      ? payload.event // 从日历视图传入的事件数据
+      : payload; // 从列表视图传入的记录数据
+
+  // 确保有有效的ID
+  const recordId = record?.id || record?.extendedProps?.id;
+  if (!recordId) {
+    console.warn('无法获取记录ID');
+    return;
+  }
+
   consultRecordDrawerApi
     .setData({
-      id: row.id,
+      id: recordId,
     })
     .open();
 }
@@ -140,7 +157,6 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
             <LyButton
               size="middle"
               type="success"
-              class="h-10 w-[96px]"
               @click="handleCreateConsult"
             >
               新建预约
