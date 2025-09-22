@@ -21,14 +21,10 @@ import {
 import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessment/index';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { getDictLabel } from '#/utils/dict';
-
-interface RiskLevelConfig {
-  level: number;
-  color: string;
-}
+import type { ActiveType, RiskLevelConfig } from '../types';
 
 const props = defineProps<{
-  activeType: 'all' | 'class' | 'grade';
+  activeType: ActiveType;
   taskNo: string;
 }>();
 

@@ -19,20 +19,7 @@ import LyButton from '#/components/LyButton/index.vue';
 import AssessmentDetailCompare from './components/AssessmentDetailCompare.vue';
 import AssessmentDetailList from './components/AssessmentDetailList.vue';
 import AssessmentDetailTask from './components/AssessmentDetailTask.vue';
-
-interface TabItem {
-  key: string;
-  label: string;
-}
-
-interface TaskInfo {
-  taskNo: string;
-  taskName: string;
-  status: number;
-  startline: number;
-  deadline: number;
-  questionnairesTabs: TabItem[];
-}
+import type { ActiveType, TabItem, TaskInfo } from './types';
 
 const classType = ref<TabItem[]>([
   { label: '全部', key: 'all' },
@@ -63,7 +50,7 @@ const actionButtons = ref([
   },
 ]);
 
-const activeType = ref('all'); // 年级班级类型
+const activeType = ref<ActiveType>('all'); // 年级班级类型
 const route = useRoute();
 const router = useRouter();
 const taskNo = String(route.params.taskNo || '');
