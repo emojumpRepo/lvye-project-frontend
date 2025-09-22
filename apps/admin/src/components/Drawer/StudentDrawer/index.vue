@@ -18,14 +18,14 @@ import {
   getStudentProfile,
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
-import CreateStudentEventRecord from '#/components/Dialog/CreateStudentEventRecord/index.vue';
+import CreateStudentEventRecordDialog from '#/components/Dialog/CreateStudentEventRecordDialog/index.vue';
 import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
 import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
 import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
 import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
 import TimelineTab from '#/components/Drawer/StudentDrawer/components/TimelineTab.vue';
 import LyButton from '#/components/LyButton/index.vue';
-import { calculateAge } from '#/utils/calculateAge';
+import { calculateAge } from '#/utils/calculateTool';
 import { getDictObj, getDictOptions } from '#/utils/dict';
 
 interface FooterButton {
@@ -35,6 +35,7 @@ interface FooterButton {
   type: 'dashed' | 'primary';
   color: string;
   class: string;
+  onClick: () => void;
 }
 
 interface PsychologicalStatusTag {
@@ -88,6 +89,7 @@ const footerButtons = ref<FooterButton[]>([
     type: 'dashed',
     color: '#578FFF',
     class: 'border-[#578FFF] text-[#578FFF] hover:bg-[#578FFF]/10',
+    onClick: () => handleAssessment(),
   },
   {
     icon: 'ep:warn-triangle-filled',
@@ -96,6 +98,7 @@ const footerButtons = ref<FooterButton[]>([
     type: 'dashed',
     color: '#FF9C05',
     class: 'border-[#FF9C05] text-[#FF9C05] hover:bg-[#FF9C05]/10',
+    onClick: () => handleReportAbnormal(),
   },
   {
     icon: 'solar:chat-round-line-bold',
@@ -104,6 +107,7 @@ const footerButtons = ref<FooterButton[]>([
     type: 'primary',
     color: '#578FFF',
     class: 'border-[#578FFF] bg-[#578FFF] text-white hover:bg-[#578FFF]/80',
+    onClick: () => handleInterview(),
   },
   {
     icon: 'material-symbols:event-note',
@@ -112,6 +116,7 @@ const footerButtons = ref<FooterButton[]>([
     type: 'primary',
     color: '#04DC70',
     class: 'border-[#04DC70] bg-[#04DC70] text-white hover:bg-[#04DC70]/80',
+    onClick: () => handleStartAssessment(),
   },
 ]);
 
@@ -138,7 +143,7 @@ const getSpecialMarkLabels = (specialMarks: string): string[] => {
 /** 新增记录弹窗 */
 const [CreateStudentEventRecordModal, createStudentEventRecordModalApi] =
   useVbenModal({
-    connectedComponent: CreateStudentEventRecord,
+    connectedComponent: CreateStudentEventRecordDialog,
   });
 
 /** 导出信息弹窗 */
@@ -225,10 +230,12 @@ async function loadStudentProfileTimeline(id: number) {
     const timeline = await getStudentProfileTimeline(id);
     if (timeline.length === 0) return;
 
-    studentProfileTimeline.value = timeline;
+    studentProfileTimeline.value = timeline.sort(
+      (a, b) => b.createTime - a.createTime,
+    );
     timelineTabs.value = timeline.map((item) => {
       return {
-        title: item.title,
+        title: item.eventType === 2 ? '心理测评' : item.title,
         key: item.eventType,
       };
     });
@@ -288,6 +295,26 @@ function handleExportInfo() {
   exportStudnetInfoModalApi.open();
 }
 
+/** 评估 */
+function handleAssessment() {
+  message.warning('即将上线');
+}
+
+/** 上报异常 */
+function handleReportAbnormal() {
+  message.warning('即将上线');
+}
+
+/** 预约访谈 */
+function handleInterview() {
+  message.warning('即将上线');
+}
+
+/** 发起测评 */
+function handleStartAssessment() {
+  message.warning('即将上线');
+}
+
 onMounted(async () => {
   studentSpecialMark.value = await getDictOptions('student_special_mark');
   studentSexMap.value = await getDictOptions('system_user_sex');
@@ -339,15 +366,17 @@ onMounted(async () => {
               </span>
             </div>
             <div class="text-xs text-[#979899]">
-              <span>
+              <span v-if="studentProfile?.updater">
                 {{
                   studentProfile?.updater === '管理员'
                     ? studentProfile?.updater
                     : `${studentProfile?.updater}老师`
-                }}更新于
+                }}
               </span>
               <span>{{
-                dayjs(studentProfile?.updateTime).format('YYYY-MM-DD HH:mm:ss')
+                `更新于${dayjs(studentProfile?.updateTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )}`
               }}</span>
             </div>
           </div>
@@ -423,6 +452,7 @@ onMounted(async () => {
           :key="button.value"
           class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm"
           :class="button.class"
+          @click="button.onClick"
         >
           <IconifyIcon
             :icon="button.icon"

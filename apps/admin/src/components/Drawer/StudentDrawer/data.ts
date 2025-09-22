@@ -3,7 +3,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import dayjs from 'dayjs';
 
 import { z } from '#/adapter/form';
-import { calculateAge } from '#/utils/calculateAge';
+import { calculateAge } from '#/utils/calculateTool';
 
 export interface SelectOptions {
   label: string;
@@ -193,6 +193,14 @@ const familyBackgroundFields = [
     rules: 'required',
   },
   {
+    fieldName: 'motherOccupation',
+    label: '母亲职业',
+    viewComponent: 'Input',
+    editComponent: 'Input',
+    placeholder: '请输入母亲职业',
+    // rules: 'required',
+  },
+  {
     fieldName: 'motherPhone',
     label: '母亲联系方式',
     viewComponent: 'Input',
@@ -213,6 +221,7 @@ const familyBackgroundFields = [
     ],
     placeholder: '请选择婚姻情况',
     rules: 'required',
+    formItemClass: 'col-span-2',
   },
   {
     fieldName: 'familySpecialSituation',
@@ -220,7 +229,7 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入家庭特殊情况',
-    formItemClass: 'col-span-3',
+    formItemClass: 'col-span-4',
     componentProps: {
       rows: 3,
     },

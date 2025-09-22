@@ -5,7 +5,7 @@ defineProps<{
   category: CategoryCard;
 }>();
 
-const currentCategoryKey = defineModel<number>('currentCategoryKey');
+const currentCategoryKey = defineModel<number | string>('currentCategoryKey');
 </script>
 
 <template>

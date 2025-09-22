@@ -5,8 +5,9 @@ import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-import { Textarea as ATextarea } from 'ant-design-vue';
+import { Textarea as ATextarea, message } from 'ant-design-vue';
 
+import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -17,12 +18,13 @@ import CrisisQuestionnaireEvalute from '../../../static/icons/crisis/crisis_ques
 
 const reason = ref(''); // 处理原因
 const currentMethodKey = ref<number>(0); // 当前处理方式
+const psychologicalConsultDialogOpen = ref(false);
 
 // 处理方法
 const handleMethod = ref<CategoryCard[]>([
   {
-    title: '心理访谈',
-    description: '需要专业心理咨询师进行一对一深度咨询',
+    title: '访谈评估',
+    description: '与学生进行进一步的访谈评估',
     text: '需要进行下一步处理',
     icon: CrisisPsychologyIcon,
     key: 1,
@@ -48,10 +50,28 @@ const handleMethod = ref<CategoryCard[]>([
   },
 ]);
 
-const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
-  class: 'w-[720px]',
-  destroyOnClose: true,
-});
+const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
+  {
+    class: 'w-[720px]',
+    destroyOnClose: true,
+    onConfirm: async () => {
+      if (reason.value.length < 10) {
+        message.error('处理原因至少需要10个字符');
+        return;
+      }
+      if (currentMethodKey.value === 0) {
+        message.error('请选择处理方式');
+        return;
+      }
+      // TODO 选择处理方式接口
+      if (currentMethodKey.value === 1) {
+        psychologicalConsultDialogOpen.value = true;
+      }
+
+      selectedHandleMethodDrawerApi.close();
+    },
+  },
+);
 </script>
 
 <template>
@@ -108,6 +128,8 @@ const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
         </div>
       </div>
     </div>
+
+    <PsychologicalConsultDialog v-model:open="psychologicalConsultDialogOpen" />
   </SelectHandleMethodDrawer>
 </template>
 

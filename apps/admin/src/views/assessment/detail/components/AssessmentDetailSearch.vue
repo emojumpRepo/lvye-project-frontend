@@ -19,6 +19,8 @@ const emit = defineEmits<{
 }>();
 
 const deptOptions = ref<DeptGradeClassOption[]>([]);
+const assessmentDetailSearchParams =
+  ref<PsychologyAssessmentApi.ParticipantsQuestionnairePageReq>();
 
 const [Form, formApi] = useVbenForm({
   schema: useGridFormSchema({ deptOptions: deptOptions.value }),
@@ -48,14 +50,15 @@ async function handleSearch(values: any) {
 
     // 构建搜索参数
     const params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq = {
-      pageNo: 1, // 重置到第一页
       studentNo: values.studentNo || undefined,
       name: values.name || undefined,
       status: values.status === '' ? undefined : values.status,
       riskLevel: values.riskLevel === '' ? undefined : values.riskLevel,
       classId: values.classId || undefined,
     };
-    emit('search', params);
+
+    assessmentDetailSearchParams.value = params;
+    emit('search', assessmentDetailSearchParams.value);
   } catch (error) {
     console.error('搜索失败:', error);
     message.error('搜索失败，请重试');
@@ -76,6 +79,7 @@ onMounted(async () => {
 
 defineExpose({
   handleReset,
+  assessmentDetailSearchParams,
 });
 </script>
 

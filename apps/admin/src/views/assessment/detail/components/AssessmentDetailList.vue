@@ -99,6 +99,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
               ...formValues,
+              ...searchRef.value?.assessmentDetailSearchParams,
             };
 
             const response =
@@ -131,6 +132,7 @@ watch(
       searchRef.value?.handleReset();
       selectedRowKeys.value = [];
       if ((gridApi as any)?.grid?.commitProxy) {
+        gridApi.grid.setCurrentPage(1);
         await gridApi.query();
       }
     }
@@ -139,10 +141,9 @@ watch(
 );
 
 /** 处理搜索 */
-function handleSearch(
-  params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq,
-) {
-  gridApi.query(params);
+function handleSearch() {
+  gridApi.grid.setCurrentPage(1);
+  gridApi.query({ pageNo: 1 });
 }
 
 /** 处理加载状态 */
@@ -199,10 +200,16 @@ async function handleExport() {
       return;
     }
 
-    const selectedStudents = gridApi.grid.getCheckboxRecords();
-    if (selectedStudents && selectedStudents.length > 0) {
-      exportAssessmentParticipantsToExcel(selectedStudents);
+    const completedStudents = gridApi.grid
+      .getCheckboxRecords()
+      .filter((item) => item.status === 1);
+
+    if (completedStudents.length === 0) {
+      message.warning('学生未完成测评，无法导出');
+      return;
     }
+
+    exportAssessmentParticipantsToExcel(completedStudents);
   } catch (error) {
     console.error(error);
     message.error('导出失败，请重试');

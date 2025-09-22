@@ -20,7 +20,7 @@ import CounselingList from './list.vue';
 defineOptions({ name: 'CounselingCenter' });
 
 const viewTypeOptions = [
-  { label: '咨询记录', value: 1 },
+  { label: '访谈记录', value: 1 },
   { label: '日历视图', value: 2 },
 ];
 
@@ -186,7 +186,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
 
       <Transition name="fade" mode="out-in">
         <template v-if="viewType === 1">
-          <!-- 咨询记录列表 -->
+          <!-- 访谈记录列表 -->
           <CounselingList
             @view-detail="handleViewDetail"
             ref="counselingListRef"

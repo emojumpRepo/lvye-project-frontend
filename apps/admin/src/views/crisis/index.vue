@@ -1,12 +1,20 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type { CrisisBoardData, CrisisEvent } from '@vben/types';
+
+import type { CrisisEventListReq } from '#/api/psychology/crisis';
+
+import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { Progress as AProgress } from 'ant-design-vue';
+import { Progress as AProgress, Spin as ASpin } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  getCrisisBoardData,
+  getCrisisEventList,
+} from '#/api/psychology/crisis';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import CrisisInterventionSettingDrawer from '#/components/Drawer/CrisisInterventionSettingDrawer/index.vue';
 import ReportQuickyDrawer from '#/components/Drawer/ReportQuickyDrawer/index.vue';
@@ -24,13 +32,17 @@ import crisisEventResolvedIcon from '../../static/icons/crisis/crisis_event_reso
 import CrisisSearch from './components/CrisisSearch.vue';
 import InterventionCard from './components/InterventionCard.vue';
 import { useEventGridSchema } from './data';
-import { eventListData, eventPanelData, interventionList } from './mockData';
 
 defineOptions({ name: 'CrisisIntervention' });
 
-const loading = ref(false);
-const activeTabKey = ref('board');
+interface EventPanelData {
+  eventType: number;
+  count: number;
+}
 
+const loading = ref(true);
+const activeTabKey = ref('board');
+const interventionList = ref<CrisisBoardData[]>([]);
 const eventpanelIconMap: Record<number, string> = {
   1: crisisEventHandlingIcon,
   2: crisisEventConsultIcon,
@@ -39,6 +51,13 @@ const eventpanelIconMap: Record<number, string> = {
   5: crisisEventResolvedIcon,
   6: crisisEventClosedIcon,
 };
+// 面板数据
+const eventPanelData = ref<EventPanelData[]>(
+  Object.keys(eventpanelIconMap).map((key) => ({
+    eventType: Number(key),
+    count: 0,
+  })),
+);
 
 // 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
@@ -65,7 +84,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
     },
     columns: useEventGridSchema(),
-    data: eventListData,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }: any, formValues: any) => {
+          const response = await getCrisisEventList({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...formValues,
+          });
+          calculateEventPanelData(response.list);
+          return response;
+        },
+      },
+    },
     cellConfig: {
       height: 80,
     },
@@ -73,10 +104,47 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+/** 计算事件面板数据 */
+function calculateEventPanelData(list: any[]) {
+  const statusCountMap: Record<number, number> = {};
+  for (const item of (list || []) as any[]) {
+    const status = item?.status as number | undefined;
+    if (status === undefined || status === null) continue;
+    statusCountMap[status] = (statusCountMap[status] || 0) + 1;
+  }
+
+  const allEventTypes = Object.keys(eventpanelIconMap)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  eventPanelData.value = allEventTypes.map((eventType) => ({
+    eventType,
+    count: statusCountMap[eventType] || 0,
+  }));
+}
+
+/** 搜索表单搜索 */
+function handleSearch(params: CrisisEventListReq) {
+  gridApi.query(params);
+}
+
+/** 事件类型搜索 */
+function handleEventTypeSearch(status: number) {
+  gridApi.query({
+    pageNo: 1,
+    pageSize: 10,
+    status,
+  });
+}
+
 /** 查看详情 */
-function handleViewDetail(row: any) {
-  console.log(row);
-  handleCrisisEventModalApi.open();
+function handleViewDetail(row: CrisisEvent) {
+  handleCrisisEventModalApi
+    .setData({
+      id: row.id,
+      title: row.title,
+    })
+    .open();
 }
 
 /** 系统设置 */
@@ -88,6 +156,23 @@ function handleSystemSetting() {
 function handleReportFast() {
   reportFastDrawerApi.open();
 }
+
+onMounted(async () => {
+  try {
+    const response = await getCrisisBoardData({
+      pageNo: 1,
+      pageSize: 10,
+    });
+    console.log('五级看板数据', response);
+    if (response.length > 0) {
+      interventionList.value = response;
+    }
+  } catch (error) {
+    console.error('五级看板数据', error);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <template>
@@ -121,14 +206,24 @@ function handleReportFast() {
     </PageTitle>
 
     <!-- 搜索表单 -->
-    <CrisisSearch :loading="loading" v-model:active-key="activeTabKey" />
+    <CrisisSearch
+      :loading="loading"
+      v-model:active-key="activeTabKey"
+      @search="handleSearch"
+    />
 
     <!-- 列表 -->
-    <div v-if="activeTabKey === 'board'" class="grid grid-cols-5 gap-5">
-      <template v-for="item in interventionList" :key="item.type">
-        <InterventionCard :intervention-item="item" />
-      </template>
-    </div>
+    <ASpin :spinning="loading" class="flex-center">
+      <div
+        v-if="activeTabKey === 'board'"
+        class="grid grid-cols-5 gap-5"
+        :class="{ 'h-[300px]': loading }"
+      >
+        <template v-for="item in interventionList" :key="item.type">
+          <InterventionCard :intervention-item="item" />
+        </template>
+      </div>
+    </ASpin>
 
     <div v-if="activeTabKey === 'list'" class="space-y-4">
       <!-- 事件面板 -->
@@ -136,7 +231,8 @@ function handleReportFast() {
         <div
           v-for="eventPanel in eventPanelData"
           :key="eventPanel.eventType"
-          class="flex items-center justify-between rounded-xl bg-white p-6"
+          class="flex cursor-pointer items-center justify-between rounded-xl bg-white p-6 hover:shadow-sm"
+          @click="handleEventTypeSearch(eventPanel.eventType)"
         >
           <div class="flex flex-col gap-3">
             <div class="text-xl font-bold">{{ eventPanel.count }}</div>
@@ -151,15 +247,15 @@ function handleReportFast() {
       <!-- 事件列表 -->
       <Grid>
         <!-- 事件优先级 -->
-        <template #eventId="{ row }">
+        <template #id="{ row }">
           <div class="flex flex-col gap-1 px-2">
             <div class="font-bold text-[#4C4C4D]">
-              {{ row.eventId }}
+              {{ row.id }}
             </div>
             <p
               class="line-clamp-2 whitespace-normal text-xs leading-normal text-[#979899]"
             >
-              {{ row.eventDescription }}
+              {{ row.description }}
             </p>
           </div>
         </template>
@@ -184,19 +280,19 @@ function handleReportFast() {
         <!-- 当前状态 -->
         <template #status="{ row }">
           <LyTag
-            tag-category-key="crisis_event_type"
+            tag-category-key="crisis_event_status"
             :dict-value="row.status"
           />
         </template>
 
         <!-- 负责人 -->
-        <template #consultant="{ row }">
+        <template #handlerName="{ row }">
           <div class="flex flex-col gap-1">
             <div class="font-bold text-[#4C4C4D]">
-              {{ row.consultant.name }}
+              {{ row.handlerName }}
             </div>
             <div class="text-xs text-[#4C4C4D]">
-              {{ dayjs(row.consultant.createTime).format('YYYY-MM-DD') }}
+              {{ dayjs(row.updateTime).format('YYYY-MM-DD') }}
             </div>
           </div>
         </template>
@@ -209,9 +305,9 @@ function handleReportFast() {
         </template>
 
         <!-- 上报时间 -->
-        <template #createTime="{ row }">
+        <template #reportedAt="{ row }">
           <div class="text-[#4C4C4D]">
-            {{ dayjs(row.createTime).format('YYYY-MM-DD') }}
+            {{ dayjs(row.reportedAt).format('YYYY-MM-DD') }}
           </div>
         </template>
 

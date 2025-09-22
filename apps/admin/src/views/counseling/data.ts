@@ -19,8 +19,8 @@ export interface CounselingRecordRow {
   studentClass: string;
   time: number; // timestamp
   duration: number; // minutes
-  type: string; // 咨询类型
-  teacher: string; // 咨询老师
+  type: string; // 访谈类型
+  teacher: string; // 访谈老师
   location: string; // 地点
   status: '已取消' | '已完成' | '已逾期' | '已预约';
   progress: number; // 0-100

@@ -67,7 +67,7 @@ const [
   connectedComponent: ImportStudentProfileResultDialog,
 });
 
-const [Drawer] = useVbenDrawer({
+const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   confirmText: '开始导入',
   destroyOnClose: true,
@@ -86,6 +86,12 @@ const [Drawer] = useVbenDrawer({
     await startImport();
     emit('refresh');
     // drawerApi.unlock();
+  },
+  onCancel: () => {
+    if (importCompleted.value) {
+      return message.warning('请先等待导入完成');
+    }
+    drawerApi.close();
   },
 });
 
@@ -111,13 +117,19 @@ async function startImport() {
       }
       try {
         importResult.value.summary.pendingCount++;
+        const formatedSex = userSexMap.value?.find(
+          (s: any) => s?.label === item.sex,
+        )?.value;
 
         const apiData = {
           ...item,
-          sex: userSexMap.value?.find((s: any) => s?.label === item.sex)?.value,
+          sex: Number(formatedSex),
           gradeDeptId: item.gradeDeptId ? Number(item.gradeDeptId) : undefined,
           classDeptId: item.classDeptId ? Number(item.classDeptId) : undefined,
           birthDate: dayjs(item.birthDate).valueOf().toString(),
+          enrollmentYear: item.enrollmentYear
+            ? Number(item.enrollmentYear)
+            : undefined,
         };
 
         const response = await importStudentProfileSingle(apiData);
@@ -195,6 +207,8 @@ async function parseStudentProfileExcel() {
     if (!parseData.value) {
       return message.error('文件读取失败');
     }
+
+    console.log('parseData', parseData.value);
 
     importResult.value.summary.total = parseData.value?.success.length || 0;
   } catch (error) {

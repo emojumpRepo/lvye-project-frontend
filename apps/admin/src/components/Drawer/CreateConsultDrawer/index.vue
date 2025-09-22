@@ -247,7 +247,7 @@ const rules = ref({
   consultTeacher: [{ required: true, message: '请选择访谈老师' }],
 });
 
-// ==================== 自定义咨询类型 ====================
+// ==================== 自定义访谈类型 ====================
 const showAddTypeInput = ref(false);
 const newTypeName = ref('');
 
@@ -301,7 +301,7 @@ function getWeekDays() {
   return days;
 }
 
-// ==================== 自定义咨询类型函数 ====================
+// ==================== 自定义访谈类型函数 ====================
 function showAddCustomType() {
   showAddTypeInput.value = true;
   newTypeName.value = '';
@@ -580,7 +580,7 @@ function disabledRangeTime(
     </template>
     <!-- 抽屉内容 -->
     <div class="grid h-full w-full grid-cols-2 overflow-hidden">
-      <!-- 左侧预约咨询部分 -->
+      <!-- 左侧预约访谈部分 -->
       <div class="col-span-1 overflow-y-auto border-r border-[#F2F3F5] p-6">
         <Form
           ref="formRef"
@@ -637,7 +637,7 @@ function disabledRangeTime(
             </Select>
           </Form.Item>
 
-          <!-- 咨询时间 -->
+          <!-- 访谈时间 -->
           <LyLabel
             title="访谈时间"
             :required="true"
@@ -647,7 +647,7 @@ function disabledRangeTime(
             <Form.Item name="consultDate" :class="{ 'mb-0': durationText }">
               <DatePicker
                 v-model:value="form.consultDate"
-                placeholder="请选择咨询日期"
+                placeholder="请选择访谈日期"
                 show-today
                 class="w-full"
                 :disabled="isReadOnly"
@@ -682,7 +682,7 @@ function disabledRangeTime(
             {{ durationText }}
           </div>
 
-          <!-- 咨询类型 -->
+          <!-- 访谈类型 -->
           <LyLabel
             title="访谈类型"
             :required="true"
@@ -750,7 +750,7 @@ function disabledRangeTime(
             </div>
           </Form.Item>
 
-          <!-- 咨询老师 -->
+          <!-- 访谈老师 -->
           <LyLabel
             title="访谈老师"
             :required="true"
@@ -766,7 +766,7 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询地点 -->
+          <!-- 访谈地点 -->
           <LyLabel
             title="访谈地点"
             custom-title-class="font-semibold text-sm"
@@ -780,7 +780,7 @@ function disabledRangeTime(
             />
           </Form.Item>
 
-          <!-- 咨询重点 -->
+          <!-- 访谈重点 -->
           <LyLabel
             title="访谈重点"
             custom-title-class="font-semibold text-sm"

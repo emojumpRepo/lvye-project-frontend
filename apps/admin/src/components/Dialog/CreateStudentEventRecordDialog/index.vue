@@ -6,16 +6,17 @@ import { Form, Input, Upload } from 'ant-design-vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
-const [CreateStudentEventRecord] = useVbenModal({
-  fullscreenButton: false,
-  destroyOnClose: true,
-  confirmText: '提交',
-  class: '!w-[620px]',
-});
+const [CreateStudentEventRecordModal, CreateStudentEventRecordModalApi] =
+  useVbenModal({
+    fullscreenButton: false,
+    destroyOnClose: true,
+    confirmText: '提交',
+    class: '!w-[620px]',
+  });
 </script>
 
 <template>
-  <CreateStudentEventRecord title="新建记录">
+  <CreateStudentEventRecordModal title="新建记录">
     <div class="p-2">
       <Form>
         <Form.Item name="eventName">
@@ -46,7 +47,7 @@ const [CreateStudentEventRecord] = useVbenModal({
         </Form.Item>
       </Form>
     </div>
-  </CreateStudentEventRecord>
+  </CreateStudentEventRecordModal>
 </template>
 
 <style scoped lang="scss">

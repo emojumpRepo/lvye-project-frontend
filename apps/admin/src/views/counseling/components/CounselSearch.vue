@@ -100,7 +100,6 @@ onMounted(async () => {
     <LyCardTitle
       icon="ix:user-filled"
       title="访谈记录管理"
-      :pb="3"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
 

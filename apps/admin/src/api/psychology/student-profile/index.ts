@@ -1,3 +1,5 @@
+import type { Dayjs } from 'dayjs';
+
 import type { PageResult } from '@vben/request';
 
 import { requestClient } from '#/api/request';
@@ -18,6 +20,8 @@ export namespace PsychologyStudentProfileApi {
     graduationStatus?: number;
     psychologicalStatus?: number;
     riskLevel?: number;
+    idCard?: string; // 身份证
+    enrollmentYear?: number; // 届别
     isMark?: number;
     specialMarks?: string;
     remark?: string;
@@ -50,14 +54,16 @@ export namespace PsychologyStudentProfileApi {
     userId?: number;
     studentNo?: string;
     name?: string;
-    birthDate?: string;
+    birthDate?: Dayjs | string;
     homeAddress?: string;
+    idCard?: string;
     sex?: number;
     mobile?: string;
     gradeDeptId?: number;
     classDeptId?: number;
     graduationStatus?: number;
     psychologicalStatus?: number;
+    enrollmentYear?: number;
     isMark?: number;
     specialMarks?: string;
     riskLevel?: number;
@@ -97,6 +103,19 @@ export namespace PsychologyStudentProfileApi {
     operator: string;
     createTime: number;
     updateTime: number;
+    meta: {
+      isParent: number;
+      questionnaireCount: number;
+      questionnaireIds: number[];
+      scenarioId: number;
+      studentId: number;
+      studentName: string;
+      studentNo: string;
+      targetAudience: number;
+      taskId: number;
+      taskName: string;
+      taskNo: string;
+    };
   }
 
   /** 学生测评历史 */

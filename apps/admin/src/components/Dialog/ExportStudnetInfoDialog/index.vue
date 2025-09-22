@@ -4,7 +4,11 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { RadioGroup as ARadioGroup, Select as ASelect } from 'ant-design-vue';
+import {
+  RadioGroup as ARadioGroup,
+  Select as ASelect,
+  message,
+} from 'ant-design-vue';
 
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -62,13 +66,14 @@ const consultantRecord = ref([]);
 const currentConsultantRecord = ref();
 const currentExportType = ref('zip');
 
-const [ExportStudnetInfoDialog] = useVbenModal({
+const [ExportStudnetInfoDialog, ExportStudnetInfoDialogApi] = useVbenModal({
   title: '选择导出信息',
   fullscreenButton: false,
   destroyOnClose: true,
   class: '!w-[720px]',
 });
 
+/** 选择报表类型 */
 function handleSelectExportReportType(value: string) {
   if (selectedExportReportType.value.includes(value)) {
     selectedExportReportType.value = selectedExportReportType.value.filter(
@@ -78,7 +83,19 @@ function handleSelectExportReportType(value: string) {
     selectedExportReportType.value.push(value);
   }
 }
+
+/** 取消 */
+function handleCancel() {
+  ExportStudnetInfoDialogApi.close();
+}
+
+/** 确认 */
+function handleConfirm() {
+  message.warning('即将上线');
+  ExportStudnetInfoDialogApi.close();
+}
 </script>
+
 <template>
   <ExportStudnetInfoDialog>
     <div class="px-2 py-1">
@@ -132,8 +149,12 @@ function handleSelectExportReportType(value: string) {
       <div class="flex w-full items-center justify-between p-2">
         <div class="text-xs text-[#979899]">注意：导出操作会通知上级管理员</div>
         <div class="flex gap-2">
-          <LyButton type="default" size="middle">取消</LyButton>
-          <LyButton type="success" size="middle">确认</LyButton>
+          <LyButton type="default" size="middle" @click="handleCancel">
+            取消
+          </LyButton>
+          <LyButton type="success" size="middle" @click="handleConfirm">
+            确认
+          </LyButton>
         </div>
       </div>
     </template>

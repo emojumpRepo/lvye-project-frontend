@@ -71,6 +71,12 @@ export function useQuestionGridColumns() {
     },
     { field: 'title', title: '问卷标题', width: 200, showOverflow: true },
     {
+      field: 'surveyCode',
+      title: '问卷编码',
+      width: 150,
+      showOverflow: true,
+    },
+    {
       field: 'description',
       title: '问卷描述',
       showOverflow: true,
@@ -104,6 +110,12 @@ export function useQuestionGridColumns() {
       title: '状态',
       width: 100,
       slots: { default: 'status' },
+    },
+    {
+      field: 'isOpen',
+      title: '是否启用',
+      width: 100,
+      slots: { default: 'isOpen' },
     },
     {
       field: 'targetAudience',

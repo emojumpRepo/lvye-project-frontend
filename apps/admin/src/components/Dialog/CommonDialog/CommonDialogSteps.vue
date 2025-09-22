@@ -43,7 +43,7 @@ const items = computed(() =>
   <div
     class="relative flex h-full rounded-2xl bg-gradient-to-b from-[#fff] via-[#fff] to-[#ffffff59]"
   >
-    <div class="flex overflow-y-auto p-8">
+    <div class="scroll-area flex overflow-y-auto p-8">
       <ASteps
         :current="currentIndex"
         label-placement="vertical"
@@ -87,3 +87,18 @@ const items = computed(() =>
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+</style>
