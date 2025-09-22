@@ -12,7 +12,7 @@ import { Button, message, Modal, Tag } from 'ant-design-vue';
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteQuestionnaireConfig,
-  getQuestionnaireConfigList,
+  getQuestionnaireConfigPage,
 } from '#/api/psychology/questionnaire/index';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 
@@ -58,13 +58,15 @@ const [ConfigGrid, configGridApi] = useVbenVxeGrid({
     height: '400px',
     proxyConfig: {
       ajax: {
-        query: async () => {
+        query: async ({ page }: any) => {
           if (!props.questionnaire?.id) {
             return { list: [], total: 0 };
           }
-          const result = await getQuestionnaireConfigList(
-            props.questionnaire.id,
-          );
+          const result = await getQuestionnaireConfigPage({
+            questionnaireId: props.questionnaire.id,
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+          });
           return {
             list: result?.list || [],
             total: result?.total || 0,
