@@ -340,7 +340,7 @@ onMounted(async () => {
     <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button>
+          <!-- <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button> -->
           <Dropdown>
             <template #overlay>
               <Menu>
