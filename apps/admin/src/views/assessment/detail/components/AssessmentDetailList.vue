@@ -217,7 +217,11 @@ async function handleExport() {
 <template>
   <div class="mb-6">
     <!-- 问卷Tabs -->
-    <ATabs :tab-bar-gutter="10" class="mb-3" v-model:active-key="activeTabKey">
+    <ATabs
+      :tab-bar-gutter="10"
+      class="mb-3 mt-2"
+      v-model:active-key="activeTabKey"
+    >
       <ATabs.TabPane v-for="tab in props.questionnairesTabs" :key="tab.key">
         <template #tab>
           <span

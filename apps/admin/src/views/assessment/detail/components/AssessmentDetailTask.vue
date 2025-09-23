@@ -47,9 +47,7 @@ watch(
 </script>
 
 <template>
-  <div
-    class="box-border flex !h-[400px] flex-col gap-6 rounded-xl bg-white p-6"
-  >
+  <div class="box-border flex h-full flex-col gap-6 rounded-xl bg-white p-6">
     <ASpin :spinning="loading" class="h-full">
       <div class="flex h-full flex-col justify-between gap-6 overflow-hidden">
         <LyCardTitle

@@ -237,7 +237,7 @@ onMounted(async () => {
       </template>
     </ATabs>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid h-[400px] grid-cols-2 gap-4">
       <!-- 统计卡片区域 -->
       <AssessmentDetailTask :task-no="taskNo" />
 
