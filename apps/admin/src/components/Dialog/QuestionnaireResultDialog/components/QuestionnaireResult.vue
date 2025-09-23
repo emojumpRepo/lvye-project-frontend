@@ -17,7 +17,7 @@ defineProps<{
           <h3 class="text-lg font-medium text-gray-900">
             {{ questionnaireResult?.dimensionName }}
           </h3>
-          <div
+          <!-- <div
             class="rounded-full px-3 py-1 text-sm font-medium"
             :class="[
               questionnaireResult?.isAbnormal === 0
@@ -26,7 +26,7 @@ defineProps<{
             ]"
           >
             {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
-          </div>
+          </div> -->
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
