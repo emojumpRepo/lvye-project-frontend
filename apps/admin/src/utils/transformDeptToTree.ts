@@ -116,26 +116,6 @@ export async function loadDeptList() {
   return finalData;
 }
 
-// 格式化班级名称
-export function simplifyClassName(name: string): string {
-  if (!name) return '';
-
-  // 匹配年级+括号数字+班的格式
-  // 支持：一年级(1)班、初一(1)班、高一(1)班、初二(2)班等
-  const m1 = name.match(
-    /^([一二三四五六七八九十年级]+)[（(]\s*([0-9一二三四五六七八九十]+)\s*[)）]\s*班?$/,
-  );
-  if (m1 && m1[1] && m1[2]) {
-    return `${m1[1]}(${m1[2]})班`;
-  }
-
-  // 匹配直接以"X班"结尾的场景
-  const m2 = name.match(/([0-9一二三四五六七八九十]+)\s*班$/);
-  if (m2 && m2[1]) return `${m2[1]}班`;
-
-  return name;
-}
-
 /**
  * 计算部门树形结构
  */
