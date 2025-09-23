@@ -22,10 +22,10 @@ const columns = [
     title: '得分',
     dataIndex: 'score',
   },
-  {
-    title: '是否异常',
-    dataIndex: 'isAbnormal',
-  },
+  // {
+  //   title: '是否异常',
+  //   dataIndex: 'isAbnormal',
+  // },
 ];
 
 /**
@@ -56,6 +56,7 @@ const questionnaireResults = computed(() => {
     <div class="space-y-4">
       <div v-for="item in questionnaireResults" :key="item.questionnaireId">
         <Table
+          v-if="JSON.parse(item.reportContent).length > 0"
           bordered
           :columns="columns"
           :data-source="JSON.parse(item.reportContent)"
@@ -72,6 +73,25 @@ const questionnaireResults = computed(() => {
           <template #title>
             <div class="font-bold">
               {{ item.questionnaireName }}
+            </div>
+          </template>
+          <template #footer>
+            <div class="flex flex-col gap-3">
+              <template
+                v-for="content in JSON.parse(item.reportContent)"
+                :key="content.dimensionName"
+              >
+                <div class="flex items-center gap-2 font-bold text-[#1966FF]">
+                  <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
+                  {{ content.dimensionName }}
+                </div>
+                <div class="rounded-lg">
+                  <span class="font-bold text-gray-600">教师建议：</span>
+                  <span class="text-sm leading-relaxed text-gray-700">
+                    {{ content.teacherComment }}
+                  </span>
+                </div>
+              </template>
             </div>
           </template>
         </Table>

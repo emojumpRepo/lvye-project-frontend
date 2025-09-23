@@ -14,7 +14,6 @@ import {
   Input as AInput,
   Radio as ARadio,
   Select as ASelect,
-  Spin as ASpin,
   message,
 } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -170,8 +169,8 @@ const rules: Record<string, Rule[]> = {
 
 /** 创建学生档案 */
 async function handleCreateStudent() {
-  drawerApi.lock();
   formRef.value?.validate().then(async () => {
+    drawerApi.lock();
     loading.value = true;
     const formatBirthDate = dayjs(studentForm.birthDate).valueOf();
     const params = {
@@ -219,130 +218,127 @@ onMounted(async () => {
         <span class="text-lg font-bold">创建学生</span>
       </div>
     </template>
-    <ASpin :spinning="loading" tip="正在保存...">
-      <AForm ref="formRef" :model="studentForm" :rules="rules">
-        <div>
-          <LyLabel title="学生姓名" required custom-title-class="font-normal" />
-          <AForm.Item name="name" has-feedback>
-            <AInput
-              v-model:value="studentForm.name"
-              placeholder="请填写"
-              :maxlength="30"
-            />
-          </AForm.Item>
-        </div>
+    <!-- <ASpin :spinning="loading" tip="正在保存..."> -->
+    <AForm ref="formRef" :model="studentForm" :rules="rules">
+      <div>
+        <LyLabel title="学生姓名" required custom-title-class="font-normal" />
+        <AForm.Item name="name" has-feedback>
+          <AInput
+            v-model:value="studentForm.name"
+            placeholder="请填写"
+            :maxlength="30"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="学号" required custom-title-class="font-normal" />
-          <AForm.Item name="studentNo" has-feedback>
-            <AInput
-              v-model:value="studentForm.studentNo"
-              placeholder="请填写"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="学号" required custom-title-class="font-normal" />
+        <AForm.Item name="studentNo" has-feedback>
+          <AInput v-model:value="studentForm.studentNo" placeholder="请填写" />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="身份证" required custom-title-class="font-normal" />
-          <AForm.Item name="idCard" has-feedback>
-            <AInput
-              v-model:value="studentForm.idCard"
-              placeholder="请填写"
-              style="width: 100%"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="身份证" required custom-title-class="font-normal" />
+        <AForm.Item name="idCard" has-feedback>
+          <AInput
+            v-model:value="studentForm.idCard"
+            placeholder="请填写"
+            style="width: 100%"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="出生日期" custom-title-class="font-normal" />
-          <AForm.Item name="birthDate">
-            <ADatePicker
-              v-model:value="studentForm.birthDate"
-              placeholder="请选择日期"
-              style="width: 100%"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="出生日期" custom-title-class="font-normal" />
+        <AForm.Item name="birthDate">
+          <ADatePicker
+            v-model:value="studentForm.birthDate"
+            placeholder="请选择日期"
+            style="width: 100%"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="性别" custom-title-class="font-normal" />
-          <AForm.Item name="sex">
-            <ARadio.Group v-model:value="studentForm.sex">
-              <ARadio :value="GenderEnum.MALE">男</ARadio>
-              <ARadio :value="GenderEnum.FEMALE">女</ARadio>
-            </ARadio.Group>
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="性别" custom-title-class="font-normal" />
+        <AForm.Item name="sex">
+          <ARadio.Group v-model:value="studentForm.sex">
+            <ARadio :value="GenderEnum.MALE">男</ARadio>
+            <ARadio :value="GenderEnum.FEMALE">女</ARadio>
+          </ARadio.Group>
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="年级" required custom-title-class="font-normal" />
-          <AForm.Item name="gradeDeptId">
-            <ASelect
-              v-model:value="studentForm.gradeDeptId"
-              placeholder="请选择年级"
-              :options="deptList"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="年级" required custom-title-class="font-normal" />
+        <AForm.Item name="gradeDeptId">
+          <ASelect
+            v-model:value="studentForm.gradeDeptId"
+            placeholder="请选择年级"
+            :options="deptList"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="班级" required custom-title-class="font-normal" />
-          <AForm.Item name="classDeptId">
-            <ASelect
-              v-model:value="studentForm.classDeptId"
-              placeholder="请选择班级"
-              :options="classList"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="班级" required custom-title-class="font-normal" />
+        <AForm.Item name="classDeptId">
+          <ASelect
+            v-model:value="studentForm.classDeptId"
+            placeholder="请选择班级"
+            :options="classList"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="届别" required custom-title-class="font-normal" />
-          <AForm.Item name="enrollmentYear">
-            <ASelect
-              v-model:value="studentForm.enrollmentYear"
-              placeholder="请选择届别"
-              :options="enrollmentYearList"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="届别" required custom-title-class="font-normal" />
+        <AForm.Item name="enrollmentYear">
+          <ASelect
+            v-model:value="studentForm.enrollmentYear"
+            placeholder="请选择届别"
+            :options="enrollmentYearList"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="就读状态" required custom-title-class="font-normal" />
-          <AForm.Item name="graduationStatus">
-            <ASelect
-              v-model:value="studentForm.graduationStatus"
-              placeholder="请选择就读状态"
-              :options="graduationStatusOptions"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="就读状态" required custom-title-class="font-normal" />
+        <AForm.Item name="graduationStatus">
+          <ASelect
+            v-model:value="studentForm.graduationStatus"
+            placeholder="请选择就读状态"
+            :options="graduationStatusOptions"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="联系电话" custom-title-class="font-normal" />
-          <AForm.Item name="mobile">
-            <AInput
-              v-model:value="studentForm.mobile"
-              placeholder="请填写"
-              :maxlength="11"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="联系电话" custom-title-class="font-normal" />
+        <AForm.Item name="mobile">
+          <AInput
+            v-model:value="studentForm.mobile"
+            placeholder="请填写"
+            :maxlength="11"
+          />
+        </AForm.Item>
+      </div>
 
-        <div>
-          <LyLabel title="家庭住址" custom-title-class="font-normal" />
-          <AForm.Item name="homeAddress">
-            <AInput.TextArea
-              v-model:value="studentForm.homeAddress"
-              placeholder="建议填写详细地址便于联系"
-              :rows="3"
-              :maxlength="200"
-              :show-count="true"
-            />
-          </AForm.Item>
-        </div>
+      <div>
+        <LyLabel title="家庭住址" custom-title-class="font-normal" />
+        <AForm.Item name="homeAddress">
+          <AInput.TextArea
+            v-model:value="studentForm.homeAddress"
+            placeholder="建议填写详细地址便于联系"
+            :rows="3"
+            :maxlength="200"
+            :show-count="true"
+          />
+        </AForm.Item>
+      </div>
 
-        <!-- <div>
+      <!-- <div>
         <LyLabel label="特殊标记" />
         <AForm.Item name="isMark">
           <ARadioGroup v-model:value="studentForm.isMark">
@@ -360,17 +356,17 @@ onMounted(async () => {
         </AForm.Item>
       </div> -->
 
-        <div>
-          <LyLabel title="备注说明" custom-title-class="font-normal" />
-          <AForm.Item name="remark">
-            <AInput.TextArea
-              v-model:value="studentForm.remark"
-              placeholder="可填写具体情况说明"
-            />
-          </AForm.Item>
-        </div>
-      </AForm>
-    </ASpin>
+      <div>
+        <LyLabel title="备注说明" custom-title-class="font-normal" />
+        <AForm.Item name="remark">
+          <AInput.TextArea
+            v-model:value="studentForm.remark"
+            placeholder="可填写具体情况说明"
+          />
+        </AForm.Item>
+      </div>
+    </AForm>
+    <!-- </ASpin> -->
   </Drawer>
 </template>
 
