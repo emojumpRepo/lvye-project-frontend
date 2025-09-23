@@ -4,7 +4,7 @@ import type { VbenFormSchema } from '@vben/common-ui';
 import type { AuthApi } from '#/api/core/auth';
 
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { isCaptchaEnable, isTenantEnable } from '@vben/hooks';
@@ -25,6 +25,7 @@ const accessStore = useAccessStore();
 const tenantEnable = isTenantEnable();
 const captchaEnable = isCaptchaEnable();
 const route = useRoute();
+const router = useRouter();
 
 const loginRef = ref();
 const verifyRef = ref();
@@ -35,6 +36,11 @@ const tenantInfo = ref<AuthApi.TenantResult | null>(null);
 
 /** 获取租户列表，并默认选中 */
 const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
+const TENANT_CACHE_KEY = 'school_tenant_id'; // localStorage缓存键名
+
+// 判断是否为开发环境
+const isDevelopment = import.meta.env.MODE === 'development' || import.meta.env.DEV;
+
 async function fetchTenantList() {
   if (!tenantEnable) {
     return;
@@ -42,17 +48,56 @@ async function fetchTenantList() {
 
   tenantLoading.value = true;
   try {
-    // 优先从URL参数获取租户ID（使用简洁的 id 参数）
+    // 开发环境：允许显示租户列表供选择
+    if (isDevelopment) {
+      // 获取租户列表
+      tenantList.value = await getTenantSimpleList();
+      
+      // 尝试从URL或缓存获取默认选中的租户
+      const tenantIdFromUrl = route.query.id as string;
+      const cachedTenantId = !tenantIdFromUrl ? localStorage.getItem(TENANT_CACHE_KEY) : null;
+      const defaultTenantId = tenantIdFromUrl || cachedTenantId;
+      
+      if (defaultTenantId) {
+        // 设置默认选中的租户
+        accessStore.setTenantId(Number(defaultTenantId));
+        loginRef.value?.getFormApi()?.setFieldValue('tenantId', defaultTenantId.toString());
+        
+        // 如果是从URL获取的，缓存它
+        if (tenantIdFromUrl) {
+          localStorage.setItem(TENANT_CACHE_KEY, defaultTenantId.toString());
+        }
+      } else if (tenantList.value.length > 0) {
+          // 如果没有默认值，选择第一个租户
+        const firstTenantId = tenantList?.value?.[0]?.id;
+        if (firstTenantId) {
+          accessStore.setTenantId(firstTenantId);
+          loginRef.value?.getFormApi()?.setFieldValue('tenantId', firstTenantId.toString());
+        }
+      }
+      
+      // 开发环境不需要显示无租户提示
+      return;
+    }
+    
+    // 生产环境：保持原有的安全限制逻辑
+    // 1. 优先从URL参数获取租户ID
     const tenantIdFromUrl = route.query.id as string;
-
-    if (tenantIdFromUrl) {
-      // 如果URL中有租户ID，直接使用免鉴权接口查询
+    
+    // 2. 如果URL没有，从localStorage获取缓存的租户ID
+    const cachedTenantId = !tenantIdFromUrl ? localStorage.getItem(TENANT_CACHE_KEY) : null;
+    
+    // 使用URL参数或缓存的ID
+    const tenantId = tenantIdFromUrl || cachedTenantId;
+    
+    if (tenantId) {
+      // 如果有租户ID，直接使用免鉴权接口查询
       try {
-        const tenantData = await getTenantById(Number(tenantIdFromUrl));
+        const tenantData = await getTenantById(Number(tenantId));
 
         if (tenantData) {
           // 成功获取租户信息
-          hasTenantFromUrl.value = true;
+          hasTenantFromUrl.value = !!tenantIdFromUrl; // 只有URL有参数时才标记
           tenantInfo.value = {
             id: tenantData.id,
             name: tenantData.name,
@@ -63,54 +108,46 @@ async function fetchTenantList() {
           loginRef.value
             ?.getFormApi()
             ?.setFieldValue('tenantId', tenantData.id.toString());
+          
+          // 如果是从URL获取的，缓存到localStorage
+          if (tenantIdFromUrl) {
+            localStorage.setItem(TENANT_CACHE_KEY, tenantData.id.toString());
+          }
 
           // 不需要获取租户列表，直接返回
           return;
         } else {
-          // 租户ID无效或租户被禁用，显示无租户提示
-          console.error('未找到指定的租户ID或租户已被禁用:', tenantIdFromUrl);
-          noTenantProvided.value = true;
-          return;
+          // 租户ID无效或租户被禁用
+          console.error('未找到指定的租户ID或租户已被禁用:', tenantId);
+          // 清除无效的缓存
+          if (cachedTenantId) {
+            localStorage.removeItem(TENANT_CACHE_KEY);
+          }
+          // 只有URL参数无效时才显示错误，缓存无效时静默失败
+          if (tenantIdFromUrl) {
+            noTenantProvided.value = true;
+            return;
+          }
         }
       } catch (error) {
         console.error('获取租户信息失败:', error);
-        // 租户ID无效，显示无租户提示
-        noTenantProvided.value = true;
-        return;
+        // 清除无效的缓存
+        if (cachedTenantId) {
+          localStorage.removeItem(TENANT_CACHE_KEY);
+        }
+        // 只有URL参数请求失败时才显示错误
+        if (tenantIdFromUrl) {
+          noTenantProvided.value = true;
+          return;
+        }
       }
     }
 
-    // 如果没有URL参数，直接显示无租户提示
-    if (!tenantIdFromUrl) {
-      // 没有提供租户ID，显示提示信息
+    // 如果没有URL参数也没有缓存，显示无租户提示
+    if (!tenantIdFromUrl && !cachedTenantId) {
       noTenantProvided.value = true;
       return;
     }
-
-    // 以下是原有的域名获取租户逻辑（作为备用方案）
-    const websiteTenantPromise = getTenantByWebsite(window.location.hostname);
-    tenantList.value = await getTenantSimpleList();
-
-    // 选中租户：域名 > store 中的租户 > 首个租户
-    let tenantId: null | number = null;
-    const websiteTenant = await websiteTenantPromise;
-    if (websiteTenant?.id) {
-      tenantId = websiteTenant.id;
-    }
-    // 如果没有从域名获取到租户，尝试从 store 中获取
-    if (!tenantId && accessStore.tenantId) {
-      tenantId = accessStore.tenantId;
-    }
-    // 如果还是没有租户，使用列表中的第一个
-    if (!tenantId && tenantList.value?.[0]?.id) {
-      tenantId = tenantList.value[0].id;
-    }
-
-    // 设置选中的租户编号
-    accessStore.setTenantId(tenantId);
-    loginRef.value
-      ?.getFormApi()
-      ?.setFieldValue('tenantId', tenantId?.toString());
   } catch (error) {
     console.error('获取租户列表失败:', error);
     noTenantProvided.value = true;
@@ -121,6 +158,12 @@ async function fetchTenantList() {
 
 /** 处理登录 */
 async function handleLogin(values: any) {
+  // 登录前确保租户ID已缓存（用于退出时保持）
+  const currentTenantId = accessStore.tenantId || values.tenantId;
+  if (currentTenantId) {
+    localStorage.setItem(TENANT_CACHE_KEY, currentTenantId.toString());
+  }
+  
   // 如果开启验证码，则先验证验证码
   if (captchaEnable) {
     verifyRef.value.show();
@@ -128,6 +171,16 @@ async function handleLogin(values: any) {
   }
   // 无验证码，直接登录
   await authStore.authLogin('username', values);
+  
+  // 登录成功后，如果URL中有id参数，清理它
+  if (route.query.id) {
+    // 移除URL中的id参数，保持URL干净
+    const { id, ...otherQuery } = route.query;
+    router.replace({
+      path: route.path,
+      query: otherQuery
+    });
+  }
 }
 
 /** 组件挂载时获取租户信息 */
@@ -138,8 +191,8 @@ onMounted(() => {
 const formSchema = computed((): VbenFormSchema[] => {
   const schema: VbenFormSchema[] = [];
 
-  // 只有在没有从URL获取租户时才显示租户选择字段
-  if (tenantEnable && !hasTenantFromUrl.value && !noTenantProvided.value) {
+  // 开发环境或没有从URL获取租户时显示租户选择字段
+  if (tenantEnable && (isDevelopment || (!hasTenantFromUrl.value && !noTenantProvided.value))) {
     schema.push({
       component: 'VbenSelect',
       componentProps: {
@@ -147,7 +200,7 @@ const formSchema = computed((): VbenFormSchema[] => {
           label: item.name,
           value: item.id.toString(),
         })),
-        placeholder: $t('authentication.tenantTip'),
+        placeholder: isDevelopment ? '请选择学校（开发环境）' : $t('authentication.tenantTip'),
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
@@ -158,14 +211,18 @@ const formSchema = computed((): VbenFormSchema[] => {
         trigger(values) {
           if (values.tenantId) {
             accessStore.setTenantId(Number(values.tenantId));
+            // 开发环境下，选择租户后也缓存
+            if (isDevelopment) {
+              localStorage.setItem(TENANT_CACHE_KEY, values.tenantId.toString());
+            }
           }
         },
       },
     });
   }
 
-  // 如果从URL获取了租户，显示租户名称（只读）
-  if (hasTenantFromUrl.value && tenantInfo.value) {
+  // 生产环境：如果从URL获取了租户，显示租户名称（只读）
+  if (!isDevelopment && hasTenantFromUrl.value && tenantInfo.value) {
     schema.push({
       component: 'VbenInput',
       componentProps: {
@@ -242,9 +299,9 @@ const formSchema = computed((): VbenFormSchema[] => {
       </div>
     </div>
 
-    <!-- 无租户提示 -->
+    <!-- 无租户提示（仅生产环境） -->
     <div
-      v-else-if="noTenantProvided"
+      v-else-if="!isDevelopment && noTenantProvided"
       class="flex h-full items-center justify-center"
     >
       <div class="bg-card mx-auto max-w-md rounded-lg p-8 text-center">
