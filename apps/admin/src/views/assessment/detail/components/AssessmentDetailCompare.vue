@@ -6,6 +6,8 @@ import type {
   RiskLevel,
 } from '@vben/types';
 
+import type { ActiveType, RiskLevelConfig } from '../types';
+
 import { computed, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
@@ -21,7 +23,6 @@ import {
 import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessment/index';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { getDictLabel } from '#/utils/dict';
-import type { ActiveType, RiskLevelConfig } from '../types';
 
 const props = defineProps<{
   activeType: ActiveType;
