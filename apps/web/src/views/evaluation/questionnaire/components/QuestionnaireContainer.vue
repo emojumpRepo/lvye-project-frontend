@@ -41,14 +41,12 @@ const showIntro = ref(false);
 const isIframeCompleted = ref(false);
 const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
 
-const imgBaseUrl = '../../../../static/images/evaluation/questionnaire/';
-
 const bgUrl = computed(() => {
   const introBgImgUrl =
     props.sceneData?.metadata?.introConfig.backgroundImageUrl;
   return showIntro.value
     ? introBgImgUrl
-    : new URL(`${imgBaseUrl}answer_page_bg.png`, import.meta.url).href;
+    : 'https://kangpei-1371067330.cos.ap-guangzhou.myqcloud.com/20250923/answer_page_bg_1758608768536.png';
 });
 
 function handleIntroClose() {
