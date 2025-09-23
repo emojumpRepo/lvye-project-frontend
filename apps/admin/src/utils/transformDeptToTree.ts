@@ -32,6 +32,7 @@ export async function loadDeptList() {
       label: dept.name,
       parentId: dept.parentId,
       count: dept.count || 0,
+      sort: dept.sort || 0,
       children: [], // 先初始化为空数组
     });
   }
@@ -133,15 +134,18 @@ export async function getDeptTreeList(
     const children = targetDept?.children ?? [];
     if (!Array.isArray(children) || children.length === 0) return [];
 
-    return children.map((child: any) => ({
-      id: child.value,
-      name: child.label,
-      classDeptId: child.value,
-      gradeDeptId: classDeptId,
-      count: child.count,
-      hasChildField: true,
-      isClass: true,
-    }));
+    return children
+      .map((child: any) => ({
+        id: child.value,
+        name: child.label,
+        classDeptId: child.value,
+        gradeDeptId: classDeptId,
+        count: child.count,
+        sort: child.sort,
+        hasChildField: true,
+        isClass: true,
+      }))
+      .sort((a: { sort: number }, b: { sort: number }) => a.sort - b.sort);
   }
 
   const allDeptList = treeData
@@ -151,10 +155,11 @@ export async function getDeptTreeList(
       classDeptId: dept.value,
       gradeDeptId: dept.parentId ?? null,
       count: dept.count,
+      sort: dept.sort,
       hasChildField: true,
       isGrade: true,
     }))
-    .sort((a: { id: number }, b: { id: number }) => a.id - b.id);
+    .sort((a: { sort: number }, b: { sort: number }) => a.sort - b.sort);
 
   return allDeptList;
 }
