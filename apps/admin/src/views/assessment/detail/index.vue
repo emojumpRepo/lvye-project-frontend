@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { ActiveType, TabItem, TaskInfo } from './types';
+
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -19,7 +21,6 @@ import LyButton from '#/components/LyButton/index.vue';
 import AssessmentDetailCompare from './components/AssessmentDetailCompare.vue';
 import AssessmentDetailList from './components/AssessmentDetailList.vue';
 import AssessmentDetailTask from './components/AssessmentDetailTask.vue';
-import type { ActiveType, TabItem, TaskInfo } from './types';
 
 const classType = ref<TabItem[]>([
   { label: '全部', key: 'all' },
@@ -59,9 +60,6 @@ const loading = ref(false);
 
 const currentTaskInfo = ref<TaskInfo>();
 const activeTabKey = ref(''); // 问卷Tab
-
-/** 是否存在身心健康自评问卷 */
-const hasHealthSelfAssessment = ref(false);
 
 /** 任务状态标签 */
 const taskStatusTag = computed(() => {
@@ -123,6 +121,7 @@ async function loadTaskData() {
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
         label: item.title || '',
+        code: item.code || '',
         key: item.id?.toString() || '',
       }));
       currentTaskInfo.value = {
@@ -141,10 +140,6 @@ async function loadTaskData() {
       };
       activeTabKey.value =
         currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
-      hasHealthSelfAssessment.value =
-        currentTaskInfo.value.questionnairesTabs.some(
-          (item) => item.key === '12',
-        );
     }
   } catch (error) {
     console.error('Failed to load task data:', error);
@@ -255,7 +250,6 @@ onMounted(async () => {
       :task-no="taskNo"
       :task-name="currentTaskInfo?.taskName"
       :questionnaire-id="activeTabKey"
-      :has-health-self-assessment="hasHealthSelfAssessment"
       :questionnaires-tabs="currentTaskInfo?.questionnairesTabs"
       v-model:active-tab-key="activeTabKey"
     />

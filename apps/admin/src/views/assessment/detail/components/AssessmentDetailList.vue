@@ -23,7 +23,6 @@ interface Props {
   taskNo?: string;
   taskName?: string;
   questionnaireId?: string;
-  hasHealthSelfAssessment?: boolean;
   questionnairesTabs?: { key: string; label: string }[];
 }
 
@@ -175,18 +174,14 @@ function viewDetail(
       })
       .open();
   } else {
-    if (props.hasHealthSelfAssessment) {
-      questionnaireResultModalApi
-        .setData({
-          id: row?.id,
-          name: row?.name,
-          taskName: props.taskName,
-          questionnairesTabs: props.questionnairesTabs,
-        })
-        .open();
-    } else {
-      return message.error('问卷暂不支持查看');
-    }
+    questionnaireResultModalApi
+      .setData({
+        id: row?.id,
+        name: row?.name,
+        taskName: props.taskName,
+        questionnairesTabs: props.questionnairesTabs,
+      })
+      .open();
   }
 }
 

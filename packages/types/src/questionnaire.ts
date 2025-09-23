@@ -4,6 +4,8 @@ export interface QuestionnaireVO {
   externalId?: string;
   title?: string;
   questionnaireTitle?: string;
+  surveyCode?: string;
+  code?: string;
   status?: number;
   description?: string;
   externalLink: string;
