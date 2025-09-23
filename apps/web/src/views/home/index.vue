@@ -24,16 +24,16 @@ const dailyTip = ref(
 // 隐私提醒弹窗
 const PRIVACY_NOTICE_KEY = 'lvye_privacy_notice_ack_v1';
 const [PrivacyModal, privacyModalApi] = useVbenModal({
-  title: '调查说明',
+  title: '测评须知',
   centered: true,
   closeOnClickModal: false,
   fullscreenButton: false,
   showCancelButton: false,
   closable: false,
-  confirmText: '下一页',
+  confirmText: '我已知晓，开始测评',
   bordered: false,
-  class: 'w-[92vw] sm:max-w-[720px]',
-  contentClass: 'p-0',
+  class: 'privacy-modal w-[92vw] sm:w-[85vw] md:max-w-[580px]',
+  contentClass: 'p-0 overflow-hidden',
   onConfirm: () => {
     try {
       localStorage.setItem(PRIVACY_NOTICE_KEY, '1');
@@ -170,47 +170,200 @@ function onTaskAction(task: AssessmentTask) {
     <!-- 隐私提醒弹窗 -->
     <PrivacyModal>
       <template #title>
-        <div
-          class="flex items-start gap-2 border-b border-emerald-100/70 px-4 py-2"
-        >
-          <span
-            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
-          >
+        <div class="flex items-center gap-2.5 bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-400 text-white">
             <IconifyIcon icon="lucide:shield-check" class="h-5 w-5" />
-          </span>
-          <div class="leading-tight">
-            <div
-              class="bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-lg font-semibold text-transparent"
-            >
-              测评须知
-            </div>
-            <div class="mt-0.5 text-xs text-emerald-700/80">
-              我们承诺严格保密你的信息
-            </div>
           </div>
+          <h3 class="text-lg font-bold bg-gradient-to-r from-amber-700 to-orange-700 bg-clip-text text-transparent">测评须知</h3>
+          <span class="ml-auto text-sm text-amber-600">🔒 隐私保护</span>
         </div>
       </template>
+      
       <template #default>
-        <div class="px-6 py-2">
-          <div class="space-y-4 leading-7 text-emerald-900/90">
-            <p class="text-base">亲爱的同学，你好!</p>
-            <p class="indent-4">
-              为更全面深入地了解你的身心健康状况，我们特组织此次调查。本次调查遵循自愿参与原则，主要采用自评问卷的形式对你的整体身心健康状况进行评估，同时我们向你保证，本次调查中你所提供的所有个人资料和隐私信息将被严格保密。
-            </p>
-            <p class="indent-4">
-              本次调查结果将用于中小学生身心健康情况的分析，将会为学校制定更有针对性及更有效的身心健康服务策略、更好地服务和支持各位同学提供重要参考，也对推动该领域的科学研究、全面提升青少年身心整体健康水平具有重要意义。
-            </p>
-            <p class="indent-4">
-              参与调查过程中，如果你在回答问题时遇到困难或感到困惑，请与相关老师联系。
-            </p>
-            <div
-              class="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-emerald-900"
-            >
-              如你已知晓并自愿参加本次调查，请点击「下一页」选项，正式进入调查。
+        <div class="bg-white px-5 py-4">
+          <!-- 问候语 -->
+          <div class="mb-3 text-center">
+            <span class="text-base font-semibold text-amber-900">亲爱的同学，欢迎参加身心健康调查！</span>
+          </div>
+          
+          <!-- 三列网格布局 -->
+          <div class="grid gap-2.5 sm:grid-cols-3 mb-3">
+            <!-- 调查目的 -->
+            <div class="rounded-lg bg-amber-50/60 p-2.5 border border-amber-100">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-amber-800">1</span>
+                <span class="text-sm font-semibold text-amber-800">调查目的</span>
+              </div>
+              <p class="text-sm text-amber-700 leading-relaxed">
+                了解同学们身心健康，提供更好的支持服务
+              </p>
             </div>
+            
+            <!-- 参与方式 -->
+            <div class="rounded-lg bg-orange-50/60 p-2.5 border border-orange-100">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-orange-200 text-xs font-bold text-orange-800">2</span>
+                <span class="text-sm font-semibold text-orange-800">参与方式</span>
+              </div>
+              <p class="text-sm text-orange-700 leading-relaxed">
+                <span class="inline-block rounded bg-orange-100/80 px-1.5 py-0.5 font-medium">自愿</span>
+                问卷调查
+              </p>
+            </div>
+            
+            <!-- 需要帮助 -->
+            <div class="rounded-lg bg-amber-50/60 p-2.5 border border-amber-100">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-amber-800">3</span>
+                <span class="text-sm font-semibold text-amber-800">需要帮助</span>
+              </div>
+              <p class="text-sm text-amber-700 leading-relaxed">
+                遇到困难请联系老师
+              </p>
+            </div>
+          </div>
+          
+          <!-- 隐私保护区域 -->
+          <div class="rounded-lg bg-gradient-to-r from-amber-400 to-orange-400 p-[1px] mb-3">
+            <div class="rounded-lg bg-white p-3">
+              <div class="flex items-start gap-2">
+                <IconifyIcon icon="lucide:lock" class="h-4 w-4 text-amber-600 mt-0.5" />
+                <div class="flex-1">
+                  <h5 class="text-sm font-semibold text-amber-900">隐私保护承诺</h5>
+                  <p class="text-sm text-amber-800 mt-1 leading-relaxed">
+                    我们严格保密你的所有信息，仅用于健康分析，不会泄露给任何第三方
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 调查意义 -->
+          <div class="rounded-lg bg-gradient-to-r from-amber-50/50 to-orange-50/50 p-2.5 mb-3">
+            <div class="flex items-start gap-2">
+              <IconifyIcon icon="lucide:target" class="h-4 w-4 text-amber-600 mt-0.5" />
+              <div class="flex-1">
+                <p class="text-sm text-amber-800 font-medium">调查结果将用于：</p>
+                <ul class="text-sm text-amber-700 mt-1 space-y-0.5">
+                  <li>• 制定更好的身心健康服务策略</li>
+                  <li>• 提供有针对性的支持和帮助</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 确认区域 -->
+          <div class="rounded-lg bg-gradient-to-r from-amber-100/40 to-orange-100/40 p-3 text-center">
+            <p class="text-sm font-medium text-amber-800">
+              如你已了解并同意参与，请点击下方按钮开始测评 ✨
+            </p>
           </div>
         </div>
       </template>
     </PrivacyModal>
   </Page>
 </template>
+
+<style scoped>
+/* 隐私提醒弹窗优化样式 */
+:deep(.privacy-modal) {
+  /* 去除弹窗阴影 */
+  box-shadow: none !important;
+  border: 2px solid rgba(251, 191, 36, 0.15);
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+}
+
+:deep(.privacy-modal .ant-modal-content) {
+  box-shadow: none !important;
+  border-radius: 24px;
+  overflow: hidden;
+  background: transparent;
+}
+
+:deep(.privacy-modal .ant-modal-header) {
+  border-bottom: none;
+  padding: 0;
+  background: transparent;
+}
+
+:deep(.privacy-modal .ant-modal-body) {
+  padding: 0;
+  background: transparent;
+}
+
+:deep(.privacy-modal .ant-modal-footer) {
+  border-top: 1px solid rgba(251, 191, 36, 0.15);
+  padding: 14px 24px;
+  background: linear-gradient(to right, #fffbeb, #fff7ed);
+  margin: 0;
+}
+
+:deep(.privacy-modal .ant-btn-primary) {
+  background: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
+  border: none;
+  border-radius: 12px;
+  height: 42px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 0 28px;
+}
+
+:deep(.privacy-modal .ant-btn-primary:hover) {
+  background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
+  transform: translateY(-1px);
+}
+
+:deep(.privacy-modal .ant-btn-primary:active) {
+  transform: translateY(0);
+}
+
+/* 响应式优化 */
+@media (max-width: 640px) {
+  :deep(.privacy-modal) {
+    border-radius: 20px;
+  }
+  
+  :deep(.privacy-modal .ant-modal-footer) {
+    padding: 12px 16px;
+  }
+  
+  :deep(.privacy-modal .ant-btn-primary) {
+    height: 36px;
+    font-size: 13px;
+    padding: 0 20px;
+    border-radius: 10px;
+  }
+}
+
+/* 限制最大高度，确保一屏内显示 */
+:deep(.privacy-modal .ant-modal-body) {
+  max-height: calc(80vh - 120px);
+  overflow-y: auto;
+}
+
+/* 滚动条优化 */
+:deep(.privacy-modal .ant-modal-body) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.3) transparent;
+}
+
+:deep(.privacy-modal .ant-modal-body::-webkit-scrollbar) {
+  width: 6px;
+}
+
+:deep(.privacy-modal .ant-modal-body::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:deep(.privacy-modal .ant-modal-body::-webkit-scrollbar-thumb) {
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 3px;
+}
+
+:deep(.privacy-modal .ant-modal-body::-webkit-scrollbar-thumb:hover) {
+  background: rgba(16, 185, 129, 0.5);
+}
+</style>
