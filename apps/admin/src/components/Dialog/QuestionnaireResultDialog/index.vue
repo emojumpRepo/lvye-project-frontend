@@ -51,9 +51,10 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreenButton: false,
   fullscreen: true,
   destroyOnClose: true,
-  class: 'w-[900px] !h-full',
+  class: 'h-full overflow-hidden',
+  contentClass: '!bg-[#F7F8FB] box-border flex-center px-20',
   footer: false,
-  header: false,
+  closable: false,
   onOpenChange: async (open) => {
     if (open) {
       loading.value = true;
@@ -226,11 +227,36 @@ const handleExport = async () => {
     message.error('导出失败，请重试');
   }
 };
+
+function handleClose() {
+  questionnaireResultModalApi.close();
+}
 </script>
 
 <template>
   <QuestionnaireResultModal>
-    <div class="h-full overflow-hidden p-6">
+    <template #title>
+      <!-- 顶部返回与标题 -->
+      <div
+        class="to-[rgba(255, 255, 255, 0.8) flex w-full items-center justify-between bg-gradient-to-r from-[#FFFFFF]"
+      >
+        <div class="flex items-center gap-4">
+          <LyButton
+            type="default"
+            size="middle"
+            class="rounded-[4px] px-[12px]"
+            @click="handleClose"
+          >
+            返回
+          </LyButton>
+        </div>
+      </div>
+    </template>
+
+    <div
+      class="h-full w-full overflow-hidden bg-white px-10 py-6"
+      style="margin: 0 140px"
+    >
       <Tabs v-model:active-key="activeKey">
         <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.tab">
           <Spin :spinning="loading" class="flex-center h-full" />

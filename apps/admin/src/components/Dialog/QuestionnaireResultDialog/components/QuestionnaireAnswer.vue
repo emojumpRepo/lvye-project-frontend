@@ -80,7 +80,7 @@ function parseMultiAnswer(answer?: string) {
     </div>
 
     <!-- 答题列表 -->
-    <div class="space-y-4">
+    <div class="space-y-6">
       <div
         v-for="item in answers"
         :key="item.index"

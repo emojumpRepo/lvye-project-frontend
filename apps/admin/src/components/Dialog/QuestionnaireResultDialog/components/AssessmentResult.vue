@@ -53,54 +53,9 @@ const questionnaireResults = computed(() => {
 <template>
   <div>
     <AssessmentRadar :questionnaire-result="questionnaireResults" />
-    <div class="space-y-4">
-      <div v-for="item in questionnaireResults" :key="item.questionnaireId">
-        <Table
-          v-if="JSON.parse(item.reportContent).length > 0"
-          bordered
-          :columns="columns"
-          :data-source="JSON.parse(item.reportContent)"
-          :pagination="false"
-        >
-          <template #bodyCell="{ column, text }">
-            <template v-if="column.dataIndex === 'isAbnormal'">
-              <LyTag
-                :color-type="text === 0 ? 'success' : 'error'"
-                :tag-label="text === 0 ? '正常' : '异常'"
-              />
-            </template>
-          </template>
-          <template #title>
-            <div class="font-bold">
-              {{ item.questionnaireName }}
-            </div>
-          </template>
-          <template #footer>
-            <div class="flex flex-col gap-3">
-              <template
-                v-for="content in JSON.parse(item.reportContent)"
-                :key="content.dimensionName"
-              >
-                <div class="flex items-center gap-2 font-bold text-[#1966FF]">
-                  <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
-                  {{ content.dimensionName }}
-                </div>
-                <div class="rounded-lg">
-                  <span class="font-bold text-gray-600">教师建议：</span>
-                  <span class="text-sm leading-relaxed text-gray-700">
-                    {{ content.teacherComment }}
-                  </span>
-                </div>
-              </template>
-            </div>
-          </template>
-        </Table>
-      </div>
-    </div>
-
     <!-- 测评总结 -->
     <div
-      class="mt-6 flex flex-col gap-4 rounded-lg border bg-gray-50 p-4 text-sm"
+      class="mb-8 mt-6 flex flex-col gap-4 rounded-lg border bg-gray-50 p-4 text-sm"
     >
       <div>
         <h3 class="text-lg font-semibold text-gray-800">测评总结</h3>
@@ -143,6 +98,53 @@ const questionnaireResults = computed(() => {
             {{ assessmentResult.riskLevelIntervention.suggestion }}
           </p>
         </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div v-for="item in questionnaireResults" :key="item.questionnaireId">
+        <Table
+          v-if="JSON.parse(item.reportContent).length > 0"
+          bordered
+          :columns="columns"
+          :data-source="JSON.parse(item.reportContent)"
+          :pagination="false"
+        >
+          <template #bodyCell="{ column, text }">
+            <template v-if="column.dataIndex === 'isAbnormal'">
+              <LyTag
+                :color-type="text === 0 ? 'success' : 'error'"
+                :tag-label="text === 0 ? '正常' : '异常'"
+              />
+            </template>
+          </template>
+          <template #title>
+            <div class="font-bold">
+              {{ item.questionnaireName }}
+            </div>
+          </template>
+          <template #footer>
+            <div class="flex flex-col gap-5">
+              <template
+                v-for="content in JSON.parse(item.reportContent)"
+                :key="content.dimensionName"
+              >
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 font-bold text-[#1966FF]">
+                    <div class="h-1 w-1 rounded-full bg-[#1966FF]"></div>
+                    {{ content.dimensionName }}
+                  </div>
+                  <div class="rounded-lg">
+                    <span class="font-bold text-gray-600">教师建议：</span>
+                    <span class="text-sm leading-relaxed text-gray-700">
+                      {{ content.teacherComment }}
+                    </span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </Table>
       </div>
     </div>
   </div>
