@@ -9,56 +9,111 @@ import {
 } from '#/api/psychology/student-profile';
 
 /**
- * 加载部门列表
+ * 加载部门列表 (支持多级)
  */
 export async function loadDeptList() {
+  // 假设 getDeptSimpleList 返回类型为 Dept[]
   const data = await getDeptSimpleList();
-  if (data.length > 0) {
-    const filteredData = data.filter(
-      (dept) => dept.parentId !== 110 && dept.parentId !== 0,
-    );
 
-    const childIds = new Set(filteredData.map((dept) => dept.id));
+  if (!data || data.length === 0) {
+    return [];
+  }
 
-    const rootDepts = filteredData.filter(
-      (dept) =>
-        !childIds.has(dept.parentId) ||
-        dept.parentId === 0 ||
-        dept.parentId === null,
-    );
+  const filteredData = data;
 
-    // 构建树形结构
-    const buildTree = (
-      parentId: number,
-    ): undefined | { label: string; value: number }[] => {
-      const children = filteredData
-        .filter((dept) => dept.parentId === parentId)
-        .map((dept) => ({
-          value: dept.id,
-          label: dept.name,
-          parentId,
-          count: dept.count || 0,
-          isClass: true,
-        }));
+  const nodeMap = new Map();
+  const treeData = [];
 
-      return children.length > 0 ? children : undefined;
-    };
-
-    // 构建最终的树形数据
-    const treeData = rootDepts.map((dept) => ({
+  // 2. 第一次遍历：将每个部门转换为树节点，并存入 Map 以便快速查找。
+  // 同时为每个节点初始化一个 children 数组。
+  for (const dept of filteredData) {
+    nodeMap.set(dept.id, {
       value: dept.id,
       label: dept.name,
       parentId: dept.parentId,
-      children: buildTree(dept.id),
       count: dept.count || 0,
-      isGrade: true,
-    }));
-
-    localStorage.setItem('deptList', JSON.stringify(treeData));
-    return treeData;
+      children: [], // 先初始化为空数组
+    });
   }
 
-  return [];
+  // 3. 第二次遍历：构建父子关系。
+  for (const dept of filteredData) {
+    const node = nodeMap.get(dept.id);
+    if (!node) continue;
+
+    // 判断是否为根节点 (父ID为0, null, 或者在Map中找不到父节点)
+    if (
+      dept.parentId === null ||
+      dept.parentId === 0 ||
+      !nodeMap.has(dept.parentId)
+    ) {
+      treeData.push(node);
+    } else {
+      // 如果不是根节点，就找到它的父节点，并将自己添加到父节点的 children 中
+      const parentNode = nodeMap.get(dept.parentId);
+      if (parentNode) {
+        parentNode.children?.push(node);
+      }
+    }
+  }
+
+  // 标记各层级的标识，并计算最大层级
+  function getMaxDepth(nodes: any[], currentDepth = 1): number {
+    if (!Array.isArray(nodes) || nodes.length === 0) return currentDepth - 1;
+    let max = currentDepth;
+    for (const n of nodes) {
+      const depth = getMaxDepth(n.children || [], currentDepth + 1);
+      if (depth > max) max = depth;
+    }
+    return max;
+  }
+
+  function labelFlags(nodes: any[], level = 1, maxDepthForMark = 1) {
+    for (const n of nodes) {
+      // 清理旧标记，避免脏数据
+      delete n.isGrade;
+      delete n.isDept;
+      delete n.isClass;
+      if (maxDepthForMark >= 3) {
+        if (level === 1) {
+          n.isDept = true;
+        } else if (level === 2) {
+          n.isGrade = true;
+        } else {
+          // 第三层（及更深层）视为班级
+          n.isClass = true;
+        }
+      } else if (maxDepthForMark === 2) {
+        if (level === 1) {
+          // 两层结构：第一层为 isGrass
+          (n as any).isGrass = true;
+        } else {
+          n.isClass = true;
+        }
+      } else {
+        // 单层或未知：统一按班级
+        n.isClass = true;
+      }
+      if (Array.isArray(n.children) && n.children.length > 0) {
+        labelFlags(n.children, level + 1, maxDepthForMark);
+      }
+    }
+  }
+
+  const maxDepth = getMaxDepth(treeData, 1);
+  labelFlags(treeData, 1, maxDepth);
+
+  let finalData: any = treeData;
+
+  // 层级达到三层或以上：提取每个第一层节点的 children 合并为新的第一层
+  if (maxDepth >= 3) {
+    finalData = (treeData as any[]).flatMap((root: any) =>
+      Array.isArray(root.children) ? root.children : [],
+    );
+  }
+
+  localStorage.setItem('deptList', JSON.stringify(finalData));
+  return finalData;
 }
 
 // 格式化班级名称
@@ -119,7 +174,7 @@ export async function getDeptTreeList(
       hasChildField: true,
       isGrade: true,
     }))
-    .sort((a, b) => a.id - b.id);
+    .sort((a: { id: number }, b: { id: number }) => a.id - b.id);
 
   return allDeptList;
 }
