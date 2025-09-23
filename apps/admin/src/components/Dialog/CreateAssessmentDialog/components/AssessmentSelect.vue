@@ -40,6 +40,9 @@ type SimpleScenario = {
   description?: string;
   id: number;
   maxQuestionnaireCount?: number;
+  meta: {
+    tags?: string[];
+  };
   name: string;
 };
 const scenarioList = ref<SimpleScenario[]>([]);
@@ -53,6 +56,7 @@ type UICard = {
   estimatedDuration?: number;
   id: number;
   questionCount?: number;
+  tags?: string[];
   title: string;
 };
 
@@ -62,6 +66,7 @@ const uiCards = computed<UICard[]>(() => {
     title: s.name,
     description: s.description,
     __isScenario: true,
+    tags: s.meta.tags,
   }));
   const assessmentCards: UICard[] = assessmentList.value
     .filter((a) => typeof a.id === 'number')
@@ -136,6 +141,7 @@ async function getAssessmentList() {
 async function getScenarios() {
   try {
     const list = await getAssessmentScenarioList();
+    console.log(list);
     scenarioList.value = list
       .filter((i) => typeof i.id === 'number')
       .map((i) => ({
@@ -144,7 +150,9 @@ async function getScenarios() {
         maxQuestionnaireCount: i.maxQuestionnaireCount,
         slots: i.slots,
         description: i.description,
+        meta: JSON.parse(i.metadataJson as string) as any,
       }));
+    console.log('scenarioList.value', scenarioList.value);
   } catch (error) {
     console.error(error);
   }
@@ -241,8 +249,12 @@ onMounted(async () => {
               </span>
             </template>
             <template v-else>
-              <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
-                场景
+              <span
+                v-for="tag in card.tags"
+                :key="tag"
+                class="tag border-[#0060FF] bg-[#6B72800D] text-[#0060FF]"
+              >
+                {{ tag }}
               </span>
               <span class="tag border-[#6B7280] bg-[#6B72800D] text-[#6B7280]">
                 仅支持单独下发
