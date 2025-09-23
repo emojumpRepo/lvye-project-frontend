@@ -117,17 +117,26 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // 不做任何处理
     }
+    
+    // 获取缓存的学校ID（退出前保存）
+    const cachedTenantId = localStorage.getItem('school_tenant_id');
+    
     resetAllStores();
     accessStore.setLoginExpired(false);
 
-    // 回登录页带上当前路由地址
+    // 回登录页带上当前路由地址，如果有缓存的学校ID也带上
+    const query: any = {};
+    if (redirect) {
+      query.redirect = encodeURIComponent(router.currentRoute.value.fullPath);
+    }
+    // 如果有缓存的学校ID，添加到URL参数中
+    if (cachedTenantId) {
+      query.id = cachedTenantId;
+    }
+    
     await router.replace({
       path: LOGIN_PATH,
-      query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
-        : {},
+      query,
     });
   }
 
