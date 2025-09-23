@@ -27,6 +27,12 @@ defineProps<{
           >
             {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
           </div> -->
+          <div
+            v-if="questionnaireResult?.level"
+            class="rounded-full bg-[#14E77E14] px-3 py-1 text-sm font-medium"
+          >
+            {{ questionnaireResult.level }}
+          </div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
