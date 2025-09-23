@@ -121,8 +121,6 @@ export function exportStudentsToExcel(
       return;
     }
 
-    console.log('data', data);
-
     // 格式化数据
     const formattedData = formatStudentDataForExport(data);
 

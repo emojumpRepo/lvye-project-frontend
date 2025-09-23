@@ -330,6 +330,7 @@ const handleExport = async () => {
         <template #rightExtra>
           <LyButton
             v-if="queryData.taskName"
+            :disabled="loading"
             type="success"
             size="small"
             @click="handleExport"

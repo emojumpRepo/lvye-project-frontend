@@ -158,7 +158,10 @@ function toChineseSectionNumber(num) {
 /**
  * 生成问卷报告内容：遍历问卷数组并拼接维度分析与对应作答记录
  */
-function generateQuestionnaireReportContents(questionnaireResults, questionnaireAnswerItems) {
+function generateQuestionnaireReportContents(
+  questionnaireResults,
+  questionnaireAnswerItems,
+) {
   let resultsArray = [];
   if (Array.isArray(questionnaireResults)) {
     resultsArray = questionnaireResults;
@@ -190,7 +193,10 @@ function generateQuestionnaireReportContents(questionnaireResults, questionnaire
     contents.push(...dimBlocks);
 
     // 附：该问卷的作答记录
-    const relatedAnswerItem = findRelatedAnswerItem(qr, questionnaireAnswerItems);
+    const relatedAnswerItem = findRelatedAnswerItem(
+      qr,
+      questionnaireAnswerItems,
+    );
     if (relatedAnswerItem) {
       contents.push({
         text: '作答记录',
@@ -281,7 +287,8 @@ function generateDimensionResults(questionnaireResults) {
       // 右侧：状态信息
       if (dimension.isAbnormal === 0 || dimension.isAbnormal === 1) {
         dimensionRow.push({
-          text: `状态：${dimension.isAbnormal === 1 ? '异常' : '正常'}`,
+          // text: `状态：${dimension.isAbnormal === 1 ? '异常' : '正常'}`,
+          text: '',
           style: 'dimensionStatus',
           alignment: 'right',
         });
@@ -344,7 +351,11 @@ function generateDimensionResults(questionnaireResults) {
  * 在结果问卷与答案问卷中建立关联（优先按 questionnaireId，其次按名称）
  */
 function findRelatedAnswerItem(resultItem, questionnaireAnswerItems) {
-  if (!resultItem || !questionnaireAnswerItems || questionnaireAnswerItems.length === 0) {
+  if (
+    !resultItem ||
+    !questionnaireAnswerItems ||
+    questionnaireAnswerItems.length === 0
+  ) {
     return null;
   }
   const byId = questionnaireAnswerItems.find(
@@ -362,7 +373,9 @@ function findRelatedAnswerItem(resultItem, questionnaireAnswerItems) {
  * @param {object} answerItem { questionnaireName, questionnaireId, answers: Question[] }
  */
 function generateAnswerSection(answerItem) {
-  const questions = Array.isArray(answerItem?.answers) ? answerItem.answers.filter(Boolean) : [];
+  const questions = Array.isArray(answerItem?.answers)
+    ? answerItem.answers.filter(Boolean)
+    : [];
   if (questions.length === 0) {
     return [
       {
@@ -377,7 +390,10 @@ function generateAnswerSection(answerItem) {
   const content = [];
 
   // 统计信息
-  const totalScore = questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0);
+  const totalScore = questions.reduce(
+    (sum, q) => sum + (Number(q.score) || 0),
+    0,
+  );
   const totalCount = questions.length;
   const answeredCount = questions.filter(
     (q) => typeof q.answer === 'string' && q.answer.trim() !== '',
