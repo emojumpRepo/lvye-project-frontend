@@ -7,6 +7,10 @@ interface BasicUserInfo {
    */
   avatar: string;
   /**
+   * 用户租户 ID
+   */
+  deptName: string;
+  /**
    * 用户邮箱
    */
   email?: string;

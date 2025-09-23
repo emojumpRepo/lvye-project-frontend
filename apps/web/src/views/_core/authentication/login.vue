@@ -34,30 +34,35 @@ const tenantList = ref<AuthApi.TenantResult[]>([]); // 租户列表
 const TENANT_CACHE_KEY = 'school_tenant_id'; // localStorage缓存键名
 
 // 判断是否为开发环境
-const isDevelopment = import.meta.env.MODE === 'development' || import.meta.env.DEV;
+const isDevelopment =
+  import.meta.env.MODE === 'development' || import.meta.env.DEV;
 
 async function fetchTenantList() {
   if (!tenantEnable) {
     return;
   }
-  
+
   tenantLoading.value = true;
   try {
     // 开发环境：允许显示租户列表供选择
     if (isDevelopment) {
       // 获取租户列表
       tenantList.value = await getTenantSimpleList();
-      
+
       // 尝试从URL或缓存获取默认选中的租户
       const tenantIdFromUrl = route.query.id as string;
-      const cachedTenantId = !tenantIdFromUrl ? localStorage.getItem(TENANT_CACHE_KEY) : null;
+      const cachedTenantId = tenantIdFromUrl
+        ? null
+        : localStorage.getItem(TENANT_CACHE_KEY);
       const defaultTenantId = tenantIdFromUrl || cachedTenantId;
-      
+
       if (defaultTenantId) {
         // 设置默认选中的租户
         accessStore.setTenantId(Number(defaultTenantId));
-        loginRef.value?.getFormApi()?.setFieldValue('tenantId', defaultTenantId.toString());
-        
+        loginRef.value
+          ?.getFormApi()
+          ?.setFieldValue('tenantId', defaultTenantId.toString());
+
         // 如果是从URL获取的，缓存它
         if (tenantIdFromUrl) {
           localStorage.setItem(TENANT_CACHE_KEY, defaultTenantId.toString());
@@ -67,46 +72,52 @@ async function fetchTenantList() {
         const firstTenantId = tenantList?.value?.[0]?.id;
         if (firstTenantId) {
           accessStore.setTenantId(firstTenantId);
-          loginRef.value?.getFormApi()?.setFieldValue('tenantId', firstTenantId.toString());
+          loginRef.value
+            ?.getFormApi()
+            ?.setFieldValue('tenantId', firstTenantId.toString());
         }
       }
-      
+
       // 开发环境不需要显示无租户提示
       return;
     }
-    
+
     // 生产环境：保持原有的安全限制逻辑
     // 1. 优先从URL参数获取租户ID
     const tenantIdFromUrl = route.query.id as string;
-    
+
     // 2. 如果URL没有，从localStorage获取缓存的租户ID
-    const cachedTenantId = !tenantIdFromUrl ? localStorage.getItem(TENANT_CACHE_KEY) : null;
-    
+    const cachedTenantId = tenantIdFromUrl
+      ? null
+      : localStorage.getItem(TENANT_CACHE_KEY);
+
     // 使用URL参数或缓存的ID
     const tenantId = tenantIdFromUrl || cachedTenantId;
-    
+
     if (tenantId) {
       // 如果有租户ID，直接使用免鉴权接口查询
       try {
         const tenantData = await getTenantById(Number(tenantId));
-        
+
         if (tenantData) {
           // 成功获取租户信息
           hasTenantFromUrl.value = !!tenantIdFromUrl; // 只有URL有参数时才标记
           tenantInfo.value = {
             id: tenantData.id,
-            name: tenantData.name
+            name: tenantData.name,
           };
-          
+
           // 设置租户ID
           accessStore.setTenantId(tenantData.id);
-          loginRef.value?.getFormApi()?.setFieldValue('tenantId', tenantData.id.toString());
-          
+          loginRef.value
+            ?.getFormApi()
+            ?.setFieldValue('tenantId', tenantData.id.toString());
+
           // 如果是从URL获取的，缓存到localStorage
           if (tenantIdFromUrl) {
             localStorage.setItem(TENANT_CACHE_KEY, tenantData.id.toString());
           }
-          
+
           // 不需要获取租户列表，直接返回
           return;
         } else {
@@ -135,11 +146,10 @@ async function fetchTenantList() {
         }
       }
     }
-    
+
     // 如果没有URL参数也没有缓存，显示无租户提示
     if (!tenantIdFromUrl && !cachedTenantId) {
       noTenantProvided.value = true;
-      return;
     }
   } catch (error) {
     console.error('获取租户信息失败:', error);
@@ -156,20 +166,20 @@ async function handleLogin(values: any) {
   if (currentTenantId) {
     localStorage.setItem(TENANT_CACHE_KEY, currentTenantId.toString());
   }
-  
+
   // 无验证码，直接登录
   await authStore.authLogin('username', {
     ...values,
     isParent: Number(values.isParent),
   });
-  
+
   // 登录成功后，如果URL中有id参数，清理它
   if (route.query.id) {
     // 移除URL中的id参数，保持URL干净
     const { id, ...otherQuery } = route.query;
     router.replace({
       path: route.path,
-      query: otherQuery
+      query: otherQuery,
     });
   }
 }
@@ -201,9 +211,12 @@ onMounted(async () => {
 
 const formSchema = computed((): VbenFormSchema[] => {
   const schema: VbenFormSchema[] = [];
-  
+
   // 开发环境或没有从URL获取租户时显示租户选择字段
-  if (tenantEnable && (isDevelopment || (!hasTenantFromUrl.value && !noTenantProvided.value))) {
+  if (
+    tenantEnable &&
+    (isDevelopment || (!hasTenantFromUrl.value && !noTenantProvided.value))
+  ) {
     schema.push({
       component: 'VbenSelect',
       componentProps: {
@@ -211,7 +224,9 @@ const formSchema = computed((): VbenFormSchema[] => {
           label: item.name,
           value: item.id.toString(),
         })),
-        placeholder: isDevelopment ? '请选择学校（开发环境）' : $t('authentication.tenantTip'),
+        placeholder: isDevelopment
+          ? '请选择学校（开发环境）'
+          : $t('authentication.tenantTip'),
       },
       fieldName: 'tenantId',
       label: $t('authentication.tenant'),
@@ -224,14 +239,17 @@ const formSchema = computed((): VbenFormSchema[] => {
             accessStore.setTenantId(Number(values.tenantId));
             // 开发环境下，选择租户后也缓存
             if (isDevelopment) {
-              localStorage.setItem(TENANT_CACHE_KEY, values.tenantId.toString());
+              localStorage.setItem(
+                TENANT_CACHE_KEY,
+                values.tenantId.toString(),
+              );
             }
           }
         },
       },
     });
   }
-  
+
   // 生产环境：如果从URL获取了租户，显示租户名称（只读）
   if (!isDevelopment && hasTenantFromUrl.value && tenantInfo.value) {
     schema.push({
@@ -246,7 +264,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       defaultValue: tenantInfo.value.name,
     });
   }
-  
+
   // 其他字段保持不变
   schema.push(
     {
@@ -285,7 +303,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       rules: z
         .string()
         .min(1, { message: $t('authentication.studentNameTip') }),
-    }
+    },
   );
 
   if (enablePasswordLogin.value) {
@@ -314,7 +332,7 @@ const formSchema = computed((): VbenFormSchema[] => {
       <div class="text-center">
         <div class="mb-4">
           <svg
-            class="mx-auto h-12 w-12 animate-spin text-primary"
+            class="text-primary mx-auto h-12 w-12 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -334,16 +352,16 @@ const formSchema = computed((): VbenFormSchema[] => {
             />
           </svg>
         </div>
-        <p class="text-lg text-muted-foreground">正在加载...</p>
+        <p class="text-muted-foreground text-lg">正在加载...</p>
       </div>
     </div>
-    
+
     <!-- 无租户提示（仅生产环境） -->
     <div
       v-else-if="!isDevelopment && noTenantProvided"
       class="flex h-full items-center justify-center"
     >
-      <div class="mx-auto max-w-md rounded-lg bg-card p-8 text-center">
+      <div class="bg-card mx-auto max-w-md rounded-lg p-8 text-center">
         <div class="mb-6">
           <svg
             class="mx-auto h-20 w-20 text-yellow-500 opacity-80"
@@ -360,39 +378,45 @@ const formSchema = computed((): VbenFormSchema[] => {
             />
           </svg>
         </div>
-        
-        <h2 class="mb-3 text-2xl font-semibold text-foreground">
+
+        <h2 class="text-foreground mb-3 text-2xl font-semibold">
           无法识别学校信息
         </h2>
-        
-        <p class="mb-8 text-base font-normal leading-relaxed text-muted-foreground">
+
+        <p
+          class="text-muted-foreground mb-8 text-base font-normal leading-relaxed"
+        >
           系统无法识别您的学校信息，请确认访问链接是否正确。
         </p>
-        
-        <div class="space-y-4 rounded-md bg-muted/30 p-4">
+
+        <div class="bg-muted/30 space-y-4 rounded-md p-4">
           <div class="text-left">
-            <h3 class="mb-2 text-sm font-medium text-foreground">
+            <h3 class="text-foreground mb-2 text-sm font-medium">
               如果您是学生或家长
             </h3>
-            <p class="text-sm font-normal leading-relaxed text-muted-foreground">
+            <p
+              class="text-muted-foreground text-sm font-normal leading-relaxed"
+            >
               请联系学校心理老师获取专属登录链接
             </p>
           </div>
-          
-          <div class="my-3 border-t border-border/50"></div>
-          
+
+          <div class="border-border/50 my-3 border-t"></div>
+
           <div class="text-left">
-            <h3 class="mb-2 text-sm font-medium text-foreground">
+            <h3 class="text-foreground mb-2 text-sm font-medium">
               如果您是学校管理员
             </h3>
-            <p class="text-sm font-normal leading-relaxed text-muted-foreground">
+            <p
+              class="text-muted-foreground text-sm font-normal leading-relaxed"
+            >
               请确认链接中包含正确的学校标识参数
             </p>
           </div>
         </div>
-        
+
         <div class="mt-6">
-          <p class="text-xs text-muted-foreground/70">
+          <p class="text-muted-foreground/70 text-xs">
             需要帮助？请联系技术支持
           </p>
         </div>

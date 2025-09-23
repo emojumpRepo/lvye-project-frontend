@@ -9,6 +9,7 @@ const routes: RouteRecordRaw[] = [
       icon: 'lucide:heart-handshake',
       order: 3,
       title: '心之旅疗愈室',
+      hideInMenu: true,
     },
   },
 ];

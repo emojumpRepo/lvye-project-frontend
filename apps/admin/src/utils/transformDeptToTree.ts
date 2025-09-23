@@ -159,36 +159,53 @@ export async function getDeptTreeListByStudentName(name: string) {
 
   const profile = await getStudentProfileSimpleList({ name });
   if (profile.length === 0) return [];
-  const deptList: any[] = [];
 
-  const promises = profile.map(async (profileItem) => {
+  // 按班级分组学生
+  const studentsByClass = new Map<number, any[]>();
+
+  profile.forEach((profileItem) => {
     if (profileItem.classDeptId) {
-      const dept = await getDeptById(profileItem.classDeptId);
-      if (dept) {
-        return [
-          {
-            id: dept.id,
-            name: dept.name,
-            classDeptId: dept.id,
-            gradeDeptId: profileItem.gradeDeptId,
-            count: dept.count,
-            hasChildField: true,
-          },
-        ];
+      if (!studentsByClass.has(profileItem.classDeptId)) {
+        studentsByClass.set(profileItem.classDeptId, []);
+      }
+      const classStudents = studentsByClass.get(profileItem.classDeptId);
+      if (classStudents) {
+        classStudents.push(profileItem);
       }
     }
-    return [];
   });
 
-  const results = await Promise.all(promises);
-  results.forEach((result) => {
-    deptList.push(...result);
-  });
+  const deptList: any[] = [];
 
-  const _uniqueDeptList = deptList.filter(
-    (dept, index, self) => index === self.findIndex((d) => d.id === dept.id),
-  );
-  return _uniqueDeptList;
+  // 构建班级 -> 学生的树形结构
+  for (const [classDeptId, students] of studentsByClass.entries()) {
+    const classDept = await getDeptById(classDeptId);
+    if (classDept) {
+      const classItem = {
+        id: classDept.id,
+        name: classDept.name,
+        classDeptId: classDept.id,
+        gradeDeptId: null, // 班级作为根节点
+        count: students.length, // 班级学生人数
+        hasChildField: true,
+        isClass: true,
+        children: students.map((student) => ({
+          id: student.id,
+          name: student.name,
+          classDeptId: student.classDeptId,
+          gradeDeptId: classDeptId,
+          studentNo: student.studentNo,
+          userId: student.userId,
+          className: student.className,
+          hasChildField: false,
+        })),
+      };
+
+      deptList.push(classItem);
+    }
+  }
+
+  return deptList;
 }
 
 /**

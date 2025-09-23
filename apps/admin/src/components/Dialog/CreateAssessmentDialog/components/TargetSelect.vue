@@ -445,6 +445,7 @@ async function handleSearch() {
           v-model:value="keyword"
           placeholder="搜索学生添加"
           class="flex-1 rounded-[4px]"
+          @keydown.enter="handleSearch"
         >
           <template #prefix>
             <Search class="size-5 text-[#979899]" />

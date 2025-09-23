@@ -95,10 +95,10 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // 不做任何处理
     }
-    
+
     // 获取缓存的学校ID（退出前保存）
     const cachedTenantId = localStorage.getItem('school_tenant_id');
-    
+
     resetAllStores();
     accessStore.setLoginExpired(false);
 
@@ -111,7 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (cachedTenantId) {
       query.id = cachedTenantId;
     }
-    
+
     await router.replace({
       path: LOGIN_PATH,
       query,

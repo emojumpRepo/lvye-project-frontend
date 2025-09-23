@@ -261,9 +261,9 @@ watch(
       <div class="px-2">
         <UserCard
           :avatar="avatar"
-          :class-name="userStore.userInfo?.username ?? ''"
+          :class-name="userStore.userInfo?.deptName ?? ''"
           :name="userStore.userInfo?.nickname ?? ''"
-          :student-no="userStore.userInfo?.id ?? ''"
+          :student-no="userStore.userInfo?.username ?? ''"
         />
       </div>
     </template>
