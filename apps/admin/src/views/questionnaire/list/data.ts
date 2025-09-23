@@ -193,6 +193,11 @@ export function useQuestionConfigGridColumns() {
       showOverflow: true,
     },
     {
+      title: '等级',
+      field: 'level',
+      width: 100,
+    },
+    {
       title: '是否异常配置',
       field: 'isAbnormal',
       width: 100,

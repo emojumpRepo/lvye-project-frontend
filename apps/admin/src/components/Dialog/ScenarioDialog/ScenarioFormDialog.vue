@@ -277,54 +277,70 @@ const [Modal, modalApi] = useVbenModal({
   },
   async onOpenChange(isOpen: boolean) {
     if (isOpen) {
-      // 打开弹窗时加载问卷选项
-      if (questionnaireOptions.value.length === 0) {
-        await loadQuestionnaireOptions();
-      }
-      const data = modalApi.getData<Record<string, any>>() || {};
-      isEditRef.value = !!(data.isEdit ?? props.isEdit ?? false);
-      const incomingRecord = data.record as AssessmentScenario | undefined;
-      if (incomingRecord) {
-        let detailAny: any = incomingRecord as any;
-        // 若缺少完整详情或 slots，进行兜底加载
-        try {
-          const id = detailAny.id as number | undefined;
-          if (id) {
-            const [detail, slots] = await Promise.all([
-              getAssessmentScenario(id),
-              getAssessmentScenarioSlots(id),
-            ]);
-            detailAny = { ...detail, slots } as any;
-          }
-        } catch {}
+      try {
+        // 打开弹窗时加载问卷选项
+        if (questionnaireOptions.value.length === 0) {
+          await loadQuestionnaireOptions();
+        }
+        const data = modalApi.getData<Record<string, any>>() || {};
+        isEditRef.value = !!(data.isEdit ?? props.isEdit ?? false);
+        const incomingRecord = data.record as AssessmentScenario | undefined;
+        if (incomingRecord) {
+          let detailAny: any = incomingRecord as any;
+          // 若缺少完整详情或 slots，进行兜底加载
+          try {
+            const id = detailAny.id as number | undefined;
+            if (id) {
+              const [detail, slots] = await Promise.all([
+                getAssessmentScenario(id),
+                getAssessmentScenarioSlots(id),
+              ]);
+              detailAny = { ...detail, slots } as any;
+            }
+          } catch {}
 
-        currentRecord.value = detailAny as AssessmentScenario;
-        formApi.setValues({
-          code: detailAny.code,
-          name: detailAny.name,
-          maxQuestionnaireCount: detailAny.maxQuestionnaireCount,
-          frontendRoute: detailAny.frontendRoute,
-          isActive: detailAny.isActive,
-          metadataJson: detailAny.metadataJson,
+          currentRecord.value = detailAny as AssessmentScenario;
+          formApi.setValues({
+            code: detailAny.code,
+            name: detailAny.name,
+            description: detailAny.description,
+            maxQuestionnaireCount: detailAny.maxQuestionnaireCount,
+            frontendRoute: detailAny.frontendRoute,
+            isActive: detailAny.isActive,
+            metadataJson: detailAny.metadataJson,
+          });
+
+          slotsRef.value = Array.isArray(detailAny.slots)
+            ? [...detailAny.slots]
+            : [];
+
+          maxQuestionnaireCountRef.value =
+            detailAny.maxQuestionnaireCount &&
+            detailAny.maxQuestionnaireCount > 0
+              ? detailAny.maxQuestionnaireCount
+              : undefined;
+        } else {
+          // 重置表单时确保包含所有字段
+          formApi.setValues({
+            code: '',
+            name: '',
+            description: '',
+            maxQuestionnaireCount: undefined,
+            frontendRoute: '',
+            isActive: true,
+            metadataJson: '',
+          });
+          slotsRef.value = [];
+          maxQuestionnaireCountRef.value = undefined;
+        }
+        modalApi.setState({
+          title: isEditRef.value ? '编辑场景' : '新建场景',
+          confirmText: '保存',
         });
-
-        slotsRef.value = Array.isArray(detailAny.slots)
-          ? [...detailAny.slots]
-          : [];
-
-        maxQuestionnaireCountRef.value =
-          detailAny.maxQuestionnaireCount && detailAny.maxQuestionnaireCount > 0
-            ? detailAny.maxQuestionnaireCount
-            : undefined;
-      } else {
-        formApi.resetForm();
-        slotsRef.value = [];
-        maxQuestionnaireCountRef.value = undefined;
+      } catch (error) {
+        console.error('打开场景表单对话框时发生错误:', error);
+        message.error('加载表单数据失败，请重试');
       }
-      modalApi.setState({
-        title: isEditRef.value ? '编辑场景' : '新建场景',
-        confirmText: '保存',
-      });
     }
   },
 });

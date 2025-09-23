@@ -23,17 +23,19 @@ export function useEvaluation() {
       return '';
     }
 
+    const schoolTenantId = localStorage.getItem('school_tenant_id') || '';
+
     // 有场景模式：从 selectedSlot 获取问卷信息
     if (hasScenario.value && selectedSlot.value?.questionnaire) {
       const link = selectedSlot.value.questionnaire.externalLink;
       const id = selectedSlot.value.questionnaire.id;
 
-      return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userInfo.value?.id}&assessmentNo=${currentTaskNo.value}&questionId=${id}`;
+      return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userInfo.value?.id}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId=${schoolTenantId}`;
     }
 
     // 无场景模式：从传入的参数获取问卷信息
     if (questionnaireId && questionnaireLink) {
-      return `${surveyBaseUrl}${questionnaireLink}?t=${Date.now()}&userId=${userInfo.value?.id}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId}`;
+      return `${surveyBaseUrl}${questionnaireLink}?t=${Date.now()}&userId=${userInfo.value?.id}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId}&tenantId=${schoolTenantId}`;
     }
 
     return '';

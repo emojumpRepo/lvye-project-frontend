@@ -1,6 +1,7 @@
+import type { AssessmentScenario } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { PsychologyScenarioApi } from '#/api/psychology/scenario';
 
 // ==================== 表单配置 ====================
 
@@ -46,7 +47,7 @@ export function useScenarioFormSchema(): VbenFormSchema[] {
       fieldName: 'code',
       component: 'Input',
       label: '场景编码',
-      required: true,
+      rules: 'required',
       componentProps: {
         placeholder: '请输入场景编码，如：CAMPUS_TRIP',
       },
@@ -56,10 +57,23 @@ export function useScenarioFormSchema(): VbenFormSchema[] {
       fieldName: 'name',
       component: 'Input',
       label: '场景名称',
-      required: true,
+      rules: 'required',
       componentProps: {
         placeholder: '请输入场景名称，如：校园旅行',
       },
+    },
+    {
+      fieldName: 'description',
+      component: 'Textarea',
+      label: '场景描述',
+      componentProps: {
+        placeholder: '请输入场景描述信息',
+        rows: 3,
+        maxlength: 500,
+        showCount: true,
+        class: 'w-full',
+      },
+      help: '场景的详细描述信息，最多500个字符',
     },
     {
       fieldName: 'maxQuestionnaireCount',
@@ -76,7 +90,7 @@ export function useScenarioFormSchema(): VbenFormSchema[] {
       fieldName: 'frontendRoute',
       component: 'Input',
       label: '前端路由',
-      required: true,
+      rules: 'required',
       componentProps: {
         placeholder: '请输入前端路由，如：campusTrip',
       },
@@ -108,49 +122,55 @@ export function useScenarioFormSchema(): VbenFormSchema[] {
 // ==================== 表格配置 ====================
 
 /** 场景列表表格配置 */
-export function useScenarioGridSchema(): VxeTableGridOptions<PsychologyScenarioApi.AssessmentScenario>['columns'] {
+export function useScenarioGridSchema(): VxeTableGridOptions<AssessmentScenario>['columns'] {
   return [
     { type: 'seq', width: '5%', title: '序号' },
-    { 
-      field: 'code', 
-      title: '场景编码', 
+    {
+      field: 'code',
+      title: '场景编码',
       width: '15%',
       showOverflow: 'tooltip',
     },
-    { 
-      field: 'name', 
-      title: '场景名称', 
+    {
+      field: 'name',
+      title: '场景名称',
       width: '15%',
       showOverflow: 'tooltip',
     },
-    { 
-      field: 'maxQuestionnaireCount', 
-      title: '最大问卷数', 
-      width: '12%',
+    {
+      field: 'description',
+      title: '场景描述',
+      width: '20%',
+      showOverflow: 'tooltip',
+    },
+    {
+      field: 'maxQuestionnaireCount',
+      title: '最大问卷数',
+      width: '10%',
       slots: { default: 'maxQuestionnaireCount' },
     },
-    { 
-      field: 'frontendRoute', 
-      title: '前端路由', 
-      width: '15%',
+    {
+      field: 'frontendRoute',
+      title: '前端路由',
+      width: '12%',
       showOverflow: 'tooltip',
     },
-    { 
-      field: 'isActive', 
-      title: '启用状态', 
-      width: '10%',
+    {
+      field: 'isActive',
+      title: '启用状态',
+      width: '8%',
       slots: { default: 'isActive' },
     },
-    { 
-      field: 'createTime', 
-      title: '创建时间', 
-      width: '15%',
+    {
+      field: 'createTime',
+      title: '创建时间',
+      width: '12%',
       formatter: ['formatDate', 'yyyy-MM-dd HH:mm:ss'],
     },
     {
       field: 'actions',
       title: '操作',
-      width: '13%',
+      width: '10%',
       fixed: 'right',
       align: 'center',
       slots: { default: 'actions' },

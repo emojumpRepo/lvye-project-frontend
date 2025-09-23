@@ -201,7 +201,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         ) {
           try {
             const classList = await getDeptTreeList(r.classDeptId, true);
-            classList.forEach((classInfo) => {
+            classList.forEach((classInfo: any) => {
               selected.push({
                 classId: classInfo.classDeptId,
                 className: classInfo.name,

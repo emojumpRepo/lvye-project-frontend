@@ -13,7 +13,7 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
     enableRefreshToken: true,
     authPageLayout: 'panel-center',
-    contentCompact: 'compact',
+    contentCompact: 'wide',
     enablePreferences: false,
   },
   widget: {
