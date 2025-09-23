@@ -62,15 +62,17 @@ function formatStudentDataForExport(
       // 格式化特殊字段
       switch (column.key) {
         case 'birthDate': {
-          value = value ? new Date(value).toLocaleDateString('zh-CN') : '---';
+          value = value ? dayjs(value).format('YYYY-MM-DD') : '--';
           break;
         }
         case 'ethnicity': {
-          value = getDictLabel('student_ethnicity', value);
+          value = value ? getDictLabel('student_ethnicity', value) : '--';
           break;
         }
         case 'graduationStatus': {
-          value = getDictLabel('student_graduation_status', value);
+          value = value
+            ? getDictLabel('student_graduation_status', value)
+            : '--';
           break;
         }
         case 'homeAddress':
@@ -83,11 +85,13 @@ function formatStudentDataForExport(
           break;
         }
         case 'psychologicalStatus': {
-          value = getDictLabel('student_psychological_status', value);
+          value = value
+            ? getDictLabel('student_psychological_status', value)
+            : '--';
           break;
         }
         case 'sex': {
-          value = getDictLabel('system_user_sex', value) || '--';
+          value = value ? getDictLabel('system_user_sex', value) : '--';
           break;
         }
         default: {
@@ -116,6 +120,8 @@ export function exportStudentsToExcel(
       message.warning('没有数据可导出');
       return;
     }
+
+    console.log('data', data);
 
     // 格式化数据
     const formattedData = formatStudentDataForExport(data);
