@@ -64,18 +64,18 @@ function parseMultiAnswer(answer?: string) {
         <div class="text-sm text-[#1966FF]/70">已答题数</div>
       </div>
       <div
-        class="rounded-lg border border-[#FF0831]/30 bg-[#FF083114] p-2 text-center"
-      >
-        <div class="text-2xl font-bold text-[#FF0831]">
-          {{ unansweredCount }}
-        </div>
-        <div class="text-sm text-[#FF0831]/70">未答题数</div>
-      </div>
-      <div
         class="rounded-lg border border-[#04DC70]/30 bg-[#14E77E0A] p-2 text-center"
       >
         <div class="text-primary text-2xl font-bold">{{ totalScore }}</div>
         <div class="text-primary/70 text-sm">总得分</div>
+      </div>
+      <div
+        class="rounded-lg border border-gray-200 bg-gray-100 p-2 text-center"
+      >
+        <div class="text-2xl font-bold text-gray-500">
+          {{ unansweredCount }}
+        </div>
+        <div class="text-sm text-gray-500">未答/无需作答题数</div>
       </div>
     </div>
 
@@ -174,9 +174,9 @@ function parseMultiAnswer(answer?: string) {
             </span>
             <span
               v-else
-              class="inline-flex items-center rounded-full bg-[#FF083114] px-3 py-1 text-sm font-medium text-[#FF0831]"
+              class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-500"
             >
-              未作答
+              未答/无需作答
             </span>
           </div>
         </div>
