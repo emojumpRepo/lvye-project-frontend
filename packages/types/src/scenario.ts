@@ -4,6 +4,7 @@ export interface AssessmentScenario {
   id?: number;
   code: string;
   name: string;
+  description?: string; // 场景描述
   maxQuestionnaireCount?: number;
   frontendRoute?: string;
   isActive: boolean; // 修改为boolean类型，与后端保持一致

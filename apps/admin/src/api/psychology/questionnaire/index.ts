@@ -22,6 +22,7 @@ export interface QuestionnaireConfigBaseVO {
   teacherComment: string; // 老师评语
   studentComment: string; // 学生评语
   isAbnormal: number; // 是否异常
+  level: string; // 评级等级
 }
 
 export interface QuestionnaireConfigVO extends QuestionnaireConfigBaseVO {

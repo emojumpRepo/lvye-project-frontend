@@ -80,20 +80,17 @@ function onTaskAction(task: AssessmentTask) {
 
 <template>
   <Page auto-content-height :height-offset="50">
-    <!-- 一屏布局：左8/右4 -->
-    <div
-      class="grid h-full grid-cols-1 gap-4 lg:grid-cols-12 lg:[grid-template-rows:auto_1fr]"
-    >
+    <div class="flex h-full w-full flex-wrap gap-4">
       <!-- 左边布局 -->
-      <div class="flex h-full flex-col overflow-y-auto lg:col-span-8">
+      <div class="flex h-full flex-1 flex-col overflow-y-auto">
         <WelcomeBanner />
         <!-- 我的测评任务列表 -->
         <div class="flex-1">
           <div
-            class="flex h-full flex-col rounded-3xl border-0 bg-white/60 p-4 shadow backdrop-blur-sm"
+            class="flex h-full flex-col rounded-3xl border-0 bg-white/60 p-3 shadow backdrop-blur-sm md:p-4"
           >
             <div
-              class="mb-3 flex shrink-0 items-center text-xl font-bold text-emerald-900"
+              class="mb-3 flex shrink-0 items-center text-lg font-bold text-emerald-900 sm:text-xl"
             >
               <span
                 class="bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent"
@@ -127,16 +124,10 @@ function onTaskAction(task: AssessmentTask) {
       </div>
 
       <!-- 考拉老师寄语 -->
-      <div class="h-full space-y-6 lg:col-span-4">
+      <div class="h-full space-y-4 sm:col-span-4 lg:w-[380px]">
         <KoalaMessage />
         <DailyTip :tip="dailyTip" />
       </div>
-
-      <!-- 右下：小贴士 + 正念音频 二分栏堆叠，占据一格 -->
-      <!-- <div class="flex h-full gap-4 lg:col-span-4"> -->
-      <!-- 小贴士 -->
-      <!-- <DailyTip :tip="dailyTip" /> -->
-      <!-- </div> -->
     </div>
   </Page>
 </template>

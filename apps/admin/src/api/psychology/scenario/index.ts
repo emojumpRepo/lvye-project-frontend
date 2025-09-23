@@ -20,6 +20,7 @@ export namespace PsychologyScenarioApi {
     id?: number; // 创建时为空，更新时必填
     code: string;
     name: string;
+    description?: string; // 场景描述
     maxQuestionnaireCount?: number;
     frontendRoute?: string;
     isActive: boolean;
