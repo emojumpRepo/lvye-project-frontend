@@ -53,6 +53,7 @@ const formRef = ref();
 const formData = ref({
   title: '',
   externalId: '',
+  surveyCode: '',
   questionnaireType: '',
   estimatedDuration: 0,
   externalLink: '',
@@ -89,6 +90,7 @@ async function fetchDetail(id?: number) {
     formData.value = {
       title: data.title || '',
       externalId: data.externalId || '',
+      surveyCode: data.surveyCode || '',
       questionnaireType: String(data.questionnaireType || ''),
       estimatedDuration: data.estimatedDuration || 0,
       externalLink: data.externalLink || '',
@@ -163,6 +165,15 @@ async function handleSave() {
         class="p-4"
         :model="formData"
       >
+        <FormItem label="问卷编码">
+          <Input
+            v-model:value="formData.surveyCode"
+            :disabled="isReadOnly"
+            placeholder="请输入问卷编码"
+            class="max-w-[50%]"
+          />
+        </FormItem>
+
         <FormItem label="问卷类型">
           <Select
             v-model:value="formData.questionnaireType"
