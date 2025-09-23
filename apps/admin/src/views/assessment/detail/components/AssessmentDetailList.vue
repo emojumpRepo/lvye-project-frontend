@@ -37,11 +37,11 @@ const props = withDefaults(defineProps<Props>(), {
 const activeTabKey = defineModel<string>('activeTabKey'); // 问卷Tab
 
 const actionButtons = ref([
-  {
-    label: '批量发送提醒',
-    value: 'batchSendReminder',
-    onClick: handleBatchSendReminder,
-  },
+  // {
+  //   label: '批量发送提醒',
+  //   value: 'batchSendReminder',
+  //   onClick: handleBatchSendReminder,
+  // },
   {
     label: '批量转入评估',
     value: 'batchTransferToIntervention',
