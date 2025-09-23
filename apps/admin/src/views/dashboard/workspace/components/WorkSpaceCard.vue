@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
-import { RefreshCw } from '@vben/icons';
-
 import { Pagination as APagination } from 'ant-design-vue';
 
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
@@ -60,14 +58,16 @@ const containerClasses = computed(() => {
     <button
       v-if="showRefresh"
       type="button"
-      class="absolute right-3 top-3 inline-flex items-center gap-1 text-xs text-[#959599] hover:text-[#6a6a6d] transition-colors sm:right-4 sm:top-4 sm:gap-1.5 sm:text-sm md:right-5 md:top-5"
+      class="absolute right-3 top-3 inline-flex items-center gap-1 text-xs text-[#959599] transition-colors hover:text-[#6a6a6d] sm:right-4 sm:top-4 sm:gap-1.5 sm:text-sm md:right-5 md:top-5"
       @click="emit('refresh')"
     >
-      <RefreshCw class="size-3 sm:size-3.5" />
-      <span class="hidden sm:inline">刷新</span>
+      <!-- <RefreshCw class="size-3 sm:size-3.5" />
+      <span class="hidden sm:inline">刷新</span> -->
     </button>
 
-    <div class="ml-3 mt-3 flex items-center gap-2 sm:ml-4 sm:mt-4 md:ml-5 md:mt-5">
+    <div
+      class="ml-3 mt-3 flex items-center gap-2 sm:ml-4 sm:mt-4 md:ml-5 md:mt-5"
+    >
       <LyCardTitle
         :icon="iconSrc"
         :title="title"
@@ -86,11 +86,16 @@ const containerClasses = computed(() => {
       </LyCardTitle>
     </div>
 
-    <div class="mt-3 flex-1 overflow-y-auto px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4 md:mt-5 md:px-5 md:pb-5">
+    <div
+      class="mt-3 flex-1 overflow-y-auto px-3 pb-3 sm:mt-4 sm:px-4 sm:pb-4 md:mt-5 md:px-5 md:pb-5"
+    >
       <slot></slot>
     </div>
 
-    <div v-if="pagination" class="flex justify-center px-3 pb-3 sm:px-5 sm:pb-4 md:pb-5">
+    <div
+      v-if="pagination"
+      class="flex justify-center px-3 pb-3 sm:px-5 sm:pb-4 md:pb-5"
+    >
       <APagination
         size="small"
         :current="pagination.current ?? 1"
