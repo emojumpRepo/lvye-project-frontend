@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue';
 
 import { ChevronRight } from '@vben/icons';
 
+import { Empty } from 'ant-design-vue';
+
 import { getConfigKey } from '#/api/infra/config';
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
@@ -104,12 +106,17 @@ onMounted(async () => {
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedTaskList"
-            :key="idx"
-            v-bind="item as any"
-          />
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedTaskList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedTaskList"
+              :key="idx"
+              v-bind="item"
+            />
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
 
@@ -129,19 +136,24 @@ onMounted(async () => {
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedInterveneList"
-            :key="idx"
-            v-bind="item as any"
-          >
-            <template #rightAction>
-              <ChevronRight
-                class="size-4 cursor-pointer hover:opacity-70"
-                color="#959599"
-              />
-            </template>
-          </WorkSpaceItem>
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedInterveneList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedInterveneList"
+              :key="idx"
+              v-bind="item"
+            >
+              <template #rightAction>
+                <ChevronRight
+                  class="size-4 cursor-pointer hover:opacity-70"
+                  color="#959599"
+                />
+              </template>
+            </WorkSpaceItem>
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
 
@@ -161,12 +173,17 @@ onMounted(async () => {
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedAlertsList"
-            :key="idx"
-            v-bind="item as any"
-          />
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedAlertsList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedAlertsList"
+              :key="idx"
+              v-bind="item"
+            />
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
     </div>
