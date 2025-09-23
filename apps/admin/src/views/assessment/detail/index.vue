@@ -29,21 +29,21 @@ const classType = ref<TabItem[]>([
 ]);
 
 const actionButtons = ref([
-  {
-    label: '发布提醒',
-    value: 'publish',
-    onClick: handlePublish,
-  },
-  {
-    label: '延长时间',
-    value: 'extend',
-    onClick: handleExtend,
-  },
-  {
-    label: '提前结束',
-    value: 'end',
-    onClick: handleEnd,
-  },
+  // {
+  //   label: '发布提醒',
+  //   value: 'publish',
+  //   onClick: handlePublish,
+  // },
+  // {
+  //   label: '延长时间',
+  //   value: 'extend',
+  //   onClick: handleExtend,
+  // },
+  // {
+  //   label: '提前结束',
+  //   value: 'end',
+  //   onClick: handleEnd,
+  // },
   {
     label: '导出数据',
     value: 'export',
