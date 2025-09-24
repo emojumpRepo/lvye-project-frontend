@@ -3,7 +3,9 @@ import type { AssessmentResultVO } from '@vben/types';
 
 import { computed } from 'vue';
 
-import { Table } from 'ant-design-vue';
+import { IconifyIcon } from '@vben/icons';
+
+import { Popover, Table } from 'ant-design-vue';
 
 import LyTag from '#/components/LyTag/index.vue';
 
@@ -19,41 +21,22 @@ const getColumnsForData = (data: any[]): any[] => {
     {
       title: '维度名称',
       dataIndex: 'dimensionName',
-      width: '30%',
+      width: '40%',
     },
     {
       title: '得分',
       dataIndex: 'score',
-      width: '15%',
+      width: '20%',
     },
     {
       title: '是否异常',
       dataIndex: 'isAbnormal',
-      width: '15%',
+      width: '20%',
     },
     {
       title: '测评结果',
       dataIndex: 'level',
-      width: '15%',
-    },
-    {
-      title: '评分规则',
-      dataIndex: 'description',
-      width: '25%',
-      customCell: (record: any, rowIndex: number, _column: any) => {
-        // 计算当前行的合并规则
-        const currentEvaluation = record.evaluation;
-        const sameEvaluationRows = data.filter(
-          (item: any) => item.evaluation === currentEvaluation,
-        );
-        const firstOccurenceIndex = data.findIndex(
-          (item: any) => item.evaluation === currentEvaluation,
-        );
-
-        return rowIndex === firstOccurenceIndex
-          ? { rowSpan: sameEvaluationRows.length }
-          : { rowSpan: 0 };
-      },
+      width: '20%',
     },
   ];
 };
@@ -140,7 +123,7 @@ const questionnaireResults = computed(() => {
           :data-source="JSON.parse(item.reportContent)"
           :pagination="false"
         >
-          <template #bodyCell="{ column, text }">
+          <template #bodyCell="{ column, text, record }">
             <template v-if="column.dataIndex === 'isAbnormal'">
               <LyTag
                 :color-type="text === 0 ? 'success' : 'error'"
@@ -149,9 +132,18 @@ const questionnaireResults = computed(() => {
             </template>
 
             <template v-if="column.dataIndex === 'level'">
-              <span class="text-sm leading-relaxed text-gray-700">
-                {{ text || '无' }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm leading-relaxed text-gray-700">
+                  {{ text || '无' }}
+                </span>
+                <Popover
+                  :content="record.description"
+                  placement="right"
+                  :overlay-style="{ maxWidth: '300px', wordWrap: 'break-word' }"
+                >
+                  <IconifyIcon icon="carbon:help" />
+                </Popover>
+              </div>
             </template>
           </template>
           <template #title>

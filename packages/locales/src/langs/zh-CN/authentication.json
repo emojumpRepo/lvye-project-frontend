@@ -14,7 +14,7 @@
   "tenant": "学校",
   "isParent": "家长登录",
   "usernameTip": "请输入用户名",
-  "studentNoTip": "请输入学号/身份证",
+  "studentNoTip": "请输入学号或身份证",
   "passwordTip": "请输入密码",
   "nicknameTip": "请输入昵称",
   "tenantTip": "请选择学校",
