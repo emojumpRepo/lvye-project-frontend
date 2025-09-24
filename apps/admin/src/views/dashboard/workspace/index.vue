@@ -92,7 +92,7 @@ onMounted(async () => {
     >
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="mingcute:task-2-fill"
         icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
         :pagination="{
@@ -122,7 +122,7 @@ onMounted(async () => {
 
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="ix:user-filled"
         icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
         :pagination="{
@@ -159,7 +159,7 @@ onMounted(async () => {
 
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="octicon:bell-fill-24"
         icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
         :pagination="{
