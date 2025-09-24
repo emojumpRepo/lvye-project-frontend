@@ -34,6 +34,7 @@ const queryData = ref();
 const completedTime = ref<number>();
 const activeKey = ref('result');
 const loading = ref(true);
+const exportLoading = ref(false);
 const questionnaireAnswerActiveKey = ref('');
 const tabs = ref<{ key: string; tab: string }[]>([
   { key: 'result', tab: '问卷报告' },
@@ -215,6 +216,7 @@ const handleExport = async () => {
     return;
   }
 
+  exportLoading.value = true;
   try {
     await exportQuestionnaireReportToPDF({
       questionnaireResult: assessmentResult.value!.questionnaireResults,
@@ -225,6 +227,8 @@ const handleExport = async () => {
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
+  } finally {
+    exportLoading.value = false;
   }
 };
 
@@ -356,12 +360,13 @@ function handleClose() {
         <template #rightExtra>
           <LyButton
             v-if="queryData.taskName"
-            :disabled="loading"
+            :loading="exportLoading"
+            :disabled="loading || exportLoading"
             type="success"
             size="small"
             @click="handleExport"
           >
-            导出
+            {{ exportLoading ? '导出中...' : '导出' }}
           </LyButton>
         </template>
       </Tabs>
