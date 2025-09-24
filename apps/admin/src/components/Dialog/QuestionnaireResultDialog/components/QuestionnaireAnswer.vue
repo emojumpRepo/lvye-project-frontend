@@ -23,7 +23,7 @@ const totalScore = computed(() => {
 // 计算已答题数
 const answeredCount = computed(() => {
   return props.answers.filter(
-    (item) => item.answer && item.answer.trim() !== '',
+    (item) => item.answer && trimAnswer(item.answer) !== '',
   ).length;
 });
 
@@ -50,6 +50,12 @@ function parseMultiAnswer(answer?: string) {
     .split(/[,，]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+// 去除答案字符串的前后空格
+function trimAnswer(answer?: string) {
+  if (!answer) return '';
+  return answer.trim();
 }
 </script>
 
@@ -107,11 +113,11 @@ function parseMultiAnswer(answer?: string) {
         <div class="mt-2 space-y-2">
           <!-- 单选题：radio -->
           <div v-if="item.type === 'radio'">
-            <Radio.Group :value="item.answer">
+            <Radio.Group :value="trimAnswer(item.answer)">
               <Radio
                 v-for="(opt, idx) in getOptionTexts(item)"
                 :key="idx"
-                :value="opt"
+                :value="trimAnswer(opt)"
                 class="mr-4"
               >
                 {{ formatAnswer(opt) }}
@@ -125,7 +131,7 @@ function parseMultiAnswer(answer?: string) {
               <Checkbox
                 v-for="(opt, idx) in getOptionTexts(item)"
                 :key="idx"
-                :value="opt"
+                :value="trimAnswer(opt)"
                 class="mr-4"
               >
                 {{ formatAnswer(opt) }}
@@ -141,9 +147,12 @@ function parseMultiAnswer(answer?: string) {
           <!-- 下拉题：select -->
           <div v-else-if="item.type === 'select'">
             <Select
-              :value="item.answer"
+              :value="trimAnswer(item.answer)"
               :options="
-                getOptionTexts(item).map((t) => ({ label: t, value: t }))
+                getOptionTexts(item).map((t) => ({
+                  label: t,
+                  value: trimAnswer(t),
+                }))
               "
               style="width: 260px"
               disabled
@@ -152,13 +161,13 @@ function parseMultiAnswer(answer?: string) {
 
           <!-- 文本输入：input -->
           <div v-else-if="item.type === 'input'">
-            <Input :value="formatAnswer(item.answer)" disabled />
+            <Input :value="formatAnswer(trimAnswer(item.answer))" disabled />
           </div>
 
           <!-- 文本域：textarea -->
           <div v-else-if="item.type === 'textarea'">
             <Input.TextArea
-              :value="formatAnswer(item.answer)"
+              :value="formatAnswer(trimAnswer(item.answer))"
               :rows="3"
               disabled
             />
@@ -167,10 +176,10 @@ function parseMultiAnswer(answer?: string) {
           <!-- 兜底展示：标签 -->
           <div v-else class="flex items-center gap-2">
             <span
-              v-if="item.answer"
+              v-if="trimAnswer(item.answer)"
               class="inline-flex items-center rounded-full bg-[#1966FF14] px-3 py-1 text-sm font-medium text-[#1966FF]"
             >
-              {{ formatAnswer(item.answer) }}
+              {{ formatAnswer(trimAnswer(item.answer)) }}
             </span>
             <span
               v-else
