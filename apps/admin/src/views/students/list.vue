@@ -118,13 +118,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const data = await getStudentProfilePage({
+          return await getStudentProfilePage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...studentSearchRef.value?.searchParams,
             ...formValues,
           });
-          return data;
         },
       },
     },
@@ -213,6 +212,7 @@ function handleViewModeChange({ target }: { target: any }) {
             return await getStudentProfilePage({
               pageNo: page.currentPage,
               pageSize: page.pageSize,
+              ...studentSearchRef.value?.searchParams,
               ...formValues,
             });
           },
