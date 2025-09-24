@@ -161,6 +161,12 @@ export function useQuestionConfigGridColumns() {
       width: 120,
     },
     {
+      title: '配置描述',
+      field: 'description',
+      minWidth: 160,
+      showOverflow: true,
+    },
+    {
       title: '题目索引',
       field: 'questionIndex',
       slots: { default: 'questionIndex' },

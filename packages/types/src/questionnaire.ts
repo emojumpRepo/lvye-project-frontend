@@ -8,6 +8,7 @@ export interface QuestionnaireVO {
   code?: string;
   status?: number;
   description?: string;
+  isOpen?: number;
   externalLink: string;
   questionnaireType: number;
   syncStatus?: number;

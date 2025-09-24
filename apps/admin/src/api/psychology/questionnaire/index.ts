@@ -19,6 +19,7 @@ export interface QuestionnaireConfigBaseVO {
   questionIndex: string; // 题目索引
   calculateType: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE; // 计算类型
   calculateFormula: string; // 计算公式
+  description?: string; // 配置描述
   teacherComment: string; // 老师评语
   studentComment: string; // 学生评语
   isAbnormal: number; // 是否异常

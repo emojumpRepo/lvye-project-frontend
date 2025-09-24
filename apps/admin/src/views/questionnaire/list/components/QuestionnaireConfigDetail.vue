@@ -78,6 +78,10 @@ const abnormalColor = computed(() => {
             <span class="value">{{ config.dimensionName }}</span>
           </div>
           <div class="info-item col-span-1">
+            <span class="label">配置描述：</span>
+            <span class="value">{{ config.description || '无' }}</span>
+          </div>
+          <div class="info-item col-span-1">
             <span class="label">状态：</span>
             <Tag :color="abnormalColor">{{ abnormalLabel }}</Tag>
           </div>
