@@ -19,6 +19,27 @@ import App from './app.vue';
 import { router } from './router';
 
 async function bootstrap(namespace: string) {
+  // 显示 Mindtrip 版本信息
+  const version = import.meta.env.VITE_APP_VERSION || '0.0.5';
+  const metadata = (window as any).__VBEN_ADMIN_METADATA__;
+  const buildTime = metadata?.buildTime || new Date().toISOString();
+  
+  console.log(
+    `%c
+███╗   ███╗██╗███╗   ██╗██████╗ ████████╗██████╗ ██╗██████╗ 
+████╗ ████║██║████╗  ██║██╔══██╗╚══██╔══╝██╔══██╗██║██╔══██╗
+██╔████╔██║██║██╔██╗ ██║██║  ██║   ██║   ██████╔╝██║██████╔╝
+██║╚██╔╝██║██║██║╚██╗██║██║  ██║   ██║   ██╔══██╗██║██╔═══╝ 
+██║ ╚═╝ ██║██║██║ ╚████║██████╔╝   ██║   ██║  ██║██║██║     
+╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝     
+
+Admin Console v${version}
+Build Date: ${buildTime}
+%c🚀 Mindtrip Admin System Initialized`,
+    'color: #4ade80; font-family: monospace',
+    'color: #94a3b8; font-weight: bold'
+  );
+
   // 初始化组件适配器
   await initComponentAdapter();
 
