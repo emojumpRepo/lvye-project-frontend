@@ -65,8 +65,8 @@ async function initSetupVbenForm() {
           return $t('ui.formRules.required', [ctx.label]);
         }
         const age = Number(value);
-        if (Number.isNaN(age) || age < 1 || age > 30) {
-          return `${ctx.label}必须是1-30岁之间的有效年龄`;
+        if (Number.isNaN(age) || age < 6 || age > 30) {
+          return `${ctx.label}必须是6-30岁之间的有效年龄`;
         }
         return true;
       },
