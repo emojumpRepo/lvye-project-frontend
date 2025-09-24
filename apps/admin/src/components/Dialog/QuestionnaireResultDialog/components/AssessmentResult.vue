@@ -13,33 +13,28 @@ const props = defineProps<{
   assessmentResult: AssessmentResultVO;
 }>();
 
-/**
- * 为特定数据源生成列配置
- */
-const getColumnsForData = (data: any[]): any[] => {
-  return [
-    {
-      title: '维度名称',
-      dataIndex: 'dimensionName',
-      width: '40%',
-    },
-    {
-      title: '得分',
-      dataIndex: 'score',
-      width: '20%',
-    },
-    {
-      title: '是否异常',
-      dataIndex: 'isAbnormal',
-      width: '20%',
-    },
-    {
-      title: '测评结果',
-      dataIndex: 'level',
-      width: '20%',
-    },
-  ];
-};
+const columns = [
+  {
+    title: '维度名称',
+    dataIndex: 'dimensionName',
+    width: '40%',
+  },
+  {
+    title: '得分',
+    dataIndex: 'score',
+    width: '20%',
+  },
+  {
+    title: '是否异常',
+    dataIndex: 'isAbnormal',
+    width: '20%',
+  },
+  {
+    title: '测评结果',
+    dataIndex: 'level',
+    width: '20%',
+  },
+];
 
 /**
  * 计算问卷结果
@@ -119,16 +114,26 @@ const questionnaireResults = computed(() => {
         <Table
           v-if="JSON.parse(item.reportContent).length > 0"
           bordered
-          :columns="getColumnsForData(JSON.parse(item.reportContent))"
+          :columns="columns"
           :data-source="JSON.parse(item.reportContent)"
           :pagination="false"
         >
           <template #bodyCell="{ column, text, record }">
             <template v-if="column.dataIndex === 'isAbnormal'">
-              <LyTag
-                :color-type="text === 0 ? 'success' : 'error'"
-                :tag-label="text === 0 ? '正常' : '异常'"
-              />
+              <template
+                v-if="
+                  !item.questionnaireName.includes('睡眠质量') &&
+                  !item.questionnaireName.includes('电子游戏使用情况')
+                "
+              >
+                <LyTag
+                  :color-type="text === 0 ? 'success' : 'error'"
+                  :tag-label="text === 0 ? '正常' : '异常'"
+                />
+              </template>
+              <template v-else>
+                <span>--</span>
+              </template>
             </template>
 
             <template v-if="column.dataIndex === 'level'">
