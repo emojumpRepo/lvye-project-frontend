@@ -92,6 +92,23 @@ async function initSetupVbenForm() {
         }
         return true;
       },
+      // 出生日期验证（要求年龄大于7岁）
+      birthDateValidation: (value: any, _params: any, ctx: any) => {
+        if (value === undefined || value === null || value === '') {
+          return $t('ui.formRules.required', [ctx.label]);
+        }
+        const birthDate = new Date(value);
+        const today = new Date();
+        const minDate = new Date('2018-01-01'); // 7岁对应2018年之前出生
+        
+        if (birthDate >= minDate) {
+          return `${ctx.label}要求年龄大于6岁`;
+        }
+        if (birthDate > today) {
+          return `${ctx.label}不能是未来日期`;
+        }
+        return true;
+      },
     } as any,
   });
 }
