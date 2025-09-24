@@ -16,6 +16,8 @@ import {
   TextRun,
   WidthType,
 } from 'docx';
+import * as ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
 import { getDictLabel } from '#/utils';
 
@@ -109,18 +111,15 @@ function formatStudentDataForExport(
  * @param data 学生数据
  * @param filename 文件名（可选）
  */
-export async function exportStudentsToExcel(
+export function exportStudentsToExcel(
   data: PsychologyStudentProfileApi.StudentProfile[],
   filename?: string,
-): Promise<void> {
+): void {
   try {
     if (!data || data.length === 0) {
       message.warning('没有数据可导出');
       return;
     }
-
-    // 动态导入 XLSX 库
-    const { default: XLSX } = await import('xlsx');
 
     // 格式化数据
     const formattedData = formatStudentDataForExport(data);
@@ -189,18 +188,15 @@ export async function exportStudentsToExcel(
  * @param data 学生问卷结果数据（来自测评任务列表勾选项）
  * @param filename 可选的文件名
  */
-export async function exportAssessmentParticipantsToExcel(
+export function exportAssessmentParticipantsToExcel(
   data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
   filename?: string,
-): Promise<void> {
+): void {
   try {
     if (!data || data.length === 0) {
       message.warning('没有数据可导出');
       return;
     }
-
-    // 动态导入 XLSX 库
-    const { default: XLSX } = await import('xlsx');
 
     const formattedData = data.map((item) => {
       return {
@@ -250,9 +246,6 @@ export async function exportAssessmentParticipantsToExcel(
  * 下载学生批量导入模板
  */
 export async function downloadTemplate() {
-  // 动态导入 ExcelJS 库
-  const ExcelJS = await import('exceljs');
-  
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('学生信息');
 

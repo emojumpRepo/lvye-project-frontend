@@ -2,6 +2,7 @@ import { ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 import { getInfoFromIdCard } from './calculateTool';
 import { STUDENT_EXPORT_COLUMNS } from './export';
@@ -463,9 +464,6 @@ export async function parseExcel(
   };
 
   try {
-    // 动态导入 XLSX 库
-    const { default: XLSX } = await import('xlsx');
-
     // 读取文件内容
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
