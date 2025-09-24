@@ -204,7 +204,7 @@ async function handleExport() {
       return;
     }
 
-    exportAssessmentParticipantsToExcel(completedStudents);
+    await exportAssessmentParticipantsToExcel(completedStudents);
   } catch (error) {
     console.error(error);
     message.error('导出失败，请重试');

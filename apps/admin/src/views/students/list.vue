@@ -293,7 +293,7 @@ async function handleExport() {
       // 导出选中的数据
       const selectedStudents = gridApi.grid.getCheckboxRecords();
       if (selectedStudents && selectedStudents.length > 0) {
-        exportStudentsToExcel(selectedStudents);
+        await exportStudentsToExcel(selectedStudents);
       } else {
         message.warning('请先选择要导出的学生数据');
       }
@@ -301,7 +301,7 @@ async function handleExport() {
       // 导出全部数据
       const studentProfileList = gridApi.grid.getData();
       if (studentProfileList.length > 0) {
-        exportStudentsToExcel(studentProfileList);
+        await exportStudentsToExcel(studentProfileList);
       } else {
         message.warning('没有数据可导出');
       }
