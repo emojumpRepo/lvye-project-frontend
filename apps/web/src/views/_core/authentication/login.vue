@@ -212,6 +212,28 @@ onMounted(async () => {
 const formSchema = computed((): VbenFormSchema[] => {
   const schema: VbenFormSchema[] = [];
 
+  // 角色选择 - 使用RadioGroup（放在第一个）
+  schema.push({
+    component: 'RadioGroup',
+    componentProps: {
+      options: [
+        { label: $t('authentication.iAmStudent'), value: '0' },
+        { 
+          label: $t('authentication.iAmParent'),
+          value: '1', 
+          disabled: true 
+        },
+      ],
+      optionType: 'button',
+      buttonStyle: 'solid',
+      class: 'flex justify-center',
+    },
+    fieldName: 'isParent',
+    label: $t('authentication.selectIdentity'),
+    rules: z.string().min(1, { message: $t('authentication.isParentTip') }),
+    defaultValue: '0',
+  });
+
   // 开发环境或没有从URL获取租户时显示租户选择字段
   if (
     tenantEnable &&
@@ -265,29 +287,15 @@ const formSchema = computed((): VbenFormSchema[] => {
     });
   }
 
-  // 其他字段保持不变
+  // 其他字段
   schema.push(
-    {
-      component: 'VbenSelect',
-      componentProps: {
-        options: [
-          { label: '学生', value: '0' },
-          { label: '家长', value: '1' },
-        ],
-        placeholder: $t('authentication.isParentTip'),
-      },
-      fieldName: 'isParent',
-      label: $t('authentication.isParent'),
-      rules: z.string().min(1, { message: $t('authentication.isParentTip') }),
-      defaultValue: '0',
-    },
     {
       component: 'VbenInput',
       componentProps: {
         placeholder: $t('authentication.studentNoTip'),
       },
       fieldName: 'username',
-      label: $t('authentication.studentNo'),
+      label: $t('authentication.studentNoAndId'),
       rules: z
         .string()
         .min(1, { message: $t('authentication.studentNoTip') })
@@ -433,7 +441,27 @@ const formSchema = computed((): VbenFormSchema[] => {
       :show-qrcode-login="false"
       :show-register="false"
       :show-third-party-login="false"
+      :show-remember-me="false"
+      :show-forget-password="false"
+      :title="$t('authentication.studentWelcomeTitle')"
+      :sub-title="$t('authentication.studentWelcomeSubtitle')"
       @submit="handleLogin"
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+/* 角色选择Radio按钮居中 */
+:deep(.ant-radio-group) {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  
+  &.ant-radio-group-solid {
+    .ant-radio-button-wrapper {
+      min-width: 120px;
+      text-align: center;
+    }
+  }
+}
+</style>
