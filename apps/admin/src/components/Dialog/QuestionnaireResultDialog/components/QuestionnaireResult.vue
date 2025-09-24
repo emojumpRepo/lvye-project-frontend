@@ -17,7 +17,7 @@ defineProps<{
           <h3 class="text-lg font-medium text-gray-900">
             {{ questionnaireResult?.dimensionName }}
           </h3>
-          <!-- <div
+          <div
             class="rounded-full px-3 py-1 text-sm font-medium"
             :class="[
               questionnaireResult?.isAbnormal === 0
@@ -26,13 +26,18 @@ defineProps<{
             ]"
           >
             {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
-          </div> -->
-          <div
+          </div>
+          <!-- <div
             v-if="questionnaireResult?.level"
-            class="rounded-full bg-[#14E77E14] px-3 py-1 text-sm font-medium"
+            class="rounded-full px-3 py-1 text-sm font-medium"
+            :class="
+              questionnaireResult?.isAbnormal === 0
+                ? 'text-primary bg-[#14E77E14]'
+                : 'bg-[#FF083114] text-[#FF0831]'
+            "
           >
             {{ questionnaireResult.level }}
-          </div>
+          </div> -->
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>

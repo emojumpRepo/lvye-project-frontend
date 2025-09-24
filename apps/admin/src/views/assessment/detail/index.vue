@@ -124,6 +124,19 @@ async function loadTaskData() {
         code: item.code || '',
         key: item.id?.toString() || '',
       }));
+
+      // 将包含"儿童期逆境与发育情况评估"的项前置
+      const priorityIndex = questionnairesTabs.findIndex((item) =>
+        item.label.includes('心理健康评估'),
+      );
+
+      if (priorityIndex !== -1) {
+        const [priorityItem] = questionnairesTabs.splice(priorityIndex, 1);
+        if (priorityItem) {
+          questionnairesTabs.unshift(priorityItem);
+        }
+      }
+
       currentTaskInfo.value = {
         taskNo: taskInfo.taskNo || '',
         taskName: taskInfo.taskName,

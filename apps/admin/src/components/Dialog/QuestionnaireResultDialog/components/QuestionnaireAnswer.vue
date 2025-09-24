@@ -58,19 +58,19 @@ function parseMultiAnswer(answer?: string) {
     <!-- 统计信息 -->
     <div class="mb-6 grid grid-cols-1 gap-8 md:grid-cols-3">
       <div
-        class="rounded-lg border border-[#1966FF]/30 bg-[#1966FF14] p-2 text-center"
+        class="rounded-lg border border-[#1966FF]/30 bg-[#1966FF14] px-3 py-4 text-center"
       >
         <div class="text-2xl font-bold text-[#1966FF]">{{ answeredCount }}</div>
         <div class="text-sm text-[#1966FF]/70">已答题数</div>
       </div>
       <div
-        class="rounded-lg border border-[#04DC70]/30 bg-[#14E77E0A] p-2 text-center"
+        class="rounded-lg border border-[#04DC70]/30 bg-[#14E77E0A] px-3 py-4 text-center"
       >
         <div class="text-primary text-2xl font-bold">{{ totalScore }}</div>
         <div class="text-primary/70 text-sm">总得分</div>
       </div>
       <div
-        class="rounded-lg border border-gray-200 bg-gray-100 p-2 text-center"
+        class="rounded-lg border border-gray-200 bg-gray-100 px-3 py-4 text-center"
       >
         <div class="text-2xl font-bold text-gray-500">
           {{ unansweredCount }}
@@ -84,7 +84,7 @@ function parseMultiAnswer(answer?: string) {
       <div
         v-for="item in answers"
         :key="item.index"
-        class="rounded-lg border border-gray-200 px-4 py-2 transition-shadow hover:shadow-md"
+        class="rounded-lg border border-gray-200 px-6 py-4 transition-shadow hover:shadow-md"
       >
         <!-- 题目标题/分数 -->
         <div class="mb-3 flex items-center justify-between">
