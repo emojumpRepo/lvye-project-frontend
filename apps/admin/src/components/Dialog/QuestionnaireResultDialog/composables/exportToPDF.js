@@ -2,8 +2,6 @@ import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import pdfMake from 'pdfmake/build/pdfmake';
 
-import * as vfs_fonts from '../../../../static/fonts/vfs_fonts';
-
 const fonts = {
   AlibabaPuHuiTi: {
     bold: 'Alibaba-PuHuiTi-Medium.ttf',
@@ -11,8 +9,61 @@ const fonts = {
   },
 };
 
-pdfMake.vfs = vfs_fonts;
-pdfMake.fonts = fonts;
+// 字体缓存变量
+let fontsLoaded = false;
+let fontLoadingPromise = null;
+
+// 外部字体CDN地址
+const VFS_FONTS_URL = 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/vfs_fonts.js';
+
+/**
+ * 动态加载字体文件
+ * @returns {Promise} 字体加载Promise
+ */
+function loadVfsFonts() {
+  // 如果已经加载过，直接返回
+  if (fontsLoaded) {
+    return Promise.resolve();
+  }
+
+  // 如果正在加载，返回现有的Promise
+  if (fontLoadingPromise) {
+    return fontLoadingPromise;
+  }
+
+  fontLoadingPromise = new Promise((resolve, reject) => {
+    try {
+      // 创建script标签动态加载字体
+      const script = document.createElement('script');
+      script.src = VFS_FONTS_URL;
+      script.onload = () => {
+        try {
+          // 检查全局变量是否存在
+          if (window.vfs) {
+            pdfMake.vfs = window.vfs;
+            pdfMake.fonts = fonts;
+            fontsLoaded = true;
+            resolve();
+          } else {
+            reject(new Error('字体文件加载失败：未找到vfs数据'));
+          }
+        } catch (error) {
+          reject(new Error(`字体初始化失败：${error.message}`));
+        }
+      };
+      script.onerror = () => {
+        reject(new Error('字体文件加载失败：网络错误'));
+      };
+      
+      // 添加到head中开始加载
+      document.head.appendChild(script);
+    } catch (error) {
+      reject(new Error(`字体加载异常：${error.message}`));
+    }
+  });
+
+  return fontLoadingPromise;
+}
 
 /**
  * 导出整体测评报告 PDF
@@ -30,6 +81,8 @@ export async function exportQuestionnaireReportToPDF({
   studentName,
 }) {
   try {
+    // 动态加载字体文件
+    await loadVfsFonts();
     // 格式化完成时间
     const completedTimeStr = dayjs(completedTime).format(
       'YYYY年MM月DD日 HH:mm:ss',
@@ -132,7 +185,14 @@ export async function exportQuestionnaireReportToPDF({
     message.success('PDF 导出成功');
   } catch (error) {
     console.error('PDF 导出失败:', error);
-    message.error('PDF 导出失败，请重试');
+    
+    // 根据错误类型提供不同的用户提示
+    if (error.message && error.message.includes('字体')) {
+      message.error('字体加载失败，请检查网络连接后重试');
+    } else {
+      message.error('PDF 导出失败，请重试');
+    }
+    
     throw error;
   }
 }
