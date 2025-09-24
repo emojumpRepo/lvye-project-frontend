@@ -130,12 +130,12 @@ const _rules = {
       const dt = dayjs(`${y}-${m}-${d}`);
       if (!dt.isValid()) return false;
 
-      // 校验年龄在1-30岁之间
+      // 校验年龄在6-30岁之间
       const now = dayjs();
       const age = now.diff(dt, 'year');
-      return age >= 1 && age <= 30;
+      return age >= 6 && age <= 30;
     },
-    message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在1-30岁之间',
+    message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在6-30岁之间',
   },
   enrollmentYear: {
     required: true,
@@ -465,7 +465,7 @@ export async function parseExcel(
   try {
     // 动态导入 XLSX 库
     const { default: XLSX } = await import('xlsx');
-    
+
     // 读取文件内容
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);

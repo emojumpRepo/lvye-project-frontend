@@ -72,8 +72,8 @@ const personalInfoFields = [
     rules: z.string().refine((val) => {
       if (!val) return false;
       const age = calculateAge(dayjs(val).valueOf());
-      return age >= 1 && age <= 30;
-    }, '年龄需在1-30岁之间'),
+      return age >= 6 && age <= 30;
+    }, '年龄需在6-30岁之间'),
     componentProps: {
       format: 'YYYY-MM-DD',
       valueFormat: 'YYYY-MM-DD',

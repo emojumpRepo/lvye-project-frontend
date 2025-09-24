@@ -146,8 +146,8 @@ const rules: Record<string, Rule[]> = {
           const birthYear = new Date(value).getFullYear();
           const currentYear = new Date().getFullYear();
           const age = currentYear - birthYear;
-          if (age < 1 || age > 30) {
-            return Promise.reject(new Error('年龄应在1-30岁之间'));
+          if (age < 5 || age > 30) {
+            return Promise.reject(new Error('年龄应在6-30岁之间'));
           }
         }
         return Promise.resolve();
