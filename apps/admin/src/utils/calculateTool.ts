@@ -77,3 +77,26 @@ export function truncateText(
   if (!text) return '';
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
+
+/**
+ * 解析搜索关键词，判断是学号还是姓名
+ * @param keyword 搜索关键词
+ * @returns 返回解析后的学号和姓名字段
+ */
+export function parseSearchKeyword(keyword?: string) {
+  if (!keyword || keyword.trim() === '') {
+    return { studentNo: undefined, name: undefined };
+  }
+
+  const trimmedKeyword = keyword.trim();
+
+  // 判断是否为学号的特征：
+  // 1. 纯数字
+  // 2. 以数字开头
+  const isStudentNo = /^\d+$/.test(trimmedKeyword);
+
+  // 如果符合学号特征，则赋值给学号字段，否则认为是姓名
+  return isStudentNo
+    ? { studentNo: trimmedKeyword, name: undefined }
+    : { studentNo: undefined, name: trimmedKeyword };
+}

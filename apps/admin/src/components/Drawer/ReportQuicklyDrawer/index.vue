@@ -1,24 +1,57 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type { SearchStudentProfileVO } from '@vben/types';
+
+import { reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
-  Input as AInput,
+  Select as ASelect,
+  Spin as ASpin,
   Tag as ATag,
   Textarea as ATextarea,
+  message,
 } from 'ant-design-vue';
 
+import { searchStudentProfile } from '#/api/psychology/student-profile';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import LyUpload from '#/components/LyUpload/index.vue';
 
-const searchKeyword = ref(''); // 搜索关键词
+interface Option {
+  label: string;
+  value: number;
+}
+
+interface State {
+  studentList: SearchStudentProfileVO[];
+  value: Option[];
+  selectedStudent: null | Option;
+  fetching: boolean;
+}
+
 const eventDescription = ref(''); // 事件描述
 const fileList = ref([]); // 附件列表
-const currentCriticalLevelKey = ref<number>(0); // 当前紧急程度
-const studentInfo = ref(''); // 学生信息
+const state = reactive<State>({
+  studentList: [],
+  value: [],
+  selectedStudent: null,
+  fetching: false,
+});
+
+const eventForm = ref({
+  studentProfileId: '',
+  title: '',
+  description: '',
+  eventTime: undefined,
+  location: '',
+  riskLevel: undefined,
+  priority: undefined,
+  urgencyLevel: undefined,
+  attachmentUrls: [],
+  sourceType: 1,
+});
 
 const criticalLevel = ref([
   {
@@ -48,7 +81,34 @@ const [SelectHandleMethodDrawer, seletedHandleMethodDrawerApi] = useVbenDrawer({
 
 /** 关闭学生信息标签 */
 function handleCloseTag() {
-  studentInfo.value = '';
+  state.value = [];
+}
+
+/** 查找学生 */
+async function fetchUser(value: string) {
+  try {
+    state.fetching = true;
+    const studentList = await searchStudentProfile({ name: value });
+    if (studentList.length > 0) {
+      state.studentList = studentList.map((student) => ({
+        label: `${student.name}（${student.className}）学号：${student.studentNo}`,
+        value: student.id,
+        ...student,
+      }));
+    }
+  } catch (error) {
+    console.error('查询学生失败', error);
+    message.error('查询学生失败');
+  } finally {
+    state.fetching = false;
+  }
+}
+
+/** 选择学生回调 */
+function handleSelect(value: any) {
+  console.log('value', value);
+  state.selectedStudent = value;
+  state.value = [];
 }
 </script>
 
@@ -71,13 +131,14 @@ function handleCloseTag() {
 
       <div class="space-y-7">
         <!-- 事件描述 -->
-        <div>
+        <div class="flex flex-col">
           <LyLabel
             title="学生信息"
             required
             custom-title-class="font-normal text-sm"
           />
           <ATag
+            v-if="state.selectedStudent"
             closable
             :bordered="false"
             @close="handleCloseTag"
@@ -91,16 +152,27 @@ function handleCloseTag() {
                 class="size-4"
               />
             </template>
-            <div class="flex gap-1 text-sm text-black">
-              <span>麦明明</span>
-              <span>（三年1班）</span>
-              <span>学号：2928893934939</span>
+            <div class="text-sm text-black">
+              {{ state.selectedStudent?.label }}
             </div>
           </ATag>
-          <AInput.Search
-            v-model:value="searchKeyword"
+          <ASelect
+            v-model:value="state.value"
+            style="width: 100%"
             placeholder="输入学生姓名或学号进行搜索"
-          />
+            mode="multiple"
+            auto-clear-search-value
+            label-in-value
+            :not-found-content="state.fetching ? undefined : null"
+            :filter-option="false"
+            :options="state.studentList"
+            @search="fetchUser"
+            @select="handleSelect"
+          >
+            <template v-if="state.fetching" #notFoundContent>
+              <ASpin size="small" />
+            </template>
+          </ASelect>
         </div>
 
         <!-- 事件描述 -->
@@ -131,7 +203,7 @@ function handleCloseTag() {
               v-for="item in criticalLevel"
               :key="item.key"
               :category="item"
-              v-model:current-category-key="currentCriticalLevelKey"
+              v-model:current-category-key="eventForm.urgencyLevel"
             />
           </div>
         </div>

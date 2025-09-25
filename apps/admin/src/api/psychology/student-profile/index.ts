@@ -1,6 +1,7 @@
 import type { Dayjs } from 'dayjs';
 
 import type { PageResult } from '@vben/request';
+import type { SearchStudentProfileVO } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
@@ -271,4 +272,18 @@ export function getStudentAssessmentHistory(studentProfileId: number) {
   >('/psychology/student-profile/student-task-list', {
     params: { studentProfileId },
   });
+}
+
+/** 搜索学生档案 */
+export function searchStudentProfile({
+  studentNo,
+  name,
+}: {
+  name?: string;
+  studentNo?: string;
+}) {
+  return requestClient.get<SearchStudentProfileVO[]>(
+    '/psychology/student-profile/search',
+    { params: { studentNo, name } },
+  );
 }
