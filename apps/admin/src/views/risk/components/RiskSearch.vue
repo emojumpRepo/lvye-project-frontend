@@ -99,10 +99,10 @@ onMounted(async () => {
 <template>
   <div class="box-border rounded-xl bg-white px-6 pb-6 pt-4">
     <LyCardTitle
-      icon="carbon:connect-reference"
-      title="危机干预管理"
+      icon="carbon:tree-fall-risk"
+      title="风险评估管理"
       :pb="4"
-      icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
+      icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
     >
       <template #right>
         <slot name="actions"></slot>
@@ -127,16 +127,5 @@ onMounted(async () => {
 
 :deep(.ant-tabs-tab-btn) {
   color: #979899;
-}
-</style>
-
-<style lang="scss" scoped>
-:deep(.form-item) {
-  padding-bottom: 0 !important;
-}
-
-:deep(.form-actions) {
-  grid-column: -3 / -1 !important;
-  padding-bottom: 0 !important;
 }
 </style>
