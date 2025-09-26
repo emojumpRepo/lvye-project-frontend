@@ -18,6 +18,7 @@ import {
   Textarea as ATextarea,
   message,
 } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import {
   checkDuplicateReportEvent,
@@ -106,20 +107,33 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
   {
     class: 'w-[720px]',
     destroyOnClose: true,
-    onOpenChange: () => {
-      const draft = localStorage.getItem('report_crisis_event_draft');
-      if (draft) {
-        const draftData = JSON.parse(draft);
-        confirm({
-          beforeClose: async ({ isConfirm }) => {
-            if (isConfirm) {
-              await handleReport();
-            }
-            return true;
-          },
-          content: '检测到草稿，是否恢复？',
-          icon: 'success',
-        });
+    onOpenChange: (open) => {
+      if (open) {
+        const draft = localStorage.getItem('report_crisis_event_draft');
+        if (draft) {
+          selectedHandleMethodDrawerApi.lock();
+          confirm({
+            beforeClose: async ({ isConfirm }) => {
+              if (isConfirm) {
+                const draftData = JSON.parse(draft);
+                eventForm.value = {
+                  ...draftData.eventForm,
+                  eventTime:
+                    draftData.eventForm.eventTime &&
+                    dayjs(draftData.eventForm.eventTime),
+                };
+                state.value = draftData.state;
+                localStorage.removeItem('report_crisis_event_draft');
+              }
+              return true;
+            },
+            confirmText: '确认',
+            content: '检测到草稿，是否恢复？（确认后将清除草稿）',
+            icon: 'success',
+          }).then(() => {
+            selectedHandleMethodDrawerApi.unlock();
+          });
+        }
       }
     },
     onConfirm() {
@@ -214,10 +228,9 @@ function handleSelect(value: any) {
 function handleSaveDraft() {
   localStorage.setItem(
     'report_crisis_event_draft',
-    JSON.stringify(eventForm.value),
+    JSON.stringify({ eventForm: eventForm.value, state: state.value }),
   );
   message.success('草稿已保存');
-  selectedHandleMethodDrawerApi.close();
 }
 
 onMounted(() => {
@@ -261,25 +274,6 @@ onMounted(() => {
               required
               custom-title-class="font-normal text-sm"
             />
-            <!-- <ATag
-            v-if="state.selectedStudent"
-            closable
-            :bordered="false"
-            @close="handleCloseTag"
-            color="#04DC7014"
-            class="mb-3 !inline-flex items-center gap-2 p-2"
-          >
-            <template #closeIcon>
-              <IconifyIcon
-                icon="carbon:close-filled"
-                color="#00000033"
-                class="size-4"
-              />
-            </template>
-            <div class="text-sm text-black">
-              {{ state.selectedStudent?.label }}
-            </div>
-          </ATag> -->
             <ASelect
               v-model:value="state.value"
               style="width: 100%"
