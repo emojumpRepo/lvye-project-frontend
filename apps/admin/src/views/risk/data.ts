@@ -62,9 +62,9 @@ export function useSearchFormSchema({
 export function useEventGridSchema(): VxeTableGridOptions['columns'] {
   return [
     {
-      field: 'id',
+      field: 'eventId',
       title: '事件优先级',
-      slots: { default: 'id' },
+      slots: { default: 'eventId' },
       width: '15%',
     },
     {

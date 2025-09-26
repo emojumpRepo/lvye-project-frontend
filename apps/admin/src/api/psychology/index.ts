@@ -19,6 +19,9 @@ export * from './assessment';
 // ==================== 咨询管理 ====================
 export * from './consultation';
 
+// ==================== 风险评估管理 ====================
+export * from './risk';
+
 // ==================== 学生档案管理 ====================
 export * from './student-profile';
 

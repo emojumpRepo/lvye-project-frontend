@@ -129,6 +129,11 @@ function handleSystemSetting() {
 function handleReportFast() {
   reportFastDrawerApi.open();
 }
+
+/** 刷新事件列表 */
+function refresh() {
+  gridApi.query();
+}
 </script>
 
 <template>
@@ -168,10 +173,10 @@ function handleReportFast() {
     <!-- 事件列表 -->
     <Grid>
       <!-- 事件优先级 -->
-      <template #id="{ row }">
+      <template #eventId="{ row }">
         <div class="flex flex-col gap-1 px-2">
           <div class="font-bold text-[#4C4C4D]">
-            {{ row.id }}
+            {{ row.eventId }}
           </div>
           <p
             class="line-clamp-2 whitespace-normal text-xs leading-normal text-[#979899]"
@@ -228,7 +233,7 @@ function handleReportFast() {
       <!-- 上报时间 -->
       <template #reportedAt="{ row }">
         <div class="text-[#4C4C4D]">
-          {{ dayjs(row.reportedAt).format('YYYY-MM-DD') }}
+          {{ dayjs(row.reportedAt).format('YYYY-MM-DD HH:mm:ss') }}
         </div>
       </template>
 
@@ -248,6 +253,6 @@ function handleReportFast() {
 
     <HandleCrisisEventModal />
     <SystemSettingDrawer />
-    <ReportFastDrawer />
+    <ReportFastDrawer @refresh="refresh" />
   </div>
 </template>

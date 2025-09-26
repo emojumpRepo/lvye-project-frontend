@@ -26,6 +26,11 @@ interface SelectOption {
 const currentModeKey = ref<string>('');
 const defaultHandlerUserId = ref<number | undefined>(undefined);
 const teacherUserList = ref<SelectOption[]>([]);
+const form = ref({
+  mode: '',
+  defaultHandlerUserId: undefined,
+  defaultHandlerName: '',
+});
 
 const allocationModes = ref<CategoryCard[]>([
   {

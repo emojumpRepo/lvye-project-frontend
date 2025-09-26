@@ -52,7 +52,7 @@ const eventBaseInfo = computed(() => {
         return value ? getDictLabel('crisis_event_status', value) : '--';
       }
       case 'urgencyLevel': {
-        return value ? getDictLabel('crisis_event_urgency_level', value) : '--';
+        return value ? getDictLabel('crisis_event_priority', value) : '--';
       }
       default: {
         return value || '--';
