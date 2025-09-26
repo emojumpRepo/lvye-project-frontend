@@ -28,3 +28,10 @@ export function checkDuplicateReportEvent(studentProfileId: number) {
     { params: { studentProfileId } },
   );
 }
+
+/** 获取事件状态统计 */
+export function getEventStatusStatistics() {
+  return requestClient.get<{ count: number; status: number }[]>(
+    '/psychology/intervention/event/status-statistics',
+  );
+}

@@ -7,11 +7,11 @@ import { ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { Progress as AProgress } from 'ant-design-vue';
+import { Progress as AProgress, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCrisisEventList } from '#/api/psychology/crisis';
+import { getCrisisEventList, getEventStatusStatistics } from '#/api/psychology';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import CrisisInterventionSettingDrawer from '#/components/Drawer/CrisisInterventionSettingDrawer/index.vue';
 import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
@@ -31,7 +31,7 @@ import { useEventGridSchema } from './data';
 defineOptions({ name: 'CrisisIntervention' });
 
 interface EventPanelData {
-  eventType: number;
+  status: number;
   count: number;
 }
 
@@ -47,7 +47,7 @@ const eventpanelIconMap: Record<number, string> = {
 // 面板数据
 const eventPanelData = ref<EventPanelData[]>(
   Object.keys(eventpanelIconMap).map((key) => ({
-    eventType: Number(key),
+    status: Number(key),
     count: 0,
   })),
 );
@@ -85,6 +85,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageSize: page.pageSize,
             ...formValues,
           });
+          await loadEventStatusStatistics();
           return response;
         },
       },
@@ -96,13 +97,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+/** 加载危机事件状态统计 */
+async function loadEventStatusStatistics() {
+  try {
+    const list = await getEventStatusStatistics();
+    if (list.length > 0) {
+      eventPanelData.value = list;
+    }
+  } catch (error) {
+    console.error('加载危机事件状态统计失败', error);
+    message.error('加载危机事件状态统计失败');
+  }
+}
+
 /** 搜索表单搜索 */
 function handleSearch(params: CrisisEventListReq) {
   gridApi.query(params);
 }
 
 /** 事件类型搜索 */
-function handleEventTypeSearch(status: number) {
+function handlestatusSearch(status: number) {
   gridApi.query({
     pageNo: 1,
     pageSize: 10,
@@ -153,20 +167,20 @@ function refresh() {
     </RiskSearch>
 
     <!-- 事件面板 -->
-    <div class="grid grid-cols-6 gap-5">
+    <div class="grid grid-cols-5 gap-5">
       <div
         v-for="eventPanel in eventPanelData"
-        :key="eventPanel.eventType"
+        :key="eventPanel.status"
         class="flex cursor-pointer items-center justify-between rounded-xl bg-white p-6 hover:shadow-sm"
-        @click="handleEventTypeSearch(eventPanel.eventType)"
+        @click="handlestatusSearch(eventPanel.status)"
       >
         <div class="flex flex-col gap-3">
           <div class="text-xl font-bold">{{ eventPanel.count }}</div>
           <span class="text-sm text-[#979899]">
-            {{ getDictLabel('crisis_event_type', eventPanel.eventType) }}
+            {{ getDictLabel('crisis_event_type', eventPanel.status) }}
           </span>
         </div>
-        <img :src="eventpanelIconMap[eventPanel.eventType]" class="w-12" />
+        <img :src="eventpanelIconMap[eventPanel.status]" class="w-12" />
       </div>
     </div>
 
