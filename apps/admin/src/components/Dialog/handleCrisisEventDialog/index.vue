@@ -60,7 +60,7 @@ const currentStep = ref(1); // 当前步骤
 const crisisEventHandlingSteps = ref([
   {
     label: '事件上报',
-    description: '已完成',
+    description: '已上报',
     key: 1,
   },
   {
@@ -79,9 +79,14 @@ const crisisEventHandlingSteps = ref([
     key: 4,
   },
   {
+    label: '评估',
+    description: '待评估',
+    key: 5,
+  },
+  {
     label: '流程完成',
     description: '未完成',
-    key: 5,
+    key: 6,
   },
 ]);
 
@@ -93,6 +98,7 @@ async function loadCrisisEventDetail(id: number) {
   try {
     const response = await getCrisisEventDetail(id);
     if (!response) return message.error('获取危机事件详情失败');
+    currentStep.value = response.status;
     crisisEventDetail.value = response;
   } catch (error) {
     console.error('加载危机事件详情失败', error);
@@ -116,10 +122,11 @@ async function loadCrisisEventProcessHistory(id: number) {
 }
 
 /** 快速分配 */
-function handleQuickAssign(index: number) {
+function handleQuickAssign(type: 'assign' | 'update') {
   editEventRecordApi
     .setData({
-      title: '分配负责人',
+      title: type === 'assign' ? '分配负责人' : '更改负责人',
+      type,
     })
     .open();
 }
@@ -170,34 +177,53 @@ function handleClose() {
               type="tag"
             >
               <template #event="{ index }">
-                <div class="my-2">
-                  <!-- step1 -->
+                <!-- step1: 事件上报 -->
+                <div v-if="index === 1" class="my-2">
                   <StepEventCard
-                    v-if="index === 1"
-                    name="李数学老师"
-                    :time="1757562878000"
+                    v-if="
+                      currentStep >= 1 &&
+                      crisisEventDetail?.reporterName &&
+                      crisisEventDetail?.reportedAt
+                    "
+                    :name="crisisEventDetail?.reporterName"
+                    :time="crisisEventDetail?.reportedAt"
                   />
+                </div>
 
-                  <!-- step2 -->
-                  <div v-if="index === 2" class="flex flex-col">
+                <!-- step2: 分配负责人 -->
+                <div v-if="index === 2" class="my-2">
+                  <div class="flex flex-col">
                     <div class="mb-2 flex w-full gap-1">
-                      <StepEventCard name="心理测评师" :time="1757562878000" />
+                      <StepEventCard
+                        v-if="
+                          index === 2 &&
+                          currentStep >= 2 &&
+                          crisisEventDetail?.handlerName &&
+                          crisisEventDetail?.updateTime
+                        "
+                        :name="crisisEventDetail?.handlerName"
+                        :time="crisisEventDetail?.updateTime"
+                      />
                       <IconifyIcon
+                        v-if="currentStep >= 2"
                         icon="material-symbols-light:refresh-rounded"
                         color="#1966FF"
                         class="size-5 self-end"
+                        @click="handleQuickAssign('update')"
                       />
                     </div>
                     <button
                       class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                      @click="handleQuickAssign(index)"
+                      @click="handleQuickAssign('assign')"
                     >
                       <span class="whitespace-nowrap">快速分配</span>
                     </button>
                   </div>
+                </div>
 
-                  <!-- step3 -->
-                  <div v-if="index === 3" class="flex w-full flex-col gap-1">
+                <!-- step3: 选择处理方式 -->
+                <div v-if="index === 3 && currentStep >= 3" class="my-2">
+                  <div class="flex w-full flex-col gap-1">
                     <div class="mb-2 flex w-full gap-1">
                       <StepEventCard name="心理测评师" :time="1757562878000" />
                       <IconifyIcon
@@ -213,9 +239,11 @@ function handleClose() {
                       <span class="whitespace-nowrap">开始选择</span>
                     </button>
                   </div>
+                </div>
 
-                  <!-- step4 -->
-                  <div v-if="index === 4" class="flex w-full flex-col gap-1">
+                <!-- step4: 执行处理 -->
+                <div v-if="index === 4 && currentStep >= 4" class="my-2">
+                  <div class="flex w-full flex-col gap-1">
                     <div class="mb-2 flex w-full gap-1">
                       <StepEventCard name="心理测评师" :time="1757562878000" />
                       <IconifyIcon
@@ -224,12 +252,32 @@ function handleClose() {
                         class="size-5 self-end"
                       />
                     </div>
-                    <!-- <button
-                  class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                  @click="handleSelectHandleMethod()"
-                >
-                  <span class="whitespace-nowrap">开始选择</span>
-                </button> -->
+                    <!-- 执行处理按钮可以在这里添加 -->
+                  </div>
+                </div>
+
+                <!-- step5: 评估 -->
+                <div v-if="index === 5 && currentStep >= 5" class="my-2">
+                  <div class="flex w-full flex-col gap-1">
+                    <div class="mb-2 flex w-full gap-1">
+                      <StepEventCard name="评估师" :time="1757562878000" />
+                      <IconifyIcon
+                        icon="material-symbols-light:refresh-rounded"
+                        color="#1966FF"
+                        class="size-5 self-end"
+                      />
+                    </div>
+                    <!-- 评估按钮可以在这里添加 -->
+                  </div>
+                </div>
+
+                <!-- step6: 流程完成 -->
+                <div v-if="index === 6 && currentStep >= 6" class="my-2">
+                  <div class="flex w-full flex-col gap-1">
+                    <div class="mb-2 flex w-full gap-1">
+                      <StepEventCard name="系统" :time="1757562878000" />
+                    </div>
+                    <!-- 完成状态显示 -->
                   </div>
                 </div>
               </template>

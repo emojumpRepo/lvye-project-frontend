@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
@@ -21,10 +21,10 @@ interface HandleUserOption {
 
 interface Params {
   title: string;
+  type: 'assign' | 'update';
 }
 
 const params = ref<Params>();
-const currentOperator = ref('');
 const handleUserOptions = ref<HandleUserOption[]>([]);
 const editForm = ref({
   handleUserId: '',
@@ -34,14 +34,20 @@ const editForm = ref({
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
-  onOpenChange(isOpen) {
+  async onOpenChange(isOpen) {
     if (!isOpen) return;
+    editEventRecordApi.lock();
     const data = editEventRecordApi.getData() as Params;
     params.value = data;
+    await loadHandleUserList();
+    editEventRecordApi.unlock();
+  },
+  async onConfirm() {
+    console.log('onConfirm', editForm.value.handleUserId);
   },
 });
 
-onMounted(async () => {
+async function loadHandleUserList() {
   try {
     const list = await getTeacherUserList();
     if (list.length === 0) return;
@@ -56,7 +62,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取负责人列表失败', error);
   }
-});
+}
 </script>
 
 <template>
@@ -65,15 +71,10 @@ onMounted(async () => {
       <div>
         <AForm>
           <!-- 负责人选择 -->
-          <AForm.Item
-            v-if="
-              params?.title === '更改负责人' || params?.title === '分配负责人'
-            "
-            name="handleUserId"
-          >
+          <AForm.Item name="handleUserId">
             <LyLabel title="负责人" custom-title-class="font-normal text-sm" />
             <ASelect
-              v-model:value="currentOperator"
+              v-model:value="editForm.handleUserId"
               class="w-full"
               placeholder="请选择负责人"
               :options="handleUserOptions"
@@ -81,7 +82,7 @@ onMounted(async () => {
           </AForm.Item>
 
           <!-- 更新原因 -->
-          <AForm.Item name="reason">
+          <AForm.Item name="reason" v-if="params?.type === 'update'">
             <LyLabel title="原因" custom-title-class="font-normal text-sm" />
             <ATextarea
               v-model:value="editForm.content"
