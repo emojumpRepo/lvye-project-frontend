@@ -167,7 +167,7 @@ function refresh() {
     </RiskSearch>
 
     <!-- 事件面板 -->
-    <div class="grid grid-cols-5 gap-5">
+    <div class="grid grid-cols-6 gap-5">
       <div
         v-for="eventPanel in eventPanelData"
         :key="eventPanel.status"

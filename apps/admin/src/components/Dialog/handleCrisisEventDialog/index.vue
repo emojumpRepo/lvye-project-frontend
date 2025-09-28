@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { CrisisEvent, CrisisEventRecord } from '@vben/types';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -57,38 +57,50 @@ const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
 
 const currentStep = ref(1); // 当前步骤
 
-const crisisEventHandlingSteps = ref([
-  {
-    label: '事件上报',
-    description: '已上报',
-    key: 1,
-  },
-  {
-    label: '分配负责人',
-    description: '待分配', // 已分配
-    key: 2,
-  },
-  {
-    label: '选择处理方式',
-    description: '待选择', // 心理咨询
-    key: 3,
-  },
-  {
-    label: '执行处理',
-    description: '等待中', // 处理中
-    key: 4,
-  },
-  {
-    label: '评估',
-    description: '待评估',
-    key: 5,
-  },
-  {
-    label: '流程完成',
-    description: '未完成',
-    key: 6,
-  },
-]);
+// 步骤条
+const crisisEventHandlingSteps = computed(() => {
+  const status = crisisEventDetail.value?.status ?? 1;
+
+  return [
+    {
+      label: '事件上报',
+      description: '已上报',
+      color: '#04dc70',
+      done: status >= 1,
+      key: 1,
+    },
+    {
+      label: '分配负责人',
+      description: status >= 2 ? '已分配' : '待分配',
+      done: status >= 2,
+      key: 2,
+    },
+    {
+      label: '选择处理方式',
+      description: status >= 3 ? '已选择' : '待选择',
+      done: status >= 3,
+      key: 3,
+    },
+    {
+      label: '执行处理',
+      description: status >= 3 ? '处理中' : '等待中',
+      done: status >= 4,
+      key: 4,
+    },
+    {
+      label: '评估',
+      description: status >= 5 ? '已评估' : '待评估',
+      done: status >= 5,
+      key: 5,
+    },
+    {
+      label: '流程完成',
+      description: status >= 6 ? '已完成' : '未完成',
+      done: status >= 6,
+      key: 6,
+    },
+  ];
+});
 
 /**
  * 获取危机事件详情
@@ -98,7 +110,7 @@ async function loadCrisisEventDetail(id: number) {
   try {
     const response = await getCrisisEventDetail(id);
     if (!response) return message.error('获取危机事件详情失败');
-    currentStep.value = response.status;
+    currentStep.value = response.status + 1;
     crisisEventDetail.value = response;
   } catch (error) {
     console.error('加载危机事件详情失败', error);
@@ -115,6 +127,7 @@ async function loadCrisisEventProcessHistory(id: number) {
     const response = await getCrisisEventProcessHistory({ id });
     if (response.total === 0) return;
     crisisEventProcessHistory.value = response.list.reverse();
+    // 重新加载步骤条
   } catch (error) {
     console.error('加载事件历史记录失败', error);
     message.error('加载事件历史记录失败');
@@ -125,6 +138,7 @@ async function loadCrisisEventProcessHistory(id: number) {
 function handleQuickAssign(type: 'assign' | 'update') {
   editEventRecordApi
     .setData({
+      id: crisisEventDetail.value?.id,
       title: type === 'assign' ? '分配负责人' : '更改负责人',
       type,
     })
@@ -178,34 +192,36 @@ function handleClose() {
             >
               <template #event="{ index }">
                 <!-- step1: 事件上报 -->
-                <div v-if="index === 1" class="my-2">
-                  <StepEventCard
-                    v-if="
-                      currentStep >= 1 &&
-                      crisisEventDetail?.reporterName &&
-                      crisisEventDetail?.reportedAt
-                    "
-                    :name="crisisEventDetail?.reporterName"
-                    :time="crisisEventDetail?.reportedAt"
-                  />
-                </div>
+                <template v-if="index === 1">
+                  <div class="my-2">
+                    <StepEventCard
+                      v-if="
+                        currentStep >= 2 &&
+                        crisisEventDetail?.reporterName &&
+                        crisisEventDetail?.reportedAt
+                      "
+                      :name="crisisEventDetail?.reporterName"
+                      :time="crisisEventDetail?.reportedAt"
+                    />
+                  </div>
+                </template>
 
                 <!-- step2: 分配负责人 -->
-                <div v-if="index === 2" class="my-2">
-                  <div class="flex flex-col">
-                    <div class="mb-2 flex w-full gap-1">
+                <template v-if="index === 2">
+                  <div class="my-2 flex flex-col">
+                    <div
+                      v-if="
+                        currentStep >= 3 &&
+                        crisisEventDetail?.handlerName &&
+                        crisisEventDetail?.updateTime
+                      "
+                      class="flex w-full gap-1"
+                    >
                       <StepEventCard
-                        v-if="
-                          index === 2 &&
-                          currentStep >= 2 &&
-                          crisisEventDetail?.handlerName &&
-                          crisisEventDetail?.updateTime
-                        "
                         :name="crisisEventDetail?.handlerName"
                         :time="crisisEventDetail?.updateTime"
                       />
                       <IconifyIcon
-                        v-if="currentStep >= 2"
                         icon="material-symbols-light:refresh-rounded"
                         color="#1966FF"
                         class="size-5 self-end"
@@ -213,18 +229,19 @@ function handleClose() {
                       />
                     </div>
                     <button
+                      v-if="currentStep === 2"
                       class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
                       @click="handleQuickAssign('assign')"
                     >
                       <span class="whitespace-nowrap">快速分配</span>
                     </button>
                   </div>
-                </div>
+                </template>
 
                 <!-- step3: 选择处理方式 -->
-                <div v-if="index === 3 && currentStep >= 3" class="my-2">
-                  <div class="flex w-full flex-col gap-1">
-                    <div class="mb-2 flex w-full gap-1">
+                <template v-if="index === 3">
+                  <div class="my-2 flex w-full flex-col">
+                    <div v-if="currentStep >= 4" class="flex w-full gap-1">
                       <StepEventCard name="心理测评师" :time="1757562878000" />
                       <IconifyIcon
                         icon="material-symbols-light:refresh-rounded"
@@ -233,18 +250,22 @@ function handleClose() {
                       />
                     </div>
                     <button
+                      v-if="currentStep === 3"
                       class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
                       @click="handleSelectHandleMethod()"
                     >
                       <span class="whitespace-nowrap">开始选择</span>
                     </button>
                   </div>
-                </div>
+                </template>
 
                 <!-- step4: 执行处理 -->
-                <div v-if="index === 4 && currentStep >= 4" class="my-2">
-                  <div class="flex w-full flex-col gap-1">
-                    <div class="mb-2 flex w-full gap-1">
+                <template v-if="index === 4">
+                  <div
+                    v-if="currentStep >= 5"
+                    class="my-2 flex w-full flex-col"
+                  >
+                    <div class="flex w-full gap-1">
                       <StepEventCard name="心理测评师" :time="1757562878000" />
                       <IconifyIcon
                         icon="material-symbols-light:refresh-rounded"
@@ -254,12 +275,15 @@ function handleClose() {
                     </div>
                     <!-- 执行处理按钮可以在这里添加 -->
                   </div>
-                </div>
+                </template>
 
                 <!-- step5: 评估 -->
-                <div v-if="index === 5 && currentStep >= 5" class="my-2">
-                  <div class="flex w-full flex-col gap-1">
-                    <div class="mb-2 flex w-full gap-1">
+                <template v-if="index === 5">
+                  <div
+                    v-if="currentStep >= 6"
+                    class="my-2 flex w-full flex-col"
+                  >
+                    <div class="flex w-full gap-1">
                       <StepEventCard name="评估师" :time="1757562878000" />
                       <IconifyIcon
                         icon="material-symbols-light:refresh-rounded"
@@ -269,17 +293,20 @@ function handleClose() {
                     </div>
                     <!-- 评估按钮可以在这里添加 -->
                   </div>
-                </div>
+                </template>
 
                 <!-- step6: 流程完成 -->
-                <div v-if="index === 6 && currentStep >= 6" class="my-2">
-                  <div class="flex w-full flex-col gap-1">
-                    <div class="mb-2 flex w-full gap-1">
+                <template v-if="index === 6">
+                  <div
+                    v-if="currentStep >= 7"
+                    class="my-2 flex w-full flex-col"
+                  >
+                    <div class="flex w-full gap-1">
                       <StepEventCard name="系统" :time="1757562878000" />
                     </div>
                     <!-- 完成状态显示 -->
                   </div>
-                </div>
+                </template>
               </template>
             </CommonDialogSteps>
           </div>
@@ -305,7 +332,10 @@ function handleClose() {
       </ASpin>
     </div>
 
-    <EditEventRecordModal />
+    <EditEventRecordModal
+      @load-crisis-event-detail="loadCrisisEventDetail"
+      @load-crisis-event-process-history="loadCrisisEventProcessHistory"
+    />
     <HandleMethodDrawer />
   </HandleCrisisEventModal>
 </template>
@@ -326,4 +356,8 @@ function handleClose() {
 :deep(.ant-spin-container) {
   height: 100% !important;
 }
+
+// :deep(.ant-steps-item) {
+//   flex: none !important;
+// }
 </style>

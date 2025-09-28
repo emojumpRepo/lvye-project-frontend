@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { Rule } from 'ant-design-vue/es/form';
+
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
@@ -7,8 +9,10 @@ import {
   Form as AForm,
   Select as ASelect,
   Textarea as ATextarea,
+  message,
 } from 'ant-design-vue';
 
+import { assignHandler, updateHandler } from '#/api/psychology/risk';
 import { getTeacherUserList } from '#/api/system/user';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -20,16 +24,27 @@ interface HandleUserOption {
 }
 
 interface Params {
+  id: number;
   title: string;
   type: 'assign' | 'update';
 }
 
+const emits = defineEmits<{
+  (e: 'loadCrisisEventDetail', id: number): void;
+  (e: 'loadCrisisEventProcessHistory', id: number): void;
+}>();
+
 const params = ref<Params>();
 const handleUserOptions = ref<HandleUserOption[]>([]);
 const editForm = ref({
-  handleUserId: '',
+  handleUserId: undefined,
   content: '',
 });
+
+const rules: Record<string, Rule[]> = {
+  handleUserId: [{ required: true, message: '请选择负责人', trigger: 'blur' }],
+  content: [{ required: true, message: '请填写原因', trigger: 'blur' }],
+};
 
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   fullscreenButton: false,
@@ -43,10 +58,44 @@ const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
     editEventRecordApi.unlock();
   },
   async onConfirm() {
-    console.log('onConfirm', editForm.value.handleUserId);
+    if (!editForm.value.handleUserId) return message.error('未选择负责人');
+    try {
+      editEventRecordApi.lock();
+      if (params.value?.type === 'assign') {
+        const response = await assignHandler({
+          id: params.value.id,
+          handlerUserId: editForm.value.handleUserId,
+        });
+        if (!response) return message.error('分配负责人失败');
+        if (params.value?.id) {
+          emits('loadCrisisEventDetail', params.value.id);
+          emits('loadCrisisEventProcessHistory', params.value.id);
+        }
+        message.success('分配负责人成功');
+        editEventRecordApi.close();
+      } else if (params.value?.type === 'update') {
+        const response = await updateHandler({
+          id: params.value.id,
+          newHandlerUserId: editForm.value.handleUserId,
+          reason: editForm.value.content,
+        });
+        if (!response) return message.error('更改负责人失败');
+        if (params.value?.id) {
+          emits('loadCrisisEventDetail', params.value.id);
+          emits('loadCrisisEventProcessHistory', params.value.id);
+        }
+        message.success('更改负责人成功');
+        editEventRecordApi.close();
+      }
+    } catch (error) {
+      console.error('分配负责人失败', error);
+    } finally {
+      editEventRecordApi.unlock();
+    }
   },
 });
 
+/** 获取负责人（心理老师和班主任）列表 */
 async function loadHandleUserList() {
   try {
     const list = await getTeacherUserList();
@@ -55,9 +104,9 @@ async function loadHandleUserList() {
       .filter((item) => item.id !== null)
       .map((item) => ({
         label: item.nickname ?? '',
-        value: item.id as number,
-        deptId: item.deptId as number,
-        deptName: item.deptName as string,
+        value: item.id,
+        deptId: item.deptId,
+        deptName: item.deptName,
       }));
   } catch (error) {
     console.error('获取负责人列表失败', error);
@@ -69,7 +118,7 @@ async function loadHandleUserList() {
   <EditEventRecordModal :title="params?.title">
     <div class="px-2">
       <div>
-        <AForm>
+        <AForm :model="editForm" :rules="rules">
           <!-- 负责人选择 -->
           <AForm.Item name="handleUserId">
             <LyLabel title="负责人" custom-title-class="font-normal text-sm" />

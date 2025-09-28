@@ -20,6 +20,13 @@ export namespace SystemUserApi {
     remark: string;
     createTime?: Date;
   }
+
+  export interface TeacherUser {
+    id: number;
+    nickname: string;
+    deptId: number;
+    deptName: string;
+  }
 }
 
 /** 查询用户管理列表 */
@@ -90,7 +97,10 @@ export function getSimpleUserList() {
 
 /** 获取教师用户列表 */
 export function getTeacherUserList(role?: 'psychology_teacher' | 'teacher') {
-  return requestClient.get<SystemUserApi.User[]>(`/system/user/list-teachers`, {
-    params: { role },
-  });
+  return requestClient.get<SystemUserApi.TeacherUser[]>(
+    `/system/user/list-teachers`,
+    {
+      params: { role },
+    },
+  );
 }

@@ -7,6 +7,7 @@ import LyTag from '#/components/LyTag/index.vue';
 
 type StepItem = {
   description?: string;
+  done?: boolean;
   key?: number | string;
   label: string;
 };
@@ -34,7 +35,7 @@ const items = computed(() =>
     label: s.label,
     description: s.description,
     active: (props.currentStep || 1) === idx + 1,
-    done: (props.currentStep || 1) > idx + 1,
+    done: s.done || (props.currentStep || 1) > idx + 1,
   })),
 );
 </script>

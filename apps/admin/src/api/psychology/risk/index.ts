@@ -35,3 +35,33 @@ export function getEventStatusStatistics() {
     '/psychology/intervention/event/status-statistics',
   );
 }
+
+/** 分配负责人 */
+export function assignHandler({
+  id,
+  handlerUserId,
+}: {
+  handlerUserId: number;
+  id: number;
+}) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${id}/assign`,
+    { handlerUserId },
+  );
+}
+
+/** 更改分配负责人 */
+export function updateHandler({
+  id,
+  newHandlerUserId,
+  reason,
+}: {
+  id: number;
+  newHandlerUserId: number;
+  reason: string;
+}) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${id}/reassign`,
+    { newHandlerUserId, reason },
+  );
+}

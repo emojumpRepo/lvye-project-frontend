@@ -57,6 +57,7 @@ export interface CrisisEventRecord {
   operateTime?: number;
   action?: string;
   content?: string;
+  reason?: string;
   attachments?: string[];
   createTime?: number;
 }
