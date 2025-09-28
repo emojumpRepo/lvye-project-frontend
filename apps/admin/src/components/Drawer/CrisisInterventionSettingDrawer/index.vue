@@ -23,14 +23,11 @@ interface SelectOption {
   value: number;
 }
 
-const currentModeKey = ref<string>('');
-const defaultHandlerUserId = ref<number | undefined>(undefined);
+type ModeKey = 'auto-head-teacher' | 'auto-psychology' | 'manual';
+
+const currentModeKey = ref<ModeKey | undefined>();
+const defaultPsychologyId = ref<number | undefined>(undefined);
 const teacherUserList = ref<SelectOption[]>([]);
-const form = ref({
-  mode: '',
-  defaultHandlerUserId: undefined,
-  defaultHandlerName: '',
-});
 
 const allocationModes = ref<CategoryCard[]>([
   {
@@ -42,12 +39,19 @@ const allocationModes = ref<CategoryCard[]>([
     key: 'manual',
   },
   {
-    title: '自动分配模式',
+    title: '自动分配模式-心理老师',
     description:
       '系统跟据学生档案中的责任心理老师自动分配, 无绑定时分配给默认老师',
     text: '推荐: 响应迅速, 减少人工干预',
     icon: CrisisModeAutoIcon,
-    key: 'auto',
+    key: 'auto-psychology',
+  },
+  {
+    title: '自动分配模式-班主任',
+    description: '系统跟据学生档案中的班主任自动分配, 无绑定时分配给默认老师',
+    text: '推荐: 响应迅速, 减少人工干预',
+    icon: CrisisModeAutoIcon,
+    key: 'auto-head-teacher',
   },
 ]);
 
@@ -56,23 +60,43 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
     class: 'w-[720px]',
     destroyOnClose: true,
     onOpenChange: async () => {
+      crisisInterventionSettingDrawerApi.lock();
       try {
         const response = await getCrisisInterventionSystemSetting();
         await loadTeacherUserList();
         if (response) {
-          currentModeKey.value = response.mode;
-          defaultHandlerUserId.value = response.defaultHandlerUserId;
+          currentModeKey.value = response.mode as ModeKey;
+          defaultPsychologyId.value = response.defaultPsychologyId;
         }
       } catch (error) {
         console.error('获取分配模式失败', error);
         message.error('获取分配模式失败');
+      } finally {
+        crisisInterventionSettingDrawerApi.unlock();
       }
     },
     onConfirm: async () => {
+      if (!currentModeKey.value) {
+        message.warning('请选择分配模式');
+        return;
+      }
+      if (
+        currentModeKey.value === 'auto-psychology' &&
+        !defaultPsychologyId.value
+      ) {
+        message.warning('请选择默认心理老师');
+        return;
+      }
+
       try {
-        const response = await crisisInterventionSystemSetting(
-          currentModeKey.value,
-        );
+        crisisInterventionSettingDrawerApi.lock();
+        const response = await crisisInterventionSystemSetting({
+          mode: currentModeKey.value,
+          defaultPsychologyId:
+            currentModeKey.value === 'auto-psychology'
+              ? defaultPsychologyId.value
+              : undefined,
+        });
         if (response) {
           message.success('分配成功');
           crisisInterventionSettingDrawerApi.close();
@@ -83,6 +107,7 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
         console.error('分配失败', error);
         message.error('分配失败');
       } finally {
+        crisisInterventionSettingDrawerApi.unlock();
         crisisInterventionSettingDrawerApi.close();
       }
     },
@@ -90,7 +115,7 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
 
 /** 获取心理老师列表 */
 async function loadTeacherUserList() {
-  const response = await getTeacherUserList();
+  const response = await getTeacherUserList('psychology_teacher');
   if (response) {
     teacherUserList.value = response.map((item) => ({
       label: item.nickname as string,
@@ -135,19 +160,19 @@ async function loadTeacherUserList() {
       </div>
 
       <!-- 默认心理老师 -->
-      <div class="space-y-4 px-2">
+      <div v-if="currentModeKey === 'auto-psychology'" class="space-y-4 px-2">
         <div class="space-y-6">
           <div class="space-y-1">
             <LyLabel title="默认心理老师" has-indicator />
             <div class="text-xs text-[#979899]">
-              当学生档案中未绑定责任心理老师时,自动分配给此默认老师
+              当学生档案中未绑定责任心理老师时,自动分配给默认老师
             </div>
           </div>
         </div>
 
         <div>
           <ASelect
-            v-model:value="defaultHandlerUserId"
+            v-model:value="defaultPsychologyId"
             placeholder="请选择"
             class="w-full"
             :options="teacherUserList"

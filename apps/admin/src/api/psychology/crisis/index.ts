@@ -56,16 +56,25 @@ export function getCrisisEventList(params: CrisisEventListReq) {
 /** 获取危机干预系统设置 */
 export function getCrisisInterventionSystemSetting() {
   return requestClient.get<{
-    defaultHandlerName: string;
-    defaultHandlerUserId: number;
+    defaultPsychologyId: number;
     mode: string;
-  }>('/psychology/intervention/admin/settings/intervention-assignment-mode');
+  }>('/psychology/intervention/admin/get-assignment-settings');
 }
 
 /** 危机干预系统设置 */
-export function crisisInterventionSystemSetting(mode: string) {
+export function crisisInterventionSystemSetting({
+  mode,
+  defaultPsychologyId = undefined,
+}: {
+  defaultPsychologyId?: number;
+  mode: string;
+}) {
   return requestClient.put<boolean>(
-    `/psychology/intervention/admin/settings/intervention-assignment-mode?mode=${mode}`,
+    `/psychology/intervention/admin/settings/intervention-assignment-mode`,
+    {
+      mode,
+      defaultPsychologyId,
+    },
   );
 }
 
