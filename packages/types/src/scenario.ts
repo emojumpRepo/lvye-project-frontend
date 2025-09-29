@@ -26,6 +26,7 @@ export interface AssessmentScenarioSlot {
   slotName: string;
   slotOrder: number;
   questionnaireId?: number;
+  questionnaireIds?: number[];
   metadataJson?: string;
   metadata?: SlotMetadata; // 插槽扩展配置对象（前端解析获得）
   allowedQuestionnaireTypes?: string;
@@ -33,7 +34,8 @@ export interface AssessmentScenarioSlot {
 }
 
 export interface AssessmentScenarioSlotVO extends AssessmentScenarioSlot {
-  questionnaire?: QuestionnaireVO;
+  questionnaire?: QuestionnaireVO; // 保留向后兼容
+  questionnaires?: QuestionnaireVO[]; // 新的问卷数组字段
 }
 
 // 测评场景 扩展配置对象
