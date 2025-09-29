@@ -120,20 +120,10 @@ const questionnaireResults = computed(() => {
         >
           <template #bodyCell="{ column, text, record }">
             <template v-if="column.dataIndex === 'isAbnormal'">
-              <template
-                v-if="
-                  !item.questionnaireName.includes('睡眠质量') &&
-                  !item.questionnaireName.includes('电子游戏使用情况')
-                "
-              >
-                <LyTag
-                  :color-type="text === 0 ? 'success' : 'error'"
-                  :tag-label="text === 0 ? '正常' : '异常'"
-                />
-              </template>
-              <template v-else>
-                <span>--</span>
-              </template>
+              <LyTag
+                :color-type="text === 0 ? 'success' : 'error'"
+                :tag-label="text === 0 ? '正常' : '异常'"
+              />
             </template>
 
             <template v-if="column.dataIndex === 'level'">
