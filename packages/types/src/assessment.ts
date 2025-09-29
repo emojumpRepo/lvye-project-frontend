@@ -72,6 +72,16 @@ export interface InterventionSuggestionVO {
   timeframe: string;
 }
 
+export interface RiskLevelIntervention {
+  criteria: string;
+  evaluation: string;
+  isCurrent: true;
+  priority: number;
+  riskLevel: number;
+  riskLevelName: string;
+  suggestion: string;
+}
+
 /** 测评结果 */
 export interface AssessmentResultVO {
   id: number;
@@ -79,15 +89,7 @@ export interface AssessmentResultVO {
   dimensionCode: string;
   score: number;
   riskLevel: number;
-  riskLevelIntervention: {
-    criteria: string;
-    evaluation: string;
-    isCurrent: true;
-    priority: number;
-    riskLevel: number;
-    riskLevelName: string;
-    suggestion: string;
-  };
+  riskLevelIntervention: RiskLevelIntervention;
   riskLevelDescription: string;
   suggestion: string;
   questionnaireResults: AssessmentQuestionnaireResultVO[];

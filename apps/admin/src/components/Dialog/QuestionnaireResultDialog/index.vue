@@ -219,6 +219,7 @@ const handleExport = async () => {
   exportLoading.value = true;
   try {
     await exportQuestionnaireReportToPDF({
+      assessmentSummary: assessmentResult.value!.riskLevelIntervention,
       questionnaireResult: assessmentResult.value!.questionnaireResults,
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
