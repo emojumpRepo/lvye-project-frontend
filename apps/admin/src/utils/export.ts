@@ -230,12 +230,11 @@ export function exportAssessmentParticipantsToExcel(
       { wch: 25 }, // 完成时间
     ];
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, '问卷结果');
+    XLSX.utils.book_append_sheet(workbook, worksheet, '测评结果');
 
-    const defaultFilename = `测评问卷结果.xlsx`;
+    const defaultFilename = `学生测评结果.xlsx`;
     const finalFilename = filename || defaultFilename;
     XLSX.writeFile(workbook, finalFilename);
-    message.success(`已导出 ${data.length} 条问卷结果`);
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
