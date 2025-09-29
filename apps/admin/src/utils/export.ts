@@ -205,7 +205,7 @@ export function exportAssessmentParticipantsToExcel(
         学号: item.studentNo || '--',
         班级: item.className || '--',
         完成状态: item.status === 1 ? '已完成' : '未完成',
-        问卷得分: item.score || '--',
+        问卷测评得分: item.score || '--',
         风险等级: item.riskLevel
           ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
           : '--',
