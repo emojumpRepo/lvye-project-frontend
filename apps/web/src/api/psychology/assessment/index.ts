@@ -60,3 +60,10 @@ export function getAssessmentResult(taskNo: string) {
     `/psychology/assessment-task/my-task-results?taskNo=${taskNo}`,
   );
 }
+
+/** 轮询获取结果正在生成中的测评任务列表 */
+export function getGeneratingTasks() {
+  return appRequestClient.get<AssessmentTask[]>(
+    '/psychology/assessment-task/generating-tasks',
+  );
+}

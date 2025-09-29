@@ -181,9 +181,12 @@ function handleComplete(payload: null | Record<string, unknown>) {
   console.warn('Questionnaire completed:', payload);
 
   // 更新当前问卷的完成状态
-  if (hasScenario.value && selectedSlot.value?.questionnaire) {
-    // 有场景模式：更新当前场景的问卷状态
-    selectedSlot.value.questionnaire.completed = true;
+  if (hasScenario.value && selectedSlot.value?.questionnaires?.length) {
+    // 有场景模式：更新当前场景中正在进行的问卷为完成
+    const target =
+      selectedSlot.value.questionnaires.find((q: any) => !q.completed) ||
+      selectedSlot.value.questionnaires[0];
+    if (target) target.completed = true;
   } else {
     // 无场景模式：更新当前问卷的完成状态
     const questionnaireId = route.query.questionnaireId as string;

@@ -25,6 +25,7 @@ export interface AssessmentTask {
   creatorName?: string;
   createTime?: number;
   updateTime?: number;
+  resultGenerating?: boolean; // 结果生成中标识
   // 测评场景信息
   scenarioId?: number; // 场景ID
   scenarioDetail?: AssessmentScenarioDetailed;

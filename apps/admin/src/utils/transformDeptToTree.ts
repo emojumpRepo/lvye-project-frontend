@@ -200,50 +200,59 @@ export async function getDeptTreeListByStudentName(name: string) {
   const profile = await getStudentProfileSimpleList({ name });
   if (profile.length === 0) return [];
 
-  // 按班级分组学生
-  const studentsByClass = new Map<number, any[]>();
+  // 按班级分组【匹配到的学生】
+  const matchedByClass = new Map<number, any[]>();
+  for (const p of profile) {
+    const cid = p.classDeptId;
+    if (!cid) continue;
+    const arr = matchedByClass.get(cid);
+    if (arr) arr.push(p);
+    else matchedByClass.set(cid, [p]);
+  }
 
-  profile.forEach((profileItem) => {
-    if (profileItem.classDeptId) {
-      if (!studentsByClass.has(profileItem.classDeptId)) {
-        studentsByClass.set(profileItem.classDeptId, []);
-      }
-      const classStudents = studentsByClass.get(profileItem.classDeptId);
-      if (classStudents) {
-        classStudents.push(profileItem);
-      }
-    }
-  });
+  const classIds: number[] = [...matchedByClass.keys()];
+
+  // 并发获取各班级信息与各班级的完整学生列表
+  const classInfos = await Promise.all(classIds.map((id) => getDeptById(id)));
+  const classStudentsList = await Promise.all(
+    classIds.map((id) => getStudentProfileSimpleList({ classDeptId: id })),
+  );
 
   const deptList: any[] = [];
 
-  // 构建班级 -> 学生的树形结构
-  for (const [classDeptId, students] of studentsByClass.entries()) {
-    const classDept = await getDeptById(classDeptId);
-    if (classDept) {
-      const classItem = {
-        id: classDept.id,
-        name: classDept.name,
-        classDeptId: classDept.id,
-        gradeDeptId: null, // 班级作为根节点
-        count: students.length, // 班级学生人数
-        hasChildField: true,
-        isClass: true,
-        children: students.map((student) => ({
-          id: student.id,
-          name: student.name,
-          classDeptId: student.classDeptId,
-          gradeDeptId: classDeptId,
-          studentNo: student.studentNo,
-          userId: student.userId,
-          className: student.className,
-          hasChildField: false,
-        })),
-      };
+  classIds.forEach((classDeptId, i) => {
+    const classDept = classInfos[i];
+    const allStudents = classStudentsList[i] || [];
+    if (!classDept) return;
 
-      deptList.push(classItem);
-    }
-  }
+    const matchedSet = new Set(
+      (matchedByClass.get(classDeptId) || []).map((s) => s.id),
+    );
+
+    const classItem = {
+      id: classDept.id,
+      name: classDept.name,
+      classDeptId: classDept.id,
+      gradeDeptId: null, // 班级作为根节点
+      count: allStudents.length, // 班级学生总人数
+      hasChildField: true,
+      isClass: true,
+      children: allStudents.map((student: any) => ({
+        id: student.id,
+        name: student.name,
+        classDeptId: student.id || student.userId, // 保证行主键唯一
+        gradeDeptId: classDeptId as number,
+        studentNo: student.studentNo,
+        userId: student.userId,
+        className: student.className,
+        hasChildField: false,
+        isClass: false,
+        matched: matchedSet.has(student.id), // 仅用于前端高亮/过滤，不参与选择聚合
+      })),
+    };
+
+    deptList.push(classItem);
+  });
 
   return deptList;
 }

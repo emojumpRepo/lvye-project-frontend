@@ -51,7 +51,9 @@ const toggleTooltip = (dimensionName: string, visible: boolean) => {
 };
 
 function handleBack() {
-  router.back();
+  router.replace({
+    path: '/home',
+  });
 }
 
 // 获取测评结果数据
