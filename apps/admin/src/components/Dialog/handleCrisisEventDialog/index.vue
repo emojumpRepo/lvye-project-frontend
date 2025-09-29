@@ -6,7 +6,7 @@ import { computed, ref } from 'vue';
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Spin as ASpin, message } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
 
 import {
   getCrisisEventDetail,
@@ -23,7 +23,6 @@ import StepEventCard from './components/StepEventCard.vue';
 const crisisEventDetail = ref<CrisisEvent | null>(null);
 const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
 const crisisEventTitle = ref('');
-const loading = ref(true);
 
 // 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
@@ -31,6 +30,7 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   fullscreen: true,
   closable: false,
   footer: false,
+  loading: true,
   contentClass: '!bg-[#F7F8FB] box-border py-10 flex-center',
   class: 'h-full overflow-hidden',
   destroyOnClose: true,
@@ -40,7 +40,7 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
     crisisEventTitle.value = data.title;
     await loadCrisisEventDetail(data.id);
     await loadCrisisEventProcessHistory(data.id);
-    loading.value = false;
+    handleCrisisEventModalApi.setState({ loading: false });
   },
 });
 
@@ -101,6 +101,14 @@ const crisisEventHandlingSteps = computed(() => {
     },
   ];
 });
+
+/**
+ * 设置加载状态
+ * @param loading 加载状态
+ */
+const setLoading = (loading: boolean) => {
+  handleCrisisEventModalApi.setState({ loading });
+};
 
 /**
  * 获取危机事件详情
@@ -180,156 +188,145 @@ function handleClose() {
     </template>
 
     <div class="h-full w-[1400px]">
-      <ASpin :spinning="loading" class="flex-center h-full w-full">
-        <div class="flex-center h-full w-full gap-8 overflow-hidden">
-          <!-- 步骤条 -->
-          <div class="h-full">
-            <CommonDialogSteps
-              :current-step="currentStep"
-              :steps="crisisEventHandlingSteps"
-              title-color="#04dc70"
-              type="tag"
-            >
-              <template #event="{ index }">
-                <!-- step1: 事件上报 -->
-                <template v-if="index === 1">
-                  <div class="my-2">
+      <div class="flex-center h-full w-full gap-8 overflow-hidden">
+        <!-- 步骤条 -->
+        <div class="h-full">
+          <CommonDialogSteps
+            :current-step="currentStep"
+            :steps="crisisEventHandlingSteps"
+            title-color="#04dc70"
+            type="tag"
+          >
+            <template #event="{ index }">
+              <!-- step1: 事件上报 -->
+              <template v-if="index === 1">
+                <div class="my-2">
+                  <StepEventCard
+                    v-if="
+                      currentStep >= 2 &&
+                      crisisEventDetail?.reporterName &&
+                      crisisEventDetail?.reportedAt
+                    "
+                    :name="crisisEventDetail?.reporterName"
+                    :time="crisisEventDetail?.reportedAt"
+                  />
+                </div>
+              </template>
+
+              <!-- step2: 分配负责人 -->
+              <template v-if="index === 2">
+                <div class="my-2 flex flex-col">
+                  <div
+                    v-if="
+                      currentStep >= 3 &&
+                      crisisEventDetail?.handlerName &&
+                      crisisEventDetail?.updateTime
+                    "
+                    class="flex w-full gap-1"
+                  >
                     <StepEventCard
-                      v-if="
-                        currentStep >= 2 &&
-                        crisisEventDetail?.reporterName &&
-                        crisisEventDetail?.reportedAt
-                      "
-                      :name="crisisEventDetail?.reporterName"
-                      :time="crisisEventDetail?.reportedAt"
+                      :name="crisisEventDetail?.handlerName"
+                      :time="crisisEventDetail?.updateTime"
+                    />
+                    <IconifyIcon
+                      icon="material-symbols-light:refresh-rounded"
+                      color="#1966FF"
+                      class="size-5 self-end"
+                      @click="handleQuickAssign('update')"
                     />
                   </div>
-                </template>
-
-                <!-- step2: 分配负责人 -->
-                <template v-if="index === 2">
-                  <div class="my-2 flex flex-col">
-                    <div
-                      v-if="
-                        currentStep >= 3 &&
-                        crisisEventDetail?.handlerName &&
-                        crisisEventDetail?.updateTime
-                      "
-                      class="flex w-full gap-1"
-                    >
-                      <StepEventCard
-                        :name="crisisEventDetail?.handlerName"
-                        :time="crisisEventDetail?.updateTime"
-                      />
-                      <IconifyIcon
-                        icon="material-symbols-light:refresh-rounded"
-                        color="#1966FF"
-                        class="size-5 self-end"
-                        @click="handleQuickAssign('update')"
-                      />
-                    </div>
-                    <button
-                      v-if="currentStep === 2"
-                      class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                      @click="handleQuickAssign('assign')"
-                    >
-                      <span class="whitespace-nowrap">快速分配</span>
-                    </button>
-                  </div>
-                </template>
-
-                <!-- step3: 选择处理方式 -->
-                <template v-if="index === 3">
-                  <div class="my-2 flex w-full flex-col">
-                    <div v-if="currentStep >= 4" class="flex w-full gap-1">
-                      <StepEventCard name="心理测评师" :time="1757562878000" />
-                      <IconifyIcon
-                        icon="material-symbols-light:refresh-rounded"
-                        color="#1966FF"
-                        class="size-5 self-end"
-                      />
-                    </div>
-                    <button
-                      v-if="currentStep === 3"
-                      class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                      @click="handleSelectHandleMethod()"
-                    >
-                      <span class="whitespace-nowrap">开始选择</span>
-                    </button>
-                  </div>
-                </template>
-
-                <!-- step4: 执行处理 -->
-                <template v-if="index === 4">
-                  <div
-                    v-if="currentStep >= 5"
-                    class="my-2 flex w-full flex-col"
+                  <button
+                    v-if="currentStep === 2"
+                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
+                    @click="handleQuickAssign('assign')"
                   >
-                    <div class="flex w-full gap-1">
-                      <StepEventCard name="心理测评师" :time="1757562878000" />
-                      <IconifyIcon
-                        icon="material-symbols-light:refresh-rounded"
-                        color="#1966FF"
-                        class="size-5 self-end"
-                      />
-                    </div>
-                    <!-- 执行处理按钮可以在这里添加 -->
-                  </div>
-                </template>
-
-                <!-- step5: 评估 -->
-                <template v-if="index === 5">
-                  <div
-                    v-if="currentStep >= 6"
-                    class="my-2 flex w-full flex-col"
-                  >
-                    <div class="flex w-full gap-1">
-                      <StepEventCard name="评估师" :time="1757562878000" />
-                      <IconifyIcon
-                        icon="material-symbols-light:refresh-rounded"
-                        color="#1966FF"
-                        class="size-5 self-end"
-                      />
-                    </div>
-                    <!-- 评估按钮可以在这里添加 -->
-                  </div>
-                </template>
-
-                <!-- step6: 流程完成 -->
-                <template v-if="index === 6">
-                  <div
-                    v-if="currentStep >= 7"
-                    class="my-2 flex w-full flex-col"
-                  >
-                    <div class="flex w-full gap-1">
-                      <StepEventCard name="系统" :time="1757562878000" />
-                    </div>
-                    <!-- 完成状态显示 -->
-                  </div>
-                </template>
+                    <span class="whitespace-nowrap">快速分配</span>
+                  </button>
+                </div>
               </template>
-            </CommonDialogSteps>
-          </div>
 
-          <!-- 事件详情 -->
-          <div class="h-full flex-1">
-            <div class="flex h-full flex-col rounded-xl bg-white">
-              <div class="box-border flex-1 overflow-hidden px-10 py-8">
-                <EventReporting
-                  v-if="crisisEventDetail"
-                  :crisis-event-detail="crisisEventDetail"
-                  :crisis-event-process-history="crisisEventProcessHistory"
-                  v-model:loading="loading"
-                  @load-crisis-event-detail="loadCrisisEventDetail"
-                  @load-crisis-event-process-history="
-                    loadCrisisEventProcessHistory
-                  "
-                />
-              </div>
+              <!-- step3: 选择处理方式 -->
+              <template v-if="index === 3">
+                <div class="my-2 flex w-full flex-col">
+                  <div v-if="currentStep >= 4" class="flex w-full gap-1">
+                    <StepEventCard name="心理测评师" :time="1757562878000" />
+                    <IconifyIcon
+                      icon="material-symbols-light:refresh-rounded"
+                      color="#1966FF"
+                      class="size-5 self-end"
+                    />
+                  </div>
+                  <button
+                    v-if="currentStep === 3"
+                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
+                    @click="handleSelectHandleMethod()"
+                  >
+                    <span class="whitespace-nowrap">开始选择</span>
+                  </button>
+                </div>
+              </template>
+
+              <!-- step4: 执行处理 -->
+              <template v-if="index === 4">
+                <div v-if="currentStep >= 5" class="my-2 flex w-full flex-col">
+                  <div class="flex w-full gap-1">
+                    <StepEventCard name="心理测评师" :time="1757562878000" />
+                    <IconifyIcon
+                      icon="material-symbols-light:refresh-rounded"
+                      color="#1966FF"
+                      class="size-5 self-end"
+                    />
+                  </div>
+                  <!-- 执行处理按钮可以在这里添加 -->
+                </div>
+              </template>
+
+              <!-- step5: 评估 -->
+              <template v-if="index === 5">
+                <div v-if="currentStep >= 6" class="my-2 flex w-full flex-col">
+                  <div class="flex w-full gap-1">
+                    <StepEventCard name="评估师" :time="1757562878000" />
+                    <IconifyIcon
+                      icon="material-symbols-light:refresh-rounded"
+                      color="#1966FF"
+                      class="size-5 self-end"
+                    />
+                  </div>
+                  <!-- 评估按钮可以在这里添加 -->
+                </div>
+              </template>
+
+              <!-- step6: 流程完成 -->
+              <template v-if="index === 6">
+                <div v-if="currentStep >= 7" class="my-2 flex w-full flex-col">
+                  <div class="flex w-full gap-1">
+                    <StepEventCard name="系统" :time="1757562878000" />
+                  </div>
+                  <!-- 完成状态显示 -->
+                </div>
+              </template>
+            </template>
+          </CommonDialogSteps>
+        </div>
+
+        <!-- 事件详情 -->
+        <div class="h-full flex-1">
+          <div class="flex h-full flex-col rounded-xl bg-white">
+            <div class="box-border flex-1 overflow-hidden px-10 py-8">
+              <EventReporting
+                v-if="crisisEventDetail"
+                :crisis-event-detail="crisisEventDetail"
+                :crisis-event-process-history="crisisEventProcessHistory"
+                @set-loading="setLoading"
+                @load-crisis-event-detail="loadCrisisEventDetail"
+                @load-crisis-event-process-history="
+                  loadCrisisEventProcessHistory
+                "
+              />
             </div>
           </div>
         </div>
-      </ASpin>
+      </div>
     </div>
 
     <EditEventRecordModal

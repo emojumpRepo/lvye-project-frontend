@@ -49,13 +49,13 @@ const rules: Record<string, Rule[]> = {
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
+  loading: true,
   async onOpenChange(isOpen) {
     if (!isOpen) return;
-    editEventRecordApi.lock();
     const data = editEventRecordApi.getData() as Params;
     params.value = data;
     await loadHandleUserList();
-    editEventRecordApi.unlock();
+    editEventRecordApi.setState({ loading: false });
   },
   async onConfirm() {
     if (!editForm.value.handleUserId) return message.error('未选择负责人');

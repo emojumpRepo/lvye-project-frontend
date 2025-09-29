@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'edit', title: string): void;
+  (e: 'edit', record: CrisisEventRecord): void;
 }>();
 
 const isHover = ref(false);
@@ -48,12 +48,13 @@ const recordContent = computed(() => {
         </span>
       </div>
       <IconifyIcon
+        v-if="eventProcessingRecord.action !== 'ASSIGN_HANDLER'"
         icon="mynaui:edit"
         :color="isHover ? '#1966FF' : '#666666'"
         class="size-5 cursor-pointer"
         @mouseenter="isHover = true"
         @mouseleave="isHover = false"
-        @click="emits('edit', eventProcessingRecord.action ?? '编辑记录')"
+        @click="emits('edit', eventProcessingRecord)"
       />
     </div>
 

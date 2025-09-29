@@ -65,3 +65,19 @@ export function updateHandler({
     { newHandlerUserId, reason },
   );
 }
+
+/** 选择处理方式 */
+export function selectHandleMethod({
+  id,
+  processMethod,
+  processReason,
+}: {
+  id: number;
+  processMethod: string;
+  processReason: string;
+}) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${id}/process`,
+    { processMethod, processReason },
+  );
+}

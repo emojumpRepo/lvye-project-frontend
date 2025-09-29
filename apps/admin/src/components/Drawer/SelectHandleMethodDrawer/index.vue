@@ -7,6 +7,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 import { Textarea as ATextarea, message } from 'ant-design-vue';
 
+import { selectHandleMethod } from '#/api/psychology/risk';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
@@ -64,8 +65,20 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
         return;
       }
       // TODO 选择处理方式接口
-      if (currentMethodKey.value === 1) {
-        psychologicalConsultDialogOpen.value = true;
+      try {
+        const response = await selectHandleMethod({
+          id: crisisEventDetail.value?.id,
+          processMethod: currentMethodKey.value,
+          processReason: reason.value,
+        });
+        if (response) {
+          message.success('选择处理方式成功');
+        } else {
+          message.error('选择处理方式失败');
+        }
+      } catch (error) {
+        console.error('选择处理方式失败', error);
+        message.error('选择处理方式失败');
       }
 
       selectedHandleMethodDrawerApi.close();

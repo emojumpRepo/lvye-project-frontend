@@ -24,9 +24,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'loadCrisisEventDetail', id: number): void;
   (e: 'loadCrisisEventProcessHistory', id: number): void;
+  (e: 'setLoading', loading: boolean): void;
 }>();
 
-const loading = defineModel<boolean>('loading');
 const eventDescription = ref('');
 const isEditingDescription = ref(false);
 
@@ -62,7 +62,7 @@ const eventBaseInfo = computed(() => {
 
   // 事件基本信息配置
   const baseInfoConfig = [
-    { label: '事件编号', key: 'id' },
+    { label: '事件编号', key: 'eventId' },
     { label: '优先级别', key: 'priority' },
     { label: '学生姓名', key: 'studentName' },
     { label: '所在班级', key: 'className' },
@@ -84,7 +84,7 @@ async function handleEditDescription() {
     return;
   }
 
-  loading.value = true;
+  emit('setLoading', true);
   isEditingDescription.value = false;
   if (!props.crisisEventDetail?.id) {
     message.error('事件ID不存在');
@@ -106,7 +106,7 @@ async function handleEditDescription() {
     console.error('更新描述失败', error);
     message.error('更新描述失败');
   } finally {
-    loading.value = false;
+    emit('setLoading', false);
   }
 }
 
@@ -127,11 +127,13 @@ watch(
   { immediate: true },
 );
 
-/** 快速分配 */
-function handleEditEventRecord(title: string) {
+/** 修改处理记录 */
+function handleEditEventRecord(record: CrisisEventRecord) {
   editEventRecordApi
     .setData({
-      title,
+      id: record.id,
+      title: getDictLabel('crisis_event_action', record.action ?? '编辑记录'),
+      type: record.action,
     })
     .open();
 }
@@ -146,7 +148,7 @@ function handleEditEventRecord(title: string) {
         <div
           class="flex flex-1 flex-col justify-between rounded-xl bg-[#F7F8FA] p-4"
         >
-          <div v-for="item in eventBaseInfo" :key="item.key">
+          <div v-for="item in eventBaseInfo" :key="item.key" class="text-sm">
             <span class="font-bold">{{ item.label }}：</span>
             <span>{{ item.value }}</span>
           </div>
