@@ -34,7 +34,6 @@ export interface AssessmentScenarioSlot {
 }
 
 export interface AssessmentScenarioSlotVO extends AssessmentScenarioSlot {
-  questionnaire?: QuestionnaireVO; // 保留向后兼容
   questionnaires?: QuestionnaireVO[]; // 新的问卷数组字段
 }
 
