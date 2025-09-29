@@ -210,7 +210,7 @@ function isSlotCompleted(slot: any) {
               class="report-text"
               :class="{ disabled: !hasReport || isGeneratingAfterCompleted }"
             >
-              <span v-if="!isGeneratingAfterCompleted">汇总报告</span>
+              <span v-if="!hasGeneratingQuestionnaire">汇总报告</span>
               <div v-else class="flex items-center gap-2">
                 <span>结果生成中</span>
               </div>

@@ -43,6 +43,13 @@ export const useGlobalPollerStore = defineStore('globalPoller', () => {
     isRunning.value = false;
   }
 
+  // 供 Pinia 调用的重置方法
+  function $reset() {
+    stop();
+    tasks.value = [];
+    intervalMs.value = 10_000;
+  }
+
   return {
     // state
     intervalMs,
@@ -55,6 +62,7 @@ export const useGlobalPollerStore = defineStore('globalPoller', () => {
     clearTasks,
     start,
     stop,
+    $reset,
     // 手动触发
     async tick() {
       const current = [...tasks.value];
