@@ -75,6 +75,7 @@ export interface CrisisEvent {
   status: number;
   handlerUserId: number;
   handlerName: string;
+  handleAt: number;
   sourceType: number;
   reporterUserId: number;
   reporterName: string;

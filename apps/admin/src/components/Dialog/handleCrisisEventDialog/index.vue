@@ -16,13 +16,16 @@ import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
 import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import SelectHandleMethodDrawer from '#/components/Drawer/SelectHandleMethodDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
 
+import PsychologicalConsultDialog from '../PsychologicalConsultDialog/index.vue';
 import EventReporting from './components/EventReporting.vue';
 import StepEventCard from './components/StepEventCard.vue';
 
 const crisisEventDetail = ref<CrisisEvent | null>(null);
 const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
 const crisisEventTitle = ref('');
+const psychologicalAssessmentModalOpen = ref(false);
 
 // 危机事件处理弹窗
 const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
@@ -55,6 +58,13 @@ const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
   connectedComponent: SelectHandleMethodDrawer,
 });
 
+// // 评估弹窗
+// const [PsychologicalAssessmentModal, psychologicalAssessmentModalApi] =
+//   useVbenModal({
+//     connectedComponent: PsychologicalConsultDialog,
+//     destroyOnClose: true,
+//   });
+
 const currentStep = ref(1); // 当前步骤
 
 // 步骤条
@@ -83,8 +93,8 @@ const crisisEventHandlingSteps = computed(() => {
     },
     {
       label: '执行处理',
-      description: status >= 3 ? '处理中' : '等待中',
-      done: status >= 4,
+      description: status >= 4 ? '已处理' : '待处理',
+      done: status >= 5,
       key: 4,
     },
     {
@@ -160,13 +170,19 @@ function handleSelectHandleMethod() {
   }).open();
 }
 
+/** 开始处理 */
+function startProcess() {
+  // TODO: 开始处理
+  psychologicalAssessmentModalOpen.value = true;
+}
+
 /** 关闭弹窗 */
 function handleClose() {
   handleCrisisEventModalApi.close();
 }
 
 /**
- * 重新加载危机事件
+ * 重新加载危机事件数据
  * @param id 事件id
  */
 async function reloadCrisisEvent(id: number) {
@@ -246,41 +262,59 @@ async function reloadCrisisEvent(id: number) {
                       @click="handleQuickAssign('update')"
                     />
                   </div>
-                  <button
+
+                  <LyButton
                     v-if="currentStep === 2"
-                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                    @click="handleQuickAssign('assign')"
+                    type="primary"
+                    ghost
+                    size="small"
+                    @click="handleQuickAssign"
                   >
-                    <span class="whitespace-nowrap">快速分配</span>
-                  </button>
+                    快速分配
+                  </LyButton>
                 </div>
               </template>
 
               <!-- step3: 选择处理方式 -->
               <template v-if="index === 3">
                 <div class="my-2 flex w-full flex-col">
-                  <div v-if="currentStep >= 4" class="flex w-full gap-1">
-                    <StepEventCard name="心理测评师" :time="1757562878000" />
-                    <IconifyIcon
+                  <div
+                    v-if="currentStep >= 4"
+                    class="flex w-full flex-col gap-2"
+                  >
+                    <div class="flex-none text-center">
+                      <LyTag
+                        tag-category-key="intervention_process_method"
+                        :dict-value="crisisEventDetail?.processMethod"
+                      />
+                    </div>
+                    <StepEventCard
+                      v-if="crisisEventDetail"
+                      :name="crisisEventDetail.handlerName"
+                      :time="crisisEventDetail.handleAt"
+                    />
+                    <!-- <IconifyIcon
                       icon="material-symbols-light:refresh-rounded"
                       color="#1966FF"
                       class="size-5 self-end"
-                    />
+                    /> -->
                   </div>
-                  <button
+                  <LyButton
                     v-if="currentStep === 3"
-                    class="solid rounded-lg border border-[#1966FF] px-4 py-2 text-sm text-[#1966FF] hover:bg-[#1966FF]/10"
-                    @click="handleSelectHandleMethod()"
+                    type="primary"
+                    ghost
+                    size="small"
+                    @click="handleSelectHandleMethod"
                   >
-                    <span class="whitespace-nowrap">开始选择</span>
-                  </button>
+                    开始选择
+                  </LyButton>
                 </div>
               </template>
 
               <!-- step4: 执行处理 -->
               <template v-if="index === 4">
-                <div v-if="currentStep >= 5" class="my-2 flex w-full flex-col">
-                  <div class="flex w-full gap-1">
+                <div class="my-2 flex w-full flex-col">
+                  <div v-if="currentStep >= 5" class="flex w-full gap-1">
                     <StepEventCard name="心理测评师" :time="1757562878000" />
                     <IconifyIcon
                       icon="material-symbols-light:refresh-rounded"
@@ -289,6 +323,14 @@ async function reloadCrisisEvent(id: number) {
                     />
                   </div>
                   <!-- 执行处理按钮可以在这里添加 -->
+                  <LyButton
+                    type="primary"
+                    ghost
+                    size="small"
+                    @click="startProcess"
+                  >
+                    开始处理
+                  </LyButton>
                 </div>
               </template>
 
@@ -341,6 +383,9 @@ async function reloadCrisisEvent(id: number) {
     <HandleMethodDrawer
       @set-loading="setLoading"
       @reload-crisis-event="reloadCrisisEvent"
+    />
+    <PsychologicalConsultDialog
+      v-model:open="psychologicalAssessmentModalOpen"
     />
   </HandleCrisisEventModal>
 </template>

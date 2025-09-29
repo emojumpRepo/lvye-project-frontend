@@ -20,7 +20,11 @@ const emits = defineEmits<{
 const isHover = ref(false);
 
 const recordContent = computed(() => {
-  if (props.eventProcessingRecord.action === 'REASSIGN_HANDLER') {
+  if (
+    ['CHOOSE_PROCESS', 'REASSIGN_HANDLER'].includes(
+      props.eventProcessingRecord.action ?? '',
+    )
+  ) {
     return `${props.eventProcessingRecord.content}，原因：${props.eventProcessingRecord.reason}`;
   }
   if (props.eventProcessingRecord.reason) {
