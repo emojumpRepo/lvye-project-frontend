@@ -69,7 +69,7 @@ async function getAssessmentResultData() {
       }
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '网络游戏使用',
+          (item) => item.dimensionName === '网络游戏成瘾风险',
         )
       ) {
         onlineGameUse.value = item;
