@@ -13,7 +13,6 @@ import { useAuthStore } from '#/store';
 import BaseInfo from './modules/base-info.vue';
 import ProfileUser from './modules/profile-user.vue';
 import ResetPwd from './modules/reset-pwd.vue';
-import UserSocial from './modules/user-social.vue';
 
 const authStore = useAuthStore();
 const activeName = ref('basicInfo');
@@ -53,9 +52,6 @@ onMounted(loadProfile);
           </Tabs.TabPane>
           <Tabs.TabPane key="resetPwd" tab="密码设置">
             <ResetPwd />
-          </Tabs.TabPane>
-          <Tabs.TabPane key="userSocial" tab="社交绑定" force-render>
-            <UserSocial @update:active-name="activeName = $event" />
           </Tabs.TabPane>
           <!-- TODO @芋艿：在线设备 -->
         </Tabs>
