@@ -94,10 +94,10 @@ function toggleCard(card: UICard) {
       selectedScenarioId.value = idNum;
       const scenario = scenarioList.value.find((s) => s.id === idNum) as any;
       if (scenario && Array.isArray(scenario.slots)) {
-        const questionnaires = scenario.slots
-          .map((slot: any) => slot?.questionnaire)
-          .filter((q: any) => !!q && typeof q.id === 'number');
-        selectedList.value = questionnaires as any;
+        const allQuestionnaires = scenario.slots.flatMap((slot: any) =>
+          extractQuestionnairesFromSlot(slot),
+        );
+        selectedList.value = allQuestionnaires;
       } else {
         selectedList.value = [];
       }
@@ -141,7 +141,6 @@ async function getAssessmentList() {
 async function getScenarios() {
   try {
     const list = await getAssessmentScenarioList();
-    console.log(list);
     scenarioList.value = list
       .filter((i) => typeof i.id === 'number')
       .map((i) => ({
@@ -152,7 +151,6 @@ async function getScenarios() {
         description: i.description,
         meta: JSON.parse(i.metadataJson as string) as any,
       }));
-    console.log('scenarioList.value', scenarioList.value);
   } catch (error) {
     console.error(error);
   }
@@ -171,10 +169,10 @@ async function handleViewScenarioQuestionnaires(scenarioId: number) {
     const scenario = scenarioList.value.find((s) => s.id === scenarioId);
 
     if (scenario && (scenario as any).slots) {
-      const questionnaires = (scenario as any).slots
-        .map((slot: any) => slot?.questionnaire)
-        .filter((q: any) => !!q && typeof q.id === 'number');
-      scenarioQuestionnaires.value = questionnaires;
+      const allQuestionnaires = (scenario as any).slots.flatMap((slot: any) =>
+        extractQuestionnairesFromSlot(slot),
+      );
+      scenarioQuestionnaires.value = allQuestionnaires;
     } else {
       scenarioQuestionnaires.value = [];
     }
@@ -194,6 +192,26 @@ function closeScenarioPopover() {
   setTimeout(() => {
     scenarioQuestionnaires.value = [];
   }, 200);
+}
+
+// 兼容处理槽位中的问卷数据（支持单个问卷和问卷数组）
+function extractQuestionnairesFromSlot(slot: any): QuestionnaireVO[] {
+  const questionnaires: QuestionnaireVO[] = [];
+
+  // 优先处理新格式：questionnaires 数组
+  if (Array.isArray(slot.questionnaires)) {
+    questionnaires.push(
+      ...slot.questionnaires.filter(
+        (q: any) => !!q && typeof q.id === 'number',
+      ),
+    );
+  }
+  // 兼容旧格式：单个 questionnaire 对象
+  else if (slot.questionnaire && typeof slot.questionnaire.id === 'number') {
+    questionnaires.push(slot.questionnaire);
+  }
+
+  return questionnaires;
 }
 
 onMounted(async () => {

@@ -24,7 +24,7 @@ import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { getDictLabel } from '#/utils/dict';
 
-import QuestionnaireConfigDialog from './components/QuestionnaireConfigDialog.vue';
+import DimensionConfigDialog from './components/QuestionnaireDimensionDialog.vue';
 import QuestionnaireSearch from './components/QuestionnaireSearch.vue';
 import { useQuestionGridColumns } from './data';
 
@@ -36,7 +36,6 @@ const loading = ref(false);
 const selectQuestionnaire = ref<QuestionnaireVO>();
 
 // 配置弹窗相关
-const configDialogVisible = ref(false);
 const selectedQuestionnaire = ref<null | QuestionnaireVO>(null);
 const searchRef = ref();
 
@@ -45,6 +44,12 @@ const [QuestionnaireDetailModal, questionnaireDetailModalApi] = useVbenModal({
   connectedComponent: QuestionnaireDetailDialog,
   destroyOnClose: true,
 });
+
+const [QuestionnaireDimensionDialog, questionnaireDimensionDialogApi] =
+  useVbenModal({
+    connectedComponent: DimensionConfigDialog,
+    destroyOnClose: true,
+  });
 
 // 处理加载状态
 function handleLoading(isLoading: boolean) {
@@ -149,7 +154,7 @@ async function onPause(row: QuestionnaireVO) {
 /** 配置问卷 */
 function onConfig(row: QuestionnaireVO) {
   selectedQuestionnaire.value = row;
-  configDialogVisible.value = true;
+  questionnaireDimensionDialogApi.setData({ questionnaire: row }).open();
 }
 
 /** 问卷详情 */
@@ -322,7 +327,7 @@ onMounted(() => {
               <Dropdown>
                 <template #overlay>
                   <Menu>
-                    <Menu.Item @click="onConfig(row)">评分配置</Menu.Item>
+                    <Menu.Item @click="onConfig(row)">维度配置</Menu.Item>
                     <Menu.Item @click="onDelete(row)"> 删除 </Menu.Item>
                   </Menu>
                 </template>
@@ -339,12 +344,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 问卷配置弹窗 -->
-    <QuestionnaireConfigDialog
-      v-model:visible="configDialogVisible"
-      :questionnaire="selectedQuestionnaire"
-      @refresh="onRefresh"
-    />
+    <!-- 维度配置弹窗 -->
+    <QuestionnaireDimensionDialog @refresh="onRefresh" />
 
     <!-- 问卷详情弹窗 -->
     <QuestionnaireDetailModal @refresh="onRefresh" />
