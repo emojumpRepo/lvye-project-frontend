@@ -28,13 +28,18 @@ const {
   selectSlot,
   startEvaluation,
 } = evaluationStore;
-const { loading, currentTaskNo, scenarioData, hasGeneratingQuestionnaire } =
-  storeToRefs(evaluationStore);
+const {
+  loading,
+  currentTaskNo,
+  scenarioData,
+  hasGeneratingQuestionnaire,
+  isAllQuestionnairesCompleted,
+} = storeToRefs(evaluationStore);
 const hasReport = ref(false);
 
-// 仅在“已完成”前提下，才判定结果生成中的状态
-const isGeneratingAfterCompleted = computed(
-  () => hasReport.value && hasGeneratingQuestionnaire.value,
+// 仅在所有问卷有问卷结果记录的前提下，才判定结果生成中的状态
+const hasGeneratingAfterCompleted = computed(
+  () => isAllQuestionnairesCompleted.value && hasGeneratingQuestionnaire.value,
 );
 
 // 方法
@@ -96,12 +101,12 @@ async function getParticipantStatus() {
 
 function showSummaryReport() {
   // 禁用状态时阻止跳转
-  if (!hasReport.value) {
+  if (!isAllQuestionnairesCompleted.value) {
     message.warning('完成所有场景后才可以查看汇总报告');
     return;
   }
 
-  if (isGeneratingAfterCompleted.value) {
+  if (hasGeneratingAfterCompleted.value) {
     message.warning('结果生成中，请稍后再试');
     return;
   }
@@ -112,7 +117,7 @@ function showSummaryReport() {
 }
 
 watch(
-  () => isGeneratingAfterCompleted.value,
+  () => hasGeneratingQuestionnaire.value,
   (val) => {
     if (val) {
       globalPoller.setTasks([
@@ -196,8 +201,8 @@ function isSlotCompleted(slot: any) {
             class="summary-report"
             @click="showSummaryReport"
             :class="{
-              disabled: !hasReport,
-              generating: isGeneratingAfterCompleted,
+              disabled: !isAllQuestionnairesCompleted,
+              generating: hasGeneratingAfterCompleted,
             }"
           >
             <img
@@ -208,7 +213,10 @@ function isSlotCompleted(slot: any) {
             />
             <div
               class="report-text"
-              :class="{ disabled: !hasReport || isGeneratingAfterCompleted }"
+              :class="{
+                disabled:
+                  !isAllQuestionnairesCompleted || hasGeneratingAfterCompleted,
+              }"
             >
               <span v-if="!hasGeneratingQuestionnaire">汇总报告</span>
               <div v-else class="flex items-center gap-2">
@@ -548,10 +556,6 @@ function isSlotCompleted(slot: any) {
         border: 1px solid rgb(255 255 255 / 80%);
         border-radius: 9999px;
         box-shadow: 0 4px 10px rgb(76 175 80 / 35%);
-      }
-
-      &.generating {
-        pointer-events: none;
       }
     }
 
