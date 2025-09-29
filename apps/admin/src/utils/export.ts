@@ -200,18 +200,18 @@ export function exportAssessmentParticipantsToExcel(
 
     const formattedData = data.map((item) => {
       return {
-        学生姓名: item.name || '---',
-        学号: item.studentNo || '---',
-        班级: item.className || '---',
+        测评任务编号: item.taskNo || '--',
+        学生姓名: item.name || '--',
+        学号: item.studentNo || '--',
+        班级: item.className || '--',
         完成状态: item.status === 1 ? '已完成' : '未完成',
-        分数: item.score ?? '--',
+        问卷得分: item.score || '--',
         风险等级: item.riskLevel
           ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
           : '--',
         完成时间: item.finishTime
           ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
           : '--',
-        任务编号: item.taskNo || '---',
       } as Record<string, any>;
     });
 
@@ -220,14 +220,14 @@ export function exportAssessmentParticipantsToExcel(
 
     // 列宽设置
     worksheet['!cols'] = [
-      { wch: 12 }, // 学生姓名
+      { wch: 30 }, // 任务编号
+      { wch: 15 }, // 学生姓名
       { wch: 16 }, // 学号
       { wch: 20 }, // 班级
-      { wch: 10 }, // 完成状态
-      { wch: 10 }, // 分数
-      { wch: 12 }, // 风险等级
+      { wch: 15 }, // 完成状态
+      { wch: 10 }, // 问卷得分
+      { wch: 15 }, // 风险等级
       { wch: 25 }, // 完成时间
-      { wch: 30 }, // 任务编号
     ];
 
     XLSX.utils.book_append_sheet(workbook, worksheet, '问卷结果');

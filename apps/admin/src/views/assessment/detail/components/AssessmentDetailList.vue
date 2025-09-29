@@ -268,12 +268,14 @@ async function handleExport() {
         </span>
       </template>
       <template #score="{ row }">
-        <span v-if="!row.score">--</span>
-        <span v-else class="text-primary font-bold">{{ row.score }}</span>
+        <span v-if="activeTabKey && row.score" class="text-primary font-bold">
+          {{ row.score }}
+        </span>
+        <span v-else>--</span>
       </template>
       <template #riskLevel="{ row }">
         <LyTag
-          v-if="row.riskLevel"
+          v-if="!activeTabKey && row.riskLevel"
           tag-category-key="questionnaire_result_risk_level"
           :dict-value="row.riskLevel"
         />
