@@ -62,21 +62,21 @@ async function getAssessmentResultData() {
     res.forEach((item) => {
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '行为自我评价',
+          (item) => item.dimensionCode === 'behavior_self_evaluation',
         )
       ) {
         mentalHealthStatus.value = item;
       }
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '网络游戏成瘾风险',
+          (item) => item.dimensionCode === 'game_addiction_risk',
         )
       ) {
         onlineGameUse.value = item;
       }
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '睡眠质量/失眠症状严重程度',
+          (item) => item.dimensionCode === 'sleep_quality',
         )
       ) {
         sleepQuality.value = item;

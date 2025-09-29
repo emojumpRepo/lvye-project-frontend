@@ -21,6 +21,7 @@ export interface AssessmentResultItem {
   isAbnormal: number;
   score: number;
   studentComment: string;
+  dimensionCode: string;
 }
 
 // ==================== 测评任务管理 ====================
