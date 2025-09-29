@@ -15,8 +15,8 @@ type ButtonType =
   | 'text'
   | 'warning';
 
-type ButtonSize = 'large' | 'middle' | 'small' | 'mini';
-type ButtonFontSize = 'default' | 'large' | 'small' | 'mini';
+type ButtonSize = 'large' | 'middle' | 'mini' | 'small';
+type ButtonFontSize = 'default' | 'large' | 'mini' | 'small';
 
 const props = withDefaults(
   defineProps<{
@@ -124,14 +124,14 @@ const SIZE_CONFIG = {
     borderRadius: '6px',
   },
   middle: {
-    height: '36px', 
+    height: '36px',
     padding: '8px 16px',
     fontSize: '14px',
     borderRadius: '6px',
   },
   small: {
     height: '32px',
-    padding: '5px 12px', 
+    padding: '5px 12px',
     fontSize: '14px',
     borderRadius: '6px',
   },
@@ -190,11 +190,11 @@ const buttonFontSize = computed(() => {
 <style scoped>
 /* 按钮尺寸样式 - 参考主流UI库规范 */
 .ly-btn.ant-btn {
-  font-weight: 400;
-  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-weight: 400;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 /* Large 尺寸 - 40px 高度 */
@@ -255,23 +255,23 @@ const buttonFontSize = computed(() => {
 
 /* Round 形状调整 */
 .ly-btn.ant-btn-round.ly-btn-size-large {
-  border-radius: 20px;
   padding: 6px 24px;
+  border-radius: 20px;
 }
 
 .ly-btn.ant-btn-round.ly-btn-size-middle {
-  border-radius: 18px;
   padding: 4px 20px;
+  border-radius: 18px;
 }
 
 .ly-btn.ant-btn-round.ly-btn-size-small {
-  border-radius: 16px;
   padding: 4px 16px;
+  border-radius: 16px;
 }
 
 .ly-btn.ant-btn-round.ly-btn-size-mini {
-  border-radius: 14px;
   padding: 2px 12px;
+  border-radius: 14px;
 }
 
 /* Circle 形状确保正圆 */

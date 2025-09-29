@@ -170,7 +170,7 @@ export function useScenarioGridSchema(): VxeTableGridOptions<AssessmentScenario>
     {
       field: 'actions',
       title: '操作',
-      width: '10%',
+      width: '15%',
       fixed: 'right',
       align: 'center',
       slots: { default: 'actions' },
