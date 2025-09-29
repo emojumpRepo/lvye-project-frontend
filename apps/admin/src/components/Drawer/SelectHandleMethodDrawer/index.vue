@@ -20,6 +20,7 @@ import CrisisQuestionnaireEvalute from '../../../static/icons/crisis/crisis_ques
 const reason = ref(''); // 处理原因
 const currentMethodKey = ref<number>(0); // 当前处理方式
 const psychologicalConsultDialogOpen = ref(false);
+const crisisEventId = ref<number>();
 
 // 处理方法
 const handleMethod = ref<CategoryCard[]>([
@@ -55,7 +56,17 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
   {
     class: 'w-[720px]',
     destroyOnClose: true,
+    onOpenChange: async () => {
+      const data = selectedHandleMethodDrawerApi.getData();
+      if (data.id) {
+        crisisEventId.value = data.id;
+      }
+    },
     onConfirm: async () => {
+      if (!crisisEventId.value) {
+        message.error('缺少事件ID');
+        return;
+      }
       if (reason.value.length < 10) {
         message.error('处理原因至少需要10个字符');
         return;
@@ -67,15 +78,15 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
       // TODO 选择处理方式接口
       try {
         const response = await selectHandleMethod({
-          id: crisisEventDetail.value?.id,
+          id: crisisEventId.value,
           processMethod: currentMethodKey.value,
           processReason: reason.value,
         });
-        if (response) {
-          message.success('选择处理方式成功');
-        } else {
+        if (!response) {
           message.error('选择处理方式失败');
+          return;
         }
+        message.success('选择处理方式成功');
       } catch (error) {
         console.error('选择处理方式失败', error);
         message.error('选择处理方式失败');

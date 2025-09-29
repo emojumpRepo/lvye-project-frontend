@@ -73,7 +73,7 @@ export function selectHandleMethod({
   processReason,
 }: {
   id: number;
-  processMethod: string;
+  processMethod: number;
   processReason: string;
 }) {
   return requestClient.put<boolean>(

@@ -22,8 +22,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'loadCrisisEventDetail', id: number): void;
-  (e: 'loadCrisisEventProcessHistory', id: number): void;
+  (e: 'reloadCrisisEvent', id: number): void;
   (e: 'setLoading', loading: boolean): void;
 }>();
 
@@ -96,9 +95,8 @@ async function handleEditDescription() {
       eventDescription.value,
     );
     if (result) {
+      emit('reloadCrisisEvent', props.crisisEventDetail.id);
       message.success('更新描述成功');
-      emit('loadCrisisEventDetail', props.crisisEventDetail.id);
-      emit('loadCrisisEventProcessHistory', props.crisisEventDetail.id);
     } else {
       message.error('更新描述失败');
     }

@@ -155,12 +155,23 @@ function handleQuickAssign(type: 'assign' | 'update') {
 
 /** 选择处理方式 */
 function handleSelectHandleMethod() {
-  HandleMethodDrawerApi.open();
+  HandleMethodDrawerApi.setData({
+    id: crisisEventDetail.value?.id,
+  }).open();
 }
 
 /** 关闭弹窗 */
 function handleClose() {
   handleCrisisEventModalApi.close();
+}
+
+/**
+ * 重新加载危机事件
+ * @param id 事件id
+ */
+async function reloadCrisisEvent(id: number) {
+  await loadCrisisEventDetail(id);
+  await loadCrisisEventProcessHistory(id);
 }
 </script>
 
@@ -318,10 +329,7 @@ function handleClose() {
                 :crisis-event-detail="crisisEventDetail"
                 :crisis-event-process-history="crisisEventProcessHistory"
                 @set-loading="setLoading"
-                @load-crisis-event-detail="loadCrisisEventDetail"
-                @load-crisis-event-process-history="
-                  loadCrisisEventProcessHistory
-                "
+                @reload-crisis-event="reloadCrisisEvent"
               />
             </div>
           </div>
@@ -329,11 +337,11 @@ function handleClose() {
       </div>
     </div>
 
-    <EditEventRecordModal
-      @load-crisis-event-detail="loadCrisisEventDetail"
-      @load-crisis-event-process-history="loadCrisisEventProcessHistory"
+    <EditEventRecordModal @reload-crisis-event="reloadCrisisEvent" />
+    <HandleMethodDrawer
+      @set-loading="setLoading"
+      @reload-crisis-event="reloadCrisisEvent"
     />
-    <HandleMethodDrawer />
   </HandleCrisisEventModal>
 </template>
 

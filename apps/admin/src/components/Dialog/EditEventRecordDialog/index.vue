@@ -30,8 +30,7 @@ interface Params {
 }
 
 const emits = defineEmits<{
-  (e: 'loadCrisisEventDetail', id: number): void;
-  (e: 'loadCrisisEventProcessHistory', id: number): void;
+  (e: 'reloadCrisisEvent', id: number): void;
 }>();
 
 const params = ref<Params>();
@@ -68,8 +67,7 @@ const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
         });
         if (!response) return message.error('分配负责人失败');
         if (params.value?.id) {
-          emits('loadCrisisEventDetail', params.value.id);
-          emits('loadCrisisEventProcessHistory', params.value.id);
+          emits('reloadCrisisEvent', params.value.id);
         }
         message.success('分配负责人成功');
         editEventRecordApi.close();
@@ -81,8 +79,7 @@ const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
         });
         if (!response) return message.error('更改负责人失败');
         if (params.value?.id) {
-          emits('loadCrisisEventDetail', params.value.id);
-          emits('loadCrisisEventProcessHistory', params.value.id);
+          emits('reloadCrisisEvent', params.value.id);
         }
         message.success('更改负责人成功');
         editEventRecordApi.close();
