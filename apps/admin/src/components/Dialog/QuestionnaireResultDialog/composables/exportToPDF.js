@@ -132,6 +132,10 @@ export async function exportQuestionnaireReportToPDF({
           bold: true,
           color: '#1966FF',
         },
+        answerSubheader: {
+          fontSize: 14,
+          bold: true,
+        },
         tableHeader: {
           bold: true,
           fontSize: 12,
@@ -272,7 +276,7 @@ function generateQuestionnaireReportContents(
       contents.push(
         {
           text: '作答记录',
-          style: 'subheader',
+          style: 'answerSubheader',
           margin: [0, 6, 0, 6],
         },
         ...generateAnswerSection(relatedAnswerItem),
