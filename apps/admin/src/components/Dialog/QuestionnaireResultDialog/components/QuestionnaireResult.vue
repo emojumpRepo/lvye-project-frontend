@@ -51,7 +51,7 @@ defineProps<{
     <!-- 评价内容 -->
     <div class="space-y-4 p-4">
       <!-- 学生评价 -->
-      <div class="rounded-lg bg-[#1966FF14] p-4">
+      <!-- <div class="rounded-lg bg-[#1966FF14] p-4">
         <div class="mb-3 flex items-center gap-2">
           <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
           <h4 class="text-sm font-semibold text-[#1966FF]">学生建议</h4>
@@ -59,7 +59,7 @@ defineProps<{
         <p class="text-sm leading-relaxed text-gray-700">
           {{ questionnaireResult?.studentComment }}
         </p>
-      </div>
+      </div> -->
 
       <!-- 教师评价 -->
       <div class="rounded-lg bg-[#FF9C0514] p-4">
