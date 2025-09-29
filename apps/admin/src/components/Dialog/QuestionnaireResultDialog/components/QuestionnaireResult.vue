@@ -41,7 +41,7 @@ defineProps<{
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
-          <span class="text-2xl font-bold text-[#14E77E]">
+          <span class="mb-1 text-2xl font-bold text-[#14E77E]">
             {{ questionnaireResult?.score }}
           </span>
         </div>

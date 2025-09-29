@@ -125,7 +125,7 @@ async function loadTaskData() {
         key: item.id?.toString() || '',
       }));
 
-      // 将包含"儿童期逆境与发育情况评估"的项前置
+      // 将包含"心理健康评估"的项前置
       const priorityIndex = questionnairesTabs.findIndex((item) =>
         item.label.includes('心理健康评估'),
       );
@@ -134,6 +134,18 @@ async function loadTaskData() {
         const [priorityItem] = questionnairesTabs.splice(priorityIndex, 1);
         if (priorityItem) {
           questionnairesTabs.unshift(priorityItem);
+        }
+      }
+
+      // 将包含"儿童期逆境与发育情况评估"的项后置
+      const lastIndex = questionnairesTabs.findIndex((item) =>
+        item.label.includes('儿童期逆境与发育情况评估'),
+      );
+
+      if (lastIndex !== -1) {
+        const [lastItem] = questionnairesTabs.splice(lastIndex, 1);
+        if (lastItem) {
+          questionnairesTabs.push(lastItem);
         }
       }
 
