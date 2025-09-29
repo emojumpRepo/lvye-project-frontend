@@ -225,7 +225,7 @@ export function exportAssessmentParticipantsToExcel(
       { wch: 16 }, // 学号
       { wch: 20 }, // 班级
       { wch: 15 }, // 完成状态
-      { wch: 10 }, // 问卷得分
+      { wch: 15 }, // 问卷得分
       { wch: 15 }, // 风险等级
       { wch: 25 }, // 完成时间
     ];
