@@ -70,14 +70,21 @@ function formatStudentDataForExport(
           break;
         }
         case 'graduationStatus': {
-          value = value
-            ? getDictLabel('student_graduation_status', value)
-            : '--';
+          value =
+            getDictLabel('student_graduation_status', String(value)) || '--';
+          break;
+        }
+        case 'guardianMobile': {
+          value || '--';
           break;
         }
         case 'homeAddress':
         case 'remark': {
           value = value || '--';
+          break;
+        }
+        case 'isGraduated': {
+          value = value === 1 ? '是' : '否';
           break;
         }
         case 'mobile': {
