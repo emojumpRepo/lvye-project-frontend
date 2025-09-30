@@ -364,7 +364,8 @@ function generateDimensionResults(questionnaireResults) {
       // 右侧：状态信息
       if (dimension.isAbnormal === 0 || dimension.isAbnormal === 1) {
         dimensionRow.push({
-          text: `状态：${dimension.isAbnormal === 1 ? '异常' : '正常'}`,
+          // text: `状态：${dimension.isAbnormal === 1 ? '异常' : '正常'}`,
+          text: '',
           style: 'dimensionStatus',
           alignment: 'right',
         });
