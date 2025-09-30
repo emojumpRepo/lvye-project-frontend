@@ -92,7 +92,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
   const progress = computed(() => {
     if (!taskDetailInfo.value?.questionnaires) return 0;
     const total = taskDetailInfo.value.questionnaires.length;
-    return completedQuestionnaires.value > 0
+    return completedQuestionnaires.value && completedQuestionnaires.value > 0
       ? (completedQuestionnaires.value / total) * 100
       : 0;
   });
@@ -108,9 +108,23 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
   // 计算已完成问卷数量
   const completedQuestionnaires = computed(() => {
+    if (hasScenario.value) {
+      return taskDetailInfo.value?.scenarioDetail?.slots?.reduce((acc, cur) => {
+        return (
+          acc + (cur.questionnaires?.filter((q) => q.completed).length || 0)
+        );
+      }, 0);
+    }
     if (!taskDetailInfo.value?.questionnaires) return 0;
     return taskDetailInfo.value.questionnaires.filter((q) => q.completed)
       .length;
+  });
+
+  const isAllQuestionnairesCompleted = computed(() => {
+    return (
+      completedQuestionnaires.value ===
+      taskDetailInfo.value?.questionnaireIds?.length
+    );
   });
 
   // 方法
@@ -405,6 +419,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     progress,
     totalDuration,
     completedQuestionnaires,
+    isAllQuestionnairesCompleted,
 
     // 方法
     loadTaskDetail,

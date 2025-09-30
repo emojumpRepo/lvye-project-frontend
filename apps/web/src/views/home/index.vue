@@ -45,14 +45,10 @@ function startTasksPolling() {
             const key = (task as any).taskNo as string;
             const updated = byTaskNo.get(key);
             if (updated) {
-              const isCompleted =
-                (task as any)?.participantStatus === 2 ||
-                (updated as any)?.participantStatus === 2;
               return {
                 ...(task as any),
                 ...(updated as any),
-                resultGenerating:
-                  isCompleted && (updated as any)?.resultGenerating === true,
+                resultGenerating: (updated as any)?.resultGenerating,
               } as any;
             }
             if ((task as any).resultGenerating === true && !byTaskNo.has(key)) {
@@ -71,7 +67,7 @@ function startTasksPolling() {
       }
     },
   ]);
-  globalPoller.start(undefined, 10_000);
+  globalPoller.start(undefined, 8000);
 }
 
 function stopTasksPolling() {
