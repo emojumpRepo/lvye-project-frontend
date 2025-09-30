@@ -131,12 +131,12 @@ const _rules = {
       const dt = dayjs(`${y}-${m}-${d}`);
       if (!dt.isValid()) return false;
 
-      // 校验年龄在6-30岁之间
+      // 校验年龄在6岁以上
       const now = dayjs();
       const age = now.diff(dt, 'year');
-      return age >= 6 && age <= 30;
+      return age >= 6;
     },
-    message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在6-30岁之间',
+    message: '出生日期需为YYYY-MM-DD且为有效日期，年龄需在6岁以上',
   },
   enrollmentYear: {
     required: true,

@@ -82,8 +82,10 @@ export function useGridFormSchema({
 }
 
 /** 列表的字段 */
-export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>['columns'] {
-  return [
+export function useGridColumns(
+  questionnaireId?: string,
+): VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>['columns'] {
+  const columns: any[] = [
     { type: 'checkbox', width: 40 },
     {
       field: 'name',
@@ -113,29 +115,31 @@ export function useGridColumns(): VxeTableGridOptions<PsychologyAssessmentApi.Pa
       slots: { default: 'status' },
     },
     {
-      field: 'score',
-      title: '得分',
-      minWidth: 120,
-      slots: { default: 'score' },
-    },
-    {
       field: 'finishTime',
       title: '完成时间',
       minWidth: 120,
       formatter: 'formatDateTime',
       slots: { default: 'finishTime' },
     },
-    {
+  ];
+
+  // 如果没有问卷ID，添加风险等级列
+  if (!questionnaireId) {
+    columns.push({
       field: 'riskLevel',
       title: '风险等级',
       minWidth: 120,
       slots: { default: 'riskLevel' },
-    },
-    {
-      title: '操作',
-      width: 160,
-      fixed: 'right',
-      slots: { default: 'actions' },
-    },
-  ];
+    });
+  }
+
+  // 添加操作列
+  columns.push({
+    title: '操作',
+    width: 160,
+    fixed: 'right',
+    slots: { default: 'actions' },
+  });
+
+  return columns;
 }

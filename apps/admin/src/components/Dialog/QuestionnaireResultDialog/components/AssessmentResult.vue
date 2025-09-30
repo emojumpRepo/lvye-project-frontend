@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AssessmentResultVO } from '@vben/types';
 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -22,19 +22,75 @@ const columns = [
   {
     title: '得分',
     dataIndex: 'score',
-    width: '20%',
+    width: '30%',
   },
-  {
-    title: '是否异常',
-    dataIndex: 'isAbnormal',
-    width: '20%',
-  },
+  // {
+  //   title: '是否异常',
+  //   dataIndex: 'isAbnormal',
+  //   width: '20%',
+  // },
   {
     title: '测评结果',
     dataIndex: 'level',
-    width: '20%',
+    width: '30%',
   },
 ];
+
+const riskLevelColorType = ref<Record<number, { bg: string; text: string }>>({
+  1: {
+    bg: '#04DC7E14',
+    text: '#04DC7E',
+  },
+  2: {
+    bg: '#1966FF14',
+    text: '#1966FF',
+  },
+  3: {
+    bg: '#FF9C0514',
+    text: '#FF9C05',
+  },
+  4: {
+    bg: '#FF083114',
+    text: '#FF0831',
+  },
+});
+
+/**
+ * 获取风险等级颜色
+ * @param param
+ */
+function getRiskLevelColor({
+  questionnaireName,
+  riskLevel,
+  isAbnormal,
+  type,
+}: {
+  isAbnormal: number;
+  questionnaireName: string;
+  riskLevel: number;
+  type: 'bg' | 'text';
+}): string {
+  const DEFAULT_COLOR = '#666666';
+
+  // 没有问卷名称时返回默认颜色
+  if (!questionnaireName) {
+    return DEFAULT_COLOR;
+  }
+
+  // 心理健康评估的特殊处理
+  if (questionnaireName.includes('心理健康评估')) {
+    const isNormal = isAbnormal === 0;
+    const colorMap = {
+      bg: isNormal ? '#14E77E' : '#FF0831',
+      text: isNormal ? '#14E77E' : '#FF0831',
+    };
+    return colorMap[type];
+  }
+
+  // 其他问卷的风险等级颜色处理
+  const colorConfig = riskLevelColorType.value[riskLevel];
+  return colorConfig?.[type] || DEFAULT_COLOR;
+}
 
 /**
  * 计算问卷结果
@@ -119,12 +175,12 @@ const questionnaireResults = computed(() => {
           :pagination="false"
         >
           <template #bodyCell="{ column, text, record }">
-            <template v-if="column.dataIndex === 'isAbnormal'">
+            <!-- <template v-if="column.dataIndex === 'isAbnormal'">
               <LyTag
                 :color-type="text === 0 ? 'success' : 'error'"
                 :tag-label="text === 0 ? '正常' : '异常'"
               />
-            </template>
+            </template> -->
 
             <template v-if="column.dataIndex === 'level'">
               <div class="flex items-center gap-2">
@@ -155,19 +211,25 @@ const questionnaireResults = computed(() => {
                 <div class="space-y-2">
                   <div
                     class="flex items-center gap-2 font-bold"
-                    :class="
-                      content.isAbnormal === 0
-                        ? 'text-[#04DC70]'
-                        : 'text-[#FF0831]'
-                    "
+                    :style="{
+                      color: getRiskLevelColor({
+                        questionnaireName: item.questionnaireName,
+                        riskLevel: content.riskLevel || 1,
+                        isAbnormal: content.isAbnormal,
+                        type: 'text',
+                      }),
+                    }"
                   >
                     <div
                       class="h-1 w-1 rounded-full"
-                      :class="
-                        content.isAbnormal === 0
-                          ? 'bg-[#04DC70]'
-                          : 'bg-[#FF0831]'
-                      "
+                      :style="{
+                        backgroundColor: getRiskLevelColor({
+                          questionnaireName: item.questionnaireName,
+                          riskLevel: content.riskLevel || 1,
+                          isAbnormal: content.isAbnormal,
+                          type: 'bg',
+                        }),
+                      }"
                     ></div>
                     {{ content.dimensionName }}
                   </div>

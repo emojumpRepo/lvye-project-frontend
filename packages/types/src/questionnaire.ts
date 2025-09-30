@@ -33,6 +33,7 @@ export interface QuestionnaireVO {
 export interface QuestionnaireResultDataVO {
   dimensionName?: string;
   isAbnormal?: number;
+  riskLevel?: number;
   score?: number;
   level?: string;
   studentComment?: string;

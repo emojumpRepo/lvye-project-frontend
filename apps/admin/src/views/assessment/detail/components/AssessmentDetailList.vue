@@ -74,7 +74,7 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: useGridColumns(props.questionnaireId),
     height: '400px',
     keepSource: true,
     pagerConfig: {
@@ -125,6 +125,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
 watch(
   () => [props.taskNo, props.questionnaireId],
   async ([newTaskNo, newQuestionnaireId]) => {
+    // 更新列配置
+    if (gridApi) {
+      gridApi.setGridOptions({
+        columns: useGridColumns(newQuestionnaireId),
+      });
+    }
+
     if (newTaskNo || newQuestionnaireId) {
       queryParams.value.taskNo = newTaskNo!;
       queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
