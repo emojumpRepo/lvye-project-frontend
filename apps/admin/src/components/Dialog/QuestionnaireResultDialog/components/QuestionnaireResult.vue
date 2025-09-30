@@ -1,9 +1,65 @@
 <script setup lang="ts">
 import type { QuestionnaireResultDataVO } from '@vben/types';
 
-defineProps<{
+import { ref } from 'vue';
+
+const props = defineProps<{
+  questionnaireName: string;
   questionnaireResult: QuestionnaireResultDataVO;
 }>();
+
+const riskLevelColorType = ref<Record<number, { bg: string; text: string }>>({
+  1: {
+    bg: '#04DC7E14',
+    text: '#04DC7E',
+  },
+  2: {
+    bg: '#1966FF14',
+    text: '#1966FF',
+  },
+  3: {
+    bg: '#FF9C0514',
+    text: '#FF9C05',
+  },
+  4: {
+    bg: '#FF083114',
+    text: '#FF0831',
+  },
+});
+
+/**
+ * 获取风险等级颜色
+ */
+function getRiskLevelColor({
+  riskLevel,
+  isAbnormal,
+  type,
+}: {
+  isAbnormal: number;
+  riskLevel: number;
+  type: 'bg' | 'text';
+}): string {
+  const DEFAULT_COLOR = '#666666';
+
+  // 没有问卷名称时返回默认颜色
+  if (!props.questionnaireName) {
+    return DEFAULT_COLOR;
+  }
+
+  // 心理健康评估的特殊处理
+  if (props.questionnaireName.includes('心理健康评估')) {
+    const isNormal = isAbnormal === 0;
+    const colorMap = {
+      bg: isNormal ? '#14E77E14' : '#FF083114',
+      text: isNormal ? '#14E77E' : '#FF0831',
+    };
+    return colorMap[type];
+  }
+
+  // 其他问卷按照风险等级显示对应颜色
+  const colorConfig = riskLevelColorType.value[riskLevel];
+  return colorConfig?.[type] || DEFAULT_COLOR;
+}
 </script>
 
 <template>
@@ -17,7 +73,7 @@ defineProps<{
           <h3 class="text-lg font-medium text-gray-900">
             {{ questionnaireResult?.dimensionName }}
           </h3>
-          <div
+          <!-- <div
             class="rounded-full px-3 py-1 text-sm font-medium"
             :class="[
               questionnaireResult?.isAbnormal === 0
@@ -26,22 +82,38 @@ defineProps<{
             ]"
           >
             {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
-          </div>
-          <!-- <div
+          </div> -->
+          <div
             v-if="questionnaireResult?.level"
             class="rounded-full px-3 py-1 text-sm font-medium"
-            :class="
-              questionnaireResult?.isAbnormal === 0
-                ? 'text-primary bg-[#14E77E14]'
-                : 'bg-[#FF083114] text-[#FF0831]'
-            "
+            :style="{
+              backgroundColor: getRiskLevelColor({
+                riskLevel: questionnaireResult?.riskLevel || 0,
+                isAbnormal: questionnaireResult?.isAbnormal || 0,
+                type: 'bg',
+              }),
+              color: getRiskLevelColor({
+                riskLevel: questionnaireResult?.riskLevel || 0,
+                isAbnormal: questionnaireResult?.isAbnormal || 0,
+                type: 'text',
+              }),
+            }"
           >
             {{ questionnaireResult.level }}
-          </div> -->
+          </div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
-          <span class="mb-1 text-2xl font-bold text-[#14E77E]">
+          <span
+            class="mb-1 text-2xl font-bold"
+            :style="{
+              color: getRiskLevelColor({
+                riskLevel: questionnaireResult?.riskLevel || 0,
+                isAbnormal: questionnaireResult?.isAbnormal || 0,
+                type: 'text',
+              }),
+            }"
+          >
             {{ questionnaireResult?.score }}
           </span>
         </div>

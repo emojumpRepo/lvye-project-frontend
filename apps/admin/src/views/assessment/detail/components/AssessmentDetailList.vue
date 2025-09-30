@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
@@ -35,6 +35,24 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const activeTabKey = defineModel<string>('activeTabKey'); // 问卷Tab
+
+const riskLevelColorType = ref({
+  1: 'success',
+  2: 'processing',
+  3: 'warning',
+  4: 'error',
+});
+
+/** 当前选中的 tab 名字 */
+const currentTabName = computed(() => {
+  if (!activeTabKey.value || !props.questionnairesTabs?.length) {
+    return '';
+  }
+  const currentTab = props.questionnairesTabs.find(
+    (tab) => tab.key === activeTabKey.value,
+  );
+  return currentTab?.label || '';
+});
 
 const actionButtons = ref([
   // {
@@ -74,7 +92,7 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: useGridColumns(props.questionnaireId),
     height: '400px',
     keepSource: true,
     pagerConfig: {
@@ -125,6 +143,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
 watch(
   () => [props.taskNo, props.questionnaireId],
   async ([newTaskNo, newQuestionnaireId]) => {
+    // 更新列配置
+    if (gridApi) {
+      gridApi.setGridOptions({
+        columns: useGridColumns(newQuestionnaireId),
+      });
+    }
+
     if (newTaskNo || newQuestionnaireId) {
       queryParams.value.taskNo = newTaskNo!;
       queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
@@ -275,10 +300,25 @@ async function handleExport() {
       </template>
       <template #riskLevel="{ row }">
         <LyTag
-          v-if="!activeTabKey && row.riskLevel"
+          v-if="
+            (!activeTabKey || currentTabName.includes('心理健康评估')) &&
+            row.riskLevel
+          "
           tag-category-key="questionnaire_result_risk_level"
           :dict-value="row.riskLevel"
         />
+
+        <LyTag
+          v-else-if="
+            activeTabKey &&
+            !currentTabName.includes('心理健康评估') &&
+            row.riskLevel &&
+            row.level
+          "
+          :color-type="riskLevelColorType[row.riskLevel] || 'default'"
+          :tag-label="row.level"
+        />
+
         <span v-else>--</span>
       </template>
       <template #actions="{ row }">

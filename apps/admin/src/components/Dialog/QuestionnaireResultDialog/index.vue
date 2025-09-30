@@ -294,6 +294,7 @@ function handleClose() {
                       <QuestionnaireResult
                         v-for="(item, index) in questionnaireResult"
                         :key="index"
+                        :questionnaire-name="queryData.questionnaireName"
                         :questionnaire-result="item"
                       />
                     </div>

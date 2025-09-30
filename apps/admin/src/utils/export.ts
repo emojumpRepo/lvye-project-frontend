@@ -205,41 +205,67 @@ export function exportAssessmentParticipantsToExcel(
       return;
     }
 
+    // 检查是否有问卷名称数据
+    const hasQuestionnaireName = data.some((item) => item.questionnaireName);
+
     const formattedData = data.map((item) => {
-      return {
+      const baseData = {
         测评任务编号: item.taskNo || '--',
         学生姓名: item.name || '--',
         学号: item.studentNo || '--',
         班级: item.className || '--',
         完成状态: item.status === 1 ? '已完成' : '未完成',
-        问卷测评得分: item.score || '--',
-        风险等级: item.riskLevel
-          ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
-          : '--',
         完成时间: item.finishTime
           ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
           : '--',
       } as Record<string, any>;
+
+      // 如果没有问卷名称数据，则添加总评风险列
+      if (hasQuestionnaireName) {
+        const isHealthAssessment =
+          item.questionnaireName &&
+          item.questionnaireName.includes('心理健康评估');
+
+        if (isHealthAssessment) {
+          baseData.测评结果 = item.riskLevel
+            ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+            : '--';
+        } else {
+          baseData.测评结果 = item.level;
+        }
+      } else {
+        baseData.总评风险 = item.riskLevel
+          ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+          : '--';
+      }
+
+      return baseData;
     });
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
 
     // 列宽设置
-    worksheet['!cols'] = [
+    const colWidths = [
       { wch: 30 }, // 任务编号
       { wch: 15 }, // 学生姓名
       { wch: 16 }, // 学号
       { wch: 20 }, // 班级
-      { wch: 15 }, // 完成状态
-      { wch: 15 }, // 问卷得分
-      { wch: 15 }, // 风险等级
-      { wch: 25 }, // 完成时间
+      { wch: 20 }, // 完成状态
+      { wch: 35 }, // 完成时间
     ];
+
+    // 如果没有问卷名称数据，则添加总评风险列宽
+    colWidths.splice(5, 0, { wch: 30 }); // 在完成状态后插入总评风险列
+
+    worksheet['!cols'] = colWidths;
 
     XLSX.utils.book_append_sheet(workbook, worksheet, '测评结果');
 
-    const defaultFilename = `学生测评结果.xlsx`;
+    // 根据是否有问卷名称设置默认文件名
+    const defaultFilename = hasQuestionnaireName
+      ? `${data[0]?.questionnaireName || '问卷'}测评报告.xlsx`
+      : `学生总体测评报告.xlsx`;
     const finalFilename = filename || defaultFilename;
     XLSX.writeFile(workbook, finalFilename);
   } catch (error) {
