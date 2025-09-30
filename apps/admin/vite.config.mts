@@ -11,10 +11,52 @@ export default defineConfig(
     const env = loadEnv(mode, root);
 
     const baseUrl = env.VITE_BASE_URL || 'http://127.0.0.1:48080';
+    const cdnUrl = env.VITE_CDN_URL;
 
     return {
-      application: {},
+      application: {
+        // 启用压缩
+        compress: env.VITE_COMPRESS !== 'none',
+        compressTypes: ['gzip', 'brotli'],
+      },
       vite: {
+        // 生产环境使用CDN作为静态资源基础路径
+        base: mode === 'production' && cdnUrl ? cdnUrl : env.VITE_BASE || '/admin/',
+
+        build: {
+          rollupOptions: {
+            output: {
+              // 优化代码分割策略
+              manualChunks: (id: string) => {
+                // node_modules 中的依赖包
+                if (id.includes('node_modules')) {
+                  // 工具库
+                  if (id.includes('@vueuse')) {
+                    return 'utils';
+                  }
+                  // 其他第三方库（排除CDN外部化的库）
+                  if (!id.includes('@vben')) {
+                    return 'vendor';
+                  }
+                }
+                // vben 框架代码
+                if (id.includes('@vben')) {
+                  return 'vben';
+                }
+              },
+            },
+          },
+          // 提高性能：使用 esbuild 进行压缩
+          minify: 'esbuild',
+          // 减小包体积
+          reportCompressedSize: false,
+          // 关闭源码映射以减小体积
+          sourcemap: false,
+          // 提高 chunk 大小警告限制
+          chunkSizeWarningLimit: 1500,
+          // 资源内联阈值
+          assetsInlineLimit: 4096,
+        },
         server: {
           proxy: {
             '/admin-api': {
