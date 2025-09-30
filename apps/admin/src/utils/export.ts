@@ -221,7 +221,19 @@ export function exportAssessmentParticipantsToExcel(
       } as Record<string, any>;
 
       // 如果没有问卷名称数据，则添加总评风险列
-      if (!hasQuestionnaireName) {
+      if (hasQuestionnaireName) {
+        const isHealthAssessment =
+          item.questionnaireName &&
+          item.questionnaireName.includes('心理健康评估');
+
+        if (isHealthAssessment) {
+          baseData.测评结果 = item.riskLevel
+            ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+            : '--';
+        } else {
+          baseData.测评结果 = item.level;
+        }
+      } else {
         baseData.总评风险 = item.riskLevel
           ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
           : '--';
@@ -239,14 +251,12 @@ export function exportAssessmentParticipantsToExcel(
       { wch: 15 }, // 学生姓名
       { wch: 16 }, // 学号
       { wch: 20 }, // 班级
-      { wch: 15 }, // 完成状态
-      { wch: 25 }, // 完成时间
+      { wch: 20 }, // 完成状态
+      { wch: 35 }, // 完成时间
     ];
 
     // 如果没有问卷名称数据，则添加总评风险列宽
-    if (!hasQuestionnaireName) {
-      colWidths.splice(5, 0, { wch: 15 }); // 在完成状态后插入总评风险列
-    }
+    colWidths.splice(5, 0, { wch: 30 }); // 在完成状态后插入总评风险列
 
     worksheet['!cols'] = colWidths;
 
