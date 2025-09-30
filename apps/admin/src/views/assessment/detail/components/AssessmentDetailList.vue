@@ -131,7 +131,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         },
       },
     },
-    rowConfig: { keyField: 'seq', isHover: true },
+    rowConfig: { keyField: 'seq' },
     toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {

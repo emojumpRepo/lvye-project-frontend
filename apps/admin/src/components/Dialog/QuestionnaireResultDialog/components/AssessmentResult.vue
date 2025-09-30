@@ -107,6 +107,32 @@ const questionnaireResults = computed(() => {
     : props.assessmentResult.questionnaireResults;
 });
 
+/**
+ * 获取表格中的风险等级颜色
+ * @param param0
+ */
+function getTableLevelColor({
+  questionnaireName,
+  isAbnormal,
+  riskLevel,
+}: {
+  isAbnormal: number;
+  questionnaireName: string;
+  riskLevel: number;
+}) {
+  const DEFAULT_COLOR = '#666666';
+
+  if (!questionnaireName) {
+    return DEFAULT_COLOR;
+  }
+
+  if (questionnaireName.includes('心理健康评估')) {
+    return isAbnormal === 0 ? '#14E77E' : '#FF0831';
+  }
+
+  return riskLevelColorType.value[riskLevel]?.text || DEFAULT_COLOR;
+}
+
 // 干预建议
 // const interventionSuggestions = computed(() => {
 //   const parsed = JSON.parse(props.assessmentResult.interventionSuggestions);
@@ -184,7 +210,16 @@ const questionnaireResults = computed(() => {
 
             <template v-if="column.dataIndex === 'level'">
               <div class="flex items-center gap-2">
-                <span class="text-sm leading-relaxed text-gray-700">
+                <span
+                  class="text-sm leading-relaxed text-gray-700"
+                  :style="{
+                    color: getTableLevelColor({
+                      questionnaireName: item.questionnaireName,
+                      riskLevel: record.riskLevel,
+                      isAbnormal: record.isAbnormal,
+                    }),
+                  }"
+                >
                   {{ text || '无' }}
                 </span>
                 <Popover
@@ -192,7 +227,16 @@ const questionnaireResults = computed(() => {
                   placement="right"
                   :overlay-style="{ maxWidth: '300px', wordWrap: 'break-word' }"
                 >
-                  <IconifyIcon icon="carbon:help" />
+                  <IconifyIcon
+                    icon="carbon:help"
+                    :color="
+                      getTableLevelColor({
+                        questionnaireName: item.questionnaireName,
+                        riskLevel: record.riskLevel,
+                        isAbnormal: record.isAbnormal,
+                      })
+                    "
+                  />
                 </Popover>
               </div>
             </template>
@@ -227,7 +271,7 @@ const questionnaireResults = computed(() => {
                           questionnaireName: item.questionnaireName,
                           riskLevel: content.riskLevel || 1,
                           isAbnormal: content.isAbnormal,
-                          type: 'bg',
+                          type: 'text',
                         }),
                       }"
                     ></div>
