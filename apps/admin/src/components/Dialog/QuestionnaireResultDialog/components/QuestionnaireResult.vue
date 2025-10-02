@@ -1,65 +1,31 @@
 <script setup lang="ts">
 import type { QuestionnaireResultDataVO } from '@vben/types';
 
-import { ref } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
+  dimension: QuestionnaireResultDataVO;
+  getDimensionColor: (config: {
+    isAbnormal: number;
+    questionnaireName: string;
+    riskLevel: number;
+    type: 'bg' | 'color';
+  }) => string;
   questionnaireName: string;
-  questionnaireResult: QuestionnaireResultDataVO;
 }>();
 
-const riskLevelColorType = ref<Record<number, { bg: string; text: string }>>({
-  1: {
-    bg: '#04DC7E14',
-    text: '#04DC7E',
-  },
-  2: {
-    bg: '#1966FF14',
-    text: '#1966FF',
-  },
-  3: {
-    bg: '#FF9C0514',
-    text: '#FF9C05',
-  },
-  4: {
-    bg: '#FF083114',
-    text: '#FF0831',
-  },
+const questionnaireDimension = computed(() => {
+  const data = {
+    questionnaireName: props.questionnaireName,
+    riskLevel: props.dimension.riskLevel,
+    isAbnormal: props.dimension.isAbnormal,
+  };
+  return {
+    ...props.dimension,
+    color: props.getDimensionColor({ ...data, type: 'color' }),
+    backgroundColor: props.getDimensionColor({ ...data, type: 'bg' }),
+  };
 });
-
-/**
- * 获取风险等级颜色
- */
-function getRiskLevelColor({
-  riskLevel,
-  isAbnormal,
-  type,
-}: {
-  isAbnormal: number;
-  riskLevel: number;
-  type: 'bg' | 'text';
-}): string {
-  const DEFAULT_COLOR = '#666666';
-
-  // 没有问卷名称时返回默认颜色
-  if (!props.questionnaireName) {
-    return DEFAULT_COLOR;
-  }
-
-  // 心理健康评估的特殊处理
-  if (props.questionnaireName.includes('心理健康评估')) {
-    const isNormal = isAbnormal === 0;
-    const colorMap = {
-      bg: isNormal ? '#14E77E14' : '#FF083114',
-      text: isNormal ? '#14E77E' : '#FF0831',
-    };
-    return colorMap[type];
-  }
-
-  // 其他问卷按照风险等级显示对应颜色
-  const colorConfig = riskLevelColorType.value[riskLevel];
-  return colorConfig?.[type] || DEFAULT_COLOR;
-}
 </script>
 
 <template>
@@ -71,50 +37,26 @@ function getRiskLevelColor({
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-medium text-gray-900">
-            {{ questionnaireResult?.dimensionName }}
+            {{ questionnaireDimension?.dimensionName }}
           </h3>
-          <!-- <div
-            class="rounded-full px-3 py-1 text-sm font-medium"
-            :class="[
-              questionnaireResult?.isAbnormal === 0
-                ? 'text-primary bg-[#14E77E14]'
-                : 'bg-[#FF083114] text-[#FF0831]',
-            ]"
-          >
-            {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
-          </div> -->
           <div
-            v-if="questionnaireResult?.level"
+            v-if="dimension?.level"
             class="rounded-full px-3 py-1 text-sm font-medium"
             :style="{
-              backgroundColor: getRiskLevelColor({
-                riskLevel: questionnaireResult?.riskLevel || 0,
-                isAbnormal: questionnaireResult?.isAbnormal || 0,
-                type: 'bg',
-              }),
-              color: getRiskLevelColor({
-                riskLevel: questionnaireResult?.riskLevel || 0,
-                isAbnormal: questionnaireResult?.isAbnormal || 0,
-                type: 'text',
-              }),
+              backgroundColor: questionnaireDimension?.backgroundColor,
+              color: questionnaireDimension?.color,
             }"
           >
-            {{ questionnaireResult.level }}
+            {{ dimension.level }}
           </div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
           <span
             class="mb-1 text-2xl font-bold"
-            :style="{
-              color: getRiskLevelColor({
-                riskLevel: questionnaireResult?.riskLevel || 0,
-                isAbnormal: questionnaireResult?.isAbnormal || 0,
-                type: 'text',
-              }),
-            }"
+            :style="{ color: questionnaireDimension?.color }"
           >
-            {{ questionnaireResult?.score }}
+            {{ dimension?.score }}
           </span>
         </div>
       </div>
@@ -129,7 +71,7 @@ function getRiskLevelColor({
           <h4 class="text-sm font-semibold text-[#1966FF]">学生建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
-          {{ questionnaireResult?.studentComment }}
+          {{ dimension?.studentComment }}
         </p>
       </div> -->
 
@@ -140,7 +82,7 @@ function getRiskLevelColor({
           <h4 class="text-sm font-semibold text-[#FF9C05]">教师建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
-          {{ questionnaireResult?.teacherComment }}
+          {{ dimension?.teacherComment }}
         </p>
       </div>
     </div>

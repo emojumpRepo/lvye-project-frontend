@@ -29,25 +29,29 @@ const classType = ref<TabItem[]>([
 ]);
 
 const actionButtons = ref([
-  // {
-  //   label: '发布提醒',
-  //   value: 'publish',
-  //   onClick: handlePublish,
-  // },
-  // {
-  //   label: '延长时间',
-  //   value: 'extend',
-  //   onClick: handleExtend,
-  // },
-  // {
-  //   label: '提前结束',
-  //   value: 'end',
-  //   onClick: handleEnd,
-  // },
+  {
+    label: '发布提醒',
+    value: 'publish',
+    onClick: handlePublish,
+    show: false,
+  },
+  {
+    label: '延长时间',
+    value: 'extend',
+    onClick: handleExtend,
+    show: false,
+  },
+  {
+    label: '提前结束',
+    value: 'end',
+    onClick: handleEnd,
+    show: false,
+  },
   {
     label: '导出数据',
     value: 'export',
     onClick: handleExport,
+    show: true,
   },
 ]);
 
@@ -59,7 +63,10 @@ const taskNo = String(route.params.taskNo || '');
 const loading = ref(false);
 
 const currentTaskInfo = ref<TaskInfo>();
-const activeTabKey = ref(''); // 问卷Tab
+const activeTab = ref<TabItem>({
+  key: '',
+  label: '',
+});
 
 /** 任务状态标签 */
 const taskStatusTag = computed(() => {
@@ -163,14 +170,25 @@ async function loadTaskData() {
           ...questionnairesTabs,
         ],
       };
-      activeTabKey.value =
-        currentTaskInfo.value?.questionnairesTabs[0]?.key || '';
+
+      activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
+        ? { ...currentTaskInfo.value.questionnairesTabs[0] }
+        : { key: '', label: '' };
     }
   } catch (error) {
-    console.error('Failed to load task data:', error);
+    console.error('加载测评任务数据失败:', error);
   } finally {
     loading.value = false;
   }
+}
+
+/** 切换问卷tab */
+function handleTabChange(key: any) {
+  const target = currentTaskInfo.value?.questionnairesTabs.find(
+    (item) => item.key === key,
+  );
+
+  activeTab.value = target ? { ...target } : { key: '', label: '' };
 }
 
 onMounted(async () => {
@@ -213,20 +231,25 @@ onMounted(async () => {
       </div>
       <!-- 操作按钮 -->
       <div class="flex flex-nowrap gap-2">
-        <LyButton
-          size="middle"
-          :type="item.value === 'export' ? 'success' : 'default'"
-          v-for="item in actionButtons"
-          :key="item.value"
-          @click="item.onClick && item.onClick()"
-        >
-          {{ item.label }}
-        </LyButton>
+        <template v-for="button in actionButtons" :key="button.value">
+          <LyButton
+            v-if="button.show"
+            size="middle"
+            :type="button.value === 'export' ? 'success' : 'default'"
+            @click="button.onClick && button.onClick()"
+          >
+            {{ button.label }}
+          </LyButton>
+        </template>
       </div>
     </div>
 
     <!-- 问卷Tabs -->
-    <ATabs v-model:active-key="activeTabKey" :tab-bar-gutter="10">
+    <ATabs
+      v-model:active-key="activeTab.key"
+      :tab-bar-gutter="10"
+      @change="handleTabChange"
+    >
       <!-- <ATabs.TabPane
         v-for="tab in currentTaskInfo?.questionnairesTabs"
         :key="tab.key"
@@ -235,7 +258,7 @@ onMounted(async () => {
           <span
             class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
             :class="{
-              '!bg-primary !text-white': activeTabKey === tab.key,
+              '!bg-primary !text-white': activeTab.key === tab.key,
             }"
           >
             {{ tab.label }}
@@ -274,9 +297,9 @@ onMounted(async () => {
     <AssessmentDetailList
       :task-no="taskNo"
       :task-name="currentTaskInfo?.taskName"
-      :questionnaire-id="activeTabKey"
       :questionnaires-tabs="currentTaskInfo?.questionnairesTabs"
-      v-model:active-tab-key="activeTabKey"
+      @tab-change="handleTabChange"
+      v-model:active-tab="activeTab"
     />
   </div>
 </template>

@@ -135,16 +135,6 @@ export function useGridColumns(
     },
   ];
 
-  // 如果没有问卷ID，添加风险等级列
-  // if (!questionnaireId) {
-  //   columns.push({
-  //     field: 'riskLevel',
-  //     title: '风险等级',
-  //     minWidth: 120,
-  //     slots: { default: 'riskLevel' },
-  //   });
-  // }
-
   // 添加操作列
   columns.push({
     title: '操作',

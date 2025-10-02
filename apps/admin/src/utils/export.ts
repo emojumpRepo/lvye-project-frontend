@@ -193,79 +193,89 @@ export function exportStudentsToExcel(
 /**
  * 将测评任务中选中的学生问卷结果导出为 Excel
  * @param data 学生问卷结果数据（来自测评任务列表勾选项）
+ * @param activeTab 包含当前选项信息
+ * @param activeTab.key 选项键，用于区分是否为具体问卷
+ * @param activeTab.label 选项名称，作为问卷名称展示
  * @param filename 可选的文件名
  */
 export function exportAssessmentParticipantsToExcel(
   data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
+  activeTab: { key: string; label: string },
   filename?: string,
 ): void {
   try {
-    if (!data || data.length === 0) {
-      message.warning('没有数据可导出');
-      return;
-    }
-
-    // 检查是否有问卷名称数据
-    const hasQuestionnaireName = data.some((item) => item.questionnaireName);
-
     const formattedData = data.map((item) => {
-      const baseData = {
+      const rowData: Record<string, any> = {
         测评任务编号: item.taskNo || '--',
+      };
+
+      if (activeTab.key) {
+        rowData['问卷名称'] = activeTab.label || '--';
+      }
+
+      Object.assign(rowData, {
         学生姓名: item.name || '--',
         学号: item.studentNo || '--',
         班级: item.className || '--',
         完成状态: item.status === 1 ? '已完成' : '未完成',
-        完成时间: item.finishTime
-          ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
-          : '--',
-      } as Record<string, any>;
+      });
 
-      // 如果没有问卷名称数据，则添加总评风险列
-      if (hasQuestionnaireName) {
+      if (activeTab.key) {
         const isHealthAssessment =
           item.questionnaireName &&
           item.questionnaireName.includes('心理健康评估');
 
         if (isHealthAssessment) {
-          baseData.测评结果 = item.riskLevel
+          rowData['测评结果'] = item.riskLevel
             ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
             : '--';
         } else {
-          baseData.测评结果 = item.level;
+          rowData['测评结果'] = item.level || '--';
         }
       } else {
-        baseData.总评风险 = item.riskLevel
+        rowData['总评风险'] = item.riskLevel
           ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
           : '--';
       }
 
-      return baseData;
+      rowData['完成时间'] = item.finishTime
+        ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
+        : '--';
+
+      return rowData;
     });
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
 
-    // 列宽设置
-    const colWidths = [
-      { wch: 30 }, // 任务编号
-      { wch: 15 }, // 学生姓名
-      { wch: 16 }, // 学号
-      { wch: 20 }, // 班级
-      { wch: 20 }, // 完成状态
-      { wch: 35 }, // 完成时间
-    ];
-
-    // 如果没有问卷名称数据，则添加总评风险列宽
-    colWidths.splice(5, 0, { wch: 30 }); // 在完成状态后插入总评风险列
+    const colWidths = activeTab.key
+      ? [
+          { wch: 30 }, // 测评任务编号
+          { wch: 30 }, // 问卷名称
+          { wch: 15 }, // 学生姓名
+          { wch: 16 }, // 学号
+          { wch: 20 }, // 班级
+          { wch: 20 }, // 完成状态
+          { wch: 30 }, // 测评结果
+          { wch: 35 }, // 完成时间
+        ]
+      : [
+          { wch: 30 }, // 测评任务编号
+          { wch: 15 }, // 学生姓名
+          { wch: 16 }, // 学号
+          { wch: 20 }, // 班级
+          { wch: 20 }, // 完成状态
+          { wch: 30 }, // 总评风险
+          { wch: 35 }, // 完成时间
+        ];
 
     worksheet['!cols'] = colWidths;
 
     XLSX.utils.book_append_sheet(workbook, worksheet, '测评结果');
 
-    // 根据是否有问卷名称设置默认文件名
-    const defaultFilename = hasQuestionnaireName
-      ? `${data[0]?.questionnaireName || '问卷'}测评报告.xlsx`
-      : `学生总体测评报告.xlsx`;
+    const defaultFilename = activeTab.key
+      ? `${activeTab.label || '问卷'}测评结果.xlsx`
+      : `学生总体测评结果.xlsx`;
     const finalFilename = filename || defaultFilename;
     XLSX.writeFile(workbook, finalFilename);
   } catch (error) {
