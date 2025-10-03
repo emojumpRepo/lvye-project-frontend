@@ -20,6 +20,7 @@ export interface QuestionnaireVO {
   assessmentDimension?: string[];
   completed?: boolean;
   accessible?: boolean;
+  generationStatus?: QuestionnaireGenerationStatus;
   assessmentDimensionLabels?: string[];
   validFrom?: number;
   validTo?: number;
@@ -30,12 +31,16 @@ export interface QuestionnaireVO {
 }
 
 export interface QuestionnaireResultDataVO {
-  dimensionName?: string;
-  isAbnormal?: number;
-  score?: number;
-  level?: string;
-  studentComment?: string;
-  teacherComment?: string;
+  questionnaireId: number;
+  dimensionId: number;
+  dimensionCode: string;
+  dimensionName: string;
+  isAbnormal: number;
+  riskLevel: number;
+  score: number;
+  level: string;
+  studentComment: string;
+  teacherComment: string;
 }
 
 export interface QuestionnaireResultVO {
@@ -89,4 +94,11 @@ export interface QuestionnaireAnswerItem {
   questionnaireName: string;
   questionnaireId: number | string;
   answers: Question[];
+}
+
+export enum QuestionnaireGenerationStatus {
+  ERROR = 3,
+  GENERATED = 2,
+  GENERATING = 1,
+  WAITING = 0,
 }

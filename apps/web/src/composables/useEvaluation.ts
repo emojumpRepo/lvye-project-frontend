@@ -25,10 +25,13 @@ export function useEvaluation() {
 
     const schoolTenantId = localStorage.getItem('school_tenant_id') || '';
 
-    // 有场景模式：从 selectedSlot 获取问卷信息
-    if (hasScenario.value && selectedSlot.value?.questionnaire) {
-      const link = selectedSlot.value.questionnaire.externalLink;
-      const id = selectedSlot.value.questionnaire.id;
+    // 有场景模式：从 selectedSlot.questionnaires 获取问卷信息
+    if (hasScenario.value && selectedSlot.value?.questionnaires?.length) {
+      const target =
+        selectedSlot.value.questionnaires.find((q: any) => !q.completed) ||
+        selectedSlot.value.questionnaires[0];
+      const link = target?.externalLink;
+      const id = target?.id;
 
       return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userInfo.value?.id}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId=${schoolTenantId}`;
     }

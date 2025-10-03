@@ -24,52 +24,38 @@ const router = useRouter();
 
 const basicInfoDialog = ref<InstanceType<typeof BasicInfoDialog>>();
 
+const TASK_STATUS_MAP: Record<
+  AssessmentTaskParticipantStatus,
+  { actionText: string; tagColor: string; tagText: string }
+> = {
+  [AssessmentTaskParticipantStatus.NOT_STARTED]: {
+    actionText: '去答题',
+    tagColor: 'warning',
+    tagText: '未开始',
+  },
+  [AssessmentTaskParticipantStatus.IN_PROGRESS]: {
+    actionText: '继续答题',
+    tagColor: 'blue',
+    tagText: '进行中',
+  },
+  [AssessmentTaskParticipantStatus.COMPLETED]: {
+    actionText: '查看结果',
+    tagColor: 'green',
+    tagText: '已完成',
+  },
+};
+
 function getActionText(task: AssessmentTask) {
-  switch (task.participantStatus) {
-    case AssessmentTaskParticipantStatus.COMPLETED: {
-      return '查看结果';
-    }
-    case AssessmentTaskParticipantStatus.IN_PROGRESS: {
-      return '继续答题';
-    }
-    case AssessmentTaskParticipantStatus.NOT_STARTED: {
-      return '去答题';
-    }
-    default: {
-      return '去答题';
-    }
-  }
+  if ((task as any)?.resultGenerating === true) return '结果生成中';
+  return TASK_STATUS_MAP[task.participantStatus]?.actionText ?? '去答题';
 }
 
 function getTagColor(task: AssessmentTask) {
-  switch (task.status) {
-    case ASSESSMENT_STATUS.COMPLETED: {
-      return 'cyan';
-    }
-    case ASSESSMENT_STATUS.ENDED: {
-      return 'red';
-    }
-    case ASSESSMENT_STATUS.PUBLISHED: {
-      return 'green';
-    }
-  }
+  return TASK_STATUS_MAP[task.participantStatus]?.tagColor ?? 'warning';
 }
 
 function getTagText(task: AssessmentTask) {
-  switch (task.status) {
-    case ASSESSMENT_STATUS.COMPLETED: {
-      return '已完成';
-    }
-    case ASSESSMENT_STATUS.ENDED: {
-      return '已截止';
-    }
-    case ASSESSMENT_STATUS.PUBLISHED: {
-      return '进行中';
-    }
-    default: {
-      return '';
-    }
-  }
+  return TASK_STATUS_MAP[task.participantStatus]?.tagText ?? '';
 }
 
 /**
@@ -100,6 +86,14 @@ async function handleClick() {
 
   // 根据任务状态和场景ID跳转
   const { task } = props;
+  if (
+    (task as any)?.participantStatus ===
+      AssessmentTaskParticipantStatus.COMPLETED &&
+    (task as any)?.resultGenerating === true
+  ) {
+    message.warning('结果显示中，请稍后查看');
+    return;
+  }
   if (task.status === ASSESSMENT_STATUS.ENDED) {
     message.warning('此测评任务已结束，无法答题哦');
     return;
@@ -179,10 +173,12 @@ const [PrivacyModal, privacyModalApi] = useVbenModal({
         </div>
       </div>
       <button
-        class="box-border w-24 shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        class="box-border shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         :disabled="
-          task.status === ASSESSMENT_STATUS.ENDED &&
-          task.participantStatus !== AssessmentTaskParticipantStatus.COMPLETED
+          (task as any)?.resultGenerating === true ||
+          (task.status === ASSESSMENT_STATUS.ENDED &&
+            task.participantStatus !==
+              AssessmentTaskParticipantStatus.COMPLETED)
         "
         @click="handleClick"
       >
@@ -380,44 +376,14 @@ const [PrivacyModal, privacyModalApi] = useVbenModal({
   border-bottom: none;
 }
 
-:deep(.privacy-modal .ant-modal-body) {
-  padding: 0;
-  background: transparent;
-}
-
-:deep(.privacy-modal .ant-modal-footer) {
-  padding: 14px 24px;
-  margin: 0;
-  background: linear-gradient(to right, #fffbeb, #fff7ed);
-  border-top: 1px solid rgb(251 191 36 / 15%);
-}
-
-:deep(.privacy-modal .ant-btn-primary) {
-  height: 42px;
-  padding: 0 28px;
-  font-size: 15px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
-  border: none;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-:deep(.privacy-modal .ant-btn-primary:hover) {
-  background: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
-  transform: translateY(-1px);
-}
-
-:deep(.privacy-modal .ant-btn-primary:active) {
-  transform: translateY(0);
-}
-
-/* 滚动条优化 */
+/* 合并至下方滚动条优化定义：同时保留 padding/background 设置 */
 :deep(.privacy-modal .ant-modal-body) {
   max-height: calc(80vh - 120px);
+  padding: 0;
   overflow-y: auto;
   scrollbar-color: rgb(16 185 129 / 30%) transparent;
   scrollbar-width: thin;
+  background: transparent;
 }
 
 :deep(.privacy-modal .ant-modal-body::-webkit-scrollbar) {

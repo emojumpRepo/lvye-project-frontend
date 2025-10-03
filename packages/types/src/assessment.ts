@@ -25,6 +25,7 @@ export interface AssessmentTask {
   creatorName?: string;
   createTime?: number;
   updateTime?: number;
+  resultGenerating?: boolean; // 结果生成中标识
   // 测评场景信息
   scenarioId?: number; // 场景ID
   scenarioDetail?: AssessmentScenarioDetailed;
@@ -37,12 +38,26 @@ export interface AssessmentTask {
   completionRate?: number;
 }
 
+/** 维度类型 */
+export interface Dimension {
+  dimensionId: number;
+  name: string;
+  score: number;
+  isAbnormal: number;
+  riskLevel: number;
+  level: string;
+  teacherComment: string;
+  studentComment: string;
+  description: string;
+}
+
 /** 测评问卷结果 */
 export interface AssessmentQuestionnaireResultVO {
   rawScore: number;
   riskLevel: number;
   suggestions: string;
   reportContent: string;
+  dimensions: Dimension[];
   standardScore: number;
   percentileRank: number;
   dimensionScores: Record<string, number>;
@@ -72,6 +87,16 @@ export interface InterventionSuggestionVO {
   timeframe: string;
 }
 
+export interface RiskLevelIntervention {
+  criteria: string;
+  evaluation: string;
+  isCurrent: true;
+  priority: number;
+  riskLevel: number;
+  riskLevelName: string;
+  suggestion: string;
+}
+
 /** 测评结果 */
 export interface AssessmentResultVO {
   id: number;
@@ -79,15 +104,7 @@ export interface AssessmentResultVO {
   dimensionCode: string;
   score: number;
   riskLevel: number;
-  riskLevelIntervention: {
-    criteria: string;
-    evaluation: string;
-    isCurrent: true;
-    priority: number;
-    riskLevel: number;
-    riskLevelName: string;
-    suggestion: string;
-  };
+  riskLevelIntervention: RiskLevelIntervention;
   riskLevelDescription: string;
   suggestion: string;
   questionnaireResults: AssessmentQuestionnaireResultVO[];

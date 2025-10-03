@@ -1,5 +1,13 @@
 import { getDictObj } from '#/utils/dict';
 
+export type TagType =
+  | 'default'
+  | 'error'
+  | 'pending'
+  | 'processing'
+  | 'success'
+  | 'warning';
+
 /** 标签类型 */
 export const TAG_TYPE = {
   warning: {
@@ -32,6 +40,7 @@ export const TAG_TYPE = {
   },
 } as const;
 
+/** 学生心理状态颜色配置 */
 const STUDENT_PSYCHOLOGICAL_STATUS = {
   success: {
     backgroundColor: '#E4FFF0',
@@ -65,7 +74,51 @@ const STUDENT_PSYCHOLOGICAL_STATUS = {
   },
 };
 
-/** 获取标签样式 */
+export const DICT_Value_COLOR_MAP: Record<number, TagType> = {
+  1: 'success',
+  2: 'processing',
+  3: 'warning',
+  4: 'error',
+  5: 'default',
+};
+
+/** 获取标签颜色配置 */
+export function getColorConfig({
+  dictValue = 5,
+  tagType = 'default',
+  target = 'config',
+}: {
+  dictValue?: number | string;
+  tagType?: TagType;
+  target?: 'bg' | 'color' | 'config';
+} = {}) {
+  let resolvedTagType: TagType = tagType || 'default';
+
+  if (dictValue) {
+    resolvedTagType =
+      DICT_Value_COLOR_MAP[Number(dictValue)] || resolvedTagType;
+  }
+
+  switch (target) {
+    case 'bg': {
+      return (
+        TAG_TYPE[resolvedTagType].backgroundColor ||
+        TAG_TYPE.default.backgroundColor
+      );
+    }
+    case 'color': {
+      return TAG_TYPE[resolvedTagType].color || TAG_TYPE.default.color;
+    }
+    case 'config': {
+      return TAG_TYPE[resolvedTagType] || TAG_TYPE.default;
+    }
+    default: {
+      return TAG_TYPE.default;
+    }
+  }
+}
+
+/** 根据字典获取标签样式 */
 export function getTagByCategory(dictType: string, value: number | string) {
   const dictObj = getDictObj(dictType, value);
 
@@ -80,7 +133,7 @@ export function getTagByCategory(dictType: string, value: number | string) {
   };
 }
 
-/** 学生心理状态标签 */
+/** 根据字典学生心理状态标签 */
 export function getStudentPsychologicalStatusTag(
   dictType: string,
   value: number,
@@ -107,48 +160,6 @@ export function getStudentPsychologicalStatusTag(
     label: dictObj?.label || '未知',
     value: dictObj?.value || value,
   };
-}
-
-/** 状态标签 */
-export const STATUS_TAG_MAP = {
-  uncompleted: {
-    tag: TAG_TYPE.warning,
-    label: '未完成',
-  },
-  completed: {
-    tag: TAG_TYPE.success,
-    label: '已完成',
-  },
-  pending: {
-    tag: TAG_TYPE.pending,
-    label: '进行中',
-  },
-};
-
-/** 风险等级标签 */
-export const RISK_LEVEL_TAG_MAP = {
-  normal: {
-    tag: TAG_TYPE.success,
-    label: '正常',
-  },
-  warning: {
-    tag: TAG_TYPE.warning,
-    label: '预警',
-  },
-  high: {
-    tag: TAG_TYPE.error,
-    label: '高危',
-  },
-};
-
-// 获取状态标签
-export function getStatusTag(status: string) {
-  return STATUS_TAG_MAP[status as keyof typeof STATUS_TAG_MAP];
-}
-
-// 获取风险等级标签
-export function getRiskLevelTag(riskLevel: string) {
-  return RISK_LEVEL_TAG_MAP[riskLevel as keyof typeof RISK_LEVEL_TAG_MAP];
 }
 
 // 问卷配置计算类型

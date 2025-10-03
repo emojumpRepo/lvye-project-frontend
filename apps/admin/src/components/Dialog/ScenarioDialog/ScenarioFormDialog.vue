@@ -91,6 +91,7 @@ function filterQuestionnaireOption(input: string, option?: { label?: string }) {
   if (!option?.label) return false;
   return option.label.toLowerCase().includes(input.toLowerCase());
 }
+
 const isAddDisabled = computed(() => {
   const max = maxQuestionnaireCountRef.value;
   if (!max || max <= 0) return false;
@@ -112,10 +113,10 @@ const slotColumns = [
     key: 'metadataJson',
   },
   {
-    title: '关联问卷',
+    title: '关联问卷（多选）',
     dataIndex: 'questionnaire',
     key: 'questionnaire',
-    width: 240,
+    width: 280,
   },
   { title: '操作', key: 'actions', width: 80 },
 ];
@@ -211,11 +212,16 @@ async function handleSubmit(): Promise<boolean> {
       return false;
     }
 
-    // 转换数据格式
+    // 转换数据格式，清理临时字段
+    const cleanSlots = slotsRef.value.map((slot) => {
+      const { _tempId, ...cleanSlot } = slot as any;
+      return cleanSlot;
+    });
+
     const formData: PsychologyScenarioApi.AssessmentScenarioVO = {
       ...(values as PsychologyScenarioApi.AssessmentScenarioVO),
       isActive: !!values.isActive,
-      slots: slotsRef.value,
+      slots: cleanSlots,
     };
 
     // 添加ID（编辑模式）
@@ -247,16 +253,22 @@ function addSlot() {
   if (isAddDisabled.value) {
     return;
   }
-  slotsRef.value.push({
+
+  const newSlot = {
     scenarioId: currentRecord.value?.id ?? 0,
     slotKey: '',
     slotName: '',
     slotOrder: (slotsRef.value[slotsRef.value.length - 1]?.slotOrder ?? 0) + 1,
     allowedQuestionnaireTypes: '',
-  } as any);
-}
+    questionnaireIds: [],
+    metadataJson: '',
+    frontendComponent: '',
+    // 添加一个唯一的临时ID作为key
+    _tempId: Date.now() + Math.random(),
+  };
 
-// 重置逻辑由 onOpenChange 内部处理
+  slotsRef.value.push(newSlot);
+}
 
 // ============== Dialog ==============
 const [Modal, modalApi] = useVbenModal({
@@ -311,7 +323,12 @@ const [Modal, modalApi] = useVbenModal({
           });
 
           slotsRef.value = Array.isArray(detailAny.slots)
-            ? [...detailAny.slots]
+            ? detailAny.slots.map((slot: any) => ({
+                ...slot,
+                questionnaireIds: slot.questionnaireIdList,
+                // 确保每个槽位都有唯一ID作为key
+                _tempId: slot.id || Date.now() + Math.random(),
+              }))
             : [];
 
           maxQuestionnaireCountRef.value =
@@ -354,66 +371,82 @@ const [Modal, modalApi] = useVbenModal({
       <div class="mt-4">
         <div class="mb-2 flex justify-between text-sm font-semibold">
           场景槽位
-          <Button
-            type="primary"
-            :disabled="isAddDisabled"
-            @click="addSlot"
-            size="small"
-          >
-            新增槽位 +
-          </Button>
+          <div class="space-x-2">
+            <Button
+              type="primary"
+              :disabled="isAddDisabled"
+              @click="addSlot"
+              size="small"
+            >
+              新增槽位 +
+            </Button>
+          </div>
         </div>
       </div>
       <Table
         :data-source="slotsRef"
         :columns="slotColumns"
         :pagination="false"
-        row-key="slotKey"
+        :row-key="
+          (record) =>
+            record._tempId || record.id || record.slotKey || Math.random()
+        "
         size="small"
         bordered
       >
         <template #bodyCell="{ column, record: rowItem, index }">
-          <template v-if="column.key === 'slotKey'">
+          <template v-if="column.key === 'slotKey' && rowItem">
             <Input
               v-model:value="rowItem.slotKey"
               placeholder="槽位编码，如：library"
+              :key="`slotKey-${rowItem._tempId || index}`"
             />
           </template>
-          <template v-else-if="column.key === 'slotName'">
+          <template v-else-if="column.key === 'slotName' && rowItem">
             <Input
               v-model:value="rowItem.slotName"
               placeholder="槽位名称，如：图书馆"
+              :key="`slotName-${rowItem._tempId || index}`"
             />
           </template>
-          <template v-else-if="column.key === 'slotOrder'">
+          <template v-else-if="column.key === 'slotOrder' && rowItem">
             <InputNumber
               v-model:value="rowItem.slotOrder"
               :min="1"
               style="width: 100%"
+              :key="`slotOrder-${rowItem._tempId || index}`"
             />
           </template>
-          <template v-else-if="column.key === 'allowedQuestionnaireTypes'">
+          <template
+            v-else-if="column.key === 'allowedQuestionnaireTypes' && rowItem"
+          >
             <Input
               v-model:value="rowItem.allowedQuestionnaireTypes"
               placeholder="允许类型，如：ANXIETY,DEPRESSION"
+              :key="`allowedTypes-${rowItem._tempId || index}`"
             />
           </template>
-          <template v-else-if="column.key === 'metadataJson'">
+          <template v-else-if="column.key === 'metadataJson' && rowItem">
             <Input.TextArea
               v-model:value="rowItem.metadataJson"
               :rows="3"
               placeholder="请输入JSON格式的扩展配置（可选）"
+              :key="`metadataJson-${rowItem._tempId || index}`"
             />
           </template>
-          <template v-else-if="column.key === 'questionnaire'">
+          <template v-else-if="column.key === 'questionnaire' && rowItem">
             <Select
               style="width: 100%"
-              v-model:value="rowItem.questionnaireId"
-              placeholder="请选择关联问卷"
+              mode="multiple"
+              v-model:value="rowItem.questionnaireIds"
+              placeholder="请选择关联问卷（可多选）"
               :options="questionnaireOptions"
               :loading="loadingQuestionnaires"
               show-search
               :filter-option="filterQuestionnaireOption as any"
+              :key="`questionnaire-${rowItem._tempId || index}`"
+              :max-tag-count="2"
+              :max-tag-text-length="10"
             />
           </template>
           <template v-else-if="column.key === 'actions'">

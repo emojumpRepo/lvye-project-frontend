@@ -8,7 +8,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useAccess } from '@vben/access';
 import { AuthenticationLoginExpiredModal, useVbenModal } from '@vben/common-ui';
 import { isTenantEnable, useTabs, useWatermark } from '@vben/hooks';
-import { AntdProfileOutlined } from '@vben/icons';
 import {
   BasicLayout,
   Help,
@@ -31,7 +30,6 @@ import {
 } from '#/api/system/notify/message';
 import { getSimpleTenantList } from '#/api/system/tenant';
 import UserCard from '#/components/user/UserCard.vue';
-import { $t } from '#/locales';
 import { router } from '#/router';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
@@ -47,18 +45,18 @@ const notifications = ref<NotificationItem[]>([]);
 const unreadCount = ref(0);
 const showDot = computed(() => unreadCount.value > 0);
 
-const [HelpModal, helpModalApi] = useVbenModal({
+const [HelpModal] = useVbenModal({
   connectedComponent: Help,
 });
 
 const menus = computed(() => [
-  {
-    handler: () => {
-      router.push({ name: 'Profile' });
-    },
-    icon: AntdProfileOutlined,
-    text: $t('ui.widgets.profile'),
-  },
+  // {
+  //   handler: () => {
+  //     router.push({ name: 'Profile' });
+  //   },
+  //   icon: AntdProfileOutlined,
+  //   text: $t('ui.widgets.profile'),
+  // },
   // {
   //   handler: () => {
   //     openWindow(VBEN_DOC_URL, {

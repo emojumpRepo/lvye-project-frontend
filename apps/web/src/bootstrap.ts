@@ -17,27 +17,43 @@ import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
+import versionInfo from '../../../version.json';
 
 async function bootstrap(namespace: string) {
   // 显示 Mindtrip 版本信息
-  const version = import.meta.env.VITE_APP_VERSION || '0.0.5';
-  const metadata = (window as any).__VBEN_ADMIN_METADATA__;
-  const buildTime = metadata?.buildTime || new Date().toISOString();
+  const version = versionInfo.version || import.meta.env.VITE_APP_VERSION || '0.0.5';
+  
+  // 获取北京时间的构建时间
+  const getBuildTime = () => {
+    // 优先使用 version.json 中的构建时间
+    if (versionInfo.buildTime) {
+      // 如果只有日期没有时间，添加默认时间 00:00
+      if (versionInfo.buildTime.length === 10) {
+        return `${versionInfo.buildTime} 00:00`;
+      }
+      return versionInfo.buildTime;
+    }
+    // 否则使用当前北京时间
+    return new Date().toLocaleString('zh-CN', { 
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/\//g, '-');
+  };
+  const buildTime = getBuildTime();
   
   console.log(
-    `%c
-███╗   ███╗██╗███╗   ██╗██████╗ ████████╗██████╗ ██╗██████╗ 
-████╗ ████║██║████╗  ██║██╔══██╗╚══██╔══╝██╔══██╗██║██╔══██╗
-██╔████╔██║██║██╔██╗ ██║██║  ██║   ██║   ██████╔╝██║██████╔╝
-██║╚██╔╝██║██║██║╚██╗██║██║  ██║   ██║   ██╔══██╗██║██╔═══╝ 
-██║ ╚═╝ ██║██║██║ ╚████║██████╔╝   ██║   ██║  ██║██║██║     
-╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝     
-
-Web Portal v${version}
-Build Date: ${buildTime}
-%c🌐 Mindtrip Web System Initialized`,
-    'color: #3b82f6; font-family: monospace',
-    'color: #94a3b8; font-weight: bold'
+    `%c╔════════════════════════════════════════╗
+║  MINDTRIP WEB PORTAL v${version.padEnd(16, ' ')}║
+╚════════════════════════════════════════╝
+%c构建时间: ${buildTime}
+状态: 系统已初始化 ✓`,
+    'color: #64748b; font-family: monospace; font-size: 12px; line-height: 1.2',
+    'color: #94a3b8; font-size: 11px'
   );
 
   // 初始化组件适配器

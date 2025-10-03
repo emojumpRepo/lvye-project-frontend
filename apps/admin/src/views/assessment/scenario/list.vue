@@ -16,6 +16,7 @@ import {
   getAssessmentScenarioPage,
   getAssessmentScenarioSlots,
 } from '#/api/psychology/scenario';
+import ScenarioConfigDialog from '#/components/Dialog/ScenarioDialog/ScenarioConfigDialog.vue';
 import ScenarioDetailDialog from '#/components/Dialog/ScenarioDialog/ScenarioDetailDialog.vue';
 import ScenarioFormDialog from '#/components/Dialog/ScenarioDialog/ScenarioFormDialog.vue';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
@@ -36,6 +37,11 @@ const [CreateModal, createModalApi] = useVbenModal({
 // 详情弹窗（当前未使用 API，仅挂载组件）
 const [DetailModal] = useVbenModal({
   connectedComponent: ScenarioDetailDialog,
+});
+
+// 配置弹窗
+const [ConfigModal, configModalApi] = useVbenModal({
+  connectedComponent: ScenarioConfigDialog,
 });
 
 // ============== 表格配置 ==============
@@ -93,7 +99,9 @@ async function handleEdit(row: AssessmentScenario) {
   }
 }
 
-// 查看详情（如需启用请在操作列解注释触发）
+function handleConfigResultRule(row: AssessmentScenario) {
+  configModalApi.setData({ scenario: row }).open();
+}
 
 // 删除场景
 async function handleDelete(row: AssessmentScenario) {
@@ -169,6 +177,11 @@ onMounted(() => {
                   onClick: () => handleEdit(row),
                 },
                 {
+                  label: '结果配置',
+                  type: 'link',
+                  onClick: () => handleConfigResultRule(row),
+                },
+                {
                   label: '删除',
                   type: 'link',
                   danger: true,
@@ -186,6 +199,7 @@ onMounted(() => {
       <!-- 弹窗组件 -->
       <CreateModal @success="handleRefresh" />
       <DetailModal />
+      <ConfigModal />
     </div>
   </div>
 </template>

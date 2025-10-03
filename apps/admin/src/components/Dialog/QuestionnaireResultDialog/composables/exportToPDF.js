@@ -14,7 +14,8 @@ let fontsLoaded = false;
 let fontLoadingPromise = null;
 
 // 外部字体CDN地址
-const VFS_FONTS_URL = 'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/vfs_fonts.js';
+const VFS_FONTS_URL =
+  'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/vfs_fonts.js';
 
 /**
  * 动态加载字体文件
@@ -36,7 +37,7 @@ function loadVfsFonts() {
       // 创建script标签动态加载字体
       const script = document.createElement('script');
       script.src = VFS_FONTS_URL;
-      script.onload = () => {
+      script.addEventListener('load', () => {
         try {
           // 检查全局变量是否存在
           if (window.vfs) {
@@ -50,13 +51,13 @@ function loadVfsFonts() {
         } catch (error) {
           reject(new Error(`字体初始化失败：${error.message}`));
         }
-      };
-      script.onerror = () => {
+      });
+      script.onError = () => {
         reject(new Error('字体文件加载失败：网络错误'));
       };
-      
+
       // 添加到head中开始加载
-      document.head.appendChild(script);
+      document.head.append(script);
     } catch (error) {
       reject(new Error(`字体加载异常：${error.message}`));
     }
@@ -69,12 +70,14 @@ function loadVfsFonts() {
  * 导出整体测评报告 PDF
  * 仅展示各问卷结果中的 reportContent 字段
  * @param {object} params 参数对象
+ * @param {object} params.assessmentSummary 测评总结数据
  * @param {Array<any>} params.questionnaireResult 问卷结果数据（AssessmentQuestionnaireResultVO[]）
  * @param {Array<any>} params.questionnaireAnswer 答题记录数据（不再展示，仅兼容入参）
  * @param {string|number|Date} params.completedTime 完成时间
  * @param {string} params.studentName 学生姓名
  */
 export async function exportQuestionnaireReportToPDF({
+  assessmentSummary,
   questionnaireResult,
   questionnaireAnswer, // QuestionnaireAnswerItem[]：包含每个问卷的题目与答案
   completedTime,
@@ -109,6 +112,9 @@ export async function exportQuestionnaireReportToPDF({
           alignment: 'center',
           margin: [0, 0, 0, 20],
         },
+        // 测评总结
+        ...generateAssessmentSummaryContent(assessmentSummary),
+
         // 问卷结果报告（遍历问卷数组/单个问卷），并在每个问卷后附上作答记录
         ...generateQuestionnaireReportContents(
           questionnaireResult,
@@ -125,6 +131,10 @@ export async function exportQuestionnaireReportToPDF({
           fontSize: 16,
           bold: true,
           color: '#1966FF',
+        },
+        answerSubheader: {
+          fontSize: 14,
+          bold: true,
         },
         tableHeader: {
           bold: true,
@@ -165,6 +175,11 @@ export async function exportQuestionnaireReportToPDF({
           color: '#666',
           margin: [0, 7, 0, 5],
         },
+        summaryContent: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 0, 0, 15],
+        },
       },
       footer(currentPage, pageCount) {
         return {
@@ -185,14 +200,14 @@ export async function exportQuestionnaireReportToPDF({
     message.success('PDF 导出成功');
   } catch (error) {
     console.error('PDF 导出失败:', error);
-    
+
     // 根据错误类型提供不同的用户提示
     if (error.message && error.message.includes('字体')) {
       message.error('字体加载失败，请检查网络连接后重试');
     } else {
       message.error('PDF 导出失败，请重试');
     }
-    
+
     throw error;
   }
 }
@@ -258,12 +273,14 @@ function generateQuestionnaireReportContents(
       questionnaireAnswerItems,
     );
     if (relatedAnswerItem) {
-      contents.push({
-        text: '作答记录',
-        style: 'subheader',
-        margin: [0, 6, 0, 6],
-      });
-      contents.push(...generateAnswerSection(relatedAnswerItem));
+      contents.push(
+        {
+          text: '作答记录',
+          style: 'answerSubheader',
+          margin: [0, 6, 0, 6],
+        },
+        ...generateAnswerSection(relatedAnswerItem),
+      );
     }
   });
 
@@ -338,9 +355,9 @@ function generateDimensionResults(questionnaireResults) {
       // 创建包含维度信息和状态的表格行
       const dimensionRow = [];
 
-      // 左侧：维度名称和分数
+      // 左侧：维度名称和等级
       dimensionRow.push({
-        text: `${index + 1}. ${dimension.dimensionName || dimension.name || '未知维度'}（${dimension.score || 0}分）`,
+        text: `${index + 1}. ${dimension.dimensionName || dimension.name || '未知维度'}（${dimension.level}）`,
         style: 'dimensionHeader',
       });
 
@@ -365,26 +382,10 @@ function generateDimensionResults(questionnaireResults) {
         margin: [0, 0, 0, 5],
       });
 
-      if (dimension.studentComment) {
-        content.push(
-          {
-            text: `(1) 学生自评`,
-            style: {
-              fontSize: 12,
-              bold: true,
-            },
-          },
-          {
-            text: `${dimension.studentComment}`,
-            style: 'dimensionContent',
-          },
-        );
-      }
-
       if (dimension.teacherComment) {
         content.push(
           {
-            text: `(2) 教师评价`,
+            text: `教师建议：`,
             style: {
               fontSize: 12,
               bold: true,
@@ -492,7 +493,7 @@ function generateAnswerSection(answerItem) {
             {
               text: `第${index + 1}题：${q.title || ''}`,
               style: 'questionText',
-              margin: [0, 0, 10, 5],
+              margin: [0, 0, 0, 5],
             },
             {
               text: `得分：${q && q.score ? q.score : 0}`,
@@ -519,6 +520,11 @@ function generateAnswerSection(answerItem) {
   return content;
 }
 
+/**
+ * 获取题目答案显示文本
+ * @param {*} question 题目
+ * @returns 题目答案显示文本
+ */
 function getDisplayAnswerForQuestion(question) {
   if (!question || !question.answer) return '未作答';
   if (question.type === 'checkbox') {
@@ -532,132 +538,6 @@ function getDisplayAnswerForQuestion(question) {
     );
   }
   return formatAnswer(question.answer);
-}
-
-function _htmlToPlainText(html) {
-  if (!html || typeof html !== 'string') return '';
-  return html
-    .replaceAll(/<br\s*\/?>/gi, '\n')
-    .replaceAll(/<p\b[^>]*>/gi, '')
-    .replaceAll(/<\/p>/gi, '\n')
-    .replaceAll(/<li\b[^>]*>/gi, '• ')
-    .replaceAll(/<\/li>/gi, '\n')
-    .replaceAll(/<ul\b[^>]*>|<\/ul>/gi, '')
-    .replaceAll(/<ol\b[^>]*>|<\/ol>/gi, '')
-    .replaceAll(/<h[1-6]\b[^>]*>/gi, '')
-    .replaceAll(/<\/h[1-6]>/gi, '\n')
-    .replaceAll(/<[^>]+>/g, '')
-    .replaceAll(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-/**
- * 生成答题记录内容
- */
-function _generateAnswerRecords(questionnaireAnswer) {
-  if (!questionnaireAnswer || questionnaireAnswer.length === 0) {
-    return [
-      {
-        text: '暂无答题记录',
-        italic: true,
-        color: '#666',
-        margin: [0, 0, 0, 20],
-      },
-    ];
-  }
-
-  const content = [];
-
-  // 展开新结构：QuestionnaireAnswerItem[] -> Question[]
-  const allQuestions = questionnaireAnswer
-    .flatMap((qa) => (Array.isArray(qa.answers) ? qa.answers : []))
-    .filter(Boolean);
-
-  function getDisplayAnswer(question) {
-    if (!question || !question.answer) return '未作答';
-    if (question.type === 'checkbox') {
-      return (
-        question.answer
-          .split(/[,，]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .map((s) => formatAnswer(s))
-          .join('，') || '未作答'
-      );
-    }
-    return formatAnswer(question.answer);
-  }
-
-  // 统计信息
-  const totalScore = allQuestions.reduce(
-    (sum, q) => sum + (Number(q.score) || 0),
-    0,
-  );
-  const totalCount = allQuestions.length;
-  const answeredCount = allQuestions.filter(
-    (q) => typeof q.answer === 'string' && q.answer.trim() !== '',
-  ).length;
-  const unansweredCount = totalCount - answeredCount;
-
-  content.push({
-    table: {
-      widths: ['25%', '25%', '25%', '25%'],
-      body: [
-        [
-          { text: '总分', style: 'tableHeader' },
-          { text: '答题数', style: 'tableHeader' },
-          { text: '已答题', style: 'tableHeader' },
-          { text: '未答题', style: 'tableHeader' },
-        ],
-        [
-          { text: totalScore.toString(), style: 'tableCell' },
-          { text: totalCount.toString(), style: 'tableCell' },
-          { text: answeredCount.toString(), style: 'tableCell' },
-          { text: unansweredCount.toString(), style: 'tableCell' },
-        ],
-      ],
-    },
-    margin: [0, 0, 0, 20],
-  });
-
-  // 详细答题记录
-  allQuestions.forEach((q, index) => {
-    const questionNumber = index + 1;
-    const displayAnswer = getDisplayAnswer(q);
-
-    content.push({
-      table: {
-        widths: ['90%', '10%'],
-        body: [
-          [
-            {
-              text: `第${questionNumber}题：${q.title || ''}`,
-              style: 'questionText',
-              margin: [0, 0, 10, 5],
-            },
-            {
-              text: `得分：${q && q.score ? q.score : 0}`,
-              style: 'scoreText',
-              margin: [0, 0, 0, 10],
-              alignment: 'right',
-            },
-          ],
-          [
-            {
-              text: `答案：${displayAnswer}`,
-              style: 'answerText',
-              colSpan: 2,
-            },
-            {},
-          ],
-        ],
-      },
-      layout: 'noBorders',
-      margin: [0, 0, 0, 10],
-    });
-  });
-
-  return content;
 }
 
 /**
@@ -674,4 +554,96 @@ export function formatAnswer(answer) {
     .replaceAll(/&ge;|&geq;/g, '≥')
     .replaceAll('&equals;', '=')
     .replaceAll('&#61;', '=');
+}
+
+/**
+ * 生成测评总结内容
+ * @param {object} assessmentSummary 测评总结数据
+ * @returns {Array} PDF内容数组
+ */
+function generateAssessmentSummaryContent(assessmentSummary) {
+  if (!assessmentSummary) {
+    return [
+      {
+        text: '暂无测评总结',
+        italic: true,
+        color: '#666',
+        margin: [0, 0, 0, 20],
+      },
+    ];
+  }
+
+  const content = [];
+
+  // 测评总结标题
+  content.push({
+    text: '测评总结',
+    style: 'subheader',
+  });
+
+  // 风险等级名称
+  if (assessmentSummary.riskLevelName) {
+    content.push({
+      text: `风险等级：${assessmentSummary.riskLevelName}`,
+      style: 'dimensionContent',
+      bold: true,
+    });
+  }
+
+  // 评估标准
+  if (assessmentSummary.criteria) {
+    content.push(
+      {
+        text: '维度：',
+        style: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 0, 0, 5],
+        },
+      },
+      {
+        text: assessmentSummary.criteria,
+        style: 'dimensionContent',
+      },
+    );
+  }
+
+  // 评估结果
+  if (assessmentSummary.evaluation) {
+    content.push(
+      {
+        text: '测评结果：',
+        style: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 0, 0, 5],
+        },
+      },
+      {
+        text: assessmentSummary.evaluation,
+        style: 'dimensionContent',
+      },
+    );
+  }
+
+  // 干预建议
+  if (assessmentSummary.suggestion) {
+    content.push(
+      {
+        text: '建议：',
+        style: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+      },
+      {
+        text: assessmentSummary.suggestion,
+        style: 'dimensionContent',
+        margin: [0, 0, 0, 30],
+      },
+    );
+  }
+
+  return content;
 }
