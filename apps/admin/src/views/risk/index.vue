@@ -265,7 +265,7 @@ function refresh() {
       </template>
     </Grid>
 
-    <HandleCrisisEventModal />
+    <HandleCrisisEventModal @refresh="refresh" />
     <SystemSettingDrawer />
     <ReportFastDrawer @refresh="refresh" />
   </div>

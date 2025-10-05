@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { TagType } from '#/api/constants';
+
 import { computed } from 'vue';
 
 import { getTagByCategory, TAG_TYPE } from '#/api/constants';
@@ -16,13 +18,24 @@ import { getTagByCategory, TAG_TYPE } from '#/api/constants';
  * 2. 颜色对和颜色类型
  * tagLabel 可与 colorType 和 colorPair 任意组合
  */
-const props = defineProps<{
-  colorPair?: string[];
-  colorType?: keyof typeof TAG_TYPE;
-  dictValue?: number | string;
-  tagCategoryKey?: string;
-  tagLabel?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    colorPair?: string[];
+    colorType?: TagType;
+    dictValue?: number | string;
+    size?: 'middle' | 'small';
+    tagCategoryKey?: string;
+    tagLabel?: string;
+  }>(),
+  {
+    colorPair: () => [],
+    colorType: 'default',
+    dictValue: undefined,
+    size: 'small',
+    tagCategoryKey: undefined,
+    tagLabel: '未知',
+  },
+);
 
 /**
  * 根据标签类别和值获取标签
@@ -53,7 +66,7 @@ const computedColorPair = computed(() => {
  */
 const computedTagType = computed(() => {
   if (props.colorType) {
-    return TAG_TYPE[props.colorType as keyof typeof TAG_TYPE];
+    return TAG_TYPE[props.colorType];
   }
   return null;
 });
@@ -78,7 +91,8 @@ const computedTagStyle = computed(() => {
 
 <template>
   <span
-    class="box-border whitespace-nowrap rounded-md px-2 py-1 text-xs"
+    class="box-border whitespace-nowrap rounded-md py-1"
+    :class="[size === 'middle' ? 'px-3 text-sm' : 'px-2 text-xs']"
     :style="computedTagStyle"
   >
     {{ tag?.label || tagLabel || '未知' }}

@@ -26,6 +26,8 @@ const recordContent = computed(() => {
     )
   ) {
     return `${props.eventProcessingRecord.content}，原因：${props.eventProcessingRecord.reason}`;
+  } else if (props.eventProcessingRecord.action === 'STAGE_ASSESSMENT') {
+    return `${props.eventProcessingRecord.reason}`;
   }
   if (props.eventProcessingRecord.reason) {
     return `${props.eventProcessingRecord.content}，${props.eventProcessingRecord.reason}`;
@@ -52,7 +54,10 @@ const recordContent = computed(() => {
         </span>
       </div>
       <IconifyIcon
-        v-if="eventProcessingRecord.action !== 'ASSIGN_HANDLER'"
+        v-if="
+          eventProcessingRecord.action !== 'ASSIGN_HANDLER' &&
+          eventProcessingRecord.action !== 'STAGE_ASSESSMENT'
+        "
         icon="mynaui:edit"
         :color="isHover ? '#1966FF' : '#666666'"
         class="size-5 cursor-pointer"

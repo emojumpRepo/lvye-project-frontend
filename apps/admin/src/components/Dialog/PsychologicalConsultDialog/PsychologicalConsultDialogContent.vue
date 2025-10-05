@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import type { CoreAssessmentType, DetailedAssessmentType } from '#/api/consult';
+import type { AssessmentComfirmInfo } from '@vben/types';
 
-import { computed, nextTick, ref, watch } from 'vue';
+import type { CoreAssessmentType, DetailedAssessmentType } from '#/api/consult';
+import type { InterventionAssessmentReqVO } from '#/api/psychology';
+
+import { computed, ref } from 'vue';
 
 import { CommonDialogContent } from '#/components/Dialog/CommonDialog';
 
@@ -11,20 +14,23 @@ import InfoConfirm from './components/InfoConfirm.vue';
 
 const props = withDefaults(
   defineProps<{
+    comfirmInfo: AssessmentComfirmInfo;
     loading?: boolean;
     step?: number; // 1-3
   }>(),
   {
     step: 1,
+    loading: false,
   },
 );
 
 const emit = defineEmits<{
   (e: 'next'): void;
   (e: 'prev'): void;
-  (e: 'publish'): void;
+  (e: 'publish', params: InterventionAssessmentReqVO): void;
 }>();
 
+// 步骤标题和描述
 const contentHeader: Record<number, { description: string; title: string }> = {
   1: { title: '信息确认', description: '请确认评估信息是否正确' },
   2: { title: '核心评估结论', description: '请对本次咨询进行标准化评估' },
@@ -37,21 +43,55 @@ const contentHeader: Record<number, { description: string; title: string }> = {
 const coreAssessmentRef = ref<InstanceType<typeof CoreAssessment>>();
 const detailedAssessmentRef = ref<InstanceType<typeof DetailedAssessment>>();
 
-const coreAssessment = ref<CoreAssessmentType>({
+// 核心评估数据
+const coreAssessmentData = ref<CoreAssessmentType>({
   issues: [],
-  recommendations: '',
-  riskLevel: '',
+  recommendation: 0,
+  riskLevel: 0,
 });
-const detailedAssessment = ref<DetailedAssessmentType>({
+// 详细评估数据
+const detailedAssessmentData = ref<DetailedAssessmentType>({
   report: '',
   file: undefined,
 });
+// 问题类型
+const availableIssues = ref<string[]>([
+  '学业压力',
+  '人际关系',
+  '情绪管理',
+  '家庭问题',
+  '自我认知',
+  '适应困难',
+]);
 
-const canNext = ref(false);
+/** 添加问题类型 */
+function handleAddNewIssue(name: string) {
+  if (name && !availableIssues.value.includes(name)) {
+    availableIssues.value.push(name);
+  }
+}
 
-// 仅用于“完成评估”时触发提交弹窗/逻辑，如未使用可移除
-// const isPublishOpen = ref(false);
+/**
+ * 是否可以下一步
+ */
+const canNext = computed(() => {
+  switch (props.step) {
+    case 1: {
+      return true;
+    }
+    case 2: {
+      return !!coreAssessmentRef.value?.validate();
+    }
+    case 3: {
+      return !!detailedAssessmentRef.value?.validate();
+    }
+    default: {
+      return false;
+    }
+  }
+});
 
+/** 下一步文案 */
 const nextText = computed(() => {
   if (props.step === 1) {
     return '确认，下一步';
@@ -62,80 +102,25 @@ const nextText = computed(() => {
   }
 });
 
-async function handleNext() {
-  if (props.step === 3) {
-    // 提交逻辑留空：父层自行处理（可在此发起请求）
-  } else {
-    emit('next');
-  }
-}
-
+/** 上一步触发 */
 function handlePrev() {
   emit('prev');
 }
 
-// 根据当前步骤重置/设置下一步可用性，避免沿用上一步的状态
-watch(
-  () => props.step,
-  async (v, _oldV) => {
-    switch (v) {
-      case 1: {
-        canNext.value = true;
-        break;
-      }
-      case 2: {
-        // 进入第2步先禁用“下一步”，待校验通过再放开，避免用户在渲染前连点进入下一步
-        canNext.value = false;
-        await nextTick();
-        const validator = coreAssessmentRef.value?.validate;
-        if (validator) {
-          const valid = validator();
-          canNext.value = !!valid;
-        }
-        break;
-      }
-      case 3: {
-        // 同理：进入第3步先禁用，待校验通过再启用
-        canNext.value = false;
-        await nextTick();
-        const validator = detailedAssessmentRef.value?.validate;
-        if (validator) {
-          const valid = validator();
-          canNext.value = !!valid;
-        } else {
-          canNext.value = false;
-        }
-        break;
-      }
-      default: {
-        canNext.value = true;
-      }
-    }
-  },
-  { immediate: true },
-);
-
-// Step 2: 实时校验
-watch(
-  coreAssessment,
-  () => {
-    if (props.step !== 2) return;
-    const validator = coreAssessmentRef.value?.validate;
-    canNext.value = validator ? !!validator() : false;
-  },
-  { deep: true },
-);
-
-// Step 3: 实时校验
-watch(
-  detailedAssessment,
-  () => {
-    if (props.step !== 3) return;
-    const validator = detailedAssessmentRef.value?.validate;
-    canNext.value = validator ? !!validator() : false;
-  },
-  { deep: true },
-);
+/** 下一步触发 */
+async function handleNext() {
+  if (props.step === 3) {
+    const params = {
+      riskLevel: coreAssessmentData.value.riskLevel,
+      problemTypes: coreAssessmentData.value.issues,
+      followUpSuggestion: coreAssessmentData.value.recommendation,
+      content: detailedAssessmentData.value.report || '',
+    };
+    emit('publish', params);
+  } else {
+    emit('next');
+  }
+}
 </script>
 
 <template>
@@ -154,22 +139,24 @@ watch(
     @next="handleNext"
   >
     <!-- Step 1: 确认信息 -->
-    <InfoConfirm
-      v-if="props.step === 1"
-      :core-assessment="coreAssessment"
-      :detailed-assessment="detailedAssessment"
-    />
+    <InfoConfirm v-if="props.step === 1" :comfirm-info="props.comfirmInfo" />
 
     <!-- Step 2: 核心评估结论（保持实例，避免跨步骤丢失状态） -->
     <KeepAlive v-else-if="props.step === 2">
-      <CoreAssessment ref="coreAssessmentRef" v-model="coreAssessment" />
+      <CoreAssessment
+        ref="coreAssessmentRef"
+        v-model="coreAssessmentData"
+        :available-issues="availableIssues"
+        @handle-add-new-issue="handleAddNewIssue"
+      />
     </KeepAlive>
 
     <!-- Step 3: 详细评估内容（保持实例，保留选择方式与已选文件） -->
     <KeepAlive v-else>
       <DetailedAssessment
         ref="detailedAssessmentRef"
-        v-model="detailedAssessment"
+        v-model="detailedAssessmentData"
+        :summary="coreAssessmentData"
       />
     </KeepAlive>
   </CommonDialogContent>

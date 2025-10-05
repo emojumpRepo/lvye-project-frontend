@@ -176,3 +176,17 @@ export const COUNSELING_STATUS = {
   CLOSED: 3, // 已闭环
   COMPLETED: 2, // 已完成
 };
+
+// 危机事件处理方式
+export const INTERVENTION_PROCESS_METHOD = {
+  INTERVIEW: 1, // 访谈评估
+  QUESTIONNAIRE: 2, // 量表评估
+  CONTINUTE: 3, // 持续关注
+  RESLOVE: 4, // 直接解决
+};
+
+// 评估来源
+export const EVALUATION_SOURCE = {
+  COUNSELING: 1, // 访谈评估
+  INTERVENTION: 2, // 危机干预
+};

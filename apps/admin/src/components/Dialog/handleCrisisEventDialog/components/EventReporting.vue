@@ -3,13 +3,10 @@ import type { CrisisEvent, CrisisEventRecord } from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
-
 import { Textarea as ATextarea, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { updateCrisisEventDescription } from '#/api/psychology/crisis';
-import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getDictLabel } from '#/utils/dict';
@@ -22,17 +19,16 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'reloadCrisisEvent', id: number): void;
+  (e: 'reloadCrisisEvent'): void;
   (e: 'setLoading', loading: boolean): void;
+  (
+    e: 'handleQuickAssign',
+    data: { content?: string; id?: number; recordId?: number; type: string },
+  ): void;
 }>();
 
 const eventDescription = ref('');
 const isEditingDescription = ref(false);
-
-const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
-  connectedComponent: EditEventRecordDialog,
-  destroyOnClose: true,
-});
 
 // 事件基本信息 - 合成一个 computed 处理
 const eventBaseInfo = computed(() => {
@@ -95,7 +91,7 @@ async function handleEditDescription() {
       eventDescription.value,
     );
     if (result) {
-      emit('reloadCrisisEvent', props.crisisEventDetail.id);
+      emit('reloadCrisisEvent');
       message.success('更新描述成功');
     } else {
       message.error('更新描述失败');
@@ -127,13 +123,18 @@ watch(
 
 /** 修改处理记录 */
 function handleEditEventRecord(record: CrisisEventRecord) {
-  editEventRecordApi
-    .setData({
-      id: record.id,
-      title: getDictLabel('crisis_event_action', record.action ?? '编辑记录'),
-      type: record.action,
-    })
-    .open();
+  if (!record.action) {
+    message.error('操作类型不存在');
+    return;
+  }
+
+  emit('handleQuickAssign', {
+    recordId: record.id,
+    type: record.action,
+    content: ['CHOOSE_PROCESS', 'REASSIGN_HANDLER'].includes(record.action)
+      ? record.reason
+      : record.content,
+  });
 }
 </script>
 
@@ -204,8 +205,6 @@ function handleEditEventRecord(record: CrisisEventRecord) {
         </div>
       </div>
     </div>
-
-    <EditEventRecordModal />
   </div>
 </template>
 

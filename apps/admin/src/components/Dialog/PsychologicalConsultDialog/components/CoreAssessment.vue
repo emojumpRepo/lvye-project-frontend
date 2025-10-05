@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CoreAssessmentType, RiskLevel } from '#/api/consult';
+import type { CoreAssessmentType } from '#/api/consult';
 
 import { computed, ref } from 'vue';
 
@@ -15,116 +15,110 @@ import icon_zixun from '#/static/icons/consulting/icon_zixun.svg';
 
 const props = withDefaults(
   defineProps<{
+    availableIssues: string[];
     modelValue?: CoreAssessmentType;
   }>(),
   {
     modelValue: () => ({
-      riskLevel: '',
+      riskLevel: 0,
       issues: [],
-      recommendations: '',
+      recommendation: 0,
     }),
   },
 );
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CoreAssessmentType): void;
+  (e: 'handleAddNewIssue', name: string): void;
 }>();
 
-const riskLevel = ref<CoreAssessmentType['riskLevel']>(
-  props.modelValue.riskLevel,
-);
-const selectedIssues = ref<string[]>([...props.modelValue.issues]);
-const selectedRecs = ref<string>(props.modelValue.recommendations);
+// --- pros数据绑定 ---
+const riskLevel = computed({
+  get: () => props.modelValue.riskLevel,
+  set: (val) =>
+    emit('update:modelValue', { ...props.modelValue, riskLevel: val }),
+});
 
-const builtinIssues = ref<string[]>([
-  '学业压力',
-  '人际关系',
-  '情绪管理',
-  '家庭问题',
-  '自我认知',
-  '适应困难',
-]);
+const selectedIssues = computed({
+  get: () => props.modelValue.issues,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, issues: val }),
+});
+
+const selectedRecs = computed({
+  get: () => props.modelValue.recommendation,
+  set: (val) =>
+    emit('update:modelValue', { ...props.modelValue, recommendation: val }),
+});
+
+// --- 组件内部 UI 状态 ---
 const customIssueInput = ref('');
 const showIssueInput = ref(false);
 
-interface RecOption {
-  desc: string;
-  icon: string;
-  key: string;
-  title: string;
-}
-
-const recOptions = ref<RecOption[]>([
+const recOptions = [
   {
-    key: 'consult',
+    key: 1,
     title: '需要持续咨询',
     desc: '建议安排后续咨询会面',
     icon: icon_zixun,
   },
   {
-    key: 'scale',
+    key: 2,
     title: '需要继续量表测评',
     desc: '建议安排后续咨询会面',
     icon: icon_test,
   },
   {
-    key: 'observe',
+    key: 3,
     title: '持续观察',
     desc: '建议安排后续咨询会面',
     icon: icon_guancha,
   },
   {
-    key: 'resolved',
+    key: 4,
     title: '问题基本解决',
     desc: '建议安排后续咨询会面',
     icon: icon_done,
   },
   {
-    key: 'transfer',
+    key: 5,
     title: '转介专业治疗',
     desc: '建议安排后续咨询会面',
     icon: icon_zhiliao,
   },
-]);
+];
 
-const riskSelected = computed(() => riskLevel.value);
-
-function sync() {
-  emit('update:modelValue', {
-    riskLevel: riskLevel.value,
-    issues: [...selectedIssues.value],
-    recommendations: selectedRecs.value,
-  });
-}
-
-function selectRisk(key: RiskLevel) {
+/** 选择风险等级 */
+function selectRisk(key: number) {
   riskLevel.value = key;
-  sync();
 }
 
+/** 切换问题类型 */
 function toggleIssue(name: string) {
-  const set = new Set(selectedIssues.value);
-  if (set.has(name)) set.delete(name);
-  else set.add(name);
-  selectedIssues.value = [...set];
-  sync();
+  const issues = new Set(selectedIssues.value);
+  issues.has(name) ? issues.delete(name) : issues.add(name);
+  selectedIssues.value = [...issues];
 }
 
+/** 新增问题类型 */
 function addIssue() {
   const name = customIssueInput.value.trim();
   if (!name) return;
-  if (!builtinIssues.value.includes(name)) builtinIssues.value.push(name);
-  if (!selectedIssues.value.includes(name)) selectedIssues.value.push(name);
+
+  emit('handleAddNewIssue', name);
+
+  if (!selectedIssues.value.includes(name)) {
+    selectedIssues.value = [...selectedIssues.value, name];
+  }
   customIssueInput.value = '';
   showIssueInput.value = false;
-  sync();
 }
 
-function selectRecommendation(key: string) {
+/** 选择后续建议 */
+function selectRecommendation(key: number) {
   selectedRecs.value = key;
-  sync();
 }
 
+/** 校验数据 */
 function validate() {
   if (!riskLevel.value) {
     return false;
@@ -145,7 +139,6 @@ defineExpose({
 
 <template>
   <div class="space-y-8">
-    <!-- 风险等级评估 -->
     <section>
       <LyLabel
         title="风险等级评估"
@@ -163,7 +156,7 @@ defineExpose({
           type="button"
           class="group flex w-full flex-col items-center rounded-xl border border-solid p-4 text-left transition-colors"
           :class="
-            riskSelected === opt.key
+            riskLevel === opt.key
               ? 'border-2 border-[#04DC70] bg-[#14E77E0D]'
               : '!border-[#F2F3F5] !bg-[#FFFFFF]'
           "
@@ -173,15 +166,14 @@ defineExpose({
             class="mb-3 inline-block size-3 rounded-full"
             :style="{ backgroundColor: opt.dot }"
           ></span>
-          <span class="text-[14px] font-medium text-black">{{
-            opt.title
-          }}</span>
+          <span class="text-[14px] font-medium text-black">
+            {{ opt.title }}
+          </span>
           <div class="text-[12px] text-[#979899]">{{ opt.desc }}</div>
         </button>
       </div>
     </section>
 
-    <!-- 问题类型识别 -->
     <section>
       <LyLabel
         title="问题类型识别"
@@ -192,7 +184,7 @@ defineExpose({
       />
       <div class="flex flex-wrap items-center gap-2">
         <button
-          v-for="name in builtinIssues"
+          v-for="name in availableIssues"
           :key="name"
           type="button"
           class="rounded-[6px] border px-[10px] py-[6px] text-[13px] font-medium transition-colors"
@@ -240,7 +232,6 @@ defineExpose({
       </div>
     </section>
 
-    <!-- 后续处理建议 -->
     <section>
       <LyLabel
         title="后续处理建议"
@@ -273,3 +264,4 @@ defineExpose({
     </section>
   </div>
 </template>
+vvv

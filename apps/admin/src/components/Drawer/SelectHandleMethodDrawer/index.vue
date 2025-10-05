@@ -8,7 +8,6 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { Textarea as ATextarea, message } from 'ant-design-vue';
 
 import { selectHandleMethod } from '#/api/psychology/risk';
-import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -17,9 +16,10 @@ import CrisisDirectSolveIcon from '../../../static/icons/crisis/crisis_direct_so
 import CrisisPsychologyIcon from '../../../static/icons/crisis/crisis_psychology_icon.png';
 import CrisisQuestionnaireEvalute from '../../../static/icons/crisis/crisis_questionnaire_evalute_icon.png';
 
+const emit = defineEmits(['reloadCrisisEvent']);
+
 const reason = ref(''); // 处理原因
 const currentMethodKey = ref<number>(0); // 当前处理方式
-const psychologicalConsultDialogOpen = ref(false);
 const crisisEventId = ref<number>();
 
 // 处理方法
@@ -75,8 +75,8 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
         message.error('请选择处理方式');
         return;
       }
-      // TODO 选择处理方式接口
       try {
+        selectedHandleMethodDrawerApi.lock();
         const response = await selectHandleMethod({
           id: crisisEventId.value,
           processMethod: currentMethodKey.value,
@@ -86,13 +86,15 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
           message.error('选择处理方式失败');
           return;
         }
+        emit('reloadCrisisEvent');
         message.success('选择处理方式成功');
+        selectedHandleMethodDrawerApi.close();
       } catch (error) {
         console.error('选择处理方式失败', error);
         message.error('选择处理方式失败');
+      } finally {
+        selectedHandleMethodDrawerApi.unlock();
       }
-
-      selectedHandleMethodDrawerApi.close();
     },
   },
 );
@@ -152,8 +154,6 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
         </div>
       </div>
     </div>
-
-    <PsychologicalConsultDialog v-model:open="psychologicalConsultDialogOpen" />
   </SelectHandleMethodDrawer>
 </template>
 

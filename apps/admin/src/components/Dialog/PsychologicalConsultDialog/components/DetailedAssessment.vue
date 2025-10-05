@@ -5,16 +5,14 @@ import type { CoreAssessmentType, DetailedAssessmentType } from '#/api/consult';
 
 import { ref, watch } from 'vue';
 
-import {
-  Radio as ARadio,
-  UploadDragger as AUpload,
-  message,
-} from 'ant-design-vue';
+import { Radio as ARadio } from 'ant-design-vue';
 
 import { riskOptions } from '#/api/consult';
 import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import LyUpload from '#/components/LyUpload/index.vue';
+import { getDictLabel } from '#/utils/dict';
 import { downloadPsychologicalReportTemplate } from '#/utils/export';
 
 const props = withDefaults(
@@ -25,9 +23,9 @@ const props = withDefaults(
   {
     modelValue: () => ({ report: '', file: undefined }),
     summary: () => ({
-      riskLevel: riskOptions[0]?.key || '',
+      riskLevel: riskOptions[0]?.key || 0,
       issues: ['人际关系'],
-      recommendations: '需要持续咨询',
+      recommendation: 1,
     }),
   },
 );
@@ -38,48 +36,10 @@ const emit = defineEmits<{
 
 type Method = 'free' | 'template';
 const method = ref<Method>('free');
-const freeText = ref(props.modelValue.report || '');
+const freeText = ref(props.modelValue.report || ''); // 自由输入
+const fileList = ref<UploadProps['fileList']>([]); // 上传文件列表
 
-const fileList = ref<UploadProps['fileList']>([]);
-
-function beforeUpload(file: File) {
-  const name = (file?.name || '').toLowerCase();
-  const isAllowed =
-    name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx');
-  if (!isAllowed) {
-    message.error('仅支持 DOC、DOCX、PDF 格式');
-    return AUpload.LIST_IGNORE as unknown as boolean;
-  }
-  const isLt10M = file.size / 1024 / 1024 < 10;
-  if (!isLt10M) {
-    message.error('文件大小不能超过 10MB');
-    return AUpload.LIST_IGNORE as unknown as boolean;
-  }
-  // 使用受控列表，构造 UploadFile 对象，确保 originFileObj 可用
-  fileList.value = [
-    {
-      uid: String(Date.now()),
-      name: file.name,
-      status: 'done',
-      originFileObj: file,
-    } as any,
-  ];
-  sync();
-  return false;
-}
-
-function onRemove() {
-  fileList.value = [];
-  sync();
-}
-
-function validate() {
-  if (method.value === 'free') {
-    return !!freeText.value.trim();
-  }
-  return !!fileList.value?.length;
-}
-
+/** 同步数据 */
 function sync() {
   emit('update:modelValue', {
     report: freeText.value,
@@ -88,19 +48,24 @@ function sync() {
 }
 
 watch(freeText, sync);
-watch(
-  () => method.value,
-  () => {
-    // 切换方式时，清空另一种方式的值，避免脏数据
-    if (method.value === 'free') {
-      fileList.value = [];
-    } else {
-      freeText.value = '';
-    }
-    // 触发一次同步与父层实时校验
-    sync();
-  },
-);
+
+/** 校验数据 */
+function validate() {
+  if (method.value === 'free') {
+    return !!freeText.value.trim();
+  }
+  return !!fileList.value?.length;
+}
+
+/** 切换评估方式 */
+function handleSelectedChange() {
+  if (method.value === 'free') {
+    fileList.value = [];
+  } else {
+    freeText.value = '';
+  }
+  sync();
+}
 
 defineExpose({
   validate,
@@ -120,10 +85,12 @@ defineExpose({
       <section class="section-container">
         <div>
           <span class="desc-title">风险等级：</span>
-          <span>{{
-            riskOptions.find((opt) => opt.key === props.summary.riskLevel)
-              ?.title || '—'
-          }}</span>
+          <span>
+            {{
+              riskOptions.find((opt) => opt.key === props.summary.riskLevel)
+                ?.title || '—'
+            }}
+          </span>
         </div>
         <div>
           <span class="desc-title">问题类型：</span>
@@ -131,7 +98,14 @@ defineExpose({
         </div>
         <div>
           <span class="desc-title">后续建议：</span>
-          <span>{{ props.summary.recommendations || '—' }}</span>
+          <span>
+            {{
+              getDictLabel(
+                'follow_up_suggestion',
+                props.summary.recommendation,
+              ) || '—'
+            }}
+          </span>
         </div>
       </section>
     </div>
@@ -146,7 +120,7 @@ defineExpose({
         custom-title-class="text-[16px] font-semibold"
       />
       <div class="mb-2 flex items-center gap-6 text-[14px]">
-        <ARadio.Group v-model:value="method">
+        <ARadio.Group v-model:value="method" @change="handleSelectedChange">
           <ARadio value="free">自由输入</ARadio>
           <ARadio value="template">模板上传</ARadio>
         </ARadio.Group>
@@ -193,29 +167,7 @@ defineExpose({
             margin-bottom-class="mb-3"
             custom-title-class="text-[16px] font-semibold"
           />
-
-          <AUpload
-            :before-upload="beforeUpload"
-            :file-list="fileList"
-            :max-count="1"
-            accept=".doc,.docx,.pdf"
-            @remove="onRemove"
-          >
-            <div class="flex flex-col items-center justify-center">
-              <img
-                src="../../../../static/icons/consulting/upload.svg"
-                alt="上传"
-                class="mb-1 h-[54px] w-[54px]"
-              />
-              <div class="mb-2 text-[14px] font-medium">
-                将评估文件拖拽到此处或，
-                <span class="text-[#04DC70]">点击上传</span>
-              </div>
-              <div class="mb-2 text-[12px] text-[#969997]">
-                支持 DOC、DOCX、PDF 格式，最大10MB
-              </div>
-            </div>
-          </AUpload>
+          <LyUpload v-model:file-list="fileList" @sync="sync" @remove="sync" />
         </section>
       </div>
     </section>

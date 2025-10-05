@@ -1,5 +1,11 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import type {
+  AssessmentComfirmInfo,
+  ConsultInfo,
+  StudentInfo,
+} from '@vben/types';
+
+import { onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -7,49 +13,28 @@ import dayjs from 'dayjs';
 
 import LyLabel from '#/components/LyLabel/index.vue';
 
-type StudentInfo = {
-  className: string;
-  name: string;
-  sno: string;
-};
+const props = defineProps<{
+  comfirmInfo: AssessmentComfirmInfo;
+}>();
 
-type ConsultInfo = {
-  counselor: string;
-  time: Date | string;
-  type: string;
-};
-
-const loading = ref(false);
-const student = ref<StudentInfo>({ name: '', className: '', sno: '' });
-const consult = ref<ConsultInfo>({
-  time: dayjs().toDate(),
-  counselor: '',
-  type: '',
+// const loading = ref(false);
+const studentInfo = ref<StudentInfo>({
+  studentName: '',
+  className: '',
+  studentNo: '',
+});
+const consultInfo = ref<ConsultInfo>({
+  consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+  consultant: '',
+  consultType: '',
 });
 
 onMounted(() => {
-  loading.value = true;
-  // 模拟请求接口
-  setTimeout(() => {
-    student.value = {
-      name: '小明',
-      className: '高一（3）班',
-      sno: '1524115252255',
-    };
-    consult.value = {
-      time: dayjs('2025-01-01 12:00:10').toDate(),
-      type: '学业压力咨询',
-      counselor: '李老师',
-    };
-    loading.value = false;
-  }, 200);
+  if (props.comfirmInfo) {
+    studentInfo.value = props.comfirmInfo.studentInfo;
+    consultInfo.value = props.comfirmInfo.consultInfo;
+  }
 });
-
-const consultTimeText = computed(() =>
-  consult.value.time
-    ? dayjs(consult.value.time).format('YYYY-MM-DD HH:mm:ss')
-    : '—',
-);
 </script>
 
 <template>
@@ -75,15 +60,15 @@ const consultTimeText = computed(() =>
       <section class="section-container">
         <div>
           <span class="desc-title">学生姓名：</span>
-          <span>{{ student.name || '—' }}</span>
+          <span>{{ studentInfo.studentName || '—' }}</span>
         </div>
         <div>
           <span class="desc-title">所属班级：</span>
-          <span>{{ student.className || '—' }}</span>
+          <span>{{ studentInfo.className || '—' }}</span>
         </div>
         <div>
           <span class="desc-title">学号信息：</span>
-          <span>{{ student.sno || '—' }}</span>
+          <span>{{ studentInfo.studentNo || '—' }}</span>
         </div>
       </section>
     </div>
@@ -94,15 +79,15 @@ const consultTimeText = computed(() =>
       <section class="section-container">
         <div>
           <span class="desc-title">访谈时间：</span>
-          <span>{{ consultTimeText }}</span>
+          <span>{{ consultInfo.consultTime || '—' }}</span>
         </div>
         <div>
           <span class="desc-title">访谈类型：</span>
-          <span>{{ consult.type || '—' }}</span>
+          <span>{{ consultInfo.consultType || '—' }}</span>
         </div>
         <div>
           <span class="desc-title">访谈老师：</span>
-          <span>{{ consult.counselor || '—' }}</span>
+          <span>{{ consultInfo.consultant || '—' }}</span>
         </div>
       </section>
     </div>

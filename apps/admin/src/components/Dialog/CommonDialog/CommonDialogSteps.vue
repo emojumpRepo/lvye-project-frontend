@@ -8,7 +8,7 @@ import LyTag from '#/components/LyTag/index.vue';
 type StepItem = {
   description?: string;
   done?: boolean;
-  key?: number | string;
+  key?: number;
   label: string;
 };
 
@@ -27,15 +27,20 @@ const props = withDefaults(
   },
 );
 
-const currentIndex = computed(() => Math.max(0, (props.currentStep || 1) - 1));
+// 索引从0开始
+const currentIndex = computed(() => {
+  const index =
+    props.steps.findIndex((step) => step.key === props.currentStep) + 1;
+  return index || Math.max(0, props.currentStep || 1);
+});
 
 const items = computed(() =>
-  (props.steps || []).map((s, idx) => ({
+  props.steps.map((s, idx) => ({
+    key: s.key,
     index: idx + 1,
     label: s.label,
     description: s.description,
-    active: (props.currentStep || 1) === idx + 1,
-    done: s.done || (props.currentStep || 1) > idx + 1,
+    done: s.done ?? (props.currentStep || 1) > idx + 1,
   })),
 );
 </script>
@@ -78,13 +83,11 @@ const items = computed(() =>
               >
                 {{ it.description }}
               </div>
-              <slot name="event" :index="it.index"></slot>
+              <slot name="event" :index="it.index" :key="it.key"></slot>
             </div>
           </template>
         </ASteps.Step>
       </ASteps>
-
-      <!-- <slot name="event"></slot> -->
     </div>
   </div>
 </template>

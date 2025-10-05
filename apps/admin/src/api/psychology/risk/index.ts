@@ -13,6 +13,16 @@ export interface ReportCrisisEventReqVO {
   sourceType: number;
 }
 
+// 创建干预评估请求参数
+export interface InterventionAssessmentReqVO {
+  content: string;
+  followUpSuggestion: number;
+  id?: number;
+  problemTypes: string[];
+  riskLevel: number;
+  summary?: string;
+}
+
 /** 上报危机事件 */
 export function reportCrisisEvent(data: ReportCrisisEventReqVO) {
   return requestClient.post<number>(
@@ -79,5 +89,35 @@ export function selectHandleMethod({
   return requestClient.put<boolean>(
     `/psychology/intervention/event/${id}/process`,
     { processMethod, processReason },
+  );
+}
+
+/** 更新事件处理记录 */
+export function updateEventRecord({
+  id,
+  content,
+}: {
+  content: string;
+  id: number;
+}) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/process/${id}/update`,
+    { id, content },
+  );
+}
+
+/** 提交阶段性评估 */
+export function submitStageAssessment(params: InterventionAssessmentReqVO) {
+  return requestClient.post<boolean>(
+    `/psychology/intervention/event/${params.id}/stage-assessment`,
+    { ...params },
+  );
+}
+
+/** 结案 */
+export function closeEvent(params: InterventionAssessmentReqVO) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${params.id}/close`,
+    { ...params },
   );
 }

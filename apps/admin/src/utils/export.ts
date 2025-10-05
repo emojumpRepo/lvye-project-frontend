@@ -6,14 +6,18 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import {
   AlignmentType,
+  BorderStyle,
   Document,
   HeadingLevel,
+  HeightRule,
   Packer,
   Paragraph,
   Table,
   TableCell,
   TableRow,
   TextRun,
+  UnderlineType,
+  VerticalAlign,
   WidthType,
 } from 'docx';
 import * as ExcelJS from 'exceljs';
@@ -361,32 +365,72 @@ export async function downloadTemplate() {
 
 /** 下载心理评估报告模板 */
 export async function downloadPsychologicalReportTemplate() {
+  const createContentBlock = () =>
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              children: [
+                new Paragraph({
+                  text: '',
+                  indent: { left: 300, right: 300 },
+                  spacing: { before: 200, after: 200 },
+                }),
+              ],
+              borders: {
+                top: { style: BorderStyle.SINGLE, size: 6, color: 'auto' },
+                bottom: { style: BorderStyle.SINGLE, size: 6, color: 'auto' },
+                left: { style: BorderStyle.SINGLE, size: 6, color: 'auto' },
+                right: { style: BorderStyle.SINGLE, size: 6, color: 'auto' },
+              },
+            }),
+          ],
+        }),
+      ],
+    });
+
+  // 创建一个可重用的函数来生成加粗的章节标题
+  const createSectionHeading = (text: string) =>
+    new Paragraph({
+      children: [
+        new TextRun({
+          text,
+          bold: true, // 加粗
+          size: 28, // 字体大小 (14pt)
+        }),
+      ],
+      heading: HeadingLevel.HEADING_2,
+      spacing: {
+        before: 800,
+        after: 300,
+      },
+    });
+
   // 创建文档
   const doc = new Document({
     sections: [
       {
         properties: {},
         children: [
-          // 标题
           new Paragraph({
-            text: '心理评估报告模板',
+            children: [
+              new TextRun({
+                text: '心理评估报告模板',
+                bold: true,
+                size: 44, // 字体大小 (22pt)
+              }),
+            ],
             heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
             spacing: {
-              after: 400,
+              after: 800,
             },
           }),
 
-          // 基本信息表格
-          new Paragraph({
-            text: '一、基本信息',
-            heading: HeadingLevel.HEADING_2,
-            spacing: {
-              before: 400,
-              after: 200,
-            },
-          }),
-
+          // --- 基本信息 ---
+          createSectionHeading('一、基本信息'),
           new Table({
             width: {
               size: 100,
@@ -394,360 +438,458 @@ export async function downloadPsychologicalReportTemplate() {
             },
             rows: [
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '姓名' })],
+                    children: [
+                      new Paragraph({
+                        text: '姓名',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 20, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 30, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '性别' })],
+                    children: [
+                      new Paragraph({
+                        text: '性别',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 20, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 30, type: WidthType.PERCENTAGE },
                   }),
                 ],
               }),
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '年龄' })],
+                    children: [
+                      new Paragraph({
+                        text: '年龄',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '年级' })],
+                    children: [
+                      new Paragraph({
+                        text: '年级',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                 ],
               }),
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '班级' })],
+                    children: [
+                      new Paragraph({
+                        text: '班级',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '评估日期' })],
+                    children: [
+                      new Paragraph({
+                        text: '评估日期',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                 ],
               }),
             ],
           }),
 
-          // 评估目的
+          // --- 评估目的 ---
+          createSectionHeading('二、评估目的'),
           new Paragraph({
-            text: '二、评估目的',
-            heading: HeadingLevel.HEADING_2,
+            children: [new TextRun({ text: '本次心理评估的主要目的是：' })],
             spacing: {
-              before: 400,
-              after: 200,
+              after: 300,
             },
           }),
+          createContentBlock(),
 
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: '本次心理评估的主要目的是：',
-                bold: true,
-              }),
-            ],
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          // 评估工具
-          new Paragraph({
-            text: '三、评估工具',
-            heading: HeadingLevel.HEADING_2,
-            spacing: {
-              before: 400,
-              after: 200,
-            },
-          }),
-
+          // --- 评估工具 ---
+          createSectionHeading('三、评估工具'),
           new Table({
-            width: {
-              size: 100,
-              type: WidthType.PERCENTAGE,
-            },
+            width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '序号' })],
+                    children: [
+                      new Paragraph({
+                        text: '序号',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '量表名称' })],
+                    children: [
+                      new Paragraph({
+                        text: '量表名称',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 35, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '适用年龄' })],
+                    children: [
+                      new Paragraph({
+                        text: '适用年龄',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 25, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '评估维度' })],
+                    children: [
+                      new Paragraph({
+                        text: '评估维度',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 25, type: WidthType.PERCENTAGE },
                   }),
                 ],
               }),
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '1' })],
+                    children: [
+                      new Paragraph({
+                        text: '1',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                 ],
               }),
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '2' })],
+                    children: [
+                      new Paragraph({
+                        text: '2',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                 ],
               }),
             ],
           }),
 
-          // 评估结果
+          // --- 评估结果 ---
+          createSectionHeading('四、评估结果'),
           new Paragraph({
-            text: '四、评估结果',
-            heading: HeadingLevel.HEADING_2,
-            spacing: {
-              before: 400,
-              after: 200,
-            },
+            children: [new TextRun({ text: '4.1 量表得分情况', size: 24 })],
+            spacing: { after: 300 },
           }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: '4.1 量表得分情况',
-                bold: true,
-              }),
-            ],
-            spacing: {
-              after: 200,
-            },
-          }),
-
           new Table({
-            width: {
-              size: 100,
-              type: WidthType.PERCENTAGE,
-            },
+            width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '量表名称' })],
+                    children: [
+                      new Paragraph({
+                        text: '量表名称',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 30, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '维度' })],
+                    children: [
+                      new Paragraph({
+                        text: '维度',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 25, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '原始分' })],
+                    children: [
+                      new Paragraph({
+                        text: '原始分',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '标准分' })],
+                    children: [
+                      new Paragraph({
+                        text: '标准分',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '等级' })],
+                    children: [
+                      new Paragraph({
+                        text: '等级',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                 ],
               }),
               new TableRow({
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                   new TableCell({
-                    children: [new Paragraph({ text: '_________________' })],
+                    children: [
+                      new Paragraph({
+                        text: '',
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    verticalAlign: VerticalAlign.CENTER,
                   }),
                 ],
               }),
             ],
           }),
-
           new Paragraph({
+            children: [new TextRun({ text: '4.2 结果分析', size: 24 })],
+            spacing: { before: 600, after: 200 },
+          }),
+          createContentBlock(),
+
+          // --- 建议与干预 ---
+          createSectionHeading('五、建议与干预'),
+          new Paragraph({
+            children: [new TextRun({ text: '5.1 教育建议', size: 24 })],
+            spacing: { after: 200 },
+          }),
+          createContentBlock(),
+          new Paragraph({
+            children: [new TextRun({ text: '5.2 干预措施', size: 24 })],
+            spacing: { before: 600, after: 200 },
+          }),
+          createContentBlock(),
+
+          // --- 评估师签名 ---
+          createSectionHeading(''),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 200 },
             children: [
+              new TextRun('评估师：'),
               new TextRun({
-                text: '4.2 结果分析',
-                bold: true,
+                text: '\u00A0'.repeat(30),
+                underline: {
+                  type: UnderlineType.SINGLE,
+                },
+              }),
+              new TextRun('     '),
+              new TextRun('日期：'),
+              new TextRun({
+                text: '\u00A0'.repeat(30),
+                underline: {
+                  type: UnderlineType.SINGLE,
+                },
               }),
             ],
-            spacing: {
-              before: 400,
-              after: 200,
-            },
           }),
-
           new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          // 建议与干预
-          new Paragraph({
-            text: '五、建议与干预',
-            heading: HeadingLevel.HEADING_2,
-            spacing: {
-              before: 400,
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 200 },
             children: [
+              new TextRun('审核人：'),
               new TextRun({
-                text: '5.1 教育建议',
-                bold: true,
+                text: '\u00A0'.repeat(30),
+                underline: {
+                  type: UnderlineType.SINGLE,
+                },
+              }),
+              new TextRun('     '),
+              new TextRun('日期：'),
+              new TextRun({
+                text: '\u00A0'.repeat(30),
+                underline: {
+                  type: UnderlineType.SINGLE,
+                },
               }),
             ],
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: '5.2 干预措施',
-                bold: true,
-              }),
-            ],
-            spacing: {
-              before: 400,
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '_________________________________________________________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          // 评估师签名
-          new Paragraph({
-            text: '六、评估师签名',
-            heading: HeadingLevel.HEADING_2,
-            spacing: {
-              before: 400,
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '评估师：_________________    日期：_________________',
-            spacing: {
-              after: 200,
-            },
-          }),
-
-          new Paragraph({
-            text: '审核人：_________________    日期：_________________',
-            spacing: {
-              after: 200,
-            },
           }),
         ],
       },
@@ -756,9 +898,7 @@ export async function downloadPsychologicalReportTemplate() {
 
   // 生成文档并下载
   const blob = await Packer.toBlob(doc);
-  const fileName = `心理评估报告模板_${new Date().toISOString().slice(0, 10)}.docx`;
-
-  // 创建下载链接
+  const fileName = `心理评估报告模板.docx`;
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
