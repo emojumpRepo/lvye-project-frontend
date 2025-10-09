@@ -84,11 +84,13 @@ const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
 });
 
 // 跳过处理方式
-const skipedHandler = computed(
-  () =>
-    crisisEventDetail.value?.processMethod === 3 ||
-    crisisEventDetail.value?.processMethod === 4,
-);
+const skipedHandler = computed(() => {
+  return crisisEventDetail.value?.latestAssessment
+    ? crisisEventDetail.value.latestAssessment.followUpSuggestion === 3 ||
+        crisisEventDetail.value.latestAssessment.followUpSuggestion === 4
+    : crisisEventDetail.value?.processMethod === 3 ||
+        crisisEventDetail.value?.processMethod === 4;
+});
 
 // 步骤条
 const crisisEventHandlingSteps = computed(() => {
@@ -345,7 +347,7 @@ async function closeInterventionAssessment(
               <!-- step2: 分配负责人 -->
               <template v-if="key === 2">
                 <div class="my-2 flex flex-col">
-                  <div v-if="currentStep >= 3" class="flex w-full gap-1">
+                  <div v-if="currentStep >= 2" class="flex w-full gap-1">
                     <StepEventCard
                       :name="crisisEventDetail.handlerName"
                       :time="crisisEventDetail.updateTime"
@@ -364,7 +366,7 @@ async function closeInterventionAssessment(
                   </div>
 
                   <LyButton
-                    v-if="currentStep === 2"
+                    v-if="currentStep === 1"
                     type="primary"
                     ghost
                     size="small"
@@ -384,7 +386,7 @@ async function closeInterventionAssessment(
               <template v-if="key === 3">
                 <div class="my-2 flex w-full flex-col">
                   <div
-                    v-if="currentStep >= 4"
+                    v-if="currentStep >= 3"
                     class="flex w-full flex-col gap-2"
                   >
                     <div class="flex-none">
@@ -401,7 +403,7 @@ async function closeInterventionAssessment(
                     /> -->
                   </div>
                   <LyButton
-                    v-if="currentStep === 3"
+                    v-if="currentStep === 2"
                     type="primary"
                     ghost
                     size="small"
@@ -417,18 +419,17 @@ async function closeInterventionAssessment(
                 <div v-if="!skipedHandler" class="my-2 flex w-full flex-col">
                   <div
                     v-if="crisisEventDetail.status >= 4"
-                    class="flex w-full gap-1"
+                    class="flex w-full flex-col gap-3"
                   >
                     <StepEventCard name="心理测评师" :time="1757562878000" />
-                    <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                    />
+
+                    <LyButton type="primary" ghost size="small">
+                      处理记录
+                    </LyButton>
                   </div>
                   <!-- 执行处理按钮可以在这里添加 -->
                   <LyButton
-                    v-if="currentStep === 4"
+                    v-if="currentStep === 3"
                     type="primary"
                     ghost
                     size="small"
@@ -444,16 +445,25 @@ async function closeInterventionAssessment(
                 <div class="my-2 flex w-full flex-col">
                   <div
                     v-if="crisisEventDetail.status >= 5"
-                    class="flex w-full gap-1"
+                    class="flex w-full flex-col gap-3"
                   >
                     <StepEventCard
                       :name="crisisEventDetail.handlerName"
                       :time="crisisEventDetail.handleAt"
                     />
+                    <LyButton type="primary" ghost size="small">
+                      评估记录
+                    </LyButton>
                   </div>
+
                   <!-- 评估按钮可以在这里添加 -->
                   <LyButton
-                    v-if="crisisEventDetail.status === 4"
+                    v-if="
+                      ((crisisEventDetail.processMethod === 3 ||
+                        crisisEventDetail.processMethod === 4) &&
+                        !crisisEventDetail.latestAssessment) ||
+                      crisisEventDetail.status === 4
+                    "
                     type="primary"
                     ghost
                     size="small"

@@ -166,6 +166,7 @@ function handleEditEventRecord(record: CrisisEventRecord) {
           >
             <EventRecord
               :event-processing-record="record"
+              :crisis-event-status="crisisEventDetail.status"
               @edit="handleEditEventRecord"
             />
           </template>
@@ -188,6 +189,7 @@ function handleEditEventRecord(record: CrisisEventRecord) {
               取消
             </LyButton>
             <LyButton
+              :disabled="crisisEventDetail.status === 6"
               type="success"
               size="small"
               @click="handleEditDescription"

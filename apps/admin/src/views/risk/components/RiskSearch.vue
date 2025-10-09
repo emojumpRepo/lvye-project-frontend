@@ -30,6 +30,9 @@ const crisisEventListReq = ref<CrisisEventListReq>({
 const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
+  submitButtonOptions: {
+    content: '查询',
+  },
   commonConfig: {
     componentProps: {
       class: 'w-full mr-2',

@@ -74,7 +74,7 @@ const questionnaireResults = computed(() => {
       <div class="flex items-center gap-3">
         <span class="font-medium text-gray-600">风险等级:</span>
         <LyTag
-          tag-category-key="risk_level"
+          tag-category-key="questionnaire_result_risk_level"
           :dict-value="assessmentResult.riskLevelIntervention.riskLevel"
         />
       </div>

@@ -20,7 +20,7 @@ export interface CrisisBoardDataPageReq extends PageParam {
 /** 危机事件列表查询参数 */
 export interface CrisisEventListReq extends PageParam {
   studentProfileId?: number;
-  status?: number;
+  processStatus?: number;
   riskLevel?: number;
   priority?: number;
   handlerUserId?: number;

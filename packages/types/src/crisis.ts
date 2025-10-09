@@ -62,6 +62,21 @@ export interface CrisisEventRecord {
   createTime?: number;
 }
 
+/** 评估记录 */
+export interface AssessmentRecord {
+  id: number;
+  assessorUserId: number;
+  assessorName: string;
+  assessorType: number;
+  riskLevel: number;
+  riskLevelName: string;
+  problemTypes: string[];
+  followUpSuggestion: number;
+  followUpSuggestionName: string;
+  content: string;
+  createTime: number;
+}
+
 /** 危机事件详情 */
 export interface CrisisEvent {
   id: number;
@@ -97,4 +112,5 @@ export interface CrisisEvent {
     problemTypes: string[];
     riskLevel: number;
   };
+  assessmentRecords: AssessmentRecord[];
 }

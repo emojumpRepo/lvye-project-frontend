@@ -170,6 +170,7 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
               content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
               cancelText: '返回修改',
               confirmText: '确认上报',
+              title: '信息确认',
               icon: 'success',
             });
           }
@@ -234,13 +235,12 @@ function handleSaveDraft() {
 }
 
 onMounted(() => {
-  riskLevelOptions.value = getDictOptions(
-    'questionnaire_result_risk_level',
-    'number',
-  ).map((item) => ({
-    value: item.value,
-    label: item.label,
-  }));
+  riskLevelOptions.value = getDictOptions('crisis_level', 'number').map(
+    (item) => ({
+      value: item.value,
+      label: item.label,
+    }),
+  );
 });
 </script>
 
@@ -356,13 +356,13 @@ onMounted(() => {
         <!-- 风险等级 -->
         <AForm.Item name="riskLevel">
           <LyLabel
-            title="风险等级"
+            title="危机事件等级"
             required
             custom-title-class="font-normal text-sm"
           />
           <ASelect
             v-model:value="eventForm.riskLevel"
-            placeholder="请选择风险等级"
+            placeholder="请选择危机事件等级"
             :options="riskLevelOptions"
           />
         </AForm.Item>

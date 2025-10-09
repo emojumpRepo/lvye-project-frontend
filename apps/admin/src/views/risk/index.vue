@@ -11,7 +11,10 @@ import { Progress as AProgress, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCrisisEventList, getEventStatusStatistics } from '#/api/psychology';
+import {
+  getCrisisEventList,
+  getEventProcessStatistics,
+} from '#/api/psychology';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import CrisisInterventionSettingDrawer from '#/components/Drawer/CrisisInterventionSettingDrawer/index.vue';
 import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
@@ -31,23 +34,24 @@ import { useEventGridSchema } from './data';
 defineOptions({ name: 'CrisisIntervention' });
 
 interface EventPanelData {
-  status: number;
+  type: number;
   count: number;
 }
 
+// 事件面板图标映射
 const eventpanelIconMap: Record<number, string> = {
-  1: crisisEventHandlingIcon,
-  2: crisisEventConsultIcon,
-  3: crisisEventEvaluationIcon,
-  4: crisisEventContinuousIcon,
-  5: crisisEventResolvedIcon,
-  6: crisisEventClosedIcon,
+  0: crisisEventHandlingIcon,
+  1: crisisEventConsultIcon,
+  2: crisisEventEvaluationIcon,
+  3: crisisEventContinuousIcon,
+  4: crisisEventResolvedIcon,
+  5: crisisEventClosedIcon,
 };
 
 // 面板数据
 const eventPanelData = ref<EventPanelData[]>(
   Object.keys(eventpanelIconMap).map((key) => ({
-    status: Number(key),
+    type: Number(key),
     count: 0,
   })),
 );
@@ -85,7 +89,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageSize: page.pageSize,
             ...formValues,
           });
-          await loadEventStatusStatistics();
+          await loadEventProcessStatistics();
           return response;
         },
       },
@@ -98,9 +102,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 /** 加载危机事件状态统计 */
-async function loadEventStatusStatistics() {
+async function loadEventProcessStatistics() {
   try {
-    const list = await getEventStatusStatistics();
+    const list = await getEventProcessStatistics();
     if (list.length > 0) {
       eventPanelData.value = list;
     }
@@ -120,7 +124,7 @@ function handlestatusSearch(status: number) {
   gridApi.query({
     pageNo: 1,
     pageSize: 10,
-    status,
+    processStatus: status,
   });
 }
 
@@ -170,17 +174,17 @@ function refresh() {
     <div class="grid grid-cols-6 gap-5">
       <div
         v-for="eventPanel in eventPanelData"
-        :key="eventPanel.status"
+        :key="eventPanel.type"
         class="flex cursor-pointer items-center justify-between rounded-xl bg-white p-6 hover:shadow-sm"
-        @click="handlestatusSearch(eventPanel.status)"
+        @click="handlestatusSearch(eventPanel.type)"
       >
         <div class="flex flex-col gap-3">
           <div class="text-xl font-bold">{{ eventPanel.count }}</div>
           <span class="text-sm text-[#979899]">
-            {{ getDictLabel('crisis_event_type', eventPanel.status) }}
+            {{ getDictLabel('intervention_process_status', eventPanel.type) }}
           </span>
         </div>
-        <img :src="eventpanelIconMap[eventPanel.status]" class="w-12" />
+        <img :src="eventpanelIconMap[eventPanel.type]" class="w-12" />
       </div>
     </div>
 
@@ -214,20 +218,26 @@ function refresh() {
 
       <!-- 优先级 -->
       <template #priority="{ row }">
-        <div class="text-[#4C4C4D]">{{ row.priority }}</div>
+        <div class="text-[#4C4C4D]">
+          {{ getDictLabel('crisis_event_priority', row.priority) }}
+        </div>
+        <!-- <LyTag
+          tag-category-key="crisis_event_priority"
+          :dict-value="String(row.priority)"
+        /> -->
       </template>
 
       <!-- 当前状态 -->
       <template #status="{ row }">
         <LyTag
-          tag-category-key="crisis_event_status"
-          :dict-value="row.status"
+          tag-category-key="intervention_process_status"
+          :dict-value="String(row.processStatus)"
         />
       </template>
 
       <!-- 负责人 -->
       <template #handlerName="{ row }">
-        <div class="flex flex-col gap-1">
+        <div v-if="row.handlerName" class="flex flex-col gap-1">
           <div class="font-bold text-[#4C4C4D]">
             {{ row.handlerName }}
           </div>
@@ -235,6 +245,7 @@ function refresh() {
             {{ dayjs(row.updateTime).format('YYYY-MM-DD') }}
           </div>
         </div>
+        <div v-else>--</div>
       </template>
 
       <!-- 处理进度 -->

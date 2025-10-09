@@ -48,7 +48,7 @@ async function onPublished(params: InterventionAssessmentReqVO) {
     hasPublished.value = response;
     if (hasPublished.value) {
       alert({
-        content: '创建评估成功',
+        content: '评估已完成',
         icon: 'success',
       }).then(() => {
         open.value = false;
