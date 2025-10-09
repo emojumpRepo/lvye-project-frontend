@@ -92,12 +92,13 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(activeTab.value.key),
-    height: '400px',
+    // height: '400px',
     keepSource: true,
     pagerConfig: {
       enabled: true,
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
+      pageSizes: [10, 20, 30, 40, 50, 60],
     },
     proxyConfig: {
       ajax: {
