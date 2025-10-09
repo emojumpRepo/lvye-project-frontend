@@ -75,6 +75,7 @@ function loadVfsFonts() {
  * @param {Array<any>} params.questionnaireAnswer 答题记录数据（不再展示，仅兼容入参）
  * @param {string|number|Date} params.completedTime 完成时间
  * @param {string} params.studentName 学生姓名
+ * @param {string} params.scenarioName 场景名称
  */
 export async function exportQuestionnaireReportToPDF({
   assessmentSummary,
@@ -82,6 +83,7 @@ export async function exportQuestionnaireReportToPDF({
   questionnaireAnswer, // QuestionnaireAnswerItem[]：包含每个问卷的题目与答案
   completedTime,
   studentName,
+  scenarioName,
 }) {
   try {
     // 动态加载字体文件
@@ -92,7 +94,7 @@ export async function exportQuestionnaireReportToPDF({
     );
 
     // 生成文件名：学生名_整体测评报告.pdf
-    const finalFilename = `${studentName || '未知'}_整体测评报告.pdf`;
+    const finalFilename = `${studentName || '未知'}_${scenarioName ? `${scenarioName}测评报告` : '整体测评报告'}.pdf`;
 
     // 定义文档内容
     const docDefinition = {
@@ -105,7 +107,10 @@ export async function exportQuestionnaireReportToPDF({
       },
       content: [
         // 报告标题
-        { text: '整体测评报告', style: 'header' },
+        {
+          text: scenarioName ? `${scenarioName}测评报告` : '整体测评报告',
+          style: 'header',
+        },
         // 问卷信息
         {
           text: `作答人：${studentName || '未知'}    完成时间：${completedTimeStr}`,
@@ -123,7 +128,7 @@ export async function exportQuestionnaireReportToPDF({
       ],
       styles: {
         header: {
-          fontSize: 24,
+          fontSize: 20,
           bold: true,
           alignment: 'center',
         },

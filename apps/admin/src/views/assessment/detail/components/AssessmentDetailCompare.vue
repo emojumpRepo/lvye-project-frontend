@@ -15,7 +15,6 @@ import { IconifyIcon } from '@vben/icons';
 import {
   Collapse as ACollapse,
   Empty as AEmpty,
-  Progress as AProgress,
   Spin as ASpin,
   message,
 } from 'ant-design-vue';
@@ -23,6 +22,8 @@ import {
 import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessment/index';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { getDictLabel } from '#/utils/dict';
+
+import AssessmentProgress from './AssessmentProgress.vue';
 
 const props = defineProps<{
   activeType: ActiveType;
@@ -36,10 +37,10 @@ const activeKey = ref<number>(0);
 
 // 风险等级配置
 const riskLevelConfigs: RiskLevelConfig[] = [
-  { level: 4, color: '#FF0831' },
-  { level: 3, color: '#FF9C05' },
-  { level: 2, color: '#1966FF' },
   { level: 1, color: '#04DC70' },
+  { level: 2, color: '#1966FF' },
+  { level: 3, color: '#FF9C05' },
+  { level: 4, color: '#FF0831' },
 ];
 
 // 计算风险等级统计数据
@@ -120,20 +121,22 @@ watch(
  * @returns 风险等级进度
  */
 function getRiskLevelProgress(grade: ClassRiskLevel | GradeRiskLevel) {
-  const result: Record<string, string> = {};
+  const result: Array<{ color: string; percent: number }> = [];
 
   grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
-    const percent = `${(riskLevel.count / grade.total) * 100}%`;
+    const percent = (riskLevel.count / grade.total) * 100;
     const color =
       riskLevelConfigs.find((config) => config.level === riskLevel.riskLevel)
         ?.color || '#000000';
 
-    if (percent !== '0%') {
-      result[percent] = color;
+    if (percent > 0) {
+      result.push({ color, percent });
     }
   });
-  if (Object.keys(result).length === 0) {
-    result['100%'] = '#e9eaec';
+
+  // 如果没有数据，显示灰色背景
+  if (result.length === 0) {
+    result.push({ color: '#e9eaec', percent: 100 });
   }
 
   return result;
@@ -254,11 +257,9 @@ watch(
                               {{ child.count }}
                             </span>
                           </div>
-                          <AProgress
-                            :percent="100"
-                            :size="10"
-                            :show-info="false"
-                            :stroke-color="item.progressColor"
+                          <AssessmentProgress
+                            :segments="item.progressColor"
+                            :show-percent="false"
                           />
                         </div>
                       </template>
@@ -280,11 +281,9 @@ watch(
                           {{ child.count }}
                         </span>
                       </div>
-                      <AProgress
-                        :percent="100"
-                        :size="10"
-                        :show-info="false"
-                        :stroke-color="item.progressColor"
+                      <AssessmentProgress
+                        :segments="item.progressColor"
+                        :show-percent="false"
                       />
                     </div>
                   </template>
@@ -307,11 +306,9 @@ watch(
                               {{ child.count }}
                             </span>
                           </div>
-                          <AProgress
-                            :percent="100"
-                            :size="10"
-                            :show-info="false"
-                            :stroke-color="item.progressColor"
+                          <AssessmentProgress
+                            :segments="item.progressColor"
+                            :show-percent="false"
                           />
                         </div>
                       </template>
@@ -341,11 +338,9 @@ watch(
                                 {{ child.count }}
                               </span>
                             </div>
-                            <AProgress
-                              :percent="100"
-                              :size="10"
-                              :show-info="false"
-                              :stroke-color="classItem.progressColor"
+                            <AssessmentProgress
+                              :segments="classItem.progressColor"
+                              :show-percent="false"
                             />
                           </div>
                         </div>
