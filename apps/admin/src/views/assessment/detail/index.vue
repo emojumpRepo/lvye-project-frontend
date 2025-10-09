@@ -69,7 +69,7 @@ const actionButtons = ref([
   },
 ]);
 
-const activeType = ref<ActiveType>('all');
+const activeType = ref<ActiveType>('all'); // 年级班级类型
 const route = useRoute();
 const router = useRouter();
 const taskNo = String(route.params.taskNo || '');
@@ -82,6 +82,7 @@ const activeTab = ref<TabItem>({
   label: '',
 });
 
+/** 任务状态标签 */
 const taskStatusTag = computed(() => {
   if (!currentTaskInfo.value) {
     return null;
@@ -96,18 +97,30 @@ const taskStatusTag = computed(() => {
   };
 });
 
+/** 发布提醒 */
 function handlePublish() {
   message.warning('即将上线');
 }
+
+/** 延长时间 */
 function handleExtend() {
   message.warning('即将上线');
 }
+/** 提前结束 */
 function handleEnd() {
   message.warning('即将上线');
 }
+
+/** 导出数据 */
 function handleExport() {
   message.warning('即将上线');
 }
+
+/**
+ * 截取字符串
+ * @param text 字符串
+ * @param maxLength 最大长度
+ */
 function truncateText(
   text: string | undefined,
   maxLength: number = 10,
@@ -121,6 +134,7 @@ async function loadTaskData() {
   if (!taskNo) return;
   try {
     loading.value = true;
+    // 获取任务基本信息
     const taskInfo = await getAssessmentTask(taskNo);
     if (taskInfo.questionnaires) {
       const questionnairesTabs = taskInfo.questionnaires.map((item) => ({
@@ -128,6 +142,8 @@ async function loadTaskData() {
         code: item.code || '',
         key: item.id?.toString() || '',
       }));
+
+      // 将包含"心理健康评估"的项前置
       const priorityIndex = questionnairesTabs.findIndex((item) =>
         item.label.includes('心理健康评估'),
       );
@@ -137,6 +153,8 @@ async function loadTaskData() {
           questionnairesTabs.unshift(priorityItem);
         }
       }
+
+      // 将包含"儿童期逆境与发育情况评估"的项后置
       const lastIndex = questionnairesTabs.findIndex((item) =>
         item.label.includes('儿童期逆境与发育情况评估'),
       );
@@ -146,6 +164,7 @@ async function loadTaskData() {
           questionnairesTabs.push(lastItem);
         }
       }
+
       currentTaskInfo.value = {
         taskNo: taskInfo.taskNo || '',
         taskName: taskInfo.taskName,
@@ -157,6 +176,7 @@ async function loadTaskData() {
           ...questionnairesTabs,
         ],
       };
+
       activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
         ? { ...currentTaskInfo.value.questionnairesTabs[0] }
         : { key: '', label: '' };
@@ -168,6 +188,7 @@ async function loadTaskData() {
   }
 }
 
+/** 切换问卷tab */
 function handleTabChange(key: any) {
   const target = currentTaskInfo.value?.questionnairesTabs.find(
     (item) => item.key === key,
@@ -240,6 +261,7 @@ const lastUpdatedMessage = computed(() => {
 <template>
   <div class="flex min-h-screen flex-col gap-4 p-6">
     <div class="flex items-center justify-between gap-6">
+      <!-- 任务信息 -->
       <div
         class="flex flex-1 flex-wrap items-center justify-between rounded-xl bg-[#FFFFFF99] px-5 py-2 text-sm text-[#000000A6]"
       >
@@ -266,6 +288,8 @@ const lastUpdatedMessage = computed(() => {
           {{ taskStatusTag?.label }}
         </div>
       </div>
+
+      <!-- 操作按钮 -->
       <div class="flex flex-nowrap gap-2">
         <template v-for="button in actionButtons" :key="button.value">
           <LyButton
@@ -280,11 +304,28 @@ const lastUpdatedMessage = computed(() => {
       </div>
     </div>
 
+    <!-- 问卷Tabs -->
     <ATabs
       v-model:active-key="activeTab.key"
       :tab-bar-gutter="10"
       @change="handleTabChange"
     >
+      <!-- <ATabs.TabPane
+        v-for="tab in currentTaskInfo?.questionnairesTabs"
+        :key="tab.key"
+      >
+        <template #tab>
+          <span
+            class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
+            :class="{
+              '!bg-primary !text-white': activeTab.key === tab.key,
+            }"
+          >
+            {{ tab.label }}
+          </span>
+        </template>
+      </ATabs.TabPane> -->
+
       <template #leftExtra>
         <div class="flex-center mr-6 gap-2">
           <LyButton size="middle" type="default" @click="router.back()">
@@ -314,8 +355,10 @@ const lastUpdatedMessage = computed(() => {
     </ATabs>
 
     <div class="grid h-[400px] grid-cols-2 gap-4">
+      <!-- 统计卡片区域 -->
       <AssessmentDetailTask ref="assessmentDetailTaskRef" :task-no="taskNo" />
 
+      <!-- 年级班级对比区域 -->
       <AssessmentDetailCompare
         ref="assessmentDetailCompareRef"
         :task-no="taskNo"
@@ -323,6 +366,7 @@ const lastUpdatedMessage = computed(() => {
       />
     </div>
 
+    <!-- 年级管理区域 -->
     <AssessmentDetailList
       :task-no="taskNo"
       :task-name="currentTaskInfo?.taskName"
