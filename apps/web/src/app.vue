@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { useAntdDesignTokens } from '@vben/hooks';
 import { preferences, usePreferences } from '@vben/preferences';
 
-import { App, ConfigProvider, theme } from 'ant-design-vue';
+import { App, ConfigProvider, StyleProvider, theme } from 'ant-design-vue';
 
 import { antdLocale } from '#/locales';
 
@@ -31,9 +31,12 @@ const tokenTheme = computed(() => {
 </script>
 
 <template>
-  <ConfigProvider :locale="antdLocale" :theme="tokenTheme">
-    <App>
-      <RouterView />
-    </App>
-  </ConfigProvider>
+  <!-- StyleProvider 禁用 :where() 选择器以兼容 Chrome 86 -->
+  <StyleProvider hash-priority="high">
+    <ConfigProvider :locale="antdLocale" :theme="tokenTheme">
+      <App>
+        <RouterView />
+      </App>
+    </ConfigProvider>
+  </StyleProvider>
 </template>
