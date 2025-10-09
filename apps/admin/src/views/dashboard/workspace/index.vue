@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue';
 
 import { ChevronRight } from '@vben/icons';
 
+import { Empty } from 'ant-design-vue';
+
 import { getConfigKey } from '#/api/infra/config';
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
@@ -11,99 +13,11 @@ import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.
 const systemWelcome = ref('');
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
-const taskList = [
-  {
-    severity: 'warning',
-    name: '李晓红',
-    className: '高三 ( 1 ) 班',
-    statusBadge: { text: '待补录', color: 'orange' },
-    date: '2025-01-10',
-    time: '12:12:00',
-    counselor: '李老师',
-    rightAction: { text: '补录评估', color: 'orange' },
-  },
-  {
-    severity: 'warning',
-    name: '张明明',
-    className: '高三 ( 2 ) 班',
-    statusBadge: { text: '待补录', color: 'orange' },
-    date: '2025-01-10',
-    time: '12:12:00',
-    counselor: '李老师',
-    rightAction: { text: '补录评估', color: 'orange' },
-  },
-  {
-    severity: 'neutral',
-    name: '王大大',
-    className: '高三 ( 3 ) 班',
-    date: '2025-01-10',
-    time: '12:12:00',
-    counselor: '李老师',
-    rightAction: { text: '完成咨询', color: 'green' },
-  },
-];
+const taskList = [];
 
-const interveneList = [
-  {
-    severity: 'danger',
-    name: '李晓红',
-    className: '高三 ( 1 ) 班',
-    statusBadge: { text: '重大（三类）', color: 'red' },
-    description: '2小时前',
-    counselor: '李老师',
-  },
-  {
-    severity: 'warning',
-    name: '张明明',
-    className: '高三 ( 2 ) 班',
-    statusBadge: { text: '严重（二类）', color: 'orange' },
-    date: '2025-01-10',
-    time: '12:12:00',
-    counselor: '李老师',
-  },
-  {
-    severity: 'neutral',
-    name: '王大大',
-    className: '高三 ( 3 ) 班',
-    statusBadge: { text: '一般（一类）', color: 'grey' },
-    date: '2025-01-10',
-    time: '12:12:00',
-    counselor: '李老师',
-  },
-];
+const interveneList = [];
 
-const alertsList = [
-  {
-    severity: 'danger',
-    name: '张小明',
-    className: '高三 ( 1 ) 班',
-    statusBadge: { text: '紧急', color: 'red' },
-    secondaryBadge: { text: 'AI检测', type: 'ai' },
-    time: '20分钟前',
-    description: 'AI在对话中检测到该生存在严重自我否定情绪,表达了轻生倾...',
-    rightAction: { text: '立即处理', color: 'red' },
-  },
-  {
-    severity: 'warning',
-    name: '张明明',
-    className: '高三 ( 2 ) 班',
-    statusBadge: { text: '重要', color: 'orange' },
-    secondaryBadge: { text: '教师上报', type: 'teacher' },
-    time: '20分钟前',
-    description: '班主任上报:  该学生近期情绪低落,经常独自一人,需要关注...',
-    rightAction: { text: '立即处理', color: 'orange' },
-  },
-  {
-    severity: 'neutral',
-    name: '张明明',
-    className: '高三 ( 2 ) 班',
-    statusBadge: { text: '一般', color: 'grey' },
-    secondaryBadge: { text: '评测系统', type: 'system' },
-    time: '20分钟前',
-    description: '心理测评结果显示该学生焦虑指数严重偏高,建议立即干预...',
-    rightAction: { text: '立即处理', color: 'green' },
-  },
-];
+const alertsList = [];
 
 // pagination state and handlers
 const taskPage = ref(1);
@@ -168,13 +82,17 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10">
+  <div
+    class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10"
+  >
     <PageTitle :title="systemWelcome" />
     <!-- Responsive grid with better breakpoints -->
-    <div class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3">
+    <div
+      class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3"
+    >
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="mingcute:task-2-fill"
         icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
         :pagination="{
@@ -188,18 +106,23 @@ onMounted(async () => {
         @page-change="onTaskPageChange"
         @refresh="onTaskRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedTaskList"
-            :key="idx"
-            v-bind="item as any"
-          />
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedTaskList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedTaskList"
+              :key="idx"
+              v-bind="item"
+            />
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
 
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="ix:user-filled"
         icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
         :pagination="{
@@ -213,22 +136,30 @@ onMounted(async () => {
         @page-change="onIntervenePageChange"
         @refresh="onInterveneRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedInterveneList"
-            :key="idx"
-            v-bind="item as any"
-          >
-            <template #rightAction>
-              <ChevronRight class="size-4 cursor-pointer hover:opacity-70" color="#959599" />
-            </template>
-          </WorkSpaceItem>
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedInterveneList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedInterveneList"
+              :key="idx"
+              v-bind="item"
+            >
+              <template #rightAction>
+                <ChevronRight
+                  class="size-4 cursor-pointer hover:opacity-70"
+                  color="#959599"
+                />
+              </template>
+            </WorkSpaceItem>
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
 
       <WorkSpaceCard
         :with-gradient="true"
-        :count="19"
+        :count="0"
         icon-src="octicon:bell-fill-24"
         icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
         :pagination="{
@@ -242,12 +173,17 @@ onMounted(async () => {
         @page-change="onAlertsPageChange"
         @refresh="onAlertsRefresh"
       >
-        <div class="flex max-w-full flex-col gap-3 sm:gap-4">
-          <WorkSpaceItem
-            v-for="(item, idx) in pagedAlertsList"
-            :key="idx"
-            v-bind="item as any"
-          />
+        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
+          <template v-if="pagedAlertsList.length > 0">
+            <WorkSpaceItem
+              v-for="(item, idx) in pagedAlertsList"
+              :key="idx"
+              v-bind="item"
+            />
+          </template>
+          <div v-else class="flex-center h-full">
+            <Empty />
+          </div>
         </div>
       </WorkSpaceCard>
     </div>

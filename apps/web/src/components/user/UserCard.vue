@@ -133,7 +133,7 @@ const avatarUrl = computed(() => props.avatar || preferences.app.defaultAvatar);
           </svg>
           {{ props.className }}
         </div>
-        <div class="flex items-center gap-2 text-sm text-gray-500">
+        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500">
           <svg
             class="h-4 w-4 text-teal-500"
             fill="currentColor"
@@ -145,9 +145,10 @@ const avatarUrl = computed(() => props.avatar || preferences.app.defaultAvatar);
               clip-rule="evenodd"
             />
           </svg>
-          学号：<span class="font-mono font-semibold tracking-wider">{{
-            props.studentNo
-          }}</span>
+          <div class="shrink-0">学号：</div>
+          <div class="font-mono font-semibold tracking-wider">
+            {{ props.studentNo }}
+          </div>
         </div>
       </div>
 

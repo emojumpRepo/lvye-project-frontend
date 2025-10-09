@@ -14,18 +14,35 @@
     <!-- 由 vite 注入 VITE_APP_TITLE 变量，在 .env 文件内配置 -->
     <title><%= VITE_APP_TITLE %></title>
     <link rel="icon" href="/favicon.ico" />
+    
+    <!-- 预连接到关键域名以加快DNS查找和TLS握手 -->
+    <link rel="dns-prefetch" href="https://hm.baidu.com">
+    <link rel="preconnect" href="https://hm.baidu.com" crossorigin>
+    
+    <!-- 延迟加载百度统计，避免阻塞首屏渲染 -->
     <script>
-      var HM_ID = '<%= VITE_APP_BAIDU_CODE %>'
-      if (HM_ID) {
-        var _hmt = _hmt || [];
-        (function () {
+      // 使用 requestIdleCallback 在浏览器空闲时加载百度统计
+      (function() {
+        var HM_ID = '<%= VITE_APP_BAIDU_CODE %>';
+        if (!HM_ID) return;
+        
+        window._hmt = window._hmt || [];
+        
+        function loadBaiduAnalytics() {
           var hm = document.createElement('script');
-          hm.src =
-            'https://hm.baidu.com/hm.js?' + HM_ID;
-          var s = document.getElementsByTagName('script')[0];
-          s.parentNode.insertBefore(hm, s);
-        })();
-      }
+          hm.src = 'https://hm.baidu.com/hm.js?' + HM_ID;
+          hm.async = true;
+          hm.defer = true;
+          document.head.appendChild(hm);
+        }
+        
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadBaiduAnalytics, { timeout: 3000 });
+        } else {
+          // Fallback for browsers that don't support requestIdleCallback
+          setTimeout(loadBaiduAnalytics, 2000);
+        }
+      })();
     </script>
   </head>
   <body>

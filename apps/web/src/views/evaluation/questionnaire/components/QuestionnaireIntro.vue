@@ -66,7 +66,7 @@ function handleStart() {
               <li>{{ sceneData?.metadata?.introConfig.description }}</li>
               <li>
                 预计用时约
-                {{ sceneData?.questionnaire?.estimatedDuration }} 分钟
+                {{ sceneData?.questionnaires?.[0]?.estimatedDuration }} 分钟
               </li>
               <li>请在安静环境下作答，确保网络稳定</li>
             </ul>

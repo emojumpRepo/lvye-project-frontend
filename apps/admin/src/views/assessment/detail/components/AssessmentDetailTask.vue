@@ -10,6 +10,7 @@ import {
   Empty as AEmpty,
   Progress as AProgress,
   Spin as ASpin,
+  message,
 } from 'ant-design-vue';
 
 import { getAssessmentStatistics } from '#/api/psychology/assessment';
@@ -26,30 +27,42 @@ const assessmentStatistics =
 
 watch(
   () => props.taskNo,
-  (newTaskNo) => {
+  async (newTaskNo) => {
     if (newTaskNo) {
       loading.value = true;
-      getAssessmentStatistics({
-        taskNo: newTaskNo,
-        includeDeptTree: 1,
-      })
-        .then((response) => {
-          assessmentStatistics.value = response;
-          activeKey.value = response.deptTree?.[0]?.deptId;
-        })
-        .finally(() => {
-          loading.value = false;
-        });
+      await loadAssessmentStatistics(newTaskNo);
+      loading.value = false;
     }
   },
   { immediate: true },
 );
+
+/**
+ * 加载测评统计数据
+ * @param taskNo 任务编号
+ */
+async function loadAssessmentStatistics(taskNo: string) {
+  try {
+    await getAssessmentStatistics({
+      taskNo,
+      includeDeptTree: 1,
+    }).then((response) => {
+      assessmentStatistics.value = response;
+      activeKey.value = response.deptTree?.[0]?.deptId;
+    });
+  } catch (error) {
+    console.error('加载测评统计失败', error);
+    message.error('加载测评统计失败');
+  }
+}
+
+defineExpose({
+  loadAssessmentStatistics,
+});
 </script>
 
 <template>
-  <div
-    class="box-border flex !h-[400px] flex-col gap-6 rounded-xl bg-white p-6"
-  >
+  <div class="box-border flex h-full flex-col gap-6 rounded-xl bg-white p-6">
     <ASpin :spinning="loading" class="h-full">
       <div class="flex h-full flex-col justify-between gap-6 overflow-hidden">
         <LyCardTitle

@@ -32,11 +32,13 @@ export const STUDENT_EXPORT_COLUMNS = [
   { key: 'studentNo', label: '学号' },
   { key: 'idCard', label: '身份证' },
   { key: 'sex', label: '性别' },
+  { key: 'ethnicity', label: '民族' },
   { key: 'gradeName', label: '年级' },
   { key: 'className', label: '班级' },
   { key: 'enrollmentYear', label: '届别' },
   { key: 'psychologicalStatus', label: '心理状态' },
   { key: 'mobile', label: '联系电话' },
+  { key: 'guardianMobile', label: '监护人联系电话' },
   { key: 'graduationStatus', label: '毕业状态' },
   { key: 'isGraduated', label: '是否毕业' },
   { key: 'homeAddress', label: '家庭住址' },
@@ -60,28 +62,43 @@ function formatStudentDataForExport(
       // 格式化特殊字段
       switch (column.key) {
         case 'birthDate': {
-          value = value ? new Date(value).toLocaleDateString('zh-CN') : '---';
+          value = value ? dayjs(value).format('YYYY-MM-DD') : '--';
+          break;
+        }
+        case 'ethnicity': {
+          value = value ? getDictLabel('student_ethnicity', value) : '--';
           break;
         }
         case 'graduationStatus': {
-          value = getDictLabel('student_graduation_status', value);
+          value =
+            getDictLabel('student_graduation_status', String(value)) || '--';
+          break;
+        }
+        case 'guardianMobile': {
+          value || '--';
           break;
         }
         case 'homeAddress':
         case 'remark': {
-          value = value || '---';
+          value = value || '--';
+          break;
+        }
+        case 'isGraduated': {
+          value = value === 1 ? '是' : '否';
           break;
         }
         case 'mobile': {
-          value = value || '---';
+          value = value || '--';
           break;
         }
         case 'psychologicalStatus': {
-          value = getDictLabel('student_psychological_status', value);
+          value = value
+            ? getDictLabel('student_psychological_status', value)
+            : '--';
           break;
         }
         case 'sex': {
-          value = getDictLabel('system_user_sex', value);
+          value = value ? getDictLabel('system_user_sex', value) : '--';
           break;
         }
         default: {
@@ -176,56 +193,91 @@ export function exportStudentsToExcel(
 /**
  * 将测评任务中选中的学生问卷结果导出为 Excel
  * @param data 学生问卷结果数据（来自测评任务列表勾选项）
+ * @param activeTab 包含当前选项信息
+ * @param activeTab.key 选项键，用于区分是否为具体问卷
+ * @param activeTab.label 选项名称，作为问卷名称展示
  * @param filename 可选的文件名
  */
 export function exportAssessmentParticipantsToExcel(
   data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
+  activeTab: { key: string; label: string },
   filename?: string,
 ): void {
   try {
-    if (!data || data.length === 0) {
-      message.warning('没有数据可导出');
-      return;
-    }
-
     const formattedData = data.map((item) => {
-      return {
-        学生姓名: item.name || '---',
-        学号: item.studentNo || '---',
-        班级: item.className || '---',
+      const rowData: Record<string, any> = {
+        测评任务编号: item.taskNo || '--',
+      };
+
+      if (activeTab.key) {
+        rowData['问卷名称'] = activeTab.label || '--';
+      }
+
+      Object.assign(rowData, {
+        学生姓名: item.name || '--',
+        学号: item.studentNo || '--',
+        班级: item.className || '--',
         完成状态: item.status === 1 ? '已完成' : '未完成',
-        分数: item.score ?? '--',
-        风险等级: item.riskLevel
+      });
+
+      if (activeTab.key) {
+        const isHealthAssessment =
+          item.questionnaireName &&
+          item.questionnaireName.includes('心理健康评估');
+
+        if (isHealthAssessment) {
+          rowData['测评结果'] = item.riskLevel
+            ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
+            : '--';
+        } else {
+          rowData['测评结果'] = item.level || '--';
+        }
+      } else {
+        rowData['总评风险'] = item.riskLevel
           ? getDictLabel('questionnaire_result_risk_level', item.riskLevel)
-          : '--',
-        完成时间: item.finishTime
-          ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
-          : '--',
-        任务编号: item.taskNo || '---',
-      } as Record<string, any>;
+          : '--';
+      }
+
+      rowData['完成时间'] = item.finishTime
+        ? dayjs(item.finishTime).format('YYYY-MM-DD HH:mm:ss')
+        : '--';
+
+      return rowData;
     });
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
 
-    // 列宽设置
-    worksheet['!cols'] = [
-      { wch: 12 }, // 学生姓名
-      { wch: 16 }, // 学号
-      { wch: 20 }, // 班级
-      { wch: 10 }, // 完成状态
-      { wch: 10 }, // 分数
-      { wch: 12 }, // 风险等级
-      { wch: 25 }, // 完成时间
-      { wch: 30 }, // 任务编号
-    ];
+    const colWidths = activeTab.key
+      ? [
+          { wch: 30 }, // 测评任务编号
+          { wch: 30 }, // 问卷名称
+          { wch: 15 }, // 学生姓名
+          { wch: 16 }, // 学号
+          { wch: 20 }, // 班级
+          { wch: 20 }, // 完成状态
+          { wch: 30 }, // 测评结果
+          { wch: 35 }, // 完成时间
+        ]
+      : [
+          { wch: 30 }, // 测评任务编号
+          { wch: 15 }, // 学生姓名
+          { wch: 16 }, // 学号
+          { wch: 20 }, // 班级
+          { wch: 20 }, // 完成状态
+          { wch: 30 }, // 总评风险
+          { wch: 35 }, // 完成时间
+        ];
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, '问卷结果');
+    worksheet['!cols'] = colWidths;
 
-    const defaultFilename = `测评问卷结果.xlsx`;
+    XLSX.utils.book_append_sheet(workbook, worksheet, '测评结果');
+
+    const defaultFilename = activeTab.key
+      ? `${activeTab.label || '问卷'}测评结果.xlsx`
+      : `学生总体测评结果.xlsx`;
     const finalFilename = filename || defaultFilename;
     XLSX.writeFile(workbook, finalFilename);
-    message.success(`已导出 ${data.length} 条问卷结果`);
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
@@ -243,26 +295,30 @@ export async function downloadTemplate() {
     { header: '学生姓名', key: 'name', width: 25 },
     { header: '学号', key: 'studentNo', width: 40 },
     { header: '届别', key: 'enrollmentYear', width: 20 },
-    { header: '身份证', key: 'idCard', width: 25 },
+    { header: '身份证', key: 'idCard', width: 28 },
     { header: '年级', key: 'gradeName', width: 20 },
     { header: '班级', key: 'className', width: 25 },
-    { header: '联系电话', key: 'mobile', width: 20 },
+    { header: '民族', key: 'ethnicity', width: 20 },
+    { header: '联系电话', key: 'mobile', width: 25 },
     { header: '家庭住址', key: 'homeAddress', width: 25 },
-    { header: '备注', key: 'remark', width: 20 },
-    { header: '是否毕业', key: 'isGraduated', width: 20 },
+    { header: '监护人联系电话', key: 'guardianMobile', width: 30 },
+    { header: '备注', key: 'remark', width: 25 },
+    { header: '是否毕业', key: 'isGraduated', width: 25 },
   ];
 
   worksheet.addRow([
     '必填，文本，2-30个字符',
     '必填，数字或字母数字组合，不超过20位',
     '必填，4位数字',
-    '必填，身份证',
+    '必填，中国居民身份证号码',
     '必填，只填写年级',
     '必填，填写年级和班级',
-    '11位数字',
-    '不超过200个字符',
-    '不超过100个字符',
-    '是或否，默认为否',
+    '选填，汉族/少数民族',
+    '选填，个人联系电话，11位数字',
+    '选填，不超过200个字符',
+    '选填，11位数字',
+    '选填，不超过100个字符',
+    '选填，是/否，默认为否',
   ]);
 
   // 设置身份证列为文本格式，防止Excel自动转换

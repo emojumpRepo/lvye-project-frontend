@@ -201,7 +201,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         ) {
           try {
             const classList = await getDeptTreeList(r.classDeptId, true);
-            classList.forEach((classInfo) => {
+            classList.forEach((classInfo: any) => {
               selected.push({
                 classId: classInfo.classDeptId,
                 className: classInfo.name,
@@ -445,6 +445,7 @@ async function handleSearch() {
           v-model:value="keyword"
           placeholder="搜索学生添加"
           class="flex-1 rounded-[4px]"
+          @keydown.enter="handleSearch"
         >
           <template #prefix>
             <Search class="size-5 text-[#979899]" />

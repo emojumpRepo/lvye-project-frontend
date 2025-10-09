@@ -158,6 +158,11 @@ async function handleTenantChange(tenant: SystemTenantApi.Tenant) {
   message.success(`切换当前租户为: ${tenant.name}`);
 }
 
+/** 处理使用说明点击 */
+function handleUserGuideClick() {
+  window.open('https://oc5fmzedg5.feishu.cn/wiki/Ai3Tw8dAPilpXok4qUAcF1VanRg', '_blank');
+}
+
 // ========== 初始化 ==========
 onMounted(() => {
   // 首次加载未读数量
@@ -238,7 +243,7 @@ watch(
     </template>
     <template #sidebar-bottom-custom>
       <div class="mb-4 px-2 text-center text-sm text-gray-500">
-        <LyButton type="default" size="middle" block v-if="!sidebarCollapsed">
+        <LyButton type="default" size="middle" block v-if="!sidebarCollapsed" @click="handleUserGuideClick">
           <span>使用说明</span>
         </LyButton>
       </div>

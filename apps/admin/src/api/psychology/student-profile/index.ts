@@ -83,13 +83,20 @@ export namespace PsychologyStudentProfileApi {
     name: string;
     parentId: number;
     count: number;
+    sort: number;
   }
 
   /** 部门树形结构 */
   export interface DeptTree {
     value: number;
     label: string;
-    children?: { label: string; value: number }[];
+    children?: DeptTree[];
+    sort: number;
+    count: number;
+    parentId?: number;
+    isGrade?: boolean;
+    isClass?: boolean;
+    isDept?: boolean;
   }
 
   /** 学生档案时间线 */

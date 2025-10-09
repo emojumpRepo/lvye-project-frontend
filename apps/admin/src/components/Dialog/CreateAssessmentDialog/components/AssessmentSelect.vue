@@ -3,7 +3,7 @@ import type { QuestionnaireVO } from '@vben/types';
 
 import { computed, inject, onMounted, ref } from 'vue';
 
-import { Modal as AModal, message } from 'ant-design-vue';
+import { Modal as AModal, message, Popover } from 'ant-design-vue';
 
 import { getQuestionnaireListSimple } from '#/api/psychology/questionnaire';
 import { getAssessmentScenarioList } from '#/api/psychology/scenario';
@@ -37,8 +37,12 @@ const assessmentDetail = ref<null | QuestionnaireVO>(null);
 const assessmentList = ref<QuestionnaireVO[]>([]);
 // 可用场景与限制（通过卡片选择，不再使用下拉组件与步骤条）
 type SimpleScenario = {
+  description?: string;
   id: number;
   maxQuestionnaireCount?: number;
+  meta: {
+    tags?: string[];
+  };
   name: string;
 };
 const scenarioList = ref<SimpleScenario[]>([]);
@@ -52,6 +56,7 @@ type UICard = {
   estimatedDuration?: number;
   id: number;
   questionCount?: number;
+  tags?: string[];
   title: string;
 };
 
@@ -59,8 +64,9 @@ const uiCards = computed<UICard[]>(() => {
   const scenarioCards: UICard[] = scenarioList.value.map((s) => ({
     id: s.id,
     title: s.name,
-    description: '场景预设：按场景配置量表创建测评任务',
+    description: s.description,
     __isScenario: true,
+    tags: s.meta.tags,
   }));
   const assessmentCards: UICard[] = assessmentList.value
     .filter((a) => typeof a.id === 'number')
@@ -88,10 +94,10 @@ function toggleCard(card: UICard) {
       selectedScenarioId.value = idNum;
       const scenario = scenarioList.value.find((s) => s.id === idNum) as any;
       if (scenario && Array.isArray(scenario.slots)) {
-        const questionnaires = scenario.slots
-          .map((slot: any) => slot?.questionnaire)
-          .filter((q: any) => !!q && typeof q.id === 'number');
-        selectedList.value = questionnaires as any;
+        const allQuestionnaires = scenario.slots.flatMap((slot: any) =>
+          extractQuestionnairesFromSlot(slot),
+        );
+        selectedList.value = allQuestionnaires;
       } else {
         selectedList.value = [];
       }
@@ -142,6 +148,8 @@ async function getScenarios() {
         name: i.name,
         maxQuestionnaireCount: i.maxQuestionnaireCount,
         slots: i.slots,
+        description: i.description,
+        meta: JSON.parse(i.metadataJson as string) as any,
       }));
   } catch (error) {
     console.error(error);
@@ -161,10 +169,10 @@ async function handleViewScenarioQuestionnaires(scenarioId: number) {
     const scenario = scenarioList.value.find((s) => s.id === scenarioId);
 
     if (scenario && (scenario as any).slots) {
-      const questionnaires = (scenario as any).slots
-        .map((slot: any) => slot?.questionnaire)
-        .filter((q: any) => !!q && typeof q.id === 'number');
-      scenarioQuestionnaires.value = questionnaires;
+      const allQuestionnaires = (scenario as any).slots.flatMap((slot: any) =>
+        extractQuestionnairesFromSlot(slot),
+      );
+      scenarioQuestionnaires.value = allQuestionnaires;
     } else {
       scenarioQuestionnaires.value = [];
     }
@@ -186,6 +194,26 @@ function closeScenarioPopover() {
   }, 200);
 }
 
+// 兼容处理槽位中的问卷数据（支持单个问卷和问卷数组）
+function extractQuestionnairesFromSlot(slot: any): QuestionnaireVO[] {
+  const questionnaires: QuestionnaireVO[] = [];
+
+  // 优先处理新格式：questionnaires 数组
+  if (Array.isArray(slot.questionnaires)) {
+    questionnaires.push(
+      ...slot.questionnaires.filter(
+        (q: any) => !!q && typeof q.id === 'number',
+      ),
+    );
+  }
+  // 兼容旧格式：单个 questionnaire 对象
+  else if (slot.questionnaire && typeof slot.questionnaire.id === 'number') {
+    questionnaires.push(slot.questionnaire);
+  }
+
+  return questionnaires;
+}
+
 onMounted(async () => {
   start();
   await Promise.all([getAssessmentList(), getScenarios()]);
@@ -194,7 +222,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex max-h-[435px] flex-col overflow-hidden">
+  <div class="flex h-[435px] flex-col overflow-hidden">
     <div
       class="mb-2 flex items-center justify-between text-[12px] text-[#6b7280]"
     >
@@ -226,7 +254,7 @@ onMounted(async () => {
           "
           @click="toggleCard(card as any)"
         >
-          <div class="line-clamp-1 text-[20px] font-semibold">
+          <div class="line-clamp-1 text-[14px] font-semibold">
             {{ card.title }}
           </div>
           <div class="mt-2 flex gap-2">
@@ -239,19 +267,31 @@ onMounted(async () => {
               </span>
             </template>
             <template v-else>
-              <span class="tag border-[#0060FF] bg-[#0060FF0D] text-[#0060FF]">
-                场景
+              <span
+                v-for="tag in card.tags"
+                :key="tag"
+                class="tag border-[#0060FF] bg-[#6B72800D] text-[#0060FF]"
+              >
+                {{ tag }}
               </span>
               <span class="tag border-[#6B7280] bg-[#6B72800D] text-[#6B7280]">
                 仅支持单独下发
               </span>
             </template>
           </div>
-          <div
-            class="mt-3 line-clamp-2 h-[50px] text-[14px] leading-6 text-[#979899]"
+          <Popover
+            :content="card.description"
+            placement="right"
+            :mouse-enter-delay="0.5"
+            :mouse-leave-delay="0.1"
+            :overlay-style="{ maxWidth: '300px', wordWrap: 'break-word' }"
           >
-            {{ card.description }}
-          </div>
+            <div
+              class="mt-3 line-clamp-2 h-[50px] cursor-pointer text-[12px] leading-6 text-[#979899]"
+            >
+              {{ card.description }}
+            </div>
+          </Popover>
           <div
             class="mt-2 w-fit text-[14px] text-[#0060FF] underline"
             v-if="!card.__isScenario"
@@ -303,9 +343,22 @@ onMounted(async () => {
                           </span>
                         </div>
                       </div>
-                      <div class="line-clamp-2 text-sm text-gray-600">
-                        {{ questionnaire.description || '暂无描述' }}
-                      </div>
+                      <Popover
+                        :content="questionnaire.description"
+                        placement="right"
+                        :mouse-enter-delay="0.5"
+                        :mouse-leave-delay="0.1"
+                        :overlay-style="{
+                          maxWidth: '300px',
+                          wordWrap: 'break-word',
+                        }"
+                      >
+                        <div
+                          class="line-clamp-2 cursor-pointer text-sm text-gray-600"
+                        >
+                          {{ questionnaire.description || '暂无描述' }}
+                        </div>
+                      </Popover>
                     </div>
                   </div>
                 </div>

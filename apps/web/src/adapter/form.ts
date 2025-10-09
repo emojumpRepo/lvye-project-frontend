@@ -65,8 +65,8 @@ async function initSetupVbenForm() {
           return $t('ui.formRules.required', [ctx.label]);
         }
         const age = Number(value);
-        if (Number.isNaN(age) || age < 1 || age > 30) {
-          return `${ctx.label}必须是1-30岁之间的有效年龄`;
+        if (Number.isNaN(age) || age < 6 || age > 30) {
+          return `${ctx.label}必须是6-30岁之间的有效年龄`;
         }
         return true;
       },
@@ -89,6 +89,23 @@ async function initSetupVbenForm() {
         const weight = Number(value);
         if (Number.isNaN(weight) || weight < 10 || weight > 300) {
           return `${ctx.label}必须是10-300kg之间的有效体重`;
+        }
+        return true;
+      },
+      // 出生日期验证（要求年龄大于7岁）
+      birthDateValidation: (value: any, _params: any, ctx: any) => {
+        if (value === undefined || value === null || value === '') {
+          return $t('ui.formRules.required', [ctx.label]);
+        }
+        const birthDate = new Date(value);
+        const today = new Date();
+        const minDate = new Date('2018-01-01'); // 7岁对应2018年之前出生
+        
+        if (birthDate >= minDate) {
+          return `${ctx.label}要求年龄大于6岁`;
+        }
+        if (birthDate > today) {
+          return `${ctx.label}不能是未来日期`;
         }
         return true;
       },

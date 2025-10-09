@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { ArrowLeft, CircleCheckBig, LockKeyhole } from '@vben/icons';
@@ -10,6 +10,7 @@ import { storeToRefs } from 'pinia';
 
 import { getAssessmentParticipantStatus } from '#/api/psychology/assessment';
 import { useEvaluationStore } from '#/store/evaluation';
+import { useGlobalPollerStore } from '#/store/globalPoller';
 
 // 导入背景图片
 
@@ -17,6 +18,8 @@ const router = useRouter();
 const route = useRoute();
 
 const evaluationStore = useEvaluationStore();
+const globalPoller = useGlobalPollerStore();
+const taskNo = (route.query.taskNo as string) || '';
 const {
   getSlotStatus,
   isSlotClickable,
@@ -25,8 +28,19 @@ const {
   selectSlot,
   startEvaluation,
 } = evaluationStore;
-const { loading, currentTaskNo, scenarioData } = storeToRefs(evaluationStore);
+const {
+  loading,
+  currentTaskNo,
+  scenarioData,
+  hasGeneratingQuestionnaire,
+  isAllQuestionnairesCompleted,
+} = storeToRefs(evaluationStore);
 const hasReport = ref(false);
+
+// 仅在所有问卷有问卷结果记录的前提下，才判定结果生成中的状态
+const hasGeneratingAfterCompleted = computed(
+  () => isAllQuestionnairesCompleted.value && hasGeneratingQuestionnaire.value,
+);
 
 // 方法
 function handleBack() {
@@ -87,20 +101,62 @@ async function getParticipantStatus() {
 
 function showSummaryReport() {
   // 禁用状态时阻止跳转
-  if (!hasReport.value) {
+  if (!isAllQuestionnairesCompleted.value) {
     message.warning('完成所有场景后才可以查看汇总报告');
     return;
   }
+
+  if (hasGeneratingAfterCompleted.value) {
+    message.warning('结果生成中，请稍后再试');
+    return;
+  }
+
   router.push({
     path: `/evaluation/result/${currentTaskNo.value}`,
   });
 }
 
+watch(
+  () => hasGeneratingQuestionnaire.value,
+  (val) => {
+    if (val) {
+      globalPoller.setTasks([
+        () => loadTaskDetail(taskNo, true, true),
+        () => getParticipantStatus(),
+      ]);
+      if (!globalPoller.isRunning) {
+        globalPoller.start(undefined, 5000);
+      }
+    } else if (globalPoller.isRunning) {
+      globalPoller.stop();
+    }
+  },
+  { immediate: false },
+);
+
 onMounted(async () => {
-  const taskNo = route.query.taskNo as string;
   await loadTaskDetail(taskNo, true);
   await getParticipantStatus();
 });
+
+onUnmounted(() => {
+  globalPoller.stop();
+});
+function getSlotClass(slot: any) {
+  const status = getSlotStatus(slot.id || 0);
+  return {
+    disabled: status === 'locked',
+    completed: status === 'completed',
+  } as const;
+}
+
+function isSlotLocked(slot: any) {
+  return getSlotStatus(slot.id || 0) === 'locked';
+}
+
+function isSlotCompleted(slot: any) {
+  return getSlotStatus(slot.id || 0) === 'completed';
+}
 </script>
 
 <template>
@@ -144,7 +200,10 @@ onMounted(async () => {
           <div
             class="summary-report"
             @click="showSummaryReport"
-            :class="{ disabled: !hasReport }"
+            :class="{
+              disabled: !isAllQuestionnairesCompleted,
+              generating: hasGeneratingAfterCompleted,
+            }"
           >
             <img
               src="../../../static/icons/report.svg"
@@ -152,7 +211,18 @@ onMounted(async () => {
               width="64"
               class="report-icon"
             />
-            <span class="report-text">汇总报告</span>
+            <div
+              class="report-text"
+              :class="{
+                disabled:
+                  !isAllQuestionnairesCompleted || hasGeneratingAfterCompleted,
+              }"
+            >
+              <span v-if="!hasGeneratingQuestionnaire">汇总报告</span>
+              <div v-else class="flex items-center gap-2">
+                <span>结果生成中</span>
+              </div>
+            </div>
           </div>
 
           <!-- 可点击插槽 -->
@@ -161,12 +231,7 @@ onMounted(async () => {
               v-for="slot in evaluationStore.scenarioData?.slots"
               :key="slot.id"
               class="building-button"
-              :class="{
-                disabled:
-                  evaluationStore.getSlotStatus(slot.id || 0) === 'locked',
-                completed:
-                  evaluationStore.getSlotStatus(slot.id || 0) === 'completed',
-              }"
+              :class="getSlotClass(slot)"
               :style="slot.metadata?.position"
               @click="handleSlotClick(slot)"
             >
@@ -196,16 +261,10 @@ onMounted(async () => {
                   <span class="building-emoji">{{
                     slot.metadata?.icon || '🏢'
                   }}</span>
-                  <div
-                    v-if="getSlotStatus(slot.id || 0) === 'locked'"
-                    class="lock-icon"
-                  >
+                  <div v-if="isSlotLocked(slot)" class="lock-icon">
                     <LockKeyhole class="size-3 text-white" />
                   </div>
-                  <div
-                    v-if="getSlotStatus(slot.id || 0) === 'completed'"
-                    class="completed-icon"
-                  >
+                  <div v-if="isSlotCompleted(slot)" class="completed-icon">
                     <CircleCheckBig class="size-3 text-white" />
                   </div>
                 </div>
@@ -213,16 +272,12 @@ onMounted(async () => {
 
               <div class="building-label">
                 {{ slot.slotName }}
-                <span
-                  v-if="getSlotStatus(slot.id || 0) === 'locked'"
-                  class="locked-text"
-                  >(未解锁)</span
-                >
-                <span
-                  v-if="getSlotStatus(slot.id || 0) === 'completed'"
-                  class="completed-text"
-                  >(已完成)</span
-                >
+                <span v-if="isSlotLocked(slot)" class="locked-text">
+                  (未解锁)
+                </span>
+                <span v-if="isSlotCompleted(slot)" class="completed-text">
+                  (已完成)
+                </span>
               </div>
               <div class="building-pulse"></div>
             </div>
@@ -316,6 +371,33 @@ onMounted(async () => {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    left: 10%;
+    width: 10%;
+  }
+
+  50% {
+    left: 40%;
+    width: 30%;
+  }
+
+  100% {
+    left: 70%;
+    width: 10%;
   }
 }
 
@@ -439,6 +521,7 @@ onMounted(async () => {
       bottom: 30px;
       z-index: 1000;
       cursor: pointer;
+      border-radius: 9999px;
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
 
@@ -464,6 +547,7 @@ onMounted(async () => {
       }
 
       .report-text {
+        position: relative;
         padding: 5px 10px;
         font-size: 14px;
         font-weight: 600;

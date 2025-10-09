@@ -21,6 +21,7 @@ export interface AssessmentResultItem {
   isAbnormal: number;
   score: number;
   studentComment: string;
+  dimensionCode: string;
 }
 
 // ==================== 测评任务管理 ====================
@@ -57,5 +58,12 @@ export function getAssessmentParticipantStatus(taskNo: string) {
 export function getAssessmentResult(taskNo: string) {
   return appRequestClient.get<AssessmentResult[]>(
     `/psychology/assessment-task/my-task-results?taskNo=${taskNo}`,
+  );
+}
+
+/** 轮询获取结果正在生成中的测评任务列表 */
+export function getGeneratingTasks() {
+  return appRequestClient.get<AssessmentTask[]>(
+    '/psychology/assessment-task/generating-tasks',
   );
 }

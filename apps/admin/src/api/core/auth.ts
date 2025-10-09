@@ -108,6 +108,13 @@ export async function getTenantByWebsite(website: string) {
   );
 }
 
+/** 使用租户ID，获得租户信息（免鉴权） */
+export async function getTenantById(id: number) {
+  return requestClient.get<AuthApi.TenantResult>(
+    `/system/tenant/get-by-id?id=${id}`,
+  );
+}
+
 /** 获取验证码 */
 export async function getCaptcha(data: any) {
   return baseRequestClient.post('/system/captcha/get', data);

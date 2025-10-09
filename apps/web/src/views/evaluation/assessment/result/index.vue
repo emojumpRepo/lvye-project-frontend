@@ -29,6 +29,7 @@ const taskNo = ref(route.params.taskNo as string);
 const mentalHealthStatus = ref<AssessmentResult | null>(null);
 const onlineGameUse = ref<AssessmentResult | null>(null);
 const sleepQuality = ref<AssessmentResult | null>(null);
+const loading = ref(true);
 
 // 格式化心理健康状况
 const formattedMentalHealthStatus = computed(() => {
@@ -50,31 +51,34 @@ const toggleTooltip = (dimensionName: string, visible: boolean) => {
 };
 
 function handleBack() {
-  router.back();
+  router.replace({
+    path: '/home',
+  });
 }
 
 // 获取测评结果数据
 async function getAssessmentResultData() {
   try {
+    loading.value = true;
     const res = await getAssessmentResult(taskNo.value);
     res.forEach((item) => {
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '行为自我评价',
+          (item) => item.dimensionCode === 'behavior_self_evaluation',
         )
       ) {
         mentalHealthStatus.value = item;
       }
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '网络游戏使用',
+          (item) => item.dimensionCode === 'game_addiction_risk',
         )
       ) {
         onlineGameUse.value = item;
       }
       if (
         item.resultDataParsed.some(
-          (item) => item.dimensionName === '睡眠质量/失眠症状严重程度',
+          (item) => item.dimensionCode === 'sleep_quality',
         )
       ) {
         sleepQuality.value = item;
@@ -82,6 +86,8 @@ async function getAssessmentResultData() {
     });
   } catch (error) {
     console.error(error);
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -117,8 +123,17 @@ onMounted(async () => {
           ></div>
         </div>
 
+        <!-- 加载状态 -->
+        <div v-if="loading" class="flex flex-1 items-center justify-center">
+          <div class="flex flex-col items-center space-y-4">
+            <div class="spin-loader"></div>
+            <p class="text-gray-500">正在加载测评结果...</p>
+          </div>
+        </div>
+
         <!-- 主要内容区域 -->
         <div
+          v-else
           class="grid flex-1 grid-cols-1 gap-8 overflow-y-auto lg:grid-cols-2"
         >
           <!-- 左侧：心理健康状况 -->
@@ -136,7 +151,7 @@ onMounted(async () => {
             </p>
 
             <div
-              class="relative flex flex-1 items-center justify-center bg-contain bg-center bg-top bg-no-repeat p-12"
+              class="relative flex flex-1 items-center justify-center bg-contain bg-center bg-no-repeat p-12"
               :style="{
                 backgroundImage: `url(${resultLogoBg})`,
               }"
@@ -297,6 +312,25 @@ onMounted(async () => {
 :deep(.ant-popover) {
   :deep(.ant-popover-arrow) {
     background-color: #bdbdbd;
+  }
+}
+
+.spin-loader {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>

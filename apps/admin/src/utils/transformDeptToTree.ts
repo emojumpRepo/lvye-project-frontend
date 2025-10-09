@@ -9,76 +9,112 @@ import {
 } from '#/api/psychology/student-profile';
 
 /**
- * 加载部门列表
+ * 加载部门列表 (支持多级)
  */
 export async function loadDeptList() {
+  // 假设 getDeptSimpleList 返回类型为 Dept[]
   const data = await getDeptSimpleList();
-  if (data.length > 0) {
-    const filteredData = data.filter(
-      (dept) => dept.parentId !== 110 && dept.parentId !== 0,
-    );
 
-    const childIds = new Set(filteredData.map((dept) => dept.id));
+  if (!data || data.length === 0) {
+    return [];
+  }
 
-    const rootDepts = filteredData.filter(
-      (dept) =>
-        !childIds.has(dept.parentId) ||
-        dept.parentId === 0 ||
-        dept.parentId === null,
-    );
+  const filteredData = data;
 
-    // 构建树形结构
-    const buildTree = (
-      parentId: number,
-    ): undefined | { label: string; value: number }[] => {
-      const children = filteredData
-        .filter((dept) => dept.parentId === parentId)
-        .map((dept) => ({
-          value: dept.id,
-          label: dept.name,
-          parentId,
-          count: dept.count || 0,
-          isClass: true,
-        }));
+  const nodeMap = new Map();
+  const treeData = [];
 
-      return children.length > 0 ? children : undefined;
-    };
-
-    // 构建最终的树形数据
-    const treeData = rootDepts.map((dept) => ({
+  // 2. 第一次遍历：将每个部门转换为树节点，并存入 Map 以便快速查找。
+  // 同时为每个节点初始化一个 children 数组。
+  for (const dept of filteredData) {
+    nodeMap.set(dept.id, {
       value: dept.id,
       label: dept.name,
       parentId: dept.parentId,
-      children: buildTree(dept.id),
       count: dept.count || 0,
-      isGrade: true,
-    }));
-
-    localStorage.setItem('deptList', JSON.stringify(treeData));
-    return treeData;
+      sort: dept.sort || 0,
+      children: [], // 先初始化为空数组
+    });
   }
 
-  return [];
-}
+  // 3. 第二次遍历：构建父子关系。
+  for (const dept of filteredData) {
+    const node = nodeMap.get(dept.id);
+    if (!node) continue;
 
-// 格式化班级名称
-export function simplifyClassName(name: string): string {
-  if (!name) return '';
-
-  // 匹配年级+括号数字+班的格式
-  // 支持：一年级(1)班、初一(1)班、高一(1)班、初二(2)班等
-  const m1 = name.match(
-    /^([一二三四五六七八九十年级]+)[（(]\s*([0-9一二三四五六七八九十]+)\s*[)）]\s*班?$/,
-  );
-  if (m1 && m1[1] && m1[2]) {
-    return `${m1[1]}(${m1[2]})班`;
+    // 判断是否为根节点 (父ID为0, null, 或者在Map中找不到父节点)
+    if (
+      dept.parentId === null ||
+      dept.parentId === 0 ||
+      !nodeMap.has(dept.parentId)
+    ) {
+      treeData.push(node);
+    } else {
+      // 如果不是根节点，就找到它的父节点，并将自己添加到父节点的 children 中
+      const parentNode = nodeMap.get(dept.parentId);
+      if (parentNode) {
+        parentNode.children?.push(node);
+      }
+    }
   }
 
-  // 匹配直接以"X班"结尾的场景
-  const m2 = name.match(/([0-9一二三四五六七八九十]+)\s*班$/);
-  if (m2 && m2[1]) return `${m2[1]}班`;
+  // 标记各层级的标识，并计算最大层级
+  function getMaxDepth(nodes: any[], currentDepth = 1): number {
+    if (!Array.isArray(nodes) || nodes.length === 0) return currentDepth - 1;
+    let max = currentDepth;
+    for (const n of nodes) {
+      const depth = getMaxDepth(n.children || [], currentDepth + 1);
+      if (depth > max) max = depth;
+    }
+    return max;
+  }
 
-  return name;
+  function labelFlags(nodes: any[], level = 1, maxDepthForMark = 1) {
+    for (const n of nodes) {
+      // 清理旧标记，避免脏数据
+      delete n.isGrade;
+      delete n.isDept;
+      delete n.isClass;
+      if (maxDepthForMark >= 3) {
+        if (level === 1) {
+          n.isDept = true;
+        } else if (level === 2) {
+          n.isGrade = true;
+        } else {
+          // 第三层（及更深层）视为班级
+          n.isClass = true;
+        }
+      } else if (maxDepthForMark === 2) {
+        if (level === 1) {
+          // 两层结构：第一层为 isGrass
+          (n as any).isGrass = true;
+        } else {
+          n.isClass = true;
+        }
+      } else {
+        // 单层或未知：统一按班级
+        n.isClass = true;
+      }
+      if (Array.isArray(n.children) && n.children.length > 0) {
+        labelFlags(n.children, level + 1, maxDepthForMark);
+      }
+    }
+  }
+
+  const maxDepth = getMaxDepth(treeData, 1);
+  labelFlags(treeData, 1, maxDepth);
+
+  let finalData: any = treeData;
+
+  // 层级达到三层或以上：提取每个第一层节点的 children 合并为新的第一层
+  if (maxDepth >= 3) {
+    finalData = (treeData as any[]).flatMap((root: any) =>
+      Array.isArray(root.children) ? root.children : [],
+    );
+  }
+
+  localStorage.setItem('deptList', JSON.stringify(finalData));
+  return finalData;
 }
 
 /**
@@ -98,15 +134,18 @@ export async function getDeptTreeList(
     const children = targetDept?.children ?? [];
     if (!Array.isArray(children) || children.length === 0) return [];
 
-    return children.map((child: any) => ({
-      id: child.value,
-      name: child.label,
-      classDeptId: child.value,
-      gradeDeptId: classDeptId,
-      count: child.count,
-      hasChildField: true,
-      isClass: true,
-    }));
+    return children
+      .map((child: any) => ({
+        id: child.value,
+        name: child.label,
+        classDeptId: child.value,
+        gradeDeptId: classDeptId,
+        count: child.count,
+        sort: child.sort,
+        hasChildField: true,
+        isClass: true,
+      }))
+      .sort((a: { sort: number }, b: { sort: number }) => a.sort - b.sort);
   }
 
   const allDeptList = treeData
@@ -116,10 +155,11 @@ export async function getDeptTreeList(
       classDeptId: dept.value,
       gradeDeptId: dept.parentId ?? null,
       count: dept.count,
+      sort: dept.sort,
       hasChildField: true,
       isGrade: true,
     }))
-    .sort((a, b) => a.id - b.id);
+    .sort((a: { sort: number }, b: { sort: number }) => a.sort - b.sort);
 
   return allDeptList;
 }
@@ -159,36 +199,62 @@ export async function getDeptTreeListByStudentName(name: string) {
 
   const profile = await getStudentProfileSimpleList({ name });
   if (profile.length === 0) return [];
+
+  // 按班级分组【匹配到的学生】
+  const matchedByClass = new Map<number, any[]>();
+  for (const p of profile) {
+    const cid = p.classDeptId;
+    if (!cid) continue;
+    const arr = matchedByClass.get(cid);
+    if (arr) arr.push(p);
+    else matchedByClass.set(cid, [p]);
+  }
+
+  const classIds: number[] = [...matchedByClass.keys()];
+
+  // 并发获取各班级信息与各班级的完整学生列表
+  const classInfos = await Promise.all(classIds.map((id) => getDeptById(id)));
+  const classStudentsList = await Promise.all(
+    classIds.map((id) => getStudentProfileSimpleList({ classDeptId: id })),
+  );
+
   const deptList: any[] = [];
 
-  const promises = profile.map(async (profileItem) => {
-    if (profileItem.classDeptId) {
-      const dept = await getDeptById(profileItem.classDeptId);
-      if (dept) {
-        return [
-          {
-            id: dept.id,
-            name: dept.name,
-            classDeptId: dept.id,
-            gradeDeptId: profileItem.gradeDeptId,
-            count: dept.count,
-            hasChildField: true,
-          },
-        ];
-      }
-    }
-    return [];
+  classIds.forEach((classDeptId, i) => {
+    const classDept = classInfos[i];
+    const allStudents = classStudentsList[i] || [];
+    if (!classDept) return;
+
+    const matchedSet = new Set(
+      (matchedByClass.get(classDeptId) || []).map((s) => s.id),
+    );
+
+    const classItem = {
+      id: classDept.id,
+      name: classDept.name,
+      classDeptId: classDept.id,
+      gradeDeptId: null, // 班级作为根节点
+      count: allStudents.length, // 班级学生总人数
+      hasChildField: true,
+      isClass: true,
+      children: allStudents.map((student: any) => ({
+        id: student.id,
+        name: student.name,
+        classDeptId: student.id || student.userId, // 保证行主键唯一
+        gradeDeptId: classDeptId as number,
+        studentNo: student.studentNo,
+        userId: student.userId,
+        className: student.className,
+        hasChildField: false,
+        isClass: false,
+        matched: matchedSet.has(student.id), // 仅用于前端高亮/过滤，不参与选择聚合
+      })),
+    };
+
+    deptList.push(classItem);
   });
 
-  const results = await Promise.all(promises);
-  results.forEach((result) => {
-    deptList.push(...result);
-  });
-
-  const _uniqueDeptList = deptList.filter(
-    (dept, index, self) => index === self.findIndex((d) => d.id === dept.id),
-  );
-  return _uniqueDeptList;
+  return deptList;
 }
 
 /**

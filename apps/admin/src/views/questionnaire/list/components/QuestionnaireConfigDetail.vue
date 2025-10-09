@@ -3,7 +3,9 @@ import type { QuestionnaireConfigVO } from '#/api/psychology/questionnaire/index
 
 import { computed } from 'vue';
 
-import { Modal, Tag } from 'ant-design-vue';
+import { useVbenModal } from '@vben/common-ui';
+
+import { Tag } from 'ant-design-vue';
 
 import { parseCalculateFormula } from '../utils/formula-parser';
 
@@ -13,7 +15,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const open = defineModel<boolean>('open');
+// 创建主弹窗
+const [DetailDialog] = useVbenModal({
+  title: '评分规则详情',
+  class: 'w-[600px]',
+  footer: false,
+});
 
 // 解析计算公式
 const formulaInfo = computed(() => {
@@ -61,13 +68,7 @@ const abnormalColor = computed(() => {
 </script>
 
 <template>
-  <Modal
-    :open="open"
-    title="评分规则详情"
-    width="600px"
-    :footer="null"
-    @update:open="(v: boolean) => (open = v)"
-  >
+  <DetailDialog>
     <div v-if="config" class="config-detail">
       <!-- 基本信息 -->
       <div class="section">
@@ -76,6 +77,10 @@ const abnormalColor = computed(() => {
           <div class="info-item col-span-1">
             <span class="label">维度名称：</span>
             <span class="value">{{ config.dimensionName }}</span>
+          </div>
+          <div class="info-item col-span-1">
+            <span class="label">配置描述：</span>
+            <span class="value">{{ config.description || '无' }}</span>
           </div>
           <div class="info-item col-span-1">
             <span class="label">状态：</span>
@@ -199,7 +204,7 @@ const abnormalColor = computed(() => {
     <div v-else class="empty-state">
       <p>暂无配置信息</p>
     </div>
-  </Modal>
+  </DetailDialog>
 </template>
 
 <style scoped lang="scss">

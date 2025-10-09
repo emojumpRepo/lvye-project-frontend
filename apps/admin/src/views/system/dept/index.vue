@@ -14,6 +14,7 @@ import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteDept, deleteDeptList, getDeptList } from '#/api/system/dept';
 import { getSimpleUserList } from '#/api/system/user';
 import { $t } from '#/locales';
+import { loadDeptList } from '#/utils/transformDeptToTree';
 
 import { useGridColumns } from './data';
 import Form from './modules/form.vue';
@@ -31,7 +32,8 @@ function getLeaderName(userId: number) {
 }
 
 /** 刷新表格 */
-function onRefresh() {
+async function onRefresh() {
+  await loadDeptList();
   gridApi.query();
 }
 
@@ -47,8 +49,58 @@ function handleCreate() {
   formModalApi.setData(null).open();
 }
 
+/** 计算部门层级深度 - 通过在树形结构中查找位置来确定层级 */
+function getDeptLevel(
+  dept: SystemDeptApi.Dept,
+  allDepts: SystemDeptApi.Dept[],
+): number {
+  // 处理边界情况
+  if (!allDepts || allDepts.length === 0) return 0;
+
+  // 递归查找函数
+  function findDeptInLevel(
+    depts: SystemDeptApi.Dept[],
+    targetId: number,
+    currentLevel: number,
+  ): number {
+    for (const item of depts) {
+      // 如果在当前层找到了目标部门
+      if (item.id === targetId) {
+        return currentLevel;
+      }
+      // 如果当前部门有子级，继续在子级中查找
+      if (item.children && item.children.length > 0) {
+        const foundLevel = findDeptInLevel(
+          item.children,
+          targetId,
+          currentLevel + 1,
+        );
+        if (foundLevel > 0) {
+          return foundLevel;
+        }
+      }
+    }
+    return 0; // 未找到
+  }
+
+  // 从第一层开始查找
+  return findDeptInLevel(allDepts, dept.id as number, 1);
+}
+
 /** 添加下级部门 */
 function handleAppend(row: SystemDeptApi.Dept) {
+  // 获取当前所有部门数据
+  const allDepts = gridApi.grid.getTableData().fullData as SystemDeptApi.Dept[];
+
+  // 计算当前部门的层级
+  const currentLevel = getDeptLevel(row, allDepts);
+
+  // 检查是否已经是第三级
+  if (currentLevel >= 3) {
+    message.warning('最多只能创建三级部门！');
+    return;
+  }
+
   formModalApi.setData({ parentId: row.id }).open();
 }
 
@@ -69,7 +121,7 @@ async function handleDelete(row: SystemDeptApi.Dept) {
       content: $t('ui.actionMessage.deleteSuccess', [row.name]),
       key: 'action_key_msg',
     });
-    onRefresh();
+    await onRefresh();
   } finally {
     hideLoading();
   }
@@ -94,7 +146,7 @@ async function handleDeleteBatch() {
   try {
     await deleteDeptList(checkedIds.value);
     message.success($t('ui.actionMessage.deleteSuccess'));
-    onRefresh();
+    await onRefresh();
   } finally {
     hideLoading();
   }

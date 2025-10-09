@@ -117,3 +117,10 @@ export async function getTenantByWebsite(website: string) {
     `/system/tenant/get-by-website?website=${website}`,
   );
 }
+
+/** 使用租户ID，获得租户信息（免鉴权） */
+export async function getTenantById(id: number) {
+  return requestClient.get<AuthApi.TenantResult>(
+    `/system/tenant/get-by-id?id=${id}`,
+  );
+}

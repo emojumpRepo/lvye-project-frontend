@@ -6,7 +6,11 @@ import type {
   SlotMetadata,
 } from '@vben/types';
 
+import type { PollTask } from '#/store/globalPoller';
+
 import { computed, ref } from 'vue';
+
+import { QuestionnaireGenerationStatus } from '@vben/types';
 
 import { defineStore } from 'pinia';
 
@@ -14,6 +18,7 @@ import {
   getAssessmentTask,
   startAssessment,
 } from '#/api/psychology/assessment';
+import { useGlobalPollerStore } from '#/store/globalPoller';
 
 export const useEvaluationStore = defineStore('evaluation', () => {
   // 状态
@@ -61,6 +66,20 @@ export const useEvaluationStore = defineStore('evaluation', () => {
   // 判断是否有测试场景
   const hasScenario = computed(() => !!scenarioData.value);
 
+  // 结果生成中：任一问卷 generationStatus < 2
+  const hasGeneratingQuestionnaire = computed(() => {
+    const slots = scenarioData.value?.slots || [];
+    for (const slot of slots) {
+      const questionnaires = (slot as any).questionnaires || [];
+      for (const q of questionnaires) {
+        const status = (q as any)?.generationStatus;
+        if (status && status === QuestionnaireGenerationStatus.GENERATING)
+          return true;
+      }
+    }
+    return false;
+  });
+
   // 获取下一个未完成的问卷（无场景模式）
   const getNextIncompleteQuestionnaire = computed(() => {
     if (!taskDetailInfo.value?.questionnaires) return null;
@@ -73,7 +92,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
   const progress = computed(() => {
     if (!taskDetailInfo.value?.questionnaires) return 0;
     const total = taskDetailInfo.value.questionnaires.length;
-    return completedQuestionnaires.value > 0
+    return completedQuestionnaires.value && completedQuestionnaires.value > 0
       ? (completedQuestionnaires.value / total) * 100
       : 0;
   });
@@ -89,18 +108,39 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
   // 计算已完成问卷数量
   const completedQuestionnaires = computed(() => {
+    if (hasScenario.value) {
+      return taskDetailInfo.value?.scenarioDetail?.slots?.reduce((acc, cur) => {
+        return (
+          acc + (cur.questionnaires?.filter((q) => q.completed).length || 0)
+        );
+      }, 0);
+    }
     if (!taskDetailInfo.value?.questionnaires) return 0;
     return taskDetailInfo.value.questionnaires.filter((q) => q.completed)
       .length;
   });
 
+  const isAllQuestionnairesCompleted = computed(() => {
+    return (
+      completedQuestionnaires.value ===
+      taskDetailInfo.value?.questionnaireIds?.length
+    );
+  });
+
   // 方法
-  async function loadTaskDetail(taskNo: string, isReload = false) {
+  async function loadTaskDetail(
+    taskNo: string,
+    isReload = false,
+    isSkipLoading = false,
+  ) {
     if (currentTaskNo.value === taskNo && taskDetailInfo.value && !isReload) {
       return; // 已经加载过，避免重复请求
     }
 
-    loading.value = true;
+    if (!isSkipLoading) {
+      loading.value = true;
+    }
+
     currentTaskNo.value = taskNo;
 
     try {
@@ -110,7 +150,9 @@ export const useEvaluationStore = defineStore('evaluation', () => {
       console.error('loadTaskDetail error:', error);
       throw error;
     } finally {
-      loading.value = false;
+      if (!isSkipLoading) {
+        loading.value = false;
+      }
     }
   }
 
@@ -165,8 +207,11 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
     const currentSlot = sortedSlots[currentIndex];
 
-    // 如果当前场景已完成
-    if (currentSlot?.questionnaire?.completed) {
+    // 如果当前场景已完成（所有问卷均完成）
+    const currentCompleted = (currentSlot?.questionnaires || []).every(
+      (q: any) => q.completed,
+    );
+    if (currentCompleted) {
       return 'completed';
     }
 
@@ -175,11 +220,12 @@ export const useEvaluationStore = defineStore('evaluation', () => {
       return 'available';
     }
 
-    // 检查前一个场景是否已完成
+    // 检查前一个场景是否已完成（所有问卷均完成）
     const previousSlot = sortedSlots[currentIndex - 1];
-    return previousSlot?.questionnaire?.completed === true
-      ? 'available'
-      : 'locked';
+    const previousCompleted = (previousSlot?.questionnaires || []).every(
+      (q: any) => q.completed,
+    );
+    return previousCompleted === true ? 'available' : 'locked';
   }
 
   function isSlotClickable(slotId: number | string): boolean {
@@ -198,7 +244,10 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
       // 第一个 slot 总是可点击
       if (i === 0) {
-        if (!currentSlot?.questionnaire?.completed) {
+        const currentCompleted = (currentSlot?.questionnaires || []).every(
+          (q: any) => q.completed,
+        );
+        if (!currentCompleted) {
           return currentSlot || null;
         }
         continue;
@@ -206,10 +255,13 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
       // 检查前一个 slot 是否已完成
       const previousSlot = sortedSlots[i - 1];
-      if (
-        previousSlot?.questionnaire?.completed &&
-        !currentSlot?.questionnaire?.completed
-      ) {
+      const previousCompleted = (previousSlot?.questionnaires || []).every(
+        (q: any) => q.completed,
+      );
+      const currentCompleted = (currentSlot?.questionnaires || []).every(
+        (q: any) => q.completed,
+      );
+      if (previousCompleted && !currentCompleted) {
         return currentSlot || null;
       }
     }
@@ -255,22 +307,20 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
   // 开始测评（有场景模式）
   async function startEvaluation(taskNo: string, router: any) {
-    if (!selectedSlot.value?.questionnaire) {
+    const qs = selectedSlot.value?.questionnaires || [];
+    if (!selectedSlot.value || qs.length === 0)
       throw new Error('No questionnaire selected');
-    }
 
     try {
       await startAssessment(taskNo);
+      const target = qs.find((q: any) => !q.completed) || qs[0];
       router.replace({
         path: '/evaluation/questionnaire',
         query: {
-          questionnaireId: selectedSlot.value.questionnaire.id,
+          questionnaireId: (target && target.questionnaireId) || '',
           sceneId: selectedSlot.value.id,
           assessmentTaskNo: taskNo,
-          questionnaireLink:
-            selectedSlot.value.questionnaire?.externalLink?.split(
-              'render/',
-            )[1] || '',
+          questionnaireLink: (target && target.externalLink) || '',
         },
       });
       // 进入问卷页面后自动全屏
@@ -311,6 +361,32 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     }
   }
 
+  // 轮询控制（全局唯一）
+  const globalPoller = useGlobalPollerStore();
+
+  function setPollingTasks(tasks: PollTask[]) {
+    globalPoller.setTasks(tasks);
+  }
+
+  function startPolling(tasks?: PollTask[], intervalMs?: number) {
+    globalPoller.start(tasks, intervalMs);
+  }
+
+  function stopPolling() {
+    globalPoller.stop();
+  }
+
+  function startGenerationPolling(taskNo?: string, intervalMs = 3000) {
+    const t = taskNo || currentTaskNo.value || '';
+    if (!t) return;
+    const tasks: PollTask[] = [() => loadTaskDetail(t, true, true)];
+    globalPoller.start(tasks, intervalMs);
+  }
+
+  function stopGenerationPolling() {
+    globalPoller.stop();
+  }
+
   // 重置状态
   function reset() {
     currentTaskNo.value = null;
@@ -338,10 +414,12 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     totalSlots,
     isLastScene,
     hasScenario,
+    hasGeneratingQuestionnaire,
     getNextIncompleteQuestionnaire,
     progress,
     totalDuration,
     completedQuestionnaires,
+    isAllQuestionnairesCompleted,
 
     // 方法
     loadTaskDetail,
@@ -354,6 +432,12 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     getNextAvailableSlot,
     startEvaluation,
     startEvaluationWithoutScenario,
+    // 轮询方法
+    setPollingTasks,
+    startPolling,
+    stopPolling,
+    startGenerationPolling,
+    stopGenerationPolling,
     enterFullscreen,
     exitFullscreen,
     reset,

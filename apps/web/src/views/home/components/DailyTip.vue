@@ -25,9 +25,6 @@ defineProps<{ tip: string }>();
         <span
           class="bg-gradient-to-r from-amber-700 to-orange-700 bg-clip-text font-bold text-transparent"
           >心旅小贴士</span>
-        <span
-          class="ml-3 rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] text-amber-700 lg:text-xs"
-          >今日更新</span>
       </div>
 
       <!-- 分隔线 -->

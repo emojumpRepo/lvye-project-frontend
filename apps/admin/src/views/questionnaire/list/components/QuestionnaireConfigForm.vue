@@ -56,6 +56,7 @@ function createDefaultForm() {
   return {
     questionnaireId: props.questionnaireId || 0,
     dimensionName: '',
+    description: '',
     questionIndex: [] as string[],
     calculateType: QUESTIONNAIRE_CONFIG_CALCULATE_TYPE.SCORE,
     minScore: undefined as number | undefined,
@@ -77,6 +78,7 @@ function createDefaultForm() {
     minThreshold: undefined as number | undefined,
     teacherComment: '',
     studentComment: '',
+    level: '一般', // 默认评级等级为一般
   };
 }
 
@@ -88,7 +90,12 @@ watch(
   () => {
     if (open.value) {
       formData.value = props.selectedConfig
-        ? ({ ...createDefaultForm(), ...props.selectedConfig } as any)
+        ? ({
+            ...createDefaultForm(),
+            ...props.selectedConfig,
+            // 确保 level 字段有默认值
+            level: props.selectedConfig.level ?? '一般',
+          } as any)
         : createDefaultForm();
 
       formData.value.questionIndex =
@@ -181,10 +188,12 @@ function rulesArrayValidator() {
 const dynamicRules = computed(() => {
   const base: Record<string, any[]> = {
     dimensionName: [requiredRule('请输入维度名称')],
+    description: [requiredRule('请输入配置描述')],
     questionIndex: [requiredRule('请选择题目索引')],
     calculateType: [requiredRule('请选择计算类型')],
     teacherComment: [requiredRule('请输入教师端评语')],
     studentComment: [requiredRule('请输入学生端评语')],
+    level: [requiredRule('请输入评级等级')],
   };
 
   const type = formData.value.calculateType;
@@ -242,12 +251,14 @@ function buildSavePayload() {
   const payload: QuestionnaireConfigBaseVO = {
     questionnaireId: props.questionnaireId || 0,
     dimensionName: formData.value.dimensionName,
+    description: formData.value.description,
     questionIndex: '',
     calculateType: formData.value.calculateType,
     calculateFormula: formatCalculateFormula(),
     teacherComment: formData.value.teacherComment,
     studentComment: formData.value.studentComment,
     isAbnormal: formData.value.isAbnormal,
+    level: formData.value.level ?? '一般', // 确保有默认值
   };
 
   payload.questionIndex =
@@ -266,6 +277,10 @@ function buildSavePayload() {
 
 async function handleSave() {
   try {
+    // 确保表单数据完整性
+    if (!formData.value.level) {
+      formData.value.level = '一般';
+    }
     // 先进行基础字段校验
     await formRef.value?.validate();
 
@@ -408,6 +423,15 @@ defineExpose({ validate, resetFields });
               <Input
                 v-model:value="formData.dimensionName"
                 placeholder="请输入维度名称"
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="24">
+            <Form.Item label="配置描述" name="description">
+              <Input.TextArea
+                v-model:value="formData.description"
+                placeholder="请输入此配置的描述（用途、提示等）"
+                :rows="2"
               />
             </Form.Item>
           </Col>
@@ -682,6 +706,14 @@ defineExpose({ validate, resetFields });
                 v-model:value="formData.studentComment"
                 placeholder="请输入学生端评语"
                 :rows="3"
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="24">
+            <Form.Item label="评级等级" name="level">
+              <Input
+                v-model:value="formData.level"
+                placeholder="请输入评级等级"
               />
             </Form.Item>
           </Col>

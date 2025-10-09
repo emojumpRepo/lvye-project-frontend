@@ -131,7 +131,7 @@ defineExpose({
         >
           {{ props.prevText }}
         </LyButton>
-        <LyButton
+        <!-- <LyButton
           v-if="showSave"
           :loading="props.loading"
           type="default"
@@ -141,7 +141,7 @@ defineExpose({
           @click="emit('save')"
         >
           {{ props.saveText }}
-        </LyButton>
+        </LyButton> -->
         <LyButton
           v-if="showNext"
           :loading="props.loading"

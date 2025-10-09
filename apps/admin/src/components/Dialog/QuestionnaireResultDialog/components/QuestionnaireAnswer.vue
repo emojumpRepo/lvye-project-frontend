@@ -23,7 +23,7 @@ const totalScore = computed(() => {
 // 计算已答题数
 const answeredCount = computed(() => {
   return props.answers.filter(
-    (item) => item.answer && item.answer.trim() !== '',
+    (item) => item.answer && trimAnswer(item.answer) !== '',
   ).length;
 });
 
@@ -51,6 +51,12 @@ function parseMultiAnswer(answer?: string) {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+// 去除答案字符串的前后空格
+function trimAnswer(answer?: string) {
+  if (!answer) return '';
+  return answer.trim();
+}
 </script>
 
 <template>
@@ -58,33 +64,33 @@ function parseMultiAnswer(answer?: string) {
     <!-- 统计信息 -->
     <div class="mb-6 grid grid-cols-1 gap-8 md:grid-cols-3">
       <div
-        class="rounded-lg border border-[#1966FF]/30 bg-[#1966FF14] p-2 text-center"
+        class="rounded-lg border border-[#1966FF]/30 bg-[#1966FF14] px-3 py-4 text-center"
       >
         <div class="text-2xl font-bold text-[#1966FF]">{{ answeredCount }}</div>
         <div class="text-sm text-[#1966FF]/70">已答题数</div>
       </div>
       <div
-        class="rounded-lg border border-[#FF0831]/30 bg-[#FF083114] p-2 text-center"
-      >
-        <div class="text-2xl font-bold text-[#FF0831]">
-          {{ unansweredCount }}
-        </div>
-        <div class="text-sm text-[#FF0831]/70">未答题数</div>
-      </div>
-      <div
-        class="rounded-lg border border-[#04DC70]/30 bg-[#14E77E0A] p-2 text-center"
+        class="rounded-lg border border-[#04DC70]/30 bg-[#14E77E0A] px-3 py-4 text-center"
       >
         <div class="text-primary text-2xl font-bold">{{ totalScore }}</div>
         <div class="text-primary/70 text-sm">总得分</div>
       </div>
+      <div
+        class="rounded-lg border border-gray-200 bg-gray-100 px-3 py-4 text-center"
+      >
+        <div class="text-2xl font-bold text-gray-500">
+          {{ unansweredCount }}
+        </div>
+        <div class="text-sm text-gray-500">未答/无需作答题数</div>
+      </div>
     </div>
 
     <!-- 答题列表 -->
-    <div class="space-y-4">
+    <div class="space-y-6">
       <div
         v-for="item in answers"
         :key="item.index"
-        class="rounded-lg border border-gray-200 px-4 py-2 transition-shadow hover:shadow-md"
+        class="rounded-lg border border-gray-200 px-6 py-4 transition-shadow hover:shadow-md"
       >
         <!-- 题目标题/分数 -->
         <div class="mb-3 flex items-center justify-between">
@@ -104,14 +110,14 @@ function parseMultiAnswer(answer?: string) {
         </div>
 
         <!-- 答案：按题型展示 -->
-        <div class="mt-2 space-y-2">
+        <div v-if="trimAnswer(item.answer)" class="mt-2 space-y-2">
           <!-- 单选题：radio -->
           <div v-if="item.type === 'radio'">
-            <Radio.Group :value="item.answer">
+            <Radio.Group :value="trimAnswer(item.answer)">
               <Radio
                 v-for="(opt, idx) in getOptionTexts(item)"
                 :key="idx"
-                :value="opt"
+                :value="trimAnswer(opt)"
                 class="mr-4"
               >
                 {{ formatAnswer(opt) }}
@@ -125,7 +131,7 @@ function parseMultiAnswer(answer?: string) {
               <Checkbox
                 v-for="(opt, idx) in getOptionTexts(item)"
                 :key="idx"
-                :value="opt"
+                :value="trimAnswer(opt)"
                 class="mr-4"
               >
                 {{ formatAnswer(opt) }}
@@ -141,9 +147,12 @@ function parseMultiAnswer(answer?: string) {
           <!-- 下拉题：select -->
           <div v-else-if="item.type === 'select'">
             <Select
-              :value="item.answer"
+              :value="trimAnswer(item.answer)"
               :options="
-                getOptionTexts(item).map((t) => ({ label: t, value: t }))
+                getOptionTexts(item).map((t) => ({
+                  label: t,
+                  value: trimAnswer(t),
+                }))
               "
               style="width: 260px"
               disabled
@@ -152,13 +161,13 @@ function parseMultiAnswer(answer?: string) {
 
           <!-- 文本输入：input -->
           <div v-else-if="item.type === 'input'">
-            <Input :value="formatAnswer(item.answer)" disabled />
+            <Input :value="formatAnswer(trimAnswer(item.answer))" disabled />
           </div>
 
           <!-- 文本域：textarea -->
           <div v-else-if="item.type === 'textarea'">
             <Input.TextArea
-              :value="formatAnswer(item.answer)"
+              :value="formatAnswer(trimAnswer(item.answer))"
               :rows="3"
               disabled
             />
@@ -167,19 +176,20 @@ function parseMultiAnswer(answer?: string) {
           <!-- 兜底展示：标签 -->
           <div v-else class="flex items-center gap-2">
             <span
-              v-if="item.answer"
+              v-if="trimAnswer(item.answer)"
               class="inline-flex items-center rounded-full bg-[#1966FF14] px-3 py-1 text-sm font-medium text-[#1966FF]"
             >
-              {{ formatAnswer(item.answer) }}
-            </span>
-            <span
-              v-else
-              class="inline-flex items-center rounded-full bg-[#FF083114] px-3 py-1 text-sm font-medium text-[#FF0831]"
-            >
-              未作答
+              {{ formatAnswer(trimAnswer(item.answer)) }}
             </span>
           </div>
         </div>
+
+        <span
+          v-else
+          class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-500"
+        >
+          未答/无需作答
+        </span>
       </div>
     </div>
   </div>

@@ -15,6 +15,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { Empty, message, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getColorConfig } from '#/api/constants';
 import {
   getAssessmentQuestionnaireResult,
   getAssessmentResult,
@@ -27,13 +28,14 @@ import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
 import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
 
-const questionnaireResult = ref<QuestionnaireResultDataVO[]>([]);
+const dimensions = ref<QuestionnaireResultDataVO[]>([]);
 const questionnaireAnswer = ref<QuestionnaireAnswerItem[]>([]);
 const assessmentResult = ref<AssessmentResultVO>();
 const queryData = ref();
 const completedTime = ref<number>();
 const activeKey = ref('result');
 const loading = ref(true);
+const exportLoading = ref(false);
 const questionnaireAnswerActiveKey = ref('');
 const tabs = ref<{ key: string; tab: string }[]>([
   { key: 'result', tab: '问卷报告' },
@@ -51,9 +53,10 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreenButton: false,
   fullscreen: true,
   destroyOnClose: true,
-  class: 'w-[900px] !h-full',
+  class: 'h-full overflow-hidden',
+  contentClass: '!bg-[#F7F8FB] box-border flex-center px-20',
   footer: false,
-  header: false,
+  closable: false,
   onOpenChange: async (open) => {
     if (open) {
       loading.value = true;
@@ -81,7 +84,7 @@ async function loadQuestionnaireResult() {
     }
 
     // 获取问卷结果
-    questionnaireResult.value = JSON.parse(response.resultData);
+    dimensions.value = JSON.parse(response.resultData);
 
     // 获取问卷答案
     const newQuestionnaireAnswer = await getQuestionnaireQuestion(
@@ -214,32 +217,95 @@ const handleExport = async () => {
     return;
   }
 
+  exportLoading.value = true;
   try {
     await exportQuestionnaireReportToPDF({
+      assessmentSummary: assessmentResult.value!.riskLevelIntervention,
       questionnaireResult: assessmentResult.value!.questionnaireResults,
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
       studentName: queryData.value.name,
+      scenarioName: assessmentResult.value.scenarioName,
     });
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
+  } finally {
+    exportLoading.value = false;
   }
 };
+
+function handleClose() {
+  questionnaireResultModalApi.close();
+}
+
+/**
+ * 获取维度颜色
+ * @param config 颜色配置参数
+ * @param config.isAbnormal 是否异常
+ * @param config.questionnaireName 问卷名称
+ * @param config.riskLevel 风险等级
+ * @param config.type 颜色类型
+ */
+function getDimensionColor(config: {
+  isAbnormal: number;
+  questionnaireName: string;
+  riskLevel: number;
+  type: 'bg' | 'color';
+}): string {
+  const { isAbnormal, questionnaireName, riskLevel, type } = config;
+  const DEFAULT_COLOR = '#666666';
+
+  // 没有问卷名称时返回默认颜色
+  if (!questionnaireName) {
+    return DEFAULT_COLOR;
+  }
+
+  // 心理健康评估的特殊处理
+  if (questionnaireName.includes('心理健康评估')) {
+    const colorMap = {
+      bg: isAbnormal === 0 ? '#14E77E14' : '#FF083114',
+      color: isAbnormal === 0 ? '#14E77E' : '#FF0831',
+    };
+    return colorMap[type];
+  }
+
+  // 其他问卷的风险等级颜色处理
+  return getColorConfig({ dictValue: riskLevel, target: type }) as string;
+}
 </script>
 
 <template>
   <QuestionnaireResultModal>
-    <div class="h-full overflow-hidden p-6">
+    <template #title>
+      <!-- 顶部返回与标题 -->
+      <div
+        class="to-[rgba(255, 255, 255, 0.8) flex w-full items-center justify-between bg-gradient-to-r from-[#FFFFFF]"
+      >
+        <div class="flex items-center gap-4">
+          <LyButton
+            type="default"
+            size="middle"
+            class="rounded-[4px] px-[12px]"
+            @click="handleClose"
+          >
+            返回
+          </LyButton>
+        </div>
+      </div>
+    </template>
+
+    <div
+      class="h-full w-full overflow-hidden bg-white px-10 py-6"
+      style="margin: 0 140px"
+    >
       <Tabs v-model:active-key="activeKey">
         <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.tab">
           <Spin :spinning="loading" class="flex-center h-full" />
           <div v-if="!loading" class="h-full overflow-y-auto">
             <!-- 问卷报告 -->
             <div v-if="tab.key === 'result'" class="space-y-6">
-              <template
-                v-if="assessmentResult || questionnaireResult.length > 0"
-              >
+              <template v-if="assessmentResult || dimensions.length > 0">
                 <!-- 问卷信息标题 -->
                 <div class="flex items-center gap-3">
                   <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
@@ -254,16 +320,21 @@ const handleExport = async () => {
                   <template
                     v-if="!queryData.questionnaireId && assessmentResult"
                   >
-                    <AssessmentResult :assessment-result="assessmentResult!" />
+                    <AssessmentResult
+                      :assessment-result="assessmentResult!"
+                      :get-dimension-color="getDimensionColor"
+                    />
                   </template>
 
                   <!-- 维度结果展示 -->
                   <template v-if="queryData.questionnaireId">
                     <div class="mt-6 space-y-6">
                       <QuestionnaireResult
-                        v-for="(item, index) in questionnaireResult"
+                        v-for="(dimension, index) in dimensions"
                         :key="index"
-                        :questionnaire-result="item"
+                        :questionnaire-name="queryData.questionnaireName"
+                        :dimension="dimension"
+                        :get-dimension-color="getDimensionColor"
                       />
                     </div>
                   </template>
@@ -330,11 +401,13 @@ const handleExport = async () => {
         <template #rightExtra>
           <LyButton
             v-if="queryData.taskName"
+            :loading="exportLoading"
+            :disabled="loading || exportLoading"
             type="success"
             size="small"
             @click="handleExport"
           >
-            导出
+            {{ exportLoading ? '导出中...' : '导出' }}
           </LyButton>
         </template>
       </Tabs>
