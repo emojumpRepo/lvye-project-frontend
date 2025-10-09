@@ -146,43 +146,54 @@ watch(
   () => props.taskNo,
   async (newTaskNo: string) => {
     if (newTaskNo) {
-      try {
-        loading.value = true;
-        const response = await getAssessmentTaskRiskLevelStatistics(newTaskNo);
-        if (!response) {
-          assessmentTaskRiskLevelStatistics.value = undefined;
-          return message.error('获取风险统计信息失败');
-        }
-        assessmentTaskRiskLevelStatistics.value = response;
-
-        // 处理风险等级颜色
-        assessmentTaskRiskLevelStatistics.value.gradeList.forEach((grade) => {
-          grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
-            riskLevel.color = riskLevelConfigs.find(
-              (config) => config.level === riskLevel.riskLevel,
-            )?.color;
-          });
-          // 处理班级数据
-          if (grade.classList) {
-            grade.classList.forEach((classItem) => {
-              classItem.riskLevelList?.forEach((riskLevel: RiskLevel) => {
-                riskLevel.color = riskLevelConfigs.find(
-                  (config) => config.level === riskLevel.riskLevel,
-                )?.color;
-              });
-            });
-          }
-        });
-      } catch (error) {
-        console.error('获取风险统计信息失败', error);
-        message.error('获取风险统计信息失败，请重试');
-      } finally {
-        loading.value = false;
-      }
+      loading.value = true;
+      await loadAssessmentTaskRiskLevelStatistics(newTaskNo);
+      loading.value = false;
     }
   },
   { immediate: true },
 );
+
+/**
+ * 加载评估任务风险等级统计数据
+ * @param taskNo 评估任务编号
+ */
+async function loadAssessmentTaskRiskLevelStatistics(taskNo: string) {
+  try {
+    const response = await getAssessmentTaskRiskLevelStatistics(taskNo);
+    if (!response) {
+      assessmentTaskRiskLevelStatistics.value = undefined;
+      return message.error('获取风险统计信息失败');
+    }
+    assessmentTaskRiskLevelStatistics.value = response;
+
+    // 处理风险等级颜色
+    assessmentTaskRiskLevelStatistics.value.gradeList.forEach((grade) => {
+      grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
+        riskLevel.color = riskLevelConfigs.find(
+          (config) => config.level === riskLevel.riskLevel,
+        )?.color;
+      });
+      // 处理班级数据
+      if (grade.classList) {
+        grade.classList.forEach((classItem) => {
+          classItem.riskLevelList?.forEach((riskLevel: RiskLevel) => {
+            riskLevel.color = riskLevelConfigs.find(
+              (config) => config.level === riskLevel.riskLevel,
+            )?.color;
+          });
+        });
+      }
+    });
+  } catch (error) {
+    console.error('获取风险统计信息失败', error);
+    message.error('获取风险统计信息失败，请重试');
+  }
+}
+
+defineExpose({
+  loadAssessmentTaskRiskLevelStatistics,
+});
 </script>
 
 <template>
