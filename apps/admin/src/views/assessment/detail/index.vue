@@ -177,9 +177,14 @@ async function loadTaskData() {
         ],
       };
 
-      activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
-        ? { ...currentTaskInfo.value.questionnairesTabs[0] }
-        : { key: '', label: '' };
+      if (
+        !activeTab.value.key &&
+        currentTaskInfo.value?.questionnairesTabs?.length
+      ) {
+        activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
+          ? { ...currentTaskInfo.value.questionnairesTabs[0] }
+          : { key: '', label: '' };
+      }
     }
   } catch (error) {
     console.error('加载测评任务数据失败:', error);
