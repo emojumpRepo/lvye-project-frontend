@@ -38,12 +38,26 @@ export interface AssessmentTask {
   completionRate?: number;
 }
 
+/** 维度类型 */
+export interface Dimension {
+  dimensionId: number;
+  name: string;
+  score: number;
+  isAbnormal: number;
+  riskLevel: number;
+  level: string;
+  teacherComment: string;
+  studentComment: string;
+  description: string;
+}
+
 /** 测评问卷结果 */
 export interface AssessmentQuestionnaireResultVO {
   rawScore: number;
   riskLevel: number;
   suggestions: string;
   reportContent: string;
+  dimensions: Dimension[];
   standardScore: number;
   percentileRank: number;
   dimensionScores: Record<string, number>;

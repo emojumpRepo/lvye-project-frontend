@@ -15,6 +15,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { Empty, message, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getColorConfig } from '#/api/constants';
 import {
   getAssessmentQuestionnaireResult,
   getAssessmentResult,
@@ -27,7 +28,7 @@ import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
 import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
 
-const questionnaireResult = ref<QuestionnaireResultDataVO[]>([]);
+const dimensions = ref<QuestionnaireResultDataVO[]>([]);
 const questionnaireAnswer = ref<QuestionnaireAnswerItem[]>([]);
 const assessmentResult = ref<AssessmentResultVO>();
 const queryData = ref();
@@ -83,7 +84,7 @@ async function loadQuestionnaireResult() {
     }
 
     // 获取问卷结果
-    questionnaireResult.value = JSON.parse(response.resultData);
+    dimensions.value = JSON.parse(response.resultData);
 
     // 获取问卷答案
     const newQuestionnaireAnswer = await getQuestionnaireQuestion(
@@ -236,6 +237,41 @@ const handleExport = async () => {
 function handleClose() {
   questionnaireResultModalApi.close();
 }
+
+/**
+ * 获取维度颜色
+ * @param config 颜色配置参数
+ * @param config.isAbnormal 是否异常
+ * @param config.questionnaireName 问卷名称
+ * @param config.riskLevel 风险等级
+ * @param config.type 颜色类型
+ */
+function getDimensionColor(config: {
+  isAbnormal: number;
+  questionnaireName: string;
+  riskLevel: number;
+  type: 'bg' | 'color';
+}): string {
+  const { isAbnormal, questionnaireName, riskLevel, type } = config;
+  const DEFAULT_COLOR = '#666666';
+
+  // 没有问卷名称时返回默认颜色
+  if (!questionnaireName) {
+    return DEFAULT_COLOR;
+  }
+
+  // 心理健康评估的特殊处理
+  if (questionnaireName.includes('心理健康评估')) {
+    const colorMap = {
+      bg: isAbnormal === 0 ? '#14E77E14' : '#FF083114',
+      color: isAbnormal === 0 ? '#14E77E' : '#FF0831',
+    };
+    return colorMap[type];
+  }
+
+  // 其他问卷的风险等级颜色处理
+  return getColorConfig({ dictValue: riskLevel, target: type }) as string;
+}
 </script>
 
 <template>
@@ -268,9 +304,7 @@ function handleClose() {
           <div v-if="!loading" class="h-full overflow-y-auto">
             <!-- 问卷报告 -->
             <div v-if="tab.key === 'result'" class="space-y-6">
-              <template
-                v-if="assessmentResult || questionnaireResult.length > 0"
-              >
+              <template v-if="assessmentResult || dimensions.length > 0">
                 <!-- 问卷信息标题 -->
                 <div class="flex items-center gap-3">
                   <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
@@ -285,16 +319,21 @@ function handleClose() {
                   <template
                     v-if="!queryData.questionnaireId && assessmentResult"
                   >
-                    <AssessmentResult :assessment-result="assessmentResult!" />
+                    <AssessmentResult
+                      :assessment-result="assessmentResult!"
+                      :get-dimension-color="getDimensionColor"
+                    />
                   </template>
 
                   <!-- 维度结果展示 -->
                   <template v-if="queryData.questionnaireId">
                     <div class="mt-6 space-y-6">
                       <QuestionnaireResult
-                        v-for="(item, index) in questionnaireResult"
+                        v-for="(dimension, index) in dimensions"
                         :key="index"
-                        :questionnaire-result="item"
+                        :questionnaire-name="queryData.questionnaireName"
+                        :dimension="dimension"
+                        :get-dimension-color="getDimensionColor"
                       />
                     </div>
                   </template>

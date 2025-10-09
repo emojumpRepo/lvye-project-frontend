@@ -166,6 +166,7 @@ export namespace PsychologyAssessmentApi {
     studentNo: string;
     score: number;
     riskLevel: number;
+    level: string;
     name: string;
     className: string;
     gradeName: string;
