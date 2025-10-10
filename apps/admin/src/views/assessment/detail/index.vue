@@ -342,7 +342,7 @@ onMounted(async () => {
             返回
           </LyButton>
           <LyButton size="small" type="success" @click="handleManualRefresh">
-            <IconifyIcon icon="material-symbols:refresh" class="size-5" />
+            刷新
           </LyButton>
           <div class="w-28 whitespace-nowrap text-xs text-gray-500">
             {{ lastUpdatedMessage }}
