@@ -252,7 +252,7 @@ function generateQuestionnaireReportContents(
   if (resultsArray.length === 0) {
     return [
       {
-        text: '暂无问卷结果数据',
+        text: '该问卷不提供测评报告，详情请查看答题记录',
         italic: true,
         color: '#666',
         margin: [0, 20, 0, 20],
@@ -306,7 +306,7 @@ function generateDimensionResults(questionnaireResults) {
   if (resultsArray.length === 0) {
     return [
       {
-        text: '暂无维度分析数据',
+        text: '该问卷不提供测评报告，详情请查看答题记录',
         italic: true,
         color: '#666',
         margin: [0, 0, 0, 20],
@@ -348,7 +348,7 @@ function generateDimensionResults(questionnaireResults) {
 
     if (dimensions.length === 0) {
       content.push({
-        text: '暂无维度分析数据',
+        text: '该问卷不提供测评报告，详情请查看答题记录',
         italic: true,
         color: '#666',
         margin: [0, 0, 0, 10],

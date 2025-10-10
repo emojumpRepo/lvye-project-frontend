@@ -23,7 +23,7 @@ import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessmen
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
-import AssessmentProgress from './AssessmentProgress.vue';
+import AssessmentCollapse from './AssessmentCollapse.vue';
 
 const props = defineProps<{
   activeType: ActiveType;
@@ -241,62 +241,23 @@ defineExpose({
                     class="size-2.5"
                   />
                 </template>
+
                 <!-- 统一的风险等级显示 -->
                 <ACollapse.Panel
                   v-for="item in riskLevelDeptList"
                   :key="item.id"
                 >
                   <template #header>
-                    <div class="flex items-center justify-between gap-8">
-                      <div class="whitespace-nowrap">
-                        {{ item.name }}
-                      </div>
-                      <!-- all 模式在头部显示风险等级 -->
-                      <template v-if="activeType === 'all'">
-                        <div
-                          class="flex w-full items-center justify-center gap-12"
-                        >
-                          <div
-                            v-for="child in item.riskLevelList"
-                            :key="child.riskLevel"
-                            class="flex items-center justify-between"
-                          >
-                            <span
-                              class="text-primary whitespace-nowrap text-sm"
-                              :style="{ color: child.color }"
-                            >
-                              {{ child.count }}
-                            </span>
-                          </div>
-                          <AssessmentProgress
-                            :segments="item.progressColor"
-                            :show-percent="false"
-                          />
-                        </div>
-                      </template>
-                    </div>
+                    <AssessmentCollapse
+                      :item="item"
+                      :show-progress="activeType === 'all'"
+                      :gap="0"
+                    />
                   </template>
 
                   <!-- 班级模式内容 -->
                   <template v-if="item.type === 'class'">
-                    <div class="flex items-center justify-center gap-12">
-                      <div
-                        v-for="child in item.riskLevelList"
-                        :key="child.riskLevel"
-                        class="flex items-center justify-between"
-                      >
-                        <span
-                          class="text-primary whitespace-nowrap text-sm"
-                          :style="{ color: child.color }"
-                        >
-                          {{ child.count }}
-                        </span>
-                      </div>
-                      <AssessmentProgress
-                        :segments="item.progressColor"
-                        :show-percent="false"
-                      />
-                    </div>
+                    <AssessmentCollapse :item="item" :show-class-name="false" />
                   </template>
 
                   <!-- 年级模式内容 -->
@@ -304,24 +265,10 @@ defineExpose({
                     <div class="flex flex-col gap-4">
                       <!-- grade 模式显示年级风险等级 -->
                       <template v-if="activeType === 'grade'">
-                        <div class="flex items-center justify-center gap-8">
-                          <div
-                            v-for="child in item.riskLevelList"
-                            :key="child.riskLevel"
-                            class="flex items-center justify-between"
-                          >
-                            <span
-                              class="text-primary whitespace-nowrap text-sm"
-                              :style="{ color: child.color }"
-                            >
-                              {{ child.count }}
-                            </span>
-                          </div>
-                          <AssessmentProgress
-                            :segments="item.progressColor"
-                            :show-percent="false"
-                          />
-                        </div>
+                        <AssessmentCollapse
+                          :item="item"
+                          :show-class-name="false"
+                        />
                       </template>
 
                       <!-- all 模式显示班级列表 -->
@@ -331,29 +278,7 @@ defineExpose({
                           v-for="classItem in item.classList"
                           :key="classItem.id"
                         >
-                          <span class="whitespace-nowrap">
-                            {{ classItem.name }}
-                          </span>
-                          <div
-                            class="flex w-full items-center justify-center gap-12"
-                          >
-                            <div
-                              v-for="child in classItem.riskLevelList"
-                              :key="child.riskLevel"
-                              class="flex items-center justify-between"
-                            >
-                              <span
-                                class="text-primary whitespace-nowrap text-sm"
-                                :style="{ color: child.color }"
-                              >
-                                {{ child.count }}
-                              </span>
-                            </div>
-                            <AssessmentProgress
-                              :segments="classItem.progressColor"
-                              :show-percent="false"
-                            />
-                          </div>
+                          <AssessmentCollapse :item="classItem" />
                         </div>
                       </template>
                     </div>

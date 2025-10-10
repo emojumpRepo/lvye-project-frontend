@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ActiveType, TabItem, TaskInfo } from './types';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { IconifyIcon } from '@vben/icons';
@@ -177,14 +177,14 @@ async function loadTaskData() {
         ],
       };
 
-      if (
-        !activeTab.value.key &&
-        currentTaskInfo.value?.questionnairesTabs?.length
-      ) {
-        activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
-          ? { ...currentTaskInfo.value.questionnairesTabs[0] }
-          : { key: '', label: '' };
-      }
+      // if (
+      //   !activeTab.value.key &&
+      //   currentTaskInfo.value?.questionnairesTabs?.length
+      // ) {
+      //   activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
+      //     ? { ...currentTaskInfo.value.questionnairesTabs[0] }
+      //     : { key: '', label: '' };
+      // }
     }
   } catch (error) {
     console.error('加载测评任务数据失败:', error);
@@ -207,7 +207,6 @@ function executeRefresh() {
   assessmentDetailCompareRef.value?.loadAssessmentTaskRiskLevelStatistics(
     taskNo,
   );
-  loadTaskData();
   lastUpdateTime.value = dayjs();
 }
 
@@ -260,6 +259,12 @@ const lastUpdatedMessage = computed(() => {
   // isActive 是 useIntervalFn 返回的，表示定时器是否在运行
   if (!isActive.value) return '自动刷新已暂停';
   return `上次更新时间：${lastUpdateTime.value.format('HH:mm')}`;
+});
+
+onMounted(async () => {
+  if (taskNo) {
+    await loadTaskData();
+  }
 });
 </script>
 
