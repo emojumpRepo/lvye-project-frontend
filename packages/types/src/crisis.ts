@@ -88,6 +88,7 @@ export interface CrisisEvent {
   description: string;
   riskLevel: number;
   status: number;
+  processStatus: number;
   handlerUserId: number;
   handlerName: string;
   handleAt: number;
