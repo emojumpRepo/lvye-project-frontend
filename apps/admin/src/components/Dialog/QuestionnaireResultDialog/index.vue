@@ -342,7 +342,9 @@ function getDimensionColor(config: {
               </template>
               <template v-else>
                 <div class="flex-center mt-20">
-                  <Empty />
+                  <Empty
+                    description="该问卷不提供测评报告，详情请查看答题记录"
+                  />
                 </div>
               </template>
             </div>
