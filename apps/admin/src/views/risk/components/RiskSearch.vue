@@ -8,8 +8,10 @@ import { onMounted, ref } from 'vue';
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
+import { getTeacherUserList } from '#/api/system/user';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { parseSearchKeyword } from '#/utils/calculateTool';
+import { getDictOptions } from '#/utils/dict';
 import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
@@ -22,13 +24,14 @@ const emit = defineEmits<{
 const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 // 搜索参数
-const crisisEventListReq = ref<CrisisEventListReq>({
-  pageNo: 1,
-  pageSize: 10,
-});
+const crisisEventListReq = ref<CrisisEventListReq>();
 
 const [Form, formApi] = useVbenForm({
-  schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
+  schema: useSearchFormSchema({
+    deptOptions: deptOptions.value,
+    counselorOptions: [],
+    priorityOptions: [],
+  }),
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   submitButtonOptions: {
     content: '查询',
@@ -54,11 +57,11 @@ async function handleSearch(values: any) {
 
     // 构建搜索参数
     const params: CrisisEventListReq = {
-      ...crisisEventListReq.value,
       studentNo: studentNo || undefined,
       studentName: name || undefined,
-      classId: values.classId || undefined,
+      classId: values.classId[values.classId.length - 1] || undefined,
       counselorUserId: values.counselorUserId || undefined,
+      priority: values.priority || undefined,
     };
 
     crisisEventListReq.value = params;
@@ -71,9 +74,34 @@ async function handleSearch(values: any) {
   }
 }
 
+/** 获取心理老师列表 */
+async function loadTeacherUserList() {
+  const response = await getTeacherUserList('psychology_teacher');
+  if (response) {
+    return response.map((item) => ({
+      label: item.nickname as string,
+      value: item.id,
+    })) as SelectOption[];
+  }
+
+  return [];
+}
+
 onMounted(async () => {
   deptOptions.value = await getDeptGradeClassDictOptions();
-  formApi.updateSchema(useSearchFormSchema({ deptOptions: deptOptions.value }));
+  const counselorOptions = await loadTeacherUserList();
+  const priorityOptions = await getDictOptions('crisis_event_priority');
+  formApi.updateSchema(
+    useSearchFormSchema({
+      deptOptions: deptOptions.value,
+      counselorOptions,
+      priorityOptions,
+    }),
+  );
+});
+
+defineExpose({
+  crisisEventListReq,
 });
 </script>
 

@@ -38,6 +38,8 @@ interface EventPanelData {
   count: number;
 }
 
+const riskSearchRef = ref<InstanceType<typeof RiskSearch>>();
+
 // 事件面板图标映射
 const eventpanelIconMap: Record<number, string> = {
   0: crisisEventHandlingIcon,
@@ -74,11 +76,12 @@ const [ReportFastDrawer, reportFastDrawerApi] = useVbenDrawer({
 // 表格视图
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    height: '540px',
+    height: '590px',
     pagerConfig: {
       align: 'right',
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
+      pageSizes: [10, 20, 30, 40, 50, 60],
     },
     columns: useEventGridSchema(),
     proxyConfig: {
@@ -88,6 +91,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
+            ...riskSearchRef.value?.crisisEventListReq,
           });
           await loadEventProcessStatistics();
           return response;
@@ -157,7 +161,7 @@ function refresh() {
 <template>
   <div class="flex flex-col gap-4 p-6">
     <!-- 搜索表单 -->
-    <RiskSearch @search="handleSearch">
+    <RiskSearch ref="riskSearchRef" @search="handleSearch">
       <template #actions>
         <div class="flex items-center gap-2">
           <LyButton size="middle" type="default" @click="handleSystemSetting">
@@ -281,3 +285,10 @@ function refresh() {
     <ReportFastDrawer @refresh="refresh" />
   </div>
 </template>
+
+<style lang="scss" scoped>
+:deep(.vxe-pager--sizes) {
+  width: 8em !important;
+  margin-right: 0 !important;
+}
+</style>

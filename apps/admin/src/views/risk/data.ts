@@ -10,8 +10,12 @@ import { IconifyIcon } from '@vben/icons';
 /** 搜索表单 */
 export function useSearchFormSchema({
   deptOptions,
+  counselorOptions,
+  priorityOptions,
 }: {
+  counselorOptions: { label: string; value: number }[];
   deptOptions: DeptGradeClassOption[];
+  priorityOptions: { label: string; value: number }[];
 }): VbenFormSchema[] {
   return [
     {
@@ -35,7 +39,15 @@ export function useSearchFormSchema({
       fieldName: 'counselorUserId',
       component: 'Select',
       componentProps: {
-        options: [{ label: '全部咨询师', value: '' }],
+        options: [{ label: '全部咨询师', value: '' }, ...counselorOptions],
+      },
+      defaultValue: '',
+    },
+    {
+      fieldName: 'priority',
+      component: 'Select',
+      componentProps: {
+        options: [{ label: '全部优先级', value: '' }, ...priorityOptions],
       },
       defaultValue: '',
     },

@@ -85,11 +85,10 @@ const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
 
 // 跳过处理方式
 const skipedHandler = computed(() => {
-  return crisisEventDetail.value?.latestAssessment
-    ? crisisEventDetail.value.latestAssessment.followUpSuggestion === 3 ||
-        crisisEventDetail.value.latestAssessment.followUpSuggestion === 4
-    : crisisEventDetail.value?.processMethod === 3 ||
-        crisisEventDetail.value?.processMethod === 4;
+  return (
+    crisisEventDetail.value?.processStatus === 3 ||
+    crisisEventDetail.value?.processStatus === 4
+  );
 });
 
 // 步骤条
@@ -459,9 +458,8 @@ async function closeInterventionAssessment(
                   <!-- 评估按钮可以在这里添加 -->
                   <LyButton
                     v-if="
-                      ((crisisEventDetail.processMethod === 3 ||
-                        crisisEventDetail.processMethod === 4) &&
-                        !crisisEventDetail.latestAssessment) ||
+                      crisisEventDetail.processStatus === 3 ||
+                      crisisEventDetail.processStatus === 4 ||
                       crisisEventDetail.status === 4
                     "
                     type="primary"
