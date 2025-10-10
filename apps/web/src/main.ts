@@ -1,3 +1,6 @@
+// Polyfill for Chrome 86 compatibility
+import 'core-js/actual/array/at';
+
 import { initPreferences } from '@vben/preferences';
 import { unmountGlobalLoading } from '@vben/utils';
 

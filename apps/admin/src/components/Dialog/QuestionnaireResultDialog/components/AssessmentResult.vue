@@ -44,18 +44,27 @@ const questionnaireResults = computed(() => {
     return [];
   }
 
-  return results.map((result) => ({
-    ...result,
-    dimensions: result.dimensions.map((dimension) => ({
-      ...dimension,
-      color: props.getDimensionColor({
-        questionnaireName: result.questionnaireName,
-        riskLevel: dimension.riskLevel,
-        isAbnormal: dimension.isAbnormal,
-        type: 'color',
-      }),
-    })),
-  }));
+  return results.map((result) => {
+    if (!result.dimensions || result.dimensions.length === 0) {
+      return {
+        ...result,
+        dimensions: [],
+      };
+    }
+
+    return {
+      ...result,
+      dimensions: result.dimensions.map((dimension) => ({
+        ...dimension,
+        color: props.getDimensionColor({
+          questionnaireName: result.questionnaireName,
+          riskLevel: dimension.riskLevel,
+          isAbnormal: dimension.isAbnormal,
+          type: 'color',
+        }),
+      })),
+    };
+  });
 });
 </script>
 
