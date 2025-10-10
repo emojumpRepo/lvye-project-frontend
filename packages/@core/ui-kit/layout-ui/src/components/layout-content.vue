@@ -65,7 +65,7 @@ const style = computed((): CSSProperties => {
   <main
     ref="contentElement"
     :style="style"
-    class="bg-background-deep relative bg-[#f7f8fa]"
+    class="bg-background-deep relative !bg-[#f7f8fa]"
   >
     <img :src="bgImage" width="100%" class="absolute inset-0" />
     <Slot :style="overlayStyle">
