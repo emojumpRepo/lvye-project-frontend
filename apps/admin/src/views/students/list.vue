@@ -106,12 +106,13 @@ const selectedRowKeys = ref<number[]>([]);
 // Grid 定义
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    height: '600px',
+    height: '650px',
     rowConfig: { keyField: 'id' },
     checkboxConfig: { reserve: true },
     pagerConfig: {
       align: 'right',
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
+      pageSizes: [20, 30, 50, 80, 100],
     },
     columns: useStudentProfileGridSchema(),
     toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
