@@ -6,7 +6,7 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { ref, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -15,6 +15,7 @@ import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
+import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { exportAssessmentParticipantsToExcel } from '#/utils/export';
@@ -80,6 +81,11 @@ const queryParams =
 
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   connectedComponent: QuestionnaireResultDialog,
+});
+
+// 详情抽屉
+const [Drawer, drawerApi] = useVbenDrawer({
+  connectedComponent: StudentDrawer,
 });
 
 /** 处理行选中 */
@@ -242,6 +248,11 @@ async function handleExport() {
     loading.value = false;
   }
 }
+
+/** 查看详情 */
+function viewStudentInfo(id: number) {
+  drawerApi.setData({ id }).open();
+}
 </script>
 
 <template>
@@ -287,12 +298,25 @@ async function handleExport() {
       </template>
     </div>
     <Grid>
+      <!-- 学生名称 -->
+      <template #name="{ row }">
+        <span
+          class="cursor-pointer"
+          @click="viewStudentInfo(row.studentProfileId)"
+        >
+          {{ row.name }}
+        </span>
+      </template>
+
+      <!-- 完成状态  -->
       <template #status="{ row }">
         <LyTag
           :color-type="row.status === 1 ? 'success' : 'error'"
           :tag-label="row.status === 1 ? '已完成' : '未完成'"
         />
       </template>
+
+      <!-- 完成时间 -->
       <template #finishTime="{ row }">
         <span v-if="!row.finishTime">--</span>
         <span v-else>
@@ -337,7 +361,9 @@ async function handleExport() {
         />
       </template>
     </Grid>
+
     <QuestionnaireResultModal />
+    <Drawer />
   </div>
 </template>
 

@@ -31,11 +31,11 @@ withDefaults(
     <!-- 数量和进度条 -->
     <template v-if="showProgress">
       <div class="flex flex-1 items-center justify-between gap-10">
-        <div class="flex w-1/3 items-center justify-between">
+        <div class="grid w-1/3 grid-cols-4">
           <div
             v-for="child in item.riskLevelList"
             :key="child.riskLevel"
-            class="flex items-center justify-between"
+            class="col-span-1 text-center"
           >
             <span
               class="text-primary whitespace-nowrap text-sm"
