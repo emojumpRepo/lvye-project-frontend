@@ -22,6 +22,7 @@ import {
   submitStageAssessment,
 } from '#/api/psychology';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
+import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import SelectHandleMethodDrawer from '#/components/Drawer/SelectHandleMethodDrawer/index.vue';
@@ -75,8 +76,13 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
 // 负责人快速分配弹窗
 const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   connectedComponent: EditEventRecordDialog,
-  destroyOnClose: true,
 });
+
+// 创建量表评估任务弹窗
+const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
+  useVbenModal({
+    connectedComponent: CreateSimpleAssessmentDialog,
+  });
 
 // 选择处理方式弹窗
 const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
@@ -215,9 +221,24 @@ function handleSelectHandleMethod() {
 
 /** 开始处理 */
 function startProcess() {
-  // TODO: 开始处理
-  // console.log('开始处理');
-  // psychologicalAssessmentModalOpen.value = true;
+  switch (crisisEventDetail.value?.processStatus) {
+    case 1: {
+      message.info('即将上线心理咨询');
+      break;
+    }
+    case 2: {
+      createSimpleAssessmentModalApi
+        .setData({
+          id: crisisEventDetail.value?.id,
+          studentName: crisisEventDetail.value?.studentName,
+          className: crisisEventDetail.value?.className,
+          studentNo: crisisEventDetail.value?.studentNumber,
+          studentUserId: crisisEventDetail.value?.studentUserId,
+        })
+        .open();
+      break;
+    }
+  }
 }
 
 /** 开始评估 */
@@ -295,6 +316,11 @@ async function closeInterventionAssessment(
     message.error('创建评估失败');
     return false;
   }
+}
+
+/** 查看最终评估报告 */
+function viewAssessmentReport() {
+  console.log('查看最终评估报告');
 }
 </script>
 
@@ -415,16 +441,31 @@ async function closeInterventionAssessment(
 
               <!-- step4: 执行处理 -->
               <template v-if="key === 4">
-                <div v-if="!skipedHandler" class="my-2 flex w-full flex-col">
+                <div
+                  v-if="!skipedHandler"
+                  class="my-2 flex w-full flex-col gap-3"
+                >
                   <div
                     v-if="crisisEventDetail.status >= 4"
                     class="flex w-full flex-col gap-3"
                   >
-                    <StepEventCard name="心理测评师" :time="1757562878000" />
-
                     <LyButton type="primary" ghost size="small">
                       处理记录
                     </LyButton>
+                  </div>
+
+                  <!-- 评估建议 -->
+                  <div
+                    v-if="crisisEventDetail.latestAssessment"
+                    class="flex items-center gap-2"
+                  >
+                    <span class="text-sm">评估建议：</span>
+                    <LyTag
+                      tag-category-key="follow_up_suggestion"
+                      :dict-value="
+                        crisisEventDetail.latestAssessment.followUpSuggestion
+                      "
+                    />
                   </div>
                   <!-- 执行处理按钮可以在这里添加 -->
                   <LyButton
@@ -457,11 +498,7 @@ async function closeInterventionAssessment(
 
                   <!-- 评估按钮可以在这里添加 -->
                   <LyButton
-                    v-if="
-                      crisisEventDetail.processStatus === 3 ||
-                      crisisEventDetail.processStatus === 4 ||
-                      crisisEventDetail.status === 4
-                    "
+                    v-if="skipedHandler || crisisEventDetail.status === 4"
                     type="primary"
                     ghost
                     size="small"
@@ -480,7 +517,7 @@ async function closeInterventionAssessment(
                   type="primary"
                   ghost
                   size="small"
-                  @click="startProcess"
+                  @click="viewAssessmentReport"
                 >
                   查看报告
                 </LyButton>
@@ -517,6 +554,7 @@ async function closeInterventionAssessment(
       :comfirm-info="confirmInfo"
       :publish="createInterventionAssessment"
     />
+    <CreateSimpleAssessmentModal />
   </HandleCrisisEventModal>
 </template>
 

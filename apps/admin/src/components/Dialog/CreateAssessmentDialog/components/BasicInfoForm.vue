@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Rule } from 'ant-design-vue/es/form';
 
-import type { BasicInfo } from '#/api/assessment/task';
+import type { PsychologyAssessmentApi } from '#/api/psychology/assessment';
 
 import { ref, watch } from 'vue';
 
@@ -14,22 +14,27 @@ import dayjs from 'dayjs';
 
 import LyLabel from '#/components/LyLabel/index.vue';
 
-const props = withDefaults(defineProps<{ modelValue?: BasicInfo }>(), {
-  modelValue: () => ({
-    name: '',
-    timeRange: [dayjs().startOf('day'), dayjs().startOf('day').add(7, 'day')],
-    description: '',
-  }),
-});
+const props = withDefaults(
+  defineProps<{ modelValue?: PsychologyAssessmentApi.BasicInfo }>(),
+  {
+    modelValue: () => ({
+      name: '',
+      timeRange: [dayjs().startOf('day'), dayjs().startOf('day').add(7, 'day')],
+      description: '',
+    }),
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: BasicInfo): void;
+  (e: 'update:modelValue', value: PsychologyAssessmentApi.BasicInfo): void;
   (e: 'valid', value: boolean): void;
 }>();
 
 const formRef = ref<any>(null);
 // 本地状态作为 AForm 的数据源
-const formState = ref<BasicInfo>({ ...props.modelValue });
+const formState = ref<PsychologyAssessmentApi.BasicInfo>({
+  ...props.modelValue,
+});
 
 const descriptionMax = 500; // 任务描述最大字数
 
@@ -104,8 +109,8 @@ async function validateLive() {
 
 watch(
   formState,
-  async (v: BasicInfo) => {
-    emit('update:modelValue', { ...(v as BasicInfo) });
+  async (v: PsychologyAssessmentApi.BasicInfo) => {
+    emit('update:modelValue', { ...(v as PsychologyAssessmentApi.BasicInfo) });
     await validateLive();
   },
   { deep: true },
@@ -113,7 +118,7 @@ watch(
 </script>
 
 <template>
-  <div class="basic-info mx-auto w-full max-w-[400px] space-y-6">
+  <div class="basic-info mx-auto w-full max-w-[500px] space-y-8">
     <AForm
       ref="formRef"
       layout="vertical"
@@ -143,7 +148,7 @@ watch(
               v-model:value="formState.timeRange as any"
               :allow-clear="true"
               show-time
-              style="width: 400px"
+              style="width: 100%"
               :placeholder="['开始时间', '结束时间']"
             />
           </AForm.Item>
@@ -151,7 +156,7 @@ watch(
 
         <div>
           <LyLabel title="任务描述" size="small" />
-          <div class="relative w-[400px]">
+          <div class="relative">
             <AForm.Item name="description">
               <AInput.TextArea
                 v-model:value="formState.description"

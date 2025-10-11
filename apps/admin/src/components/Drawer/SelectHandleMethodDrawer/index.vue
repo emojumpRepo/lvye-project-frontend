@@ -25,7 +25,7 @@ const crisisEventId = ref<number>();
 // 处理方法
 const handleMethod = ref<CategoryCard[]>([
   {
-    title: '访谈评估',
+    title: '心理咨询',
     description: '与学生进行进一步的访谈评估',
     text: '需要进行下一步处理',
     icon: CrisisPsychologyIcon,

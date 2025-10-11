@@ -84,6 +84,7 @@ export interface CrisisEvent {
   studentName: string;
   studentNumber: string;
   className: string;
+  studentUserId: number;
   title: string;
   description: string;
   riskLevel: number;
