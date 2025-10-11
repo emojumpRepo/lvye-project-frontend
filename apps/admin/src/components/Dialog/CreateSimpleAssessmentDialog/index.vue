@@ -156,7 +156,11 @@ provide('CommonDialogContentLoading', {
           custom-title-class="text-sm font-medium text-gray-900"
         />
         <div class="rounded-lg border border-gray-200 p-4">
-          <BasicInfoForm ref="basicInfoFormRef" v-model="basicInfoFormData" />
+          <BasicInfoForm
+            ref="basicInfoFormRef"
+            v-model="basicInfoFormData"
+            position="left"
+          />
         </div>
       </div>
 

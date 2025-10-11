@@ -15,13 +15,17 @@ import dayjs from 'dayjs';
 import LyLabel from '#/components/LyLabel/index.vue';
 
 const props = withDefaults(
-  defineProps<{ modelValue?: PsychologyAssessmentApi.BasicInfo }>(),
+  defineProps<{
+    modelValue?: PsychologyAssessmentApi.BasicInfo;
+    position?: 'center' | 'left';
+  }>(),
   {
     modelValue: () => ({
       name: '',
       timeRange: [dayjs().startOf('day'), dayjs().startOf('day').add(7, 'day')],
       description: '',
     }),
+    position: 'center',
   },
 );
 
@@ -118,7 +122,10 @@ watch(
 </script>
 
 <template>
-  <div class="basic-info mx-auto w-full max-w-[500px] space-y-8">
+  <div
+    class="basic-info w-full max-w-[500px] space-y-8"
+    :class="position === 'center' ? 'mx-auto' : ''"
+  >
     <AForm
       ref="formRef"
       layout="vertical"
