@@ -76,6 +76,8 @@ function loadVfsFonts() {
  * @param {string|number|Date} params.completedTime 完成时间
  * @param {string} params.studentName 学生姓名
  * @param {string} params.scenarioName 场景名称
+ * @param {boolean} params.returnBlob 是否返回 Blob 对象，默认 false（直接下载）
+ * @returns {Promise<void|{blob: Blob, filename: string}>} 如果 returnBlob=true，返回包含 blob 和 filename 的对象
  */
 export async function exportQuestionnaireReportToPDF({
   assessmentSummary,
@@ -84,6 +86,7 @@ export async function exportQuestionnaireReportToPDF({
   completedTime,
   studentName,
   scenarioName,
+  returnBlob = false,
 }) {
   try {
     // 动态加载字体文件
@@ -199,7 +202,16 @@ export async function exportQuestionnaireReportToPDF({
     // 生成 PDF
     const pdfDoc = pdfMake.createPdf(docDefinition);
 
-    // 下载文件
+    // 如果需要返回 Blob 对象
+    if (returnBlob) {
+      return new Promise((resolve, reject) => {
+        pdfDoc.getBlob((blob) => {
+          resolve({ blob, filename: finalFilename });
+        });
+      });
+    }
+
+    // 默认行为：直接下载文件
     pdfDoc.download(finalFilename);
 
     message.success('PDF 导出成功');

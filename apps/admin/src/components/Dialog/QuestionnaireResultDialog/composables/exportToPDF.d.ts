@@ -11,6 +11,7 @@ export declare function exportQuestionnaireReportToPDF(params: {
   questionnaireResult: AssessmentQuestionnaireResultVO[];
   scenarioName: string;
   studentName: string;
-}): Promise<void>;
+  returnBlob?: boolean;
+}): Promise<void | { blob: Blob; filename: string }>;
 
 export declare function formatAnswer(answer: string): string;
