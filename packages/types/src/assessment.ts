@@ -103,7 +103,6 @@ export interface AssessmentResultVO {
   participantId: number;
   dimensionCode: string;
   scenarioName: string;
-  studentName: string;
   score: number;
   riskLevel: number;
   riskLevelIntervention: RiskLevelIntervention;

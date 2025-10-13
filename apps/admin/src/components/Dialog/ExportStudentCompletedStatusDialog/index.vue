@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Progress } from 'ant-design-vue';
+import { message, Progress } from 'ant-design-vue';
 
 type ExportStep =
   | 'completed'
@@ -23,35 +23,46 @@ interface FailureItem {
 }
 
 interface paramsType {
+  title?: string;
   currentStep?: ExportStep;
-  fileType: FileType;
-  exportFileName: string;
+  fileType?: FileType;
+  exportFileName?: string;
   // 第一步：数据获取
   totalCount?: number;
   fetchedCount?: number;
   // 第二步：文件生成
-  generateProgress?: number;
+  currentGenerateCount?: number;
+  totalGenerateCount?: number;
   // 第三步：打包压缩（仅PDF）
   packagingProgress?: number;
   // 完成统计信息
   completedStatus?: {
-    exportDuration?: number; // 导出用时（秒）
     failureList?: FailureItem[]; // 失败列表
+    startTime?: number; // 导出用时（秒）
     successCount?: number; // 成功条数
   };
+  // 报错信息
+  errorMessage?: string;
+  downloadUrl?: string;
 }
 
 const props = withDefaults(defineProps<paramsType>(), {
+  title: '正在导出学生测评报告',
+  fileType: 'pdf',
+  exportFileName: '学生测评报告',
   currentStep: 'fetching',
   totalCount: 0,
   fetchedCount: 0,
-  generateProgress: 0,
+  currentGenerateCount: 0,
+  totalGenerateCount: 0,
   packagingProgress: 0,
+  downloadUrl: '',
   completedStatus: () => ({
     exportDuration: 0,
     successCount: 0,
     failureList: [],
   }),
+  errorMessage: '',
 });
 
 // 步骤条
@@ -61,10 +72,11 @@ const stepConfig = [
   { key: 'packaging', label: '打包压缩' },
 ];
 
-// 导出参数
+// 文件信息
 const params = ref<paramsType>({
+  title: '正在导出学生测评报告',
   fileType: 'pdf',
-  exportFileName: '学生完成情况',
+  exportFileName: '学生测评报告',
 });
 
 const [ExportProgressModal, exportProgressModalApi] = useVbenModal({
@@ -73,33 +85,108 @@ const [ExportProgressModal, exportProgressModalApi] = useVbenModal({
   closable: false,
   class: '!w-[560px]',
   contentClass: '!min-h-[430px] flex-center flex-col',
-  onOpenChange: (open) => {
+  onOpenChange: async (open) => {
     if (open) {
-      params.value = exportProgressModalApi.getData();
+      params.value = await exportProgressModalApi.getData();
     }
   },
 });
 
+/** 生成文件进度 */
+const generateProgress = computed(() => {
+  const current = props.currentGenerateCount ?? 0;
+  const total = props.totalGenerateCount ?? 0;
+
+  const progress = (current / total) * 100;
+  return Math.round(progress);
+});
+
 /** 当前步骤索引 */
 const currentStepIndex = computed(() => {
-  if (params.value.currentStep === 'completed') return 3;
-  if (params.value.currentStep === 'error') return -1;
   return ['fetching', 'generating', 'packaging'].indexOf(
-    params.value.currentStep ?? 'fetching',
+    props.currentStep ?? 'fetching',
   );
 });
 
 /** 第二步进度文本 */
 const progressText = computed(() => {
   const fileType = params.value.fileType?.toUpperCase();
-  return props.generateProgress === 100
-    ? `学生${fileType === 'PDF' ? '测评报告PDF' : '完成情况XLSX'}文件生成成功`
-    : `正在生成学生${fileType === 'PDF' ? '测评报告PDF' : '完成情况XLSX'}文件...`;
+  return props.currentStep === 'generating'
+    ? `正在生成学生${fileType === 'PDF' ? '测评报告PDF' : '完成情况XLSX'}文件...`
+    : `学生${fileType === 'PDF' ? '测评报告PDF' : '完成情况XLSX'}文件生成成功`;
 });
+
+/** 格式化时间显示 (计算当前时间与开始时间的时间差) */
+const formatDuration = (startTime?: number): string => {
+  // 1. 检查输入
+  if (!startTime || startTime <= 0) {
+    return '0秒';
+  }
+
+  // 2. 统一转换为毫秒级时间戳，并计算时间差
+  let startTimestamp = startTime;
+  // 简单判断：如果时间戳小于 10,000,000,000，则假设是秒级时间戳，乘以 1000 转换为毫秒级。
+  if (startTime < 10_000_000_000) {
+    startTimestamp = startTime * 1000;
+  }
+
+  const nowTimestamp = Date.now();
+
+  // 检查开始时间是否在未来
+  if (startTimestamp > nowTimestamp) {
+    return '0秒';
+  }
+
+  // 持续时间（以秒为单位，并向下取整）
+  const totalSeconds = Math.floor((nowTimestamp - startTimestamp) / 1000);
+
+  // 如果时间差小于等于 0
+  if (totalSeconds <= 0) {
+    return '0秒';
+  }
+
+  const seconds = totalSeconds;
+
+  // 3. 计算时、分、剩余秒数
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60; // 这里的 remainingSeconds 必然在 0-59 之间
+
+  const parts: string[] = [];
+
+  // 4. 构建结果数组：小时和分钟继续隐藏零值
+  if (hours > 0) {
+    parts.push(`${hours}小时`);
+  }
+
+  if (minutes > 0) {
+    parts.push(`${minutes}分钟`);
+  }
+
+  // 5. 处理秒数：
+  if (parts.length > 0 || remainingSeconds > 0) {
+    parts.push(`${remainingSeconds}秒`);
+  }
+
+  // 6. 拼接结果
+  return parts.join('');
+};
+
+/** 下载ZIP压缩包 */
+function downloadZip() {
+  if (!props.downloadUrl) return message.error('下载失败');
+  const link = document.createElement('a');
+  link.href = props.downloadUrl;
+  link.download = `${props.exportFileName}.zip`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(props.downloadUrl);
+}
 </script>
 
 <template>
-  <ExportProgressModal title="导出学生完成情况">
+  <ExportProgressModal :title="params.title">
     <div class="flex w-full flex-1 flex-col justify-between px-8 py-3">
       <div class="relative">
         <Transition name="fade" mode="out-in">
@@ -183,8 +270,8 @@ const progressText = computed(() => {
             <!-- 进度条 -->
             <div class="mb-4">
               <Progress
-                :percent="generateProgress"
-                :stroke-color="generateProgress === 100 ? '#FF418D' : '#FF9C05'"
+                :percent="(currentGenerateCount / totalGenerateCount) * 100"
+                :stroke-color="generateProgress === 100 ? '#04DC70' : '#FF418D'"
                 :show-info="false"
                 :stroke-width="8"
               />
@@ -273,7 +360,8 @@ const progressText = computed(() => {
             <!-- 成功提示 -->
             <div class="rounded-lg border border-green-200 bg-green-50 p-4">
               <div
-                class="flex-center cursor-pointer gap-2 font-medium text-green-800 hover:underline"
+                class="flex cursor-pointer items-center gap-2 font-medium text-green-800 hover:underline"
+                @click="downloadZip"
               >
                 <IconifyIcon
                   icon="mdi:zip-box"
@@ -288,7 +376,7 @@ const progressText = computed(() => {
                 <div class="flex items-center justify-between">
                   <span>用时：</span>
                   <span class="font-medium">
-                    {{ completedStatus.exportDuration }}秒
+                    {{ formatDuration(completedStatus.startTime) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-between">
@@ -313,7 +401,7 @@ const progressText = computed(() => {
             </div>
 
             <!-- 失败详情列表 -->
-            <div
+            <!-- <div
               v-if="
                 completedStatus.failureList &&
                 completedStatus.failureList.length > 0
@@ -351,7 +439,7 @@ const progressText = computed(() => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> -->
           </div>
 
           <!-- 错误状态 -->
@@ -375,9 +463,8 @@ const progressText = computed(() => {
 
             <!-- 错误信息 -->
             <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-              <div class="font-medium text-[#FF0831]">错误信息</div>
               <div class="mt-1 text-sm text-[#FF0831]">
-                {{ '未知错误，请联系管理员' }}
+                {{ props.errorMessage || '未知错误' }}
               </div>
             </div>
           </div>

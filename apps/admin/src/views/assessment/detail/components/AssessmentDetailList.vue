@@ -144,15 +144,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 // 使用导出组合式函数
-const { isExporting, exportCompletionStatus, exportAssessmentReports } =
-  useExportAssessment({
-    modalApi: exportStudentCompleteModalApi,
-    gridApi,
-    searchRef,
-    loadTotal,
-    selectedRowKeys,
-    loadStudentData,
-  });
+const {
+  isExporting,
+  exportCompletionStatus,
+  exportAssessmentReports,
+  progress,
+} = useExportAssessment({
+  modalApi: exportStudentCompleteModalApi,
+  gridApi,
+  searchRef,
+  loadTotal,
+  selectedRowKeys,
+  loadStudentData,
+});
 
 /**
  * 校验是否满足导出条件
@@ -305,11 +309,7 @@ function viewDetail(
 
 /** 导出完成情况 */
 function handleExportCompletedStatus() {
-  exportCompletionStatus({
-    taskNo: props.taskNo,
-    questionnaireId: queryParams.value.questionnaireId,
-    activeTab: activeTab.value,
-  });
+  exportCompletionStatus(activeTab.value);
 }
 
 /** 导出测评报告 */
@@ -446,7 +446,21 @@ function viewStudentInfo(id: number) {
     </Grid>
 
     <QuestionnaireResultModal />
-    <ExportStudentCompleteModal />
+    <ExportStudentCompleteModal
+      :current-step="progress.currentStep"
+      :fetched-count="progress.fetchedCount"
+      :total-count="progress.totalCount"
+      :current-generate-count="progress.currentGenerateCount"
+      :total-generate-count="progress.totalGenerateCount"
+      :packaging-progress="progress.packagingProgress"
+      :completed-status="{
+        startTime: progress.startTime,
+        successCount: progress.currentGenerateCount,
+        failureList: progress.failureList,
+      }"
+      :download-url="progress.downloadUrl"
+      :error-message="progress.errorMessage"
+    />
     <Drawer />
   </div>
 </template>

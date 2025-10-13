@@ -253,7 +253,7 @@ export async function exportAssessmentParticipantsToExcel(
           { wch: 30 }, // 测评任务编号
           { wch: 30 }, // 问卷名称
           { wch: 15 }, // 学生姓名
-          { wch: 16 }, // 学号
+          { wch: 30 }, // 学号
           { wch: 20 }, // 班级
           { wch: 20 }, // 完成状态
           { wch: 30 }, // 测评结果
@@ -262,7 +262,7 @@ export async function exportAssessmentParticipantsToExcel(
       : [
           { wch: 30 }, // 测评任务编号
           { wch: 15 }, // 学生姓名
-          { wch: 16 }, // 学号
+          { wch: 30 }, // 学号
           { wch: 20 }, // 班级
           { wch: 20 }, // 完成状态
           { wch: 30 }, // 总评风险
@@ -271,11 +271,11 @@ export async function exportAssessmentParticipantsToExcel(
 
     worksheet['!cols'] = colWidths;
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, '测评结果');
+    XLSX.utils.book_append_sheet(workbook, worksheet, '测评完成情况');
 
     const defaultFilename = activeTab.key
-      ? `${activeTab.label || '问卷'}测评结果.xlsx`
-      : `学生总体测评结果.xlsx`;
+      ? `${activeTab.label || '问卷'}完成情况.xlsx`
+      : `学生总体测评完成情况.xlsx`;
     const finalFilename = filename || defaultFilename;
     XLSX.writeFile(workbook, finalFilename);
   } catch (error) {
