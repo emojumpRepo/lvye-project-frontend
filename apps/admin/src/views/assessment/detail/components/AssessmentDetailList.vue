@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { AssessmentResultVO } from '@vben/types';
-
 import type { TabItem } from '../types';
 
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
@@ -12,22 +10,17 @@ import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Tabs as ATabs, Tooltip as ATooltip, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
-import JSZip from 'jszip';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
-import {
-  getAssessmentResult,
-  getAssessmentTaskParticipantsQuestionnairePage,
-} from '#/api/psychology/assessment/index';
+import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
 import ExportStudentCompletedStatusDialog from '#/components/Dialog/ExportStudentCompletedStatusDialog/index.vue';
-import { exportQuestionnaireReportToPDF } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportToPDF';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
-import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
+import { useExportAssessment } from '../composables/useExportAssessment';
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
 
@@ -51,7 +44,6 @@ const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
 const loadTotal = ref(0); // 学生总数
-const isExporting = ref(false);
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
     pageNo: 1,
@@ -83,6 +75,84 @@ const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
 const [Drawer, drawerApi] = useVbenDrawer({
   connectedComponent: StudentDrawer,
 });
+
+// 加载学生数据的函数
+async function loadStudentData(
+  page: { currentPage: number; pageSize: number },
+  formValues: any,
+) {
+  if (
+    !queryParams.value.taskNo ||
+    (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
+  ) {
+    return { list: [], total: 0 };
+  }
+
+  try {
+    const requestParams = {
+      ...queryParams.value,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+      ...formValues,
+      ...searchRef.value?.assessmentDetailSearchParams,
+    };
+
+    const response =
+      await getAssessmentTaskParticipantsQuestionnairePage(requestParams);
+
+    return response;
+  } catch (error) {
+    console.error('Failed to load assessment participants:', error);
+    return { list: [], total: 0 };
+  }
+}
+
+/** 处理行选中 */
+function handleRowCheckboxChange({ records }: { records: any[] }) {
+  selectedRowKeys.value = records
+    .map((item) => item.studentProfileId)
+    .filter(Boolean);
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(activeTab.value.key),
+    // height: '400px',
+    keepSource: true,
+    pagerConfig: {
+      enabled: true,
+      pageSize: 10,
+      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
+      pageSizes: [10, 20, 30, 40, 50, 60],
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }, formValues) => {
+          const data = await loadStudentData(page, formValues);
+          loadTotal.value = data.total;
+          return data;
+        },
+      },
+    },
+    rowConfig: { keyField: 'seq' },
+    toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
+  } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+});
+
+// 使用导出组合式函数
+const { isExporting, exportCompletionStatus, exportAssessmentReports } =
+  useExportAssessment({
+    modalApi: exportStudentCompleteModalApi,
+    gridApi,
+    searchRef,
+    loadTotal,
+    selectedRowKeys,
+    loadStudentData,
+  });
 
 /**
  * 校验是否满足导出条件
@@ -141,7 +211,7 @@ const actionButtons = computed(() => {
       label: '导出完成情况',
       tip: '导出筛选后的学生完成情况。若勾选了学生，则仅导出所选学生',
       value: 'exportCompletedStatus',
-      onClick: exportCompletedStatus,
+      onClick: handleExportCompletedStatus,
       disabled: !canExport,
       show: true,
     },
@@ -149,83 +219,12 @@ const actionButtons = computed(() => {
       label: '导出测评报告',
       tip: '导出当前筛选条件下的测评报告。若勾选了学生，则仅导出所选学生',
       value: 'exportAssessmentResults',
-      onClick: exportAssessmentResults,
+      onClick: handleExportAssessmentResults,
       disabled: !!activeTab.value.key || !canExport,
       show: true,
     },
   ];
 });
-
-/** 处理行选中 */
-function handleRowCheckboxChange({ records }: { records: any[] }) {
-  selectedRowKeys.value = records
-    .map((item) => item.studentProfileId)
-    .filter(Boolean);
-}
-
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: useGridColumns(activeTab.value.key),
-    // height: '400px',
-    keepSource: true,
-    pagerConfig: {
-      enabled: true,
-      pageSize: 10,
-      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
-      pageSizes: [10, 20, 30, 40, 50, 60],
-    },
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }, formValues) => {
-          const data = await loadStudentData(page, formValues);
-          loadTotal.value = data.total;
-          return data;
-        },
-      },
-    },
-    rowConfig: { keyField: 'seq' },
-    toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
-  } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
-});
-
-/**
- * 加载学生数据
- * @param page 分页信息
- * @param formValues 查询条件
- */
-async function loadStudentData(
-  page: { currentPage: number; pageSize: number },
-  formValues: any,
-) {
-  if (
-    !queryParams.value.taskNo ||
-    (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
-  ) {
-    return { list: [], total: 0 };
-  }
-
-  try {
-    const requestParams = {
-      ...queryParams.value,
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-      ...formValues,
-      ...searchRef.value?.assessmentDetailSearchParams,
-    };
-
-    const response =
-      await getAssessmentTaskParticipantsQuestionnairePage(requestParams);
-
-    return response;
-  } catch (error) {
-    console.error('Failed to load assessment participants:', error);
-    return { list: [], total: 0 };
-  }
-}
 
 watch(
   () => [props.taskNo, activeTab.value.key],
@@ -304,291 +303,21 @@ function viewDetail(
 
 // ==================================== 导出功能 ====================================
 
-/** 获取待导出的学生 */
-async function getStudentsToExport() {
-  if (selectedRowKeys.value.length > 0) {
-    // 场景A: 用户勾选了学生，仅导出所选学生
-    return gridApi.grid.getCheckboxRecords();
-  }
-
-  // 场景B: 用户未勾选，导出所有筛选结果下的学生
-  const pageSize = 100;
-  const totalPages = Math.ceil(loadTotal.value / pageSize);
-  // 创建所有分页请求的 Promise 数组
-  const pagePromises = Array.from({ length: totalPages }, (_, i) =>
-    loadStudentData(
-      { currentPage: i + 1, pageSize },
-      searchRef.value?.assessmentDetailSearchParams,
-    ),
-  );
-  const results = await Promise.all(pagePromises);
-  return results.flatMap((data) => data.list);
+/** 导出完成情况 */
+function handleExportCompletedStatus() {
+  exportCompletionStatus({
+    taskNo: props.taskNo,
+    questionnaireId: queryParams.value.questionnaireId,
+    activeTab: activeTab.value,
+  });
 }
 
-// 导出学生完成情况
-async function exportCompletedStatus() {
-  if (loadTotal.value === 0) {
-    message.warning('暂无学生数据可导出');
-    return;
-  }
-
-  loading.value = true;
-  isExporting.value = true;
-  try {
-    const studentsToProcess = await getStudentsToExport();
-
-    await exportAssessmentParticipantsToExcel(
-      studentsToProcess,
-      activeTab.value,
-    );
-  } catch (error) {
-    console.error('导出失败:', error);
-    message.error('导出失败，请重试');
-  } finally {
-    loading.value = false;
-    isExporting.value = false;
-  }
-}
-
-/** 导出学生测评报告 */
-async function exportAssessmentResults() {
-  exportStudentCompleteModalApi
-    .setData({
-      currentStep: 'error',
-      fileType: 'pdf',
-      exportFileName: '测评报告',
-      totalCount: loadTotal.value,
-      fetchedCount: loadTotal.value,
-      generateStatus: 'active',
-      generateProgress: 50,
-      packagingProgress: 20,
-      exportDuration: 0,
-      successCount: 0,
-      failureCount: 2,
-    })
-    .open();
-
-  if (loadTotal.value === 0) {
-    message.warning('暂无学生数据可导出');
-    return;
-  }
-
-  loading.value = true;
-  isExporting.value = true;
-  try {
-    const studentsToProcess = await getStudentsToExport();
-
-    // 筛选出已完成的测评
-    const completedStudents = studentsToProcess.filter(
-      (item) => item.status === 1,
-    );
-
-    if (completedStudents.length === 0) {
-      message.warning('学生未完成测评，无法导出');
-      return;
-    }
-
-    // 获取所有问卷的题目模板和所有学生的测评结果
-    const assessmentResults =
-      await fetchAllAssessmentResults(completedStudents);
-
-    const validAssessmentResults = assessmentResults.filter(
-      (result): result is AssessmentResultVO => result !== null,
-    );
-
-    if (validAssessmentResults.length === 0) {
-      message.warning('未获取到有效的测评结果');
-      return;
-    }
-
-    // 排序问卷
-    const tabOrderMap = new Map(
-      props.questionnairesTabs.map((tab, index) => [tab.key, index]),
-    );
-
-    validAssessmentResults.forEach((assessment) => {
-      if (assessment && assessment.questionnaireResults) {
-        assessment.questionnaireResults.sort((a, b) => {
-          const orderA = tabOrderMap.get(String(a.questionnaireId)) ?? Infinity;
-          const orderB = tabOrderMap.get(String(b.questionnaireId)) ?? Infinity;
-          return orderA - orderB;
-        });
-      }
-    });
-
-    console.log('validAssessmentResults', validAssessmentResults);
-
-    // 多个学生：生成 ZIP 文件
-    message.loading({
-      content: `正在导出 ${validAssessmentResults.length} 个学生的测评报告...`,
-      key: 'exportPDF',
-      duration: 0,
-    });
-
-    const zip = new JSZip();
-    let successCount = 0;
-    let failCount = 0;
-
-    // 为每个学生生成 PDF 并添加到 ZIP
-    for (let i = 0; i < validAssessmentResults.length; i++) {
-      const assessment = validAssessmentResults[i];
-      if (!assessment) {
-        failCount++;
-        continue;
-      }
-
-      try {
-        message.loading({
-          content: `正在导出 ${i + 1}/${validAssessmentResults.length} 个学生报告...`,
-          key: 'exportPDF',
-          duration: 0,
-        });
-
-        const studentQuestionnaireAnswers = getQuestionnaireAnswers([
-          assessment,
-        ]);
-
-        const result = await exportQuestionnaireReportToPDF({
-          assessmentSummary: assessment.riskLevelIntervention,
-          questionnaireResult: assessment.questionnaireResults || [],
-          questionnaireAnswer: studentQuestionnaireAnswers || [],
-          completedTime: assessment.updateTime,
-          studentName: assessment.studentName || '',
-          scenarioName: assessment.scenarioName || '',
-          returnBlob: true,
-        });
-
-        if (result && result.blob && result.filename) {
-          zip.file(result.filename, result.blob);
-          successCount++;
-        }
-      } catch (error) {
-        console.error(`导出学生 ${assessment.studentName} 的报告失败:`, error);
-        failCount++;
-      }
-    }
-
-    if (successCount === 0) {
-      message.error({ content: '所有学生报告导出失败', key: 'exportPDF' });
-      return;
-    }
-
-    // 生成 ZIP 文件
-    message.loading({
-      content: '正在打包 ZIP 文件...',
-      key: 'exportPDF',
-      duration: 0,
-    });
-
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-    // 下载 ZIP 文件
-    const downloadUrl = URL.createObjectURL(zipBlob);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    const timestamp = dayjs().format('YYYYMMDDHHmmss');
-    link.download = `测评报告_${timestamp}.zip`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(downloadUrl);
-
-    message.destroy('exportPDF');
-    if (failCount > 0) {
-      message.warning(
-        `导出完成！成功 ${successCount} 个，失败 ${failCount} 个`,
-      );
-    } else {
-      message.success(`成功导出 ${successCount} 个学生的测评报告`);
-    }
-  } catch (error) {
-    console.error('导出失败:', error);
-    message.destroy('exportPDF');
-    message.error('导出失败，请重试');
-  } finally {
-    loading.value = false;
-    isExporting.value = false;
-  }
-}
-
-/** 获取所有已完成学生的测评结果 */
-async function fetchAllAssessmentResults(
-  completedStudents: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
-) {
-  const BATCH_SIZE = 30; // 每批处理30个
-  const allResults: (AssessmentResultVO | null)[] = [];
-
-  // 计算总批次数
-  const totalBatches = Math.ceil(completedStudents.length / BATCH_SIZE);
-
-  // 分批处理
-  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-    const start = batchIndex * BATCH_SIZE;
-    const end = Math.min(start + BATCH_SIZE, completedStudents.length);
-    const batch = completedStudents.slice(start, end);
-
-    // 显示批次进度
-    if (totalBatches > 1) {
-      message.loading({
-        content: `正在获取测评结果 (${batchIndex + 1}/${totalBatches} 批)...`,
-        key: 'fetchResults',
-        duration: 0,
-      });
-    }
-
-    // 并发处理当前批次
-    const batchPromises = batch.map(
-      async (
-        student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
-      ) => {
-        try {
-          if (!student.id) {
-            return null;
-          }
-          const response = await getAssessmentResult(String(student.id));
-          if (!response) {
-            return null;
-          }
-
-          return { ...response, studentName: student.name };
-        } catch (error) {
-          console.error('获取测评结果失败', error);
-          return null;
-        }
-      },
-    );
-
-    // 等待当前批次完成
-    const batchResults = await Promise.all(batchPromises);
-    allResults.push(...batchResults);
-  }
-
-  // 清除进度提示
-  if (totalBatches > 1) {
-    message.destroy('fetchResults');
-  }
-
-  return allResults;
-}
-
-/**
- * 获取所有问卷答案
- * @param assessmentResults 包含多个学生测评结果的数组
- * @returns 一个包含所有问卷答案对象的数组
- */
-function getQuestionnaireAnswers(
-  assessmentResults: AssessmentResultVO[],
-): any[] {
-  return assessmentResults.flatMap((result) => {
-    const questionnaireAnswers = result.questionnaireResults || [];
-
-    return questionnaireAnswers.map((q) => {
-      return {
-        questionnaireName: q.questionnaireName,
-        questionnaireId: q.questionnaireId,
-        answers: JSON.parse(q.answers),
-      };
-    });
+/** 导出测评报告 */
+function handleExportAssessmentResults() {
+  exportAssessmentReports({
+    taskNo: props.taskNo,
+    taskName: props.taskName,
+    questionnairesTabs: props.questionnairesTabs,
   });
 }
 

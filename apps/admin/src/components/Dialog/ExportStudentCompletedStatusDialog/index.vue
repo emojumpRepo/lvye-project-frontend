@@ -15,9 +15,11 @@ type ExportStep =
 type FileType = 'pdf' | 'xlsx';
 
 interface FailureItem {
-  errorMeg: string;
+  errorMessage: string;
   studentName: string;
+  studentNo: string;
   className: string;
+  failedStep: 'fetching' | 'generating' | 'packaging';
 }
 
 interface paramsType {
@@ -306,6 +308,47 @@ const progressText = computed(() => {
                   <span class="font-medium text-[#FF0831]">
                     {{ completedStatus.failureList.length }}条
                   </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 失败详情列表 -->
+            <div
+              v-if="
+                completedStatus.failureList &&
+                completedStatus.failureList.length > 0
+              "
+              class="mt-4 max-h-48 overflow-y-auto rounded-lg border border-red-200 bg-red-50 p-3"
+            >
+              <div class="mb-2 text-sm font-medium text-[#FF0831]">
+                失败详情：
+              </div>
+              <div class="space-y-1">
+                <div
+                  v-for="(item, index) in completedStatus.failureList"
+                  :key="index"
+                  class="rounded bg-white p-2 text-xs text-gray-700"
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium">
+                      {{ item.studentName }} ({{ item.studentNo }})
+                    </span>
+                    <span class="text-gray-500">{{ item.className }}</span>
+                  </div>
+                  <div class="mt-1 flex items-center gap-2 text-gray-600">
+                    <span
+                      class="rounded bg-red-100 px-1.5 py-0.5 text-[#FF0831]"
+                    >
+                      {{
+                        item.failedStep === 'fetching'
+                          ? '准备工作'
+                          : item.failedStep === 'generating'
+                            ? '生成文件'
+                            : '打包压缩'
+                      }}
+                    </span>
+                    <span>{{ item.errorMessage }}</span>
+                  </div>
                 </div>
               </div>
             </div>
