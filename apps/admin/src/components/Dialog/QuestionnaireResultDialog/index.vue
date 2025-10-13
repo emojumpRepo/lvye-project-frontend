@@ -225,7 +225,7 @@ const handleExport = async () => {
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
       studentName: queryData.value.name,
-      scenarioName: assessmentResult.value.scenarioName,
+      scenarioName: assessmentResult.value?.scenarioName ?? '',
     });
   } catch (error) {
     console.error('导出失败:', error);

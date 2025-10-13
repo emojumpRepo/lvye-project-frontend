@@ -198,11 +198,11 @@ export function exportStudentsToExcel(
  * @param activeTab.label 选项名称，作为问卷名称展示
  * @param filename 可选的文件名
  */
-export function exportAssessmentParticipantsToExcel(
+export async function exportAssessmentParticipantsToExcel(
   data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
   activeTab: { key: string; label: string },
   filename?: string,
-): void {
+) {
   try {
     const formattedData = data.map((item) => {
       const rowData: Record<string, any> = {
