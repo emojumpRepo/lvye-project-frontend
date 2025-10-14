@@ -1,12 +1,12 @@
 import type { Ref } from 'vue';
 
-import type { AssessmentResultVO } from '@vben/types';
+import type { AssessmentResultVO, ExportProgress } from '@vben/types';
 
 import type { TabItem } from '../types';
 
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 import JSZip from 'jszip';
@@ -22,47 +22,6 @@ export interface StudentAssessmentResultVO extends AssessmentResultVO {
   className: string; // 班级名称
 }
 
-/** 导出失败项 */
-export interface ExportFailureItem {
-  studentName: string; // 学生姓名
-  studentNo: string; // 学号
-  className: string; // 班级名称
-  failedStep: 'fetching' | 'generating' | 'packaging'; // 失败步骤
-  errorMessage: string; // 错误信息
-}
-
-/** 导出进度 */
-export interface ExportProgress {
-  currentStep: 'completed' | 'error' | 'fetching' | 'generating' | 'packaging';
-  fileType: 'pdf' | 'xlsx';
-  exportFileName: string;
-  totalCount: number; // 学生总数
-  fetchedCount: number; // 已获取数据的学生数
-  currentGenerateCount: number; // 当前正在生成的数据数量
-  totalGenerateCount: number; // 总生成数据数量
-  generateProgress: number; // 生成文件进度（0-100）
-  packagingProgress: number; // 打包进度（0-100）
-  successCount: number; // 成功数量
-  failureList: ExportFailureItem[]; // 失败列表
-  startTime: number; // 开始时间戳
-  errorMessage: string; // 错误信息
-  downloadUrl: string; // 下载链接
-}
-
-/** 导出选项 - 完成情况 */
-export interface ExportCompletionOptions {
-  taskNo: string;
-  questionnaireId?: number;
-  activeTab?: TabItem;
-}
-
-/** 导出选项 - 测评报告 */
-export interface ExportReportsOptions {
-  taskNo: string;
-  taskName?: string;
-  questionnairesTabs?: TabItem[];
-}
-
 /** 组合式函数选项 */
 export interface UseExportAssessmentOptions {
   modalApi: any; // 进度弹窗的API，用于更新进度
@@ -76,7 +35,9 @@ export interface UseExportAssessmentOptions {
   ) => Promise<{ list: any[]; total: number }>; // 加载学生数据的函数
 }
 
-const zip = new JSZip(); // JSZip实例
+// ======================== 常量配置 ========================
+/** 获取测评结果时，每批并发请求数量 */
+const ASSESSMENT_RESULT_BATCH_SIZE = 10;
 
 // ======================== 组合式函数 ========================
 
@@ -90,8 +51,14 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     loadStudentData,
   } = options;
 
-  // 是否正在导出
-  const isExporting = reactive({ value: false });
+  // 是否正在导出测评报告（PDF）
+  const isExportingReports = ref(false);
+
+  // 是否正在导出完成情况（Excel）
+  const isExportingCompletionStatus = ref(false);
+
+  // 是否取消导出
+  const isCancelled = ref(false);
 
   // 进度状态
   const progress = reactive<ExportProgress>({
@@ -102,9 +69,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     fetchedCount: 0,
     currentGenerateCount: 0,
     totalGenerateCount: 0,
-    generateProgress: 0,
     packagingProgress: 0,
-    successCount: 0,
     failureList: [],
     startTime: 0,
     errorMessage: '',
@@ -122,13 +87,45 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     progress.fetchedCount = 0;
     progress.currentGenerateCount = 0;
     progress.totalGenerateCount = 0;
-    progress.generateProgress = 0;
     progress.packagingProgress = 0;
-    progress.successCount = 0;
     progress.failureList = [];
     progress.startTime = 0;
     progress.errorMessage = '';
     progress.downloadUrl = '';
+  }
+
+  /**
+   * 记录失败信息的辅助函数
+   */
+  function recordFailure(
+    student: {
+      className?: string;
+      name?: string;
+      studentNo?: string;
+    },
+    failedStep: 'fetching' | 'generating',
+    errorMessage: string,
+  ) {
+    progress.failureList.push({
+      studentName: student.name || '未知',
+      className: student.className || '未知',
+      studentNo: student.studentNo || '未知',
+      failedStep,
+      errorMessage,
+    });
+  }
+
+  /**
+   * 获取学生基本信息
+   */
+  function getStudentInfo(
+    student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
+  ) {
+    return {
+      name: student.name || '未知',
+      studentNo: student.studentNo || '未知',
+      className: student.className || '未知',
+    };
   }
 
   /**
@@ -145,16 +142,62 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     const pageSize = 100;
     const totalPages = Math.ceil(loadTotal.value / pageSize);
 
-    // 创建所有分页请求的 Promise 数组
-    const pagePromises = Array.from({ length: totalPages }, (_, i) =>
-      loadStudentData(
+    // 串行请求所有分页数据
+    const results = [];
+    for (let i = 0; i < totalPages; i++) {
+      if (isCancelled.value) return [];
+
+      const data = await loadStudentData(
         { currentPage: i + 1, pageSize },
         searchRef.value?.assessmentDetailSearchParams,
-      ),
-    );
+      );
+      results.push(data);
+    }
 
-    const results = await Promise.all(pagePromises);
     return results.flatMap((data) => data.list);
+  }
+
+  /**
+   * 获取单个学生的测评结果
+   */
+  async function fetchSingleAssessmentResult(
+    student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
+  ): Promise<null | StudentAssessmentResultVO> {
+    const studentInfo = getStudentInfo(student);
+
+    try {
+      // 验证学生ID
+      if (!student.id) {
+        recordFailure(studentInfo, 'fetching', '学生ID不存在');
+        return null;
+      }
+
+      // 获取测评结果
+      const response = await getAssessmentResult(String(student.id));
+      if (!response) {
+        recordFailure(studentInfo, 'fetching', '获取测评结果失败');
+        return null;
+      }
+
+      // 更新进度
+      progress.fetchedCount++;
+
+      // 返回完整的学生测评结果
+      return {
+        ...response,
+        className: student.className,
+        studentName: student.name,
+        studentNo: student.studentNo,
+      } as StudentAssessmentResultVO;
+    } catch (error: any) {
+      console.error('获取测评结果失败', error);
+      recordFailure(
+        studentInfo,
+        'fetching',
+        error?.message || '获取测评结果失败',
+      );
+      return null;
+    }
   }
 
   /**
@@ -163,73 +206,32 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   async function fetchAllAssessmentResults(
     completedStudents: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
   ): Promise<StudentAssessmentResultVO[]> {
-    const BATCH_SIZE = 30; // 每批处理30个
     const allResults: StudentAssessmentResultVO[] = [];
+    const totalBatches = Math.ceil(
+      completedStudents.length / ASSESSMENT_RESULT_BATCH_SIZE,
+    );
 
-    // 计算总批次数
-    const totalBatches = Math.ceil(completedStudents.length / BATCH_SIZE);
-
-    // 分批处理
+    // 分批处理，每批之间检查取消状态
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      const start = batchIndex * BATCH_SIZE;
-      const end = Math.min(start + BATCH_SIZE, completedStudents.length);
+      // 检查是否取消
+      if (isCancelled.value) {
+        return allResults;
+      }
+
+      // 获取当前批次的学生
+      const start = batchIndex * ASSESSMENT_RESULT_BATCH_SIZE;
+      const end = Math.min(
+        start + ASSESSMENT_RESULT_BATCH_SIZE,
+        completedStudents.length,
+      );
       const batch = completedStudents.slice(start, end);
 
       // 并发处理当前批次
-      const batchPromises = batch.map(
-        async (
-          student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
-        ) => {
-          try {
-            if (!student.id) {
-              // 记录失败信息
-              progress.failureList.push({
-                studentName: student.name || '未知',
-                studentNo: student.studentNo || '未知',
-                className: student.className || '未知',
-                failedStep: 'fetching',
-                errorMessage: '获取测评结果失败',
-              });
-              return null;
-            }
-            const response = await getAssessmentResult(String(student.id));
-            if (!response) {
-              // 记录失败信息
-              progress.failureList.push({
-                studentName: student.name || '未知',
-                studentNo: student.studentNo || '未知',
-                className: student.className || '未知',
-                failedStep: 'fetching',
-                errorMessage: '获取测评结果失败',
-              });
-              return null;
-            }
-
-            progress.fetchedCount++;
-            return {
-              ...response,
-              className: student.className,
-              studentName: student.name,
-              studentNo: student.studentNo,
-            } as StudentAssessmentResultVO;
-          } catch (error: any) {
-            console.error('获取测评结果失败', error);
-
-            // 记录失败信息
-            progress.failureList.push({
-              studentName: student.name || '未知',
-              studentNo: student.studentNo || '未知',
-              className: student.className || '未知',
-              failedStep: 'fetching',
-              errorMessage: error?.message || '获取测评结果失败',
-            });
-
-            return null;
-          }
-        },
+      const batchPromises = batch.map((student) =>
+        fetchSingleAssessmentResult(student),
       );
 
-      // 等待当前批次完成
+      // 等待当前批次完成并过滤掉失败的结果
       const batchResults = await Promise.all(batchPromises);
       allResults.push(
         ...batchResults.filter(
@@ -261,6 +263,14 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   }
 
   /**
+   * 取消导出
+   */
+  function cancelExport() {
+    isCancelled.value = true;
+    progress.currentStep = 'cancelled';
+  }
+
+  /**
    * 导出完成情况（Excel）
    */
   async function exportCompletionStatus(activeTab: TabItem) {
@@ -269,7 +279,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       return;
     }
 
-    isExporting.value = true;
+    isExportingCompletionStatus.value = true;
     try {
       const studentsToProcess = await getStudentsToExport();
 
@@ -278,14 +288,14 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       console.error('导出失败:', error);
       message.error('导出失败，请重试');
     } finally {
-      isExporting.value = false;
+      isExportingCompletionStatus.value = false;
     }
   }
 
   /**
    * 导出测评报告（PDF）
    */
-  async function exportAssessmentReports(options: ExportReportsOptions) {
+  async function exportAssessmentReports(questionnairesTabs: TabItem[]) {
     if (loadTotal.value === 0) {
       message.warning('暂无学生数据可导出');
       return;
@@ -298,8 +308,11 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     progress.startTime = Date.now();
     progress.totalCount = loadTotal.value;
 
+    // 重置取消标志
+    isCancelled.value = false;
+
     // 更新导出状态
-    isExporting.value = true;
+    isExportingReports.value = true;
 
     // 打开进度弹窗
     modalApi
@@ -310,12 +323,14 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       })
       .open();
 
+    const zip = new JSZip(); // JSZip实例
+
     try {
       // 步骤1: 准备工作 - 获取学生数据
       progress.currentStep = 'fetching';
 
       const studentsToProcess = await getStudentsToExport();
-      // Todo 获取到的学生数量与loadTotal数量不一致怎么处理
+      if (isCancelled.value) return;
 
       // 筛选出已完成的测评
       const completedStudents = studentsToProcess.filter(
@@ -335,6 +350,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       // 获取所有学生的测评结果
       const assessmentResults =
         await fetchAllAssessmentResults(completedStudents);
+      if (isCancelled.value) return;
 
       if (assessmentResults.length === 0) {
         progress.currentStep = 'error';
@@ -342,10 +358,10 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
         return;
       }
 
-      // 排序问卷
-      if (options.questionnairesTabs) {
+      // 排序问卷（内存操作，快速完成）
+      if (questionnairesTabs) {
         const tabOrderMap = new Map(
-          options.questionnairesTabs.map((tab, index) => [tab.key, index]),
+          questionnairesTabs.map((tab, index) => [tab.key, index]),
         );
 
         assessmentResults.forEach((assessment) => {
@@ -366,7 +382,10 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       progress.totalGenerateCount = assessmentResults.length;
 
       // 为每个学生生成 PDF 并添加到 ZIP
-      for (const [_i, assessment] of assessmentResults.entries()) {
+      for (const assessment of assessmentResults) {
+        // 检查是否取消
+        if (isCancelled.value) return;
+
         try {
           const studentQuestionnaireAnswers = getQuestionnaireAnswers([
             assessment,
@@ -382,35 +401,27 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
             returnBlob: true,
           });
 
-          if (result && result.blob && result.filename) {
+          if (result?.blob && result?.filename) {
             zip.file(result.filename, result.blob);
             progress.currentGenerateCount++;
           } else {
-            // 记录失败信息
-            progress.failureList.push({
-              studentName: assessment.studentName || '未知',
-              studentNo: assessment.studentNo || '未知',
-              className: assessment.className || '未知',
-              failedStep: 'generating',
-              errorMessage: 'PDF生成失败',
-            });
+            recordFailure(assessment, 'generating', 'PDF生成失败');
           }
         } catch (error: any) {
           console.error(
             `导出学生 ${assessment.studentName} 的报告失败:`,
             error,
           );
-
-          // 记录失败信息
-          progress.failureList.push({
-            studentName: assessment.studentName || '未知',
-            studentNo: assessment.studentNo || '未知',
-            className: assessment.className || '未知',
-            failedStep: 'generating',
-            errorMessage: error?.message || 'PDF生成失败',
-          });
+          recordFailure(
+            assessment,
+            'generating',
+            error?.message || 'PDF生成失败',
+          );
         }
       }
+
+      // 检查是否有成功生成的PDF
+      if (isCancelled.value) return;
 
       if (progress.currentGenerateCount === 0) {
         progress.currentStep = 'error';
@@ -420,11 +431,12 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
 
       // 步骤3: 打包压缩
       progress.currentStep = 'packaging';
-
-      // 模拟打包进度
       progress.packagingProgress = 50;
+
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const downloadUrl = URL.createObjectURL(zipBlob); // 创建下载链接
+      if (isCancelled.value) return;
+
+      const downloadUrl = URL.createObjectURL(zipBlob);
       progress.downloadUrl = downloadUrl;
       progress.packagingProgress = 100;
 
@@ -435,13 +447,15 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       progress.currentStep = 'error';
       message.error('导出失败，请重试');
     } finally {
-      isExporting.value = false;
+      isExportingReports.value = false;
     }
   }
 
   return {
     progress,
-    isExporting,
+    isExportingReports,
+    isExportingCompletionStatus,
+    cancelExport,
     exportCompletionStatus,
     exportAssessmentReports,
   };

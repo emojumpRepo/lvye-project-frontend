@@ -145,7 +145,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // 使用导出组合式函数
 const {
-  isExporting,
+  isExportingReports,
+  isExportingCompletionStatus,
+  cancelExport,
   exportCompletionStatus,
   exportAssessmentReports,
   progress,
@@ -166,10 +168,6 @@ const {
  * @returns {boolean} true: 满足导出条件, false: 不满足
  */
 const validateExport = computed(() => {
-  if (isExporting.value) {
-    return false;
-  }
-
   // 1. 检查是否勾选了学生
   const hasSelections = selectedRowKeys.value.length > 0;
 
@@ -216,7 +214,7 @@ const actionButtons = computed(() => {
       tip: '导出筛选后的学生完成情况。若勾选了学生，则仅导出所选学生',
       value: 'exportCompletedStatus',
       onClick: handleExportCompletedStatus,
-      disabled: !canExport,
+      disabled: isExportingCompletionStatus.value || !canExport,
       show: true,
     },
     {
@@ -224,7 +222,7 @@ const actionButtons = computed(() => {
       tip: '导出当前筛选条件下的测评报告。若勾选了学生，则仅导出所选学生',
       value: 'exportAssessmentResults',
       onClick: handleExportAssessmentResults,
-      disabled: !!activeTab.value.key || !canExport,
+      disabled: !!activeTab.value.key || isExportingReports.value || !canExport,
       show: true,
     },
   ];
@@ -305,7 +303,7 @@ function viewDetail(
   }
 }
 
-// ==================================== 导出功能 ====================================
+// ============== 导出功能 =================
 
 /** 导出完成情况 */
 function handleExportCompletedStatus() {
@@ -314,14 +312,8 @@ function handleExportCompletedStatus() {
 
 /** 导出测评报告 */
 function handleExportAssessmentResults() {
-  exportAssessmentReports({
-    taskNo: props.taskNo,
-    taskName: props.taskName,
-    questionnairesTabs: props.questionnairesTabs,
-  });
+  exportAssessmentReports(props.questionnairesTabs);
 }
-
-// =================================================================================
 
 /** 查看详情 */
 function viewStudentInfo(id: number) {
@@ -453,13 +445,11 @@ function viewStudentInfo(id: number) {
       :current-generate-count="progress.currentGenerateCount"
       :total-generate-count="progress.totalGenerateCount"
       :packaging-progress="progress.packagingProgress"
-      :completed-status="{
-        startTime: progress.startTime,
-        successCount: progress.currentGenerateCount,
-        failureList: progress.failureList,
-      }"
+      :start-time="progress.startTime"
+      :failure-list="progress.failureList"
       :download-url="progress.downloadUrl"
       :error-message="progress.errorMessage"
+      @cancel="cancelExport"
     />
     <Drawer />
   </div>
