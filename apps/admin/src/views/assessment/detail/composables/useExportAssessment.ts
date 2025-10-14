@@ -26,12 +26,11 @@ export interface StudentAssessmentResultVO extends AssessmentResultVO {
 export interface UseExportAssessmentOptions {
   modalApi: any; // 进度弹窗的API，用于更新进度
   gridApi: any; // 表格API，用于获取选中的行
-  searchRef: Ref<any>; // 搜索参数引用
   loadTotal: Ref<number>; // 学生总数
   selectedRowKeys: Ref<number[]>; // 选中的行键
   loadStudentData: (
     page: { currentPage: number; pageSize: number },
-    formValues: any,
+    formValues?: any,
   ) => Promise<{ list: any[]; total: number }>; // 加载学生数据的函数
 }
 
@@ -42,14 +41,8 @@ const ASSESSMENT_RESULT_BATCH_SIZE = 10;
 // ======================== 组合式函数 ========================
 
 export function useExportAssessment(options: UseExportAssessmentOptions) {
-  const {
-    modalApi,
-    gridApi,
-    searchRef,
-    loadTotal,
-    selectedRowKeys,
-    loadStudentData,
-  } = options;
+  const { modalApi, gridApi, loadTotal, selectedRowKeys, loadStudentData } =
+    options;
 
   // 是否正在导出测评报告（PDF）
   const isExportingReports = ref(false);
@@ -147,10 +140,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     for (let i = 0; i < totalPages; i++) {
       if (isCancelled.value) return [];
 
-      const data = await loadStudentData(
-        { currentPage: i + 1, pageSize },
-        searchRef.value?.assessmentDetailSearchParams,
-      );
+      const data = await loadStudentData({ currentPage: i + 1, pageSize });
       results.push(data);
     }
 
@@ -358,7 +348,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
         return;
       }
 
-      // 排序问卷（内存操作，快速完成）
+      // 排序问卷
       if (questionnairesTabs) {
         const tabOrderMap = new Map(
           questionnairesTabs.map((tab, index) => [tab.key, index]),

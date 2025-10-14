@@ -14,7 +14,7 @@ import dayjs from 'dayjs';
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
-import ExportStudentCompletedStatusDialog from '#/components/Dialog/ExportStudentCompletedStatusDialog/index.vue';
+import ExportStudentAssessmentResultDialog from '#/components/Dialog/ExportStudentAssessmentResultDialog/index.vue';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -68,7 +68,7 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
 // 导出学生完成情况弹窗
 const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
   useVbenModal({
-    connectedComponent: ExportStudentCompletedStatusDialog,
+    connectedComponent: ExportStudentAssessmentResultDialog,
   });
 
 // 学生信息详情抽屉
@@ -79,7 +79,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 // 加载学生数据的函数
 async function loadStudentData(
   page: { currentPage: number; pageSize: number },
-  formValues: any,
+  formValues?: any,
 ) {
   if (
     !queryParams.value.taskNo ||
@@ -93,7 +93,7 @@ async function loadStudentData(
       ...queryParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      ...formValues,
+      ...(formValues ? { ...formValues } : {}),
       ...searchRef.value?.assessmentDetailSearchParams,
     };
 
@@ -123,7 +123,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       enabled: true,
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
-      pageSizes: [10, 20, 30, 40, 50, 60],
+      pageSizes: [10, 30, 50, 80, 100],
     },
     proxyConfig: {
       ajax: {
@@ -154,7 +154,6 @@ const {
 } = useExportAssessment({
   modalApi: exportStudentCompleteModalApi,
   gridApi,
-  searchRef,
   loadTotal,
   selectedRowKeys,
   loadStudentData,
@@ -347,6 +346,7 @@ function viewStudentInfo(id: number) {
     <!-- 搜索栏 -->
     <AssessmentDetailSearch
       ref="searchRef"
+      v-model:selected-row-keys="selectedRowKeys"
       @search="handleSearch"
       @loading="handleLoading"
     />

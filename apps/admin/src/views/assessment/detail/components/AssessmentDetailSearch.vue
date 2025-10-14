@@ -18,6 +18,10 @@ const emit = defineEmits<{
   search: [params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq];
 }>();
 
+const selectedRowKeys = defineModel<number[]>('selectedRowKeys', {
+  default: () => [],
+});
+
 const deptOptions = ref<DeptGradeClassOption[]>([]);
 const assessmentDetailSearchParams =
   ref<PsychologyAssessmentApi.ParticipantsQuestionnairePageReq>();
@@ -30,6 +34,8 @@ const [Form, formApi] = useVbenForm({
   submitButtonOptions: { show: false },
   handleReset,
   handleValuesChange: async (values) => {
+    selectedRowKeys.value = [];
+
     // 判断搜索关键词是学号还是姓名
     let name, studentNo;
     if (values.searchKeyword) {
