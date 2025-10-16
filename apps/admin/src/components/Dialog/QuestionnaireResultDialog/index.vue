@@ -177,37 +177,60 @@ async function getQuestionnaireQuestion(
  * 排序问卷结果
  */
 function sortQuestionnaireResults() {
-  if (!queryData.value?.questionnairesTabs || !assessmentResult.value) return;
+  if (!assessmentResult.value) return;
 
-  const tabOrderKeys = queryData.value.questionnairesTabs
-    .map((t: { key: string }) => t.key)
-    .filter((k: string) => k && k.trim() !== '');
+  // 如果有配置的 tabs 顺序，使用配置的顺序
+  if (
+    queryData.value?.questionnairesTabs?.length &&
+    Array.isArray(queryData.value.questionnairesTabs)
+  ) {
+    const tabOrderKeys = queryData.value.questionnairesTabs
+      .map((t: { key: string }) => t.key)
+      .filter((k: string) => k?.trim());
 
-  const orderIndexMap = new Map(
-    tabOrderKeys.map((key: string, index: number) => [Number(key), index]),
-  );
+    // 构建排序索引映射
+    const orderIndexMap = new Map(
+      tabOrderKeys.map((key: string, index: number) => [Number(key), index]),
+    );
 
-  // 对问卷结果进行排序
-  assessmentResult.value.questionnaireResults.sort((a, b) => {
-    const questionnaireIdA = Number(a.questionnaireId);
-    const questionnaireIdB = Number(b.questionnaireId);
+    // 对问卷结果进行排序
+    assessmentResult.value.questionnaireResults.sort((a, b) => {
+      const questionnaireIdA = Number(a.questionnaireId);
+      const questionnaireIdB = Number(b.questionnaireId);
 
-    const orderIndexA = orderIndexMap.get(questionnaireIdA);
-    const orderIndexB = orderIndexMap.get(questionnaireIdB);
+      const orderIndexA = orderIndexMap.get(questionnaireIdA);
+      const orderIndexB = orderIndexMap.get(questionnaireIdB);
 
-    if (orderIndexA !== undefined && orderIndexB !== undefined) {
-      return Number(orderIndexA) - Number(orderIndexB);
-    }
+      // 如果都在排序表中，按排序表顺序
+      if (orderIndexA !== undefined && orderIndexB !== undefined) {
+        return (orderIndexA as number) - (orderIndexB as number);
+      }
 
-    if (orderIndexA !== undefined && orderIndexB === undefined) {
-      return -1;
-    }
-    if (orderIndexA === undefined && orderIndexB !== undefined) {
-      return 1;
-    }
+      // 在排序表中的排在前面
+      if (orderIndexA !== undefined) return -1;
+      if (orderIndexB !== undefined) return 1;
 
-    return questionnaireIdA - questionnaireIdB;
-  });
+      // 都不在排序表中，按 ID 排序
+      return questionnaireIdA - questionnaireIdB;
+    });
+  } else {
+    // 否则根据问卷名称进行默认排序
+    const PRIORITY_FIRST = '心理健康评估';
+    const PRIORITY_LAST = '儿童期逆境与发育情况评估';
+
+    assessmentResult.value.questionnaireResults.sort((a, b) => {
+      const aIsFirst = a.questionnaireName.includes(PRIORITY_FIRST);
+      const bIsFirst = b.questionnaireName.includes(PRIORITY_FIRST);
+      const aIsLast = a.questionnaireName.includes(PRIORITY_LAST);
+      const bIsLast = b.questionnaireName.includes(PRIORITY_LAST);
+
+      if (aIsFirst && !bIsFirst) return -1;
+      if (!aIsFirst && bIsFirst) return 1;
+      if (aIsLast && !bIsLast) return 1;
+      if (!aIsLast && bIsLast) return -1;
+      return 0;
+    });
+  }
 }
 
 // 导出问卷报告
@@ -225,7 +248,7 @@ const handleExport = async () => {
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
       studentName: queryData.value.name,
-      scenarioName: assessmentResult.value.scenarioName,
+      scenarioName: assessmentResult.value?.scenarioName,
     });
   } catch (error) {
     console.error('导出失败:', error);

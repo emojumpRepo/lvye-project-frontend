@@ -10,7 +10,6 @@ import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import { computed, ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
-import { IconifyIcon } from '@vben/icons';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -18,7 +17,6 @@ import dayjs from 'dayjs';
 import {
   closeEvent,
   getCrisisEventDetail,
-  getCrisisEventProcessHistory,
   submitStageAssessment,
 } from '#/api/psychology';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
@@ -68,7 +66,7 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
     if (!data.id) return message.error('缺少事件ID');
     crisisEventTitle.value = data.title;
     await loadCrisisEventDetail(data.id);
-    await loadCrisisEventProcessHistory(data.id);
+    // await loadCrisisEventProcessHistory(data.id);
     handleCrisisEventModalApi.setState({ loading: false });
   },
 });
@@ -87,14 +85,6 @@ const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
 // 选择处理方式弹窗
 const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
   connectedComponent: SelectHandleMethodDrawer,
-});
-
-// 跳过处理方式
-const skipedHandler = computed(() => {
-  return (
-    crisisEventDetail.value?.processStatus === 3 ||
-    crisisEventDetail.value?.processStatus === 4
-  );
 });
 
 // 步骤条
@@ -117,37 +107,47 @@ const crisisEventHandlingSteps = computed(() => {
       key: 2,
     },
     {
-      label: '选择处理方式',
-      description: status >= 3 ? '已选择' : '待选择',
-      done: status >= 3,
+      label: '执行处理',
+      description: (() => {
+        if (crisisEventDetail.value.processMethod) return '待处理';
+        if (status >= 3) return '已处理';
+        return '待选择';
+      })(),
+      done: status >= 2,
       key: 3,
     },
     {
-      label: '执行处理',
-      description: status >= 4 ? '已处理' : '待处理',
+      label: '最终评估',
+      description: status >= 4 ? '已评估' : '待评估',
       done: status >= 4,
       key: 4,
     },
     {
-      label: '最终评估',
-      description: status >= 5 ? '已评估' : '待评估',
+      label: '流程完成',
+      description: status >= 5 ? '已完成' : '未完成',
       done: status >= 5,
       key: 5,
     },
-    {
-      label: '流程完成',
-      description: status >= 6 ? '已完成' : '未完成',
-      done: status >= 6,
-      key: 6,
-    },
   ];
 
-  // 移除"执行处理"步骤
-  if (skipedHandler.value) {
-    return steps.filter((step) => step.key !== 4);
-  }
-
   return steps;
+});
+
+// 是否显示开始处理按钮
+const isShowStartAssessmentButton = computed(() => {
+  if (!crisisEventDetail.value) return false;
+
+  const { processMethod, pendingAssessmentTask } = crisisEventDetail.value;
+  if (
+    currentStep.value === 2 &&
+    processMethod &&
+    processMethod !== 3 &&
+    processMethod !== 4 &&
+    !pendingAssessmentTask
+  )
+    return true;
+
+  return false;
 });
 
 /**
@@ -168,6 +168,8 @@ async function loadCrisisEventDetail(id: number) {
     if (!response) return message.error('获取危机事件详情失败');
     crisisEventDetail.value = response;
     currentStep.value = response.status; // 进入下一个步骤
+    crisisEventDetail.value.processHistory =
+      response.processHistory.reverse() ?? [];
     confirmInfo.value = {
       studentInfo: {
         studentName: response.studentName,
@@ -183,22 +185,6 @@ async function loadCrisisEventDetail(id: number) {
   } catch (error) {
     console.error('加载危机事件详情失败', error);
     message.error('加载危机事件详情失败');
-  }
-}
-
-/**
- * 获取危机事件处理历史记录
- * @param id 事件id
- */
-async function loadCrisisEventProcessHistory(id: number) {
-  try {
-    const response = await getCrisisEventProcessHistory({ id });
-    if (response.total === 0) return;
-    crisisEventProcessHistory.value = response.list.reverse();
-    // 重新加载步骤条
-  } catch (error) {
-    console.error('加载事件历史记录失败', error);
-    message.error('加载事件历史记录失败');
   }
 }
 
@@ -267,10 +253,10 @@ async function reloadCrisisEvent() {
 async function createInterventionAssessment(
   params: InterventionAssessmentReqVO,
 ): Promise<boolean> {
-  return await (params.followUpSuggestion === 3 ||
-  params.followUpSuggestion === 4
-    ? closeInterventionAssessment(params)
-    : createStageAssessment(params));
+  return await (params.followUpSuggestion === 1 ||
+  params.followUpSuggestion === 2
+    ? createStageAssessment(params)
+    : closeInterventionAssessment(params));
 }
 
 /** 创建阶段性评估 */
@@ -318,6 +304,8 @@ async function closeInterventionAssessment(
   }
 }
 
+/** 查看测评记录 */
+
 /** 查看最终评估报告 */
 function viewAssessmentReport() {
   console.log('查看最终评估报告');
@@ -362,7 +350,7 @@ function viewAssessmentReport() {
               <template v-if="key === 1">
                 <div class="my-2">
                   <StepEventCard
-                    v-if="currentStep >= 2"
+                    v-if="currentStep >= 1"
                     :name="crisisEventDetail.reporterName"
                     :time="crisisEventDetail.reportedAt"
                   />
@@ -374,19 +362,11 @@ function viewAssessmentReport() {
                 <div class="my-2 flex flex-col">
                   <div v-if="currentStep >= 2" class="flex w-full gap-1">
                     <StepEventCard
+                      :id="crisisEventDetail.id"
                       :name="crisisEventDetail.handlerName"
                       :time="crisisEventDetail.updateTime"
-                    />
-                    <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                      @click="
-                        handleQuickAssign({
-                          id: crisisEventDetail.id,
-                          type: 'REASSIGN_HANDLER',
-                        })
-                      "
+                      :status="crisisEventDetail.status"
+                      @handle-quick-assign="handleQuickAssign"
                     />
                   </div>
 
@@ -407,113 +387,126 @@ function viewAssessmentReport() {
                 </div>
               </template>
 
-              <!-- step3: 选择处理方式 -->
+              <!-- step3: 执行处理 -->
               <template v-if="key === 3">
-                <div class="my-2 flex w-full flex-col">
-                  <div
-                    v-if="currentStep >= 3"
-                    class="flex w-full flex-col gap-2"
-                  >
-                    <div class="flex-none">
+                <div class="my-2 flex w-full flex-col gap-3">
+                  <!-- 处理文案 -->
+                  <div class="flex flex-col gap-2">
+                    <div
+                      v-if="
+                        (crisisEventDetail.latestAssessments &&
+                          crisisEventDetail.latestAssessments.length > 0) ||
+                        crisisEventDetail.processMethod
+                      "
+                      class="flex items-center gap-2"
+                    >
                       <LyTag
-                        tag-category-key="intervention_process_method"
-                        :dict-value="crisisEventDetail.processMethod"
                         size="middle"
+                        :tag-category-key="
+                          crisisEventDetail.latestAssessments[0]
+                            ?.followUpSuggestion
+                            ? 'follow_up_suggestion'
+                            : 'intervention_process_method'
+                        "
+                        :dict-value="
+                          crisisEventDetail.latestAssessments[0]
+                            ?.followUpSuggestion ||
+                          crisisEventDetail.processMethod
+                        "
                       />
                     </div>
-                    <!-- <IconifyIcon
-                      icon="material-symbols-light:refresh-rounded"
-                      color="#1966FF"
-                      class="size-5 self-end"
-                    /> -->
-                  </div>
-                  <LyButton
-                    v-if="currentStep === 2"
-                    type="primary"
-                    ghost
-                    size="small"
-                    @click="handleSelectHandleMethod"
-                  >
-                    开始选择
-                  </LyButton>
-                </div>
-              </template>
-
-              <!-- step4: 执行处理 -->
-              <template v-if="key === 4">
-                <div
-                  v-if="!skipedHandler"
-                  class="my-2 flex w-full flex-col gap-3"
-                >
-                  <div
-                    v-if="crisisEventDetail.status >= 4"
-                    class="flex w-full flex-col gap-3"
-                  >
-                    <LyButton type="primary" ghost size="small">
-                      处理记录
-                    </LyButton>
-                  </div>
-
-                  <!-- 评估建议 -->
-                  <div
-                    v-if="crisisEventDetail.latestAssessment"
-                    class="flex items-center gap-2"
-                  >
-                    <span class="text-sm">评估建议：</span>
-                    <LyTag
-                      tag-category-key="follow_up_suggestion"
-                      :dict-value="
-                        crisisEventDetail.latestAssessment.followUpSuggestion
+                    <div
+                      v-if="
+                        crisisEventDetail.pendingAssessmentTask &&
+                        crisisEventDetail.pendingAssessmentTask.status !== 2
                       "
-                    />
+                    >
+                      等待学生完成测评...
+                    </div>
                   </div>
-                  <!-- 执行处理按钮可以在这里添加 -->
-                  <LyButton
-                    v-if="currentStep === 3"
-                    type="primary"
-                    ghost
-                    size="small"
-                    @click="startProcess"
-                  >
-                    开始处理
-                  </LyButton>
+
+                  <div class="flex w-full flex-col gap-3">
+                    <template
+                      v-if="
+                        currentStep === 2 && !crisisEventDetail.processMethod
+                      "
+                    >
+                      <LyButton
+                        type="primary"
+                        ghost
+                        size="small"
+                        @click="handleSelectHandleMethod"
+                      >
+                        开始选择
+                      </LyButton>
+                    </template>
+
+                    <template v-if="isShowStartAssessmentButton">
+                      <LyButton
+                        type="primary"
+                        ghost
+                        size="small"
+                        @click="startProcess"
+                      >
+                        开始处理
+                      </LyButton>
+                    </template>
+                  </div>
                 </div>
               </template>
 
-              <!-- step5: 评估 -->
-              <template v-if="key === 5">
-                <div class="my-2 flex w-full flex-col">
-                  <div
-                    v-if="crisisEventDetail.status >= 5"
-                    class="flex w-full flex-col gap-3"
-                  >
-                    <StepEventCard
-                      :name="crisisEventDetail.handlerName"
-                      :time="crisisEventDetail.handleAt"
-                    />
-                    <LyButton type="primary" ghost size="small">
-                      评估记录
+              <!-- step4: 评估 -->
+              <template v-if="key === 4">
+                <div class="my-2 flex w-full flex-col gap-3">
+                  <template v-if="currentStep >= 4">
+                    <div class="flex flex-col gap-2">
+                      <div class="flex items-center gap-1">
+                        风险等级：
+                        <LyTag
+                          tag-category-key="crisis_level"
+                          :dict-value="
+                            crisisEventDetail.latestAssessments.length > 1
+                              ? crisisEventDetail.latestAssessments[1]
+                                  ?.riskLevel
+                              : crisisEventDetail.latestAssessments[0]
+                                  ?.riskLevel
+                          "
+                        />
+                      </div>
+                      <div>
+                        评估建议：
+                        <LyTag
+                          tag-category-key="follow_up_suggestion"
+                          :dict-value="
+                            crisisEventDetail.latestAssessments.length > 1
+                              ? crisisEventDetail.latestAssessments[1]
+                                  ?.followUpSuggestion
+                              : crisisEventDetail.latestAssessments[0]
+                                  ?.followUpSuggestion
+                          "
+                        />
+                      </div>
+                    </div>
+                  </template>
+                  <div class="flex w-full flex-col gap-3">
+                    <LyButton
+                      v-if="currentStep === 3 && crisisEventDetail.status !== 5"
+                      type="primary"
+                      ghost
+                      size="small"
+                      @click="startAssessment"
+                    >
+                      开始评估
                     </LyButton>
                   </div>
-
-                  <!-- 评估按钮可以在这里添加 -->
-                  <LyButton
-                    v-if="skipedHandler || crisisEventDetail.status === 4"
-                    type="primary"
-                    ghost
-                    size="small"
-                    @click="startAssessment"
-                  >
-                    开始评估
-                  </LyButton>
                 </div>
               </template>
 
-              <!-- step6: 流程完成 -->
-              <template v-if="key === 6">
+              <!-- step5: 流程完成 -->
+              <template v-if="key === 5">
                 <LyButton
                   class="mt-2"
-                  v-if="crisisEventDetail.status === 6"
+                  v-if="crisisEventDetail.status === 5"
                   type="primary"
                   ghost
                   size="small"
@@ -533,7 +526,6 @@ function viewAssessmentReport() {
               <EventReporting
                 v-if="crisisEventDetail"
                 :crisis-event-detail="crisisEventDetail"
-                :crisis-event-process-history="crisisEventProcessHistory"
                 @set-loading="setLoading"
                 @reload-crisis-event="reloadCrisisEvent"
                 @handle-quick-assign="handleQuickAssign"
@@ -554,7 +546,7 @@ function viewAssessmentReport() {
       :comfirm-info="confirmInfo"
       :publish="createInterventionAssessment"
     />
-    <CreateSimpleAssessmentModal />
+    <CreateSimpleAssessmentModal @reload-crisis-event="reloadCrisisEvent" />
   </HandleCrisisEventModal>
 </template>
 

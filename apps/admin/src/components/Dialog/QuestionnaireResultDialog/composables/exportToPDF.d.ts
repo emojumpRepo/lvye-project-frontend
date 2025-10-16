@@ -9,6 +9,7 @@ export declare function exportQuestionnaireReportToPDF(params: {
   completedTime?: Date | number | string;
   questionnaireAnswer: QuestionnaireAnswerItem[];
   questionnaireResult: AssessmentQuestionnaireResultVO[];
+  scenarioName?: string;
   studentName: string;
 }): Promise<void>;
 

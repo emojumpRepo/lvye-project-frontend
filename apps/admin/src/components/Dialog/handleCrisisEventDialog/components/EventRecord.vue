@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import type { CrisisEventRecord } from '@vben/types';
 
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
+import LyButton from '#/components/LyButton/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
 const props = defineProps<{
@@ -16,9 +17,8 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'edit', record: CrisisEventRecord): void;
+  (e: 'viewAssessmentResult', taskResultId: number): void;
 }>();
-
-const isHover = ref(false);
 
 const recordContent = computed(() => {
   if (
@@ -51,12 +51,27 @@ const recordContent = computed(() => {
         </span>
         <span class="text-xs text-[#979899]">
           {{
-            dayjs(eventProcessingRecord.createTime).format(
+            dayjs(eventProcessingRecord.operateTime).format(
               'YYYY-MM-DD HH:mm:ss',
             )
           }}
         </span>
       </div>
+      <!-- 查看报告 -->
+      <LyButton
+        v-if="
+          eventProcessingRecord.action === 'CREATE_ASSESSMENT' &&
+          eventProcessingRecord.taskResultId
+        "
+        type="success"
+        ghost
+        size="small"
+        @click="
+          emits('viewAssessmentResult', eventProcessingRecord.taskResultId)
+        "
+      >
+        查看报告
+      </LyButton>
       <IconifyIcon
         v-if="
           [
@@ -64,13 +79,10 @@ const recordContent = computed(() => {
             'REASSIGN_HANDLER',
             'REPORT',
             'UPDATE_DESCRIPTION',
-          ].includes(eventProcessingRecord.action) && crisisEventStatus !== 6
+          ].includes(eventProcessingRecord!.action!) && crisisEventStatus !== 6
         "
         icon="mynaui:edit"
-        :color="isHover ? '#1966FF' : '#666666'"
-        class="size-5 cursor-pointer"
-        @mouseenter="isHover = true"
-        @mouseleave="isHover = false"
+        class="size-5 cursor-pointer text-[#666666] hover:text-[#1966FF]"
         @click="emits('edit', eventProcessingRecord)"
       />
     </div>

@@ -24,6 +24,8 @@ interface Params {
   studentUserId: number;
 }
 
+const emit = defineEmits(['reloadCrisisEvent']);
+
 const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
   useVbenModal({
     fullscreenButton: false,
@@ -78,6 +80,7 @@ const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
             title: '发布测评任务成功',
           }),
         }).then(() => {
+          emit('reloadCrisisEvent');
           createSimpleAssessmentModalApi.close();
         });
       } catch (error) {

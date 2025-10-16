@@ -50,16 +50,15 @@ export interface CrisisBoardData {
 
 /** 危机处理事件记录 */
 export interface CrisisEventRecord {
-  id?: number;
-  eventId?: number;
-  operatorUserId?: number;
+  id: number;
+  eventId: number;
+  taskResultId?: number;
   operatorName?: string;
   operateTime?: number;
-  action?: string;
+  action: string;
   content?: string;
   reason?: string;
   attachments?: string[];
-  createTime?: number;
 }
 
 /** 评估记录 */
@@ -75,6 +74,17 @@ export interface AssessmentRecord {
   followUpSuggestionName: string;
   content: string;
   createTime: number;
+}
+
+export interface AssessmentTask {
+  status: number;
+  taskId: number;
+  taskName: string;
+  taskNo: string;
+  riskLevel: number;
+  startline: number;
+  deadline: number;
+  submitTime: number;
 }
 
 /** 危机事件详情 */
@@ -108,11 +118,11 @@ export interface CrisisEvent {
   createTime: number;
   updateTime: number;
   processHistory: CrisisEventRecord[];
-  latestAssessment: {
-    assessTime: number;
-    followUpSuggestion: number;
-    problemTypes: string[];
-    riskLevel: number;
+  pendingAssessmentTask: {
+    status: number;
+    taskId: number;
+    taskName: string;
+    taskNo: string;
   };
-  assessmentRecords: AssessmentRecord[];
+  latestAssessments: AssessmentRecord[];
 }

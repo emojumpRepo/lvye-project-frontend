@@ -3,10 +3,13 @@ import type { CrisisEvent, CrisisEventRecord } from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
-import { Textarea as ATextarea, message } from 'ant-design-vue';
+import { useVbenModal } from '@vben/common-ui';
+
+import { Tabs as ATabs, Textarea as ATextarea, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { updateCrisisEventDescription } from '#/api/psychology/crisis';
+import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getDictLabel } from '#/utils/dict';
@@ -15,7 +18,6 @@ import EventRecord from './EventRecord.vue';
 
 const props = defineProps<{
   crisisEventDetail: CrisisEvent;
-  crisisEventProcessHistory: CrisisEventRecord[];
 }>();
 
 const emit = defineEmits<{
@@ -29,6 +31,12 @@ const emit = defineEmits<{
 
 const eventDescription = ref('');
 const isEditingDescription = ref(false);
+const activeRecordType = ref('All');
+
+// 查看测评记录弹窗
+const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
+  connectedComponent: QuestionnaireResultDialog,
+});
 
 // 事件基本信息 - 合成一个 computed 处理
 const eventBaseInfo = computed(() => {
@@ -70,6 +78,33 @@ const eventBaseInfo = computed(() => {
     ...item,
     value: formatValue(item.key, detail[item.key as keyof CrisisEvent]),
   }));
+});
+
+// 处理记录类型
+const recordTypes = computed(() => {
+  const typeSet = new Set<string>();
+  if (!props?.crisisEventDetail?.processHistory) return [];
+
+  props.crisisEventDetail.processHistory.forEach(
+    (record: CrisisEventRecord) => {
+      if (record.action) {
+        typeSet.add(record.action);
+      }
+    },
+  );
+  return ['All', ...typeSet];
+});
+
+// 根据处理类型筛选处理记录
+const filteredProcessHistory = computed(() => {
+  if (activeRecordType.value === 'All') {
+    return props?.crisisEventDetail?.processHistory || [];
+  }
+  return props?.crisisEventDetail?.processHistory?.filter(
+    (record: CrisisEventRecord) => {
+      return record.action === activeRecordType.value;
+    },
+  );
 });
 
 /** 保存编辑描述 */
@@ -136,6 +171,17 @@ function handleEditEventRecord(record: CrisisEventRecord) {
       : record.content,
   });
 }
+
+/** 查看测评记录 */
+function handleViewAssessmentResult(taskResultId: number) {
+  questionnaireResultModalApi
+    .setData({
+      id: taskResultId,
+      name: props.crisisEventDetail.studentName,
+      taskName: props.crisisEventDetail.title,
+    })
+    .open();
+}
 </script>
 
 <template>
@@ -157,17 +203,28 @@ function handleEditEventRecord(record: CrisisEventRecord) {
 
     <!-- 事件处理记录 -->
     <div class="row-span-2 h-full">
-      <div class="flex h-full flex-col justify-between gap-3">
+      <div class="flex h-full flex-col justify-between gap-2">
         <LyLabel has-indicator title="处理记录" />
+
+        <ATabs v-model:active-key="activeRecordType">
+          <ATabs.TabPane
+            v-for="type in recordTypes"
+            :key="type"
+            :tab="
+              type === 'All'
+                ? '全部'
+                : getDictLabel('crisis_event_action', type)
+            "
+          />
+        </ATabs>
+
         <div class="scroll-area h-full space-y-4 overflow-y-auto">
-          <template
-            v-for="record in crisisEventProcessHistory"
-            :key="record.id"
-          >
+          <template v-for="record in filteredProcessHistory" :key="record.id">
             <EventRecord
               :event-processing-record="record"
               :crisis-event-status="crisisEventDetail.status"
               @edit="handleEditEventRecord"
+              @view-assessment-result="handleViewAssessmentResult"
             />
           </template>
         </div>
@@ -207,6 +264,8 @@ function handleEditEventRecord(record: CrisisEventRecord) {
         </div>
       </div>
     </div>
+
+    <QuestionnaireResultModal />
   </div>
 </template>
 
