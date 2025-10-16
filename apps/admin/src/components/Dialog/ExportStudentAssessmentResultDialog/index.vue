@@ -1,27 +1,36 @@
 <script lang="ts" setup>
 import type { ExportProgress } from '@vben/types';
 
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import { message, Progress } from 'ant-design-vue';
 
-const props = withDefaults(defineProps<Partial<ExportProgress>>(), {
-  fileType: 'pdf',
-  exportFileName: '学生测评报告',
-  currentStep: 'fetching',
-  totalCount: 0,
-  fetchedCount: 0,
-  currentGenerateCount: 0,
-  totalGenerateCount: 0,
-  packagingProgress: 0,
-  downloadUrl: '',
-  startTime: 0,
-  failureList: () => [],
-  errorMessage: '',
-});
+import LyButton from '#/components/LyButton/index.vue';
+
+const props = withDefaults(
+  defineProps<{ progress?: Partial<ExportProgress> }>(),
+  {
+    progress: () => ({
+      fileType: 'pdf',
+      exportFileName: '学生测评报告',
+      currentStep: 'fetching',
+      studentInfoTotal: 0,
+      studentInfoFetched: 0,
+      totalCount: 0,
+      fetchedCount: 0,
+      currentGenerateCount: 0,
+      totalGenerateCount: 0,
+      packagingProgress: 0,
+      downloadUrl: '',
+      startTime: 0,
+      failureList: [],
+      errorMessage: '',
+    }),
+  },
+);
 
 const emits = defineEmits<{
   (e: 'cancel'): void;
@@ -34,18 +43,10 @@ const stepConfig = [
   { key: 'packaging', label: '打包压缩' },
 ];
 
-// 文件信息
-const params = ref<{ exportFileName: string; fileType: string; title: string }>(
-  {
-    title: '正在导出学生测评报告',
-    fileType: 'pdf',
-    exportFileName: '学生测评报告',
-  },
-);
-
 const [ExportProgressModal, exportProgressModalApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
+  closeOnClickModal: false,
   showCancelButton: true,
   showConfirmButton: true,
   cancelText: '取消导出',
@@ -53,11 +54,6 @@ const [ExportProgressModal, exportProgressModalApi] = useVbenModal({
   closable: false,
   class: '!w-[560px]',
   contentClass: '!min-h-[430px] flex-center flex-col',
-  onOpenChange: async (open) => {
-    if (open) {
-      params.value = await exportProgressModalApi.getData();
-    }
-  },
   onConfirm: () => exportProgressModalApi.close(),
   onCancel: () => {
     emits('cancel');
@@ -66,8 +62,8 @@ const [ExportProgressModal, exportProgressModalApi] = useVbenModal({
 
 /** 生成文件进度 */
 const generateProgress = computed(() => {
-  const current = props.currentGenerateCount ?? 0;
-  const total = props.totalGenerateCount ?? 0;
+  const current = props.progress.currentGenerateCount ?? 0;
+  const total = props.progress.totalGenerateCount ?? 0;
 
   const progress = (current / total) * 100;
   return Math.round(progress);
@@ -76,7 +72,7 @@ const generateProgress = computed(() => {
 /** 当前步骤索引 */
 const currentStepIndex = computed(() => {
   return ['fetching', 'generating', 'packaging'].indexOf(
-    props.currentStep ?? 'fetching',
+    props.progress.currentStep ?? 'fetching',
   );
 });
 
@@ -138,19 +134,19 @@ const formatDuration = (startTime?: number): string => {
 
 /** 下载ZIP压缩包 */
 function downloadZip() {
-  if (!props.downloadUrl) return message.error('下载失败');
+  if (!props.progress.downloadUrl) return message.error('下载失败');
   const link = document.createElement('a');
-  link.href = props.downloadUrl;
-  link.download = `${props.exportFileName}.zip`;
+  link.href = props.progress.downloadUrl;
+  link.download = `${props.progress.exportFileName}.zip`;
   document.body.append(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(props.downloadUrl);
+  URL.revokeObjectURL(props.progress.downloadUrl);
 }
 
 // 监听步骤变化，动态控制按钮显示
 watch(
-  () => props.currentStep,
+  () => props.progress.currentStep,
   (newStep) => {
     if (
       newStep === 'completed' ||
@@ -175,13 +171,20 @@ watch(
 </script>
 
 <template>
-  <ExportProgressModal :title="params.title">
+  <ExportProgressModal>
+    <template #title>
+      <div class="flex items-center gap-2">
+        <IconifyIcon icon="mdi:zip-box" color="#04DC70" class="size-6" />
+        <span>导出测评报告进度</span>
+      </div>
+    </template>
+
     <div class="flex w-full flex-1 flex-col justify-between px-8 py-3">
       <div class="relative">
         <Transition name="fade" mode="out-in">
           <!-- 第一步：批量获取数据 -->
           <div
-            v-if="currentStep === 'fetching'"
+            v-if="progress.currentStep === 'fetching'"
             key="fetching"
             class="text-center"
           >
@@ -219,15 +222,25 @@ watch(
 
             <!-- 进度文字 -->
             <div class="w-full rounded-lg bg-blue-50 p-4">
-              <div class="text-sm text-[#1890ff]">
-                已读取：{{ fetchedCount }} / {{ totalCount }} 条记录
+              <div
+                v-if="progress.studentInfoFetched === progress.studentInfoTotal"
+                class="text-sm text-[#1890ff]"
+              >
+                正在读取：{{ progress.studentInfoFetched }} /
+                {{ progress.studentInfoTotal }} 条学生信息数据
+              </div>
+              <div v-else>
+                <div class="text-sm text-[#1890ff]">
+                  正在读取：{{ progress.fetchedCount }} /
+                  {{ progress.totalCount }} 条学生测评结果数据
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 第二步：生成文件 -->
           <div
-            v-else-if="currentStep === 'generating'"
+            v-else-if="progress.currentStep === 'generating'"
             key="generating"
             class="text-center"
           >
@@ -237,11 +250,7 @@ watch(
                 class="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-blue-100"
               >
                 <IconifyIcon
-                  :icon="
-                    params.fileType === 'pdf'
-                      ? 'mdi:file-pdf-box'
-                      : 'mdi:file-excel'
-                  "
+                  icon="'mdi:file-pdf-box'"
                   color="#1890ff"
                   class="size-14"
                 />
@@ -250,7 +259,7 @@ watch(
 
             <!-- 步骤标题 -->
             <h4 class="mb-2 text-xl font-semibold text-[#1890ff]">
-              生成{{ params.fileType?.toUpperCase() }}文件
+              生成{{ progress.fileType?.toUpperCase() }}文件
             </h4>
             <p class="mb-6 text-sm text-gray-600">
               这可能需要一点时间，请不要关闭页面
@@ -259,7 +268,11 @@ watch(
             <!-- 进度条 -->
             <div class="mb-4">
               <Progress
-                :percent="(currentGenerateCount / totalGenerateCount) * 100"
+                :percent="
+                  ((progress.currentGenerateCount ?? 0) /
+                    (progress.totalGenerateCount ?? 0)) *
+                  100
+                "
                 :stroke-color="generateProgress === 100 ? '#04DC70' : '#1890ff'"
                 :show-info="false"
                 :stroke-width="8"
@@ -279,7 +292,7 @@ watch(
 
           <!-- 第三步：打包压缩 -->
           <div
-            v-else-if="currentStep === 'packaging'"
+            v-else-if="progress.currentStep === 'packaging'"
             key="packaging"
             class="text-center"
           >
@@ -303,9 +316,9 @@ watch(
             <!-- 进度条 -->
             <div class="mb-4">
               <Progress
-                :percent="packagingProgress"
+                :percent="progress.packagingProgress"
                 :stroke-color="
-                  packagingProgress === 100 ? '#04DC70' : '#1890ff'
+                  progress.packagingProgress === 100 ? '#04DC70' : '#1890ff'
                 "
                 :show-info="false"
                 :stroke-width="8"
@@ -315,7 +328,7 @@ watch(
             <!-- 状态文字 -->
             <div class="rounded-lg bg-blue-50 p-4">
               <div class="text-lg font-medium text-[#1890ff]">
-                {{ packagingProgress }} %
+                {{ progress.packagingProgress }} %
               </div>
               <div class="text-sm text-[#1890ff]">
                 正在将所有PDF文件打包成ZIP压缩包...
@@ -325,7 +338,7 @@ watch(
 
           <!-- 完成状态 -->
           <div
-            v-else-if="currentStep === 'completed'"
+            v-else-if="progress.currentStep === 'completed'"
             key="completed"
             class="text-center"
           >
@@ -342,49 +355,56 @@ watch(
             <h4 class="mb-2 text-xl font-semibold text-green-600">
               打包完成！
             </h4>
-            <p class="mb-10 text-sm text-gray-600">
+            <p class="mb-6 text-sm text-gray-600">
               请点击下方链接下载ZIP压缩包
             </p>
 
             <!-- 成功提示 -->
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4">
-              <div
-                class="flex cursor-pointer items-center gap-2 font-medium text-green-800 underline"
-                @click="downloadZip"
-              >
-                <IconifyIcon
-                  icon="mdi:zip-box"
-                  color="#04DC70"
-                  class="size-6"
-                />
-                {{ params.exportFileName }}.zip
-              </div>
-
+            <div
+              class="mx-auto w-[300px] rounded-lg border border-green-200 bg-green-50 p-4"
+            >
               <!-- 统计信息 -->
-              <div class="text-primary mt-3 space-y-2 text-sm">
+              <div class="text-primary space-y-2 text-sm">
                 <div class="flex items-center justify-between">
                   <span>用时：</span>
                   <span class="font-medium">
-                    {{ formatDuration(startTime) }}
+                    {{ formatDuration(progress.startTime) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span>成功：</span>
                   <span class="font-medium">
-                    {{ currentGenerateCount }}条
+                    {{ progress.currentGenerateCount }}条
                   </span>
                 </div>
                 <div
-                  v-if="failureList && failureList.length > 0"
+                  v-if="progress.failureList && progress.failureList.length > 0"
                   class="flex items-center justify-between"
                 >
                   <span class="text-[#FF0831]">失败：</span>
                   <span class="font-medium text-[#FF0831]">
-                    {{ failureList.length }}条
+                    {{ progress.failureList.length }}条
                   </span>
                 </div>
               </div>
             </div>
+
+            <LyButton
+              type="default"
+              :disabled="!progress.downloadUrl"
+              @click="downloadZip"
+              size="large"
+              class="mt-8"
+            >
+              <div class="flex items-center gap-2">
+                <IconifyIcon
+                  icon="material-symbols:download-rounded"
+                  color="#04DC70"
+                  class="size-6"
+                />
+                <span>下载{{ progress.exportFileName }}.zip </span>
+              </div>
+            </LyButton>
 
             <!-- 失败详情列表 -->
             <!-- <div
@@ -430,7 +450,7 @@ watch(
 
           <!-- 错误状态 -->
           <div
-            v-else-if="currentStep === 'error'"
+            v-else-if="progress.currentStep === 'error'"
             key="error"
             class="text-center"
           >
@@ -450,14 +470,14 @@ watch(
             <!-- 错误信息 -->
             <div class="rounded-lg border border-red-200 bg-red-50 p-4">
               <div class="mt-1 text-sm text-[#FF0831]">
-                {{ props.errorMessage || '未知错误' }}
+                {{ progress.errorMessage || '未知错误' }}
               </div>
             </div>
           </div>
 
           <!-- 取消状态 -->
           <div
-            v-else-if="currentStep === 'cancelled'"
+            v-else-if="progress.currentStep === 'cancelled'"
             key="cancelled"
             class="text-center"
           >
@@ -485,9 +505,9 @@ watch(
       <!-- 步骤指示器 -->
       <div
         v-if="
-          currentStep !== 'completed' &&
-          currentStep !== 'error' &&
-          currentStep !== 'cancelled'
+          progress.currentStep !== 'completed' &&
+          progress.currentStep !== 'error' &&
+          progress.currentStep !== 'cancelled'
         "
         class="flex flex-col items-center"
       >

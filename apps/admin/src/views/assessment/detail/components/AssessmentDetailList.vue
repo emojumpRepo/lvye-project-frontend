@@ -14,8 +14,10 @@ import dayjs from 'dayjs';
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+import ExportExcelProgressDialog from '#/components/Dialog/ExportExcelProgressDialog/index.vue';
 import ExportStudentAssessmentResultDialog from '#/components/Dialog/ExportStudentAssessmentResultDialog/index.vue';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
+import SelectExportAssessmentTypeDialog from '#/components/Dialog/SelectExportAssessmentTypeDialog/index.vue';
 import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
@@ -65,7 +67,18 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   connectedComponent: QuestionnaireResultDialog,
 });
 
-// 导出学生完成情况弹窗
+// 导出类型选择弹窗
+const [SelectExportAssessmentTypeModal, selectExportAssessmentTypeModalApi] =
+  useVbenModal({
+    connectedComponent: SelectExportAssessmentTypeDialog,
+  });
+
+// 导出Excel进度弹窗
+const [ExportExcelProgressModal, exportExcelProgressModalApi] = useVbenModal({
+  connectedComponent: ExportExcelProgressDialog,
+});
+
+// 导出学生测评报告PDF弹窗
 const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
   useVbenModal({
     connectedComponent: ExportStudentAssessmentResultDialog,
@@ -145,14 +158,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // 使用导出组合式函数
 const {
-  isExportingReports,
-  isExportingCompletionStatus,
   cancelExport,
   exportCompletionStatus,
   exportAssessmentReports,
   progress,
 } = useExportAssessment({
-  modalApi: exportStudentCompleteModalApi,
   gridApi,
   loadTotal,
   selectedRowKeys,
@@ -209,20 +219,30 @@ const actionButtons = computed(() => {
       show: true,
     },
     {
+      label:
+        selectedRowKeys.value.length > 0
+          ? `导出（共${selectedRowKeys.value.length}名）`
+          : '导出',
+      value: 'export',
+      onClick: openSelectExportAssessmentTypeModal,
+      disabled: false,
+      show: true,
+    },
+    {
       label: '导出完成情况',
       tip: '导出筛选后的学生完成情况。若勾选了学生，则仅导出所选学生',
       value: 'exportCompletedStatus',
       onClick: handleExportCompletedStatus,
-      disabled: isExportingCompletionStatus.value || !canExport,
-      show: true,
+      disabled: !canExport,
+      show: false,
     },
     {
       label: '导出测评报告',
       tip: '导出当前筛选条件下的测评报告。若勾选了学生，则仅导出所选学生',
       value: 'exportAssessmentResults',
       onClick: handleExportAssessmentResults,
-      disabled: !!activeTab.value.key || isExportingReports.value || !canExport,
-      show: true,
+      disabled: !!activeTab.value.key || !canExport,
+      show: false,
     },
   ];
 });
@@ -312,6 +332,60 @@ function handleExportCompletedStatus() {
 /** 导出测评报告 */
 function handleExportAssessmentResults() {
   exportAssessmentReports(props.questionnairesTabs);
+}
+
+/** 打开选择导出类型弹窗 */
+function openSelectExportAssessmentTypeModal() {
+  selectExportAssessmentTypeModalApi
+    .setData({
+      selectedRowKeys: selectedRowKeys.value,
+      totalCount: loadTotal.value,
+    })
+    .open();
+}
+
+/**
+ * 导出
+ * @param type 导出类型
+ */
+async function handleExport(
+  type:
+    | 'exportAllCompletedStatus'
+    | 'exportAnalysisReport'
+    | 'exportAnalysisReportAndAnswerResults'
+    | 'exportAnswerResults',
+) {
+  if (loadTotal.value === 0) {
+    message.warning('暂无学生数据可导出');
+    return;
+  }
+
+  switch (type) {
+    case 'exportAllCompletedStatus': {
+      // 导出所有学生完成情况
+      exportExcelProgressModalApi.open();
+      await exportCompletionStatus(activeTab.value);
+      exportExcelProgressModalApi.setState({
+        confirmDisabled: false,
+      });
+      break;
+    }
+    case 'exportAnalysisReport': {
+      // 导出个体分析报告（仅测评结果，不含答题记录）
+      exportStudentCompleteModalApi.open();
+      await exportAssessmentReports(props.questionnairesTabs, false);
+      break;
+    }
+    case 'exportAnalysisReportAndAnswerResults': {
+      // 导出个体分析报告 + 答题记录
+      exportStudentCompleteModalApi.open();
+      await exportAssessmentReports(props.questionnairesTabs, true);
+      break;
+    }
+    case 'exportAnswerResults': {
+      break;
+    }
+  }
 }
 
 /** 查看详情 */
@@ -438,18 +512,13 @@ function viewStudentInfo(id: number) {
     </Grid>
 
     <QuestionnaireResultModal />
-    <ExportStudentCompleteModal
-      :current-step="progress.currentStep"
-      :fetched-count="progress.fetchedCount"
-      :total-count="progress.totalCount"
-      :current-generate-count="progress.currentGenerateCount"
-      :total-generate-count="progress.totalGenerateCount"
-      :packaging-progress="progress.packagingProgress"
-      :start-time="progress.startTime"
-      :failure-list="progress.failureList"
+    <ExportStudentCompleteModal :progress="progress" @cancel="cancelExport" />
+    <SelectExportAssessmentTypeModal @export="handleExport" />
+    <ExportExcelProgressModal
       :download-url="progress.downloadUrl"
-      :error-message="progress.errorMessage"
-      @cancel="cancelExport"
+      :file-name="progress.exportFileName"
+      :success-count="progress.studentInfoFetched"
+      :total-count="progress.studentInfoTotal"
     />
     <Drawer />
   </div>

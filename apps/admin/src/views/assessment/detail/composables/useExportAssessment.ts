@@ -24,7 +24,6 @@ export interface StudentAssessmentResultVO extends AssessmentResultVO {
 
 /** 组合式函数选项 */
 export interface UseExportAssessmentOptions {
-  modalApi: any; // 进度弹窗的API，用于更新进度
   gridApi: any; // 表格API，用于获取选中的行
   loadTotal: Ref<number>; // 学生总数
   selectedRowKeys: Ref<number[]>; // 选中的行键
@@ -41,14 +40,7 @@ const ASSESSMENT_RESULT_BATCH_SIZE = 10;
 // ======================== 组合式函数 ========================
 
 export function useExportAssessment(options: UseExportAssessmentOptions) {
-  const { modalApi, gridApi, loadTotal, selectedRowKeys, loadStudentData } =
-    options;
-
-  // 是否正在导出测评报告（PDF）
-  const isExportingReports = ref(false);
-
-  // 是否正在导出完成情况（Excel）
-  const isExportingCompletionStatus = ref(false);
+  const { gridApi, loadTotal, selectedRowKeys, loadStudentData } = options;
 
   // 是否取消导出
   const isCancelled = ref(false);
@@ -58,11 +50,18 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     currentStep: 'fetching',
     fileType: 'xlsx',
     exportFileName: '导出文件',
+    // 准备工作（获取学生信息数据）
+    studentInfoTotal: 0,
+    studentInfoFetched: 0,
+    // 第一步（获取学生测评结果数据）
     totalCount: 0,
     fetchedCount: 0,
+    // 第二步（生成文件）
     currentGenerateCount: 0,
     totalGenerateCount: 0,
+    // 第三步（打包压缩）
     packagingProgress: 0,
+    // 完成统计信息
     failureList: [],
     startTime: 0,
     errorMessage: '',
@@ -76,6 +75,8 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     progress.currentStep = 'fetching';
     progress.fileType = 'xlsx';
     progress.exportFileName = '导出文件';
+    progress.studentInfoTotal = 0;
+    progress.studentInfoFetched = 0;
     progress.totalCount = 0;
     progress.fetchedCount = 0;
     progress.currentGenerateCount = 0;
@@ -126,12 +127,15 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
    */
   async function getStudentsToExport() {
     if (selectedRowKeys.value.length > 0) {
-      progress.totalCount = selectedRowKeys.value.length;
+      progress.studentInfoTotal = selectedRowKeys.value.length;
       // 场景A: 用户勾选了学生，仅导出所选学生
-      return gridApi.grid.getCheckboxRecords();
+      const students = gridApi.grid.getCheckboxRecords();
+      progress.studentInfoFetched = students.length;
+      return students;
     }
 
     // 场景B: 用户未勾选，导出所有筛选结果下的学生
+    progress.studentInfoTotal = loadTotal.value;
     const pageSize = 100;
     const totalPages = Math.ceil(loadTotal.value / pageSize);
 
@@ -142,6 +146,9 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
 
       const data = await loadStudentData({ currentPage: i + 1, pageSize });
       results.push(data);
+
+      // 设置进度
+      progress.studentInfoFetched += data.list.length;
     }
 
     return results.flatMap((data) => data.list);
@@ -264,54 +271,44 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
    * 导出完成情况（Excel）
    */
   async function exportCompletionStatus(activeTab: TabItem) {
-    if (loadTotal.value === 0) {
-      message.warning('暂无学生数据可导出');
-      return;
-    }
-
-    isExportingCompletionStatus.value = true;
     try {
+      // 重置进度
+      resetProgress();
+      progress.exportFileName = '测评结果汇总';
+
+      // 获取学生数据
       const studentsToProcess = await getStudentsToExport();
 
-      await exportAssessmentParticipantsToExcel(studentsToProcess, activeTab);
+      // 导出Excel
+      const url = await exportAssessmentParticipantsToExcel(
+        studentsToProcess,
+        activeTab,
+      );
+
+      url && (progress.downloadUrl = url);
     } catch (error) {
       console.error('导出失败:', error);
       message.error('导出失败，请重试');
-    } finally {
-      isExportingCompletionStatus.value = false;
     }
   }
 
   /**
    * 导出测评报告（PDF）
+   * @param questionnairesTabs 问卷标签列表
+   * @param includeAnswers 是否包含答题记录，默认 true
    */
-  async function exportAssessmentReports(questionnairesTabs: TabItem[]) {
-    if (loadTotal.value === 0) {
-      message.warning('暂无学生数据可导出');
-      return;
-    }
-
+  async function exportAssessmentReports(
+    questionnairesTabs: TabItem[],
+    includeAnswers: boolean = true,
+  ) {
     // 重置并初始化进度
     resetProgress();
     progress.fileType = 'pdf';
-    progress.exportFileName = '学生测评报告';
     progress.startTime = Date.now();
     progress.totalCount = loadTotal.value;
 
     // 重置取消标志
     isCancelled.value = false;
-
-    // 更新导出状态
-    isExportingReports.value = true;
-
-    // 打开进度弹窗
-    modalApi
-      .setData({
-        title: '正在导出学生测评报告',
-        fileType: progress.fileType,
-        exportFileName: progress.exportFileName,
-      })
-      .open();
 
     const zip = new JSZip(); // JSZip实例
 
@@ -389,10 +386,12 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
             studentName: assessment.studentName || '',
             scenarioName: assessment.scenarioName || '',
             returnBlob: true,
+            includeAnswers,
           });
 
-          if (result?.blob && result?.filename) {
-            zip.file(result.filename, result.blob);
+          if (result?.blob) {
+            const fileName = `${assessment.studentName}-${includeAnswers ? '分析报告+答题记录' : '分析报告'}.pdf`;
+            zip.file(fileName, result.blob);
             progress.currentGenerateCount++;
           } else {
             recordFailure(assessment, 'generating', 'PDF生成失败');
@@ -429,6 +428,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       const downloadUrl = URL.createObjectURL(zipBlob);
       progress.downloadUrl = downloadUrl;
       progress.packagingProgress = 100;
+      progress.exportFileName = `${progress.currentGenerateCount}名学生-${includeAnswers ? '分析报告+答题记录' : '分析报告'}`;
 
       // 完成
       progress.currentStep = 'completed';
@@ -436,15 +436,11 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       console.error('导出失败:', error);
       progress.currentStep = 'error';
       message.error('导出失败，请重试');
-    } finally {
-      isExportingReports.value = false;
     }
   }
 
   return {
     progress,
-    isExportingReports,
-    isExportingCompletionStatus,
     cancelExport,
     exportCompletionStatus,
     exportAssessmentReports,

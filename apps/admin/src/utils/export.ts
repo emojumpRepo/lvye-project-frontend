@@ -196,13 +196,12 @@ export function exportStudentsToExcel(
  * @param activeTab 包含当前选项信息
  * @param activeTab.key 选项键，用于区分是否为具体问卷
  * @param activeTab.label 选项名称，作为问卷名称展示
- * @param filename 可选的文件名
+ * @returns 返回下载链接，如果失败返回 null
  */
 export async function exportAssessmentParticipantsToExcel(
   data: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
   activeTab: { key: string; label: string },
-  filename?: string,
-) {
+): Promise<null | string> {
   try {
     const formattedData = data.map((item) => {
       const rowData: Record<string, any> = {
@@ -273,14 +272,23 @@ export async function exportAssessmentParticipantsToExcel(
 
     XLSX.utils.book_append_sheet(workbook, worksheet, '测评完成情况');
 
-    const defaultFilename = activeTab.key
-      ? `${activeTab.label || '问卷'}完成情况.xlsx`
-      : `学生总体测评完成情况.xlsx`;
-    const finalFilename = filename || defaultFilename;
-    XLSX.writeFile(workbook, finalFilename);
+    // 生成 Blob 而不是直接下载
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    // 创建下载链接
+    const downloadUrl = URL.createObjectURL(blob);
+
+    return downloadUrl;
   } catch (error) {
     console.error('导出失败:', error);
     message.error('导出失败，请重试');
+    return null;
   }
 }
 

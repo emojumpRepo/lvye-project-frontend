@@ -7,11 +7,12 @@ import type {
 export declare function exportQuestionnaireReportToPDF(params: {
   assessmentSummary?: RiskLevelIntervention;
   completedTime?: Date | number | string;
+  includeAnswers?: boolean;
   questionnaireAnswer: QuestionnaireAnswerItem[];
   questionnaireResult: AssessmentQuestionnaireResultVO[];
+  returnBlob?: boolean;
   scenarioName: string;
   studentName: string;
-  returnBlob?: boolean;
-}): Promise<void | { blob: Blob; filename: string }>;
+}): Promise<{ blob: Blob; filename: string }>;
 
 export declare function formatAnswer(answer: string): string;

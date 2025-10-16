@@ -164,9 +164,12 @@ export interface ExportProgress {
     | 'packaging';
   fileType: 'pdf' | 'xlsx';
   exportFileName: string;
-  // 第一步：数据获取
-  totalCount: number; // 学生总数
-  fetchedCount: number; // 已获取数据的学生数
+  // 准备工作（获取学生信息数据）
+  studentInfoTotal: number; // 学生总数
+  studentInfoFetched: number; // 已获取数据的学生数
+  // 第一步（获取学生测评结果数据）
+  totalCount: number; // 学生测评数据总数
+  fetchedCount: number; // 已获取数据的学生测评数据数
   // 第二步：文件生成
   currentGenerateCount: number; // 当前正在生成的数据数量
   totalGenerateCount: number; // 总生成数据数量

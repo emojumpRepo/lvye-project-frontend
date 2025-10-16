@@ -77,6 +77,7 @@ function loadVfsFonts() {
  * @param {string} params.studentName 学生姓名
  * @param {string} params.scenarioName 场景名称
  * @param {boolean} params.returnBlob 是否返回 Blob 对象，默认 false（直接下载）
+ * @param {boolean} params.includeAnswers 是否包含答题记录，默认 true
  * @returns {Promise<void|{blob: Blob, filename: string}>} 如果 returnBlob=true，返回包含 blob 和 filename 的对象
  */
 export async function exportQuestionnaireReportToPDF({
@@ -87,6 +88,7 @@ export async function exportQuestionnaireReportToPDF({
   studentName,
   scenarioName,
   returnBlob = false,
+  includeAnswers = true,
 }) {
   try {
     // 动态加载字体文件
@@ -127,6 +129,7 @@ export async function exportQuestionnaireReportToPDF({
         ...generateQuestionnaireReportContents(
           questionnaireResult,
           questionnaireAnswer,
+          includeAnswers,
         ),
       ],
       styles: {
@@ -204,7 +207,7 @@ export async function exportQuestionnaireReportToPDF({
 
     // 如果需要返回 Blob 对象
     if (returnBlob) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         pdfDoc.getBlob((blob) => {
           resolve({ blob, filename: finalFilename });
         });
@@ -249,10 +252,14 @@ function toChineseSectionNumber(num) {
 
 /**
  * 生成问卷报告内容：遍历问卷数组并拼接维度分析与对应作答记录
+ * @param {Array} questionnaireResults 问卷结果数组
+ * @param {Array} questionnaireAnswerItems 问卷答题记录数组
+ * @param {boolean} includeAnswers 是否包含答题记录，默认 true
  */
 function generateQuestionnaireReportContents(
   questionnaireResults,
   questionnaireAnswerItems,
+  includeAnswers = true,
 ) {
   let resultsArray = [];
   if (Array.isArray(questionnaireResults)) {
@@ -284,20 +291,22 @@ function generateQuestionnaireReportContents(
     const dimBlocks = generateDimensionResults(qr);
     contents.push(...dimBlocks);
 
-    // 附：该问卷的作答记录
-    const relatedAnswerItem = findRelatedAnswerItem(
-      qr,
-      questionnaireAnswerItems,
-    );
-    if (relatedAnswerItem) {
-      contents.push(
-        {
-          text: '作答记录',
-          style: 'answerSubheader',
-          margin: [0, 6, 0, 6],
-        },
-        ...generateAnswerSection(relatedAnswerItem),
+    // 附：该问卷的作答记录（根据 includeAnswers 参数决定是否生成）
+    if (includeAnswers) {
+      const relatedAnswerItem = findRelatedAnswerItem(
+        qr,
+        questionnaireAnswerItems,
       );
+      if (relatedAnswerItem) {
+        contents.push(
+          {
+            text: '作答记录',
+            style: 'answerSubheader',
+            margin: [0, 6, 0, 6],
+          },
+          ...generateAnswerSection(relatedAnswerItem),
+        );
+      }
     }
   });
 
