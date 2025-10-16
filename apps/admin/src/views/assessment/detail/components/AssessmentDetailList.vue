@@ -127,6 +127,11 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
     .filter(Boolean);
 }
 
+/** 处理分页变化 */
+function handlePageChange() {
+  selectedRowKeys.value = [];
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(activeTab.value.key),
@@ -153,6 +158,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
+    pageChange: handlePageChange,
   },
 });
 
@@ -161,6 +167,7 @@ const {
   cancelExport,
   exportCompletionStatus,
   exportAssessmentReports,
+  exportAnswers,
   progress,
 } = useExportAssessment({
   gridApi,
@@ -371,18 +378,28 @@ async function handleExport(
       break;
     }
     case 'exportAnalysisReport': {
+      if (activeTab.value.key) {
+        message.error('请选择整体测评的数据导出！');
+        break;
+      }
       // 导出个体分析报告（仅测评结果，不含答题记录）
       exportStudentCompleteModalApi.open();
       await exportAssessmentReports(props.questionnairesTabs, false);
       break;
     }
     case 'exportAnalysisReportAndAnswerResults': {
+      if (activeTab.value.key) {
+        message.error('请选择整体测评的数据导出！');
+        break;
+      }
       // 导出个体分析报告 + 答题记录
       exportStudentCompleteModalApi.open();
       await exportAssessmentReports(props.questionnairesTabs, true);
       break;
     }
     case 'exportAnswerResults': {
+      // 导出答题记录
+      await exportAnswers(props.questionnairesTabs);
       break;
     }
   }

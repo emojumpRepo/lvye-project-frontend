@@ -67,6 +67,7 @@ function downloadExcel() {
         type="default"
         :disabled="!downloadUrl"
         @click="downloadExcel"
+        size="large"
         class="mt-8"
       >
         <div class="flex items-center gap-2">

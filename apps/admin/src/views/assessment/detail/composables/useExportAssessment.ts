@@ -6,7 +6,7 @@ import type { TabItem } from '../types';
 
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
-import { reactive, ref } from 'vue';
+import { nextTick, reactive, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 import JSZip from 'jszip';
@@ -35,7 +35,9 @@ export interface UseExportAssessmentOptions {
 
 // ======================== 常量配置 ========================
 /** 获取测评结果时，每批并发请求数量 */
-const ASSESSMENT_RESULT_BATCH_SIZE = 10;
+const ASSESSMENT_RESULT_BATCH_SIZE = 20;
+/** 获取学生分页数据时，每批并发页数 */
+const STUDENT_FETCH_PAGE_BATCH_SIZE = 10;
 
 // ======================== 组合式函数 ========================
 
@@ -128,6 +130,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   async function getStudentsToExport() {
     if (selectedRowKeys.value.length > 0) {
       progress.studentInfoTotal = selectedRowKeys.value.length;
+      progress.studentInfoFetched = Math.ceil(selectedRowKeys.value.length / 2);
       // 场景A: 用户勾选了学生，仅导出所选学生
       const students = gridApi.grid.getCheckboxRecords();
       progress.studentInfoFetched = students.length;
@@ -139,16 +142,40 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     const pageSize = 100;
     const totalPages = Math.ceil(loadTotal.value / pageSize);
 
-    // 串行请求所有分页数据
-    const results = [];
-    for (let i = 0; i < totalPages; i++) {
+    // 串行分批并发
+    const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+    const results: { list: any[]; total: number }[] = [];
+
+    for (
+      let i = 0;
+      i < pageNumbers.length;
+      i += STUDENT_FETCH_PAGE_BATCH_SIZE
+    ) {
       if (isCancelled.value) return [];
 
-      const data = await loadStudentData({ currentPage: i + 1, pageSize });
-      results.push(data);
+      const batchPages = pageNumbers.slice(
+        i,
+        i + STUDENT_FETCH_PAGE_BATCH_SIZE,
+      );
 
-      // 设置进度
-      progress.studentInfoFetched += data.list.length;
+      // 批内并发：每个请求返回即更新进度
+      const batchPromises = batchPages.map((pageNumber) =>
+        loadStudentData({ currentPage: pageNumber, pageSize })
+          .then((data) => {
+            progress.studentInfoFetched += data?.list?.length || 0;
+            return { ok: true as const, data };
+          })
+          .catch((error) => {
+            // 单页失败不影响整体流程
+            console.error('加载学生分页数据失败:', error);
+            return { ok: false as const, error };
+          }),
+      );
+
+      const settled = await Promise.all(batchPromises);
+      for (const item of settled) {
+        if (item.ok) results.push(item.data);
+      }
     }
 
     return results.flatMap((data) => data.list);
@@ -292,6 +319,68 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     }
   }
 
+  /** 导出答题情况 */
+  async function exportAnswers(questionnairesTabs: TabItem[]) {
+    // 重置并初始化进度
+    resetProgress();
+    progress.fileType = 'xlsx';
+    progress.exportFileName = '答题记录汇总';
+
+    // 获取学生数据
+    const studentsToProcess = await getStudentsToExport();
+
+    // 筛选出已完成的测评
+    const completedStudents = studentsToProcess.filter(
+      (item: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes) =>
+        item.status === 1,
+    );
+
+    if (completedStudents.length === 0) {
+      progress.currentStep = 'error';
+      progress.errorMessage = '学生未完成测评，无法导出';
+      return false;
+    }
+
+    // 更新进度
+    progress.totalCount = completedStudents.length;
+
+    // 获取所有学生的测评结果
+    const assessmentResults =
+      await fetchAllAssessmentResults(completedStudents);
+    if (isCancelled.value) return;
+
+    if (assessmentResults.length === 0) {
+      progress.currentStep = 'error';
+      progress.errorMessage = '未获取到有效的测评结果';
+      return false;
+    }
+
+    // 排序问卷
+    if (questionnairesTabs) {
+      const tabOrderMap = new Map(
+        questionnairesTabs.map((tab, index) => [tab.key, index]),
+      );
+
+      assessmentResults.forEach((assessment) => {
+        if (assessment && assessment.questionnaireResults) {
+          assessment.questionnaireResults.sort((a, b) => {
+            const orderA =
+              tabOrderMap.get(String(a.questionnaireId)) ?? Infinity;
+            const orderB =
+              tabOrderMap.get(String(b.questionnaireId)) ?? Infinity;
+            return orderA - orderB;
+          });
+        }
+      });
+    }
+
+    console.log('测评结果', assessmentResults);
+
+    await nextTick();
+
+    // 导出Excel
+  }
+
   /**
    * 导出测评报告（PDF）
    * @param questionnairesTabs 问卷标签列表
@@ -305,7 +394,6 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     resetProgress();
     progress.fileType = 'pdf';
     progress.startTime = Date.now();
-    progress.totalCount = loadTotal.value;
 
     // 重置取消标志
     isCancelled.value = false;
@@ -332,7 +420,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       }
 
       // 更新进度
-      progress.totalGenerateCount = completedStudents.length;
+      progress.totalCount = completedStudents.length;
 
       // 获取所有学生的测评结果
       const assessmentResults =
@@ -364,8 +452,11 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
         });
       }
 
+      await nextTick();
+
       // 步骤2: 生成文件 - 为每个学生生成 PDF
       progress.currentStep = 'generating';
+      progress.currentGenerateCount = 0;
       progress.totalGenerateCount = assessmentResults.length;
 
       // 为每个学生生成 PDF 并添加到 ZIP
@@ -444,5 +535,6 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     cancelExport,
     exportCompletionStatus,
     exportAssessmentReports,
+    exportAnswers,
   };
 }

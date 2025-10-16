@@ -65,6 +65,11 @@ const generateProgress = computed(() => {
   const current = props.progress.currentGenerateCount ?? 0;
   const total = props.progress.totalGenerateCount ?? 0;
 
+  // 防止除零错误
+  if (total === 0) {
+    return 0;
+  }
+
   const progress = (current / total) * 100;
   return Math.round(progress);
 });
@@ -181,7 +186,7 @@ watch(
 
     <div class="flex w-full flex-1 flex-col justify-between px-8 py-3">
       <div class="relative">
-        <Transition name="fade" mode="out-in">
+        <Transition name="fade" mode="out-in" :duration="1">
           <!-- 第一步：批量获取数据 -->
           <div
             v-if="progress.currentStep === 'fetching'"
@@ -223,7 +228,7 @@ watch(
             <!-- 进度文字 -->
             <div class="w-full rounded-lg bg-blue-50 p-4">
               <div
-                v-if="progress.studentInfoFetched === progress.studentInfoTotal"
+                v-if="progress.studentInfoFetched !== progress.studentInfoTotal"
                 class="text-sm text-[#1890ff]"
               >
                 正在读取：{{ progress.studentInfoFetched }} /
@@ -250,7 +255,7 @@ watch(
                 class="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-blue-100"
               >
                 <IconifyIcon
-                  icon="'mdi:file-pdf-box'"
+                  icon="mdi:file-pdf-box"
                   color="#1890ff"
                   class="size-14"
                 />
@@ -394,7 +399,7 @@ watch(
               :disabled="!progress.downloadUrl"
               @click="downloadZip"
               size="large"
-              class="mt-8"
+              class="mt-10"
             >
               <div class="flex items-center gap-2">
                 <IconifyIcon
@@ -536,10 +541,6 @@ watch(
 <style scoped>
 .animate-bounce {
   animation: bounce 1.5s infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
 }
 
 .animate-pulse {
