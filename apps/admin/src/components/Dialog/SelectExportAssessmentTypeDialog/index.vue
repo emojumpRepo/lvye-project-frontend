@@ -86,13 +86,14 @@ const selectedExportType = ref('');
       <div class="flex text-center">
         <span>是否导出本次测评下的</span>
         <span v-if="params.selectedRowKeys.length === 0">全部</span>
-        <span>
+        <span v-else>
           （共{{
             params.selectedRowKeys.length > 0
               ? params.selectedRowKeys.length
               : params.totalCount
-          }}名用户）的结果
+          }}名用户）
         </span>
+        <span>的结果</span>
       </div>
 
       <!-- 操作按钮 -->

@@ -1,40 +1,13 @@
+import type { QuestionnaireAnswerDataVO } from '@vben/types';
+
+import type {
+  AssessmentResult,
+  QuestionnaireTemplate,
+  TabItem,
+} from '../types';
+
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
-
-interface Answer {
-  answer: string;
-  index: number;
-  score: number;
-  title: string;
-}
-
-interface QuestionnaireResult {
-  questionnaireId: number;
-  questionnaireName: string;
-  completedTime: number;
-  totalScore: number;
-  answers: Answer[];
-}
-
-interface AssessmentResult {
-  studentName: string;
-  studentNo: string;
-  className: string;
-  questionnaireResults: QuestionnaireResult[];
-}
-
-/** 问卷模板，用于构建表头 */
-interface QuestionnaireTemplate {
-  questionnaireId: number;
-  questionnaireName: string;
-  answers: Answer[];
-}
-
-/** 标签项 */
-interface TabItem {
-  key: string;
-  label: string;
-}
 
 /**
  * 导出测评答题记录为 Excel
@@ -68,8 +41,8 @@ export async function exportAssessmentAnswersToExcel(
     const downloadUrl = generateExcelFile(headers, rows);
 
     // 下载excel文件到本地
-    const fileName = `答题记录汇总_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`;
-    downloadFile(downloadUrl, fileName);
+    // const fileName = `答题记录汇总_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`;
+    // downloadFile(downloadUrl, fileName);
 
     return downloadUrl;
   } catch (error) {
@@ -186,7 +159,7 @@ function fillDataRows(
       if (studentQResult) {
         // 学生完成了该问卷，填充答案
         // 创建答案映射，方便按index查找
-        const answerMap = new Map<number, Answer>();
+        const answerMap = new Map<number, QuestionnaireAnswerDataVO>();
         for (const answer of studentQResult.answers) {
           answerMap.set(answer.index, answer);
         }
@@ -195,8 +168,12 @@ function fillDataRows(
         for (const templateAnswer of template.answers) {
           const studentAnswer = answerMap.get(templateAnswer.index);
           if (studentAnswer) {
-            // 格式：答案（分数）
-            row.push(`${studentAnswer.answer}（${studentAnswer.score}）`);
+            if (studentAnswer.answer.trim()) {
+              // 格式：答案（分数）
+              row.push(`${studentAnswer.answer}（${studentAnswer.score}）`);
+            } else {
+              row.push('未作答/无需作答');
+            }
           } else {
             // 该题没有答案
             row.push('');
@@ -232,19 +209,19 @@ function fillDataRows(
  * @param url 文件URL
  * @param fileName 文件名
  */
-function downloadFile(url: string, fileName: string): void {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.style.display = 'none';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  // 延迟释放 URL 对象，确保下载完成
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 100);
-}
+// function downloadFile(url: string, fileName: string): void {
+//   const link = document.createElement('a');
+//   link.href = url;
+//   link.download = fileName;
+//   link.style.display = 'none';
+//   document.body.append(link);
+//   link.click();
+//   link.remove();
+//   // 延迟释放 URL 对象，确保下载完成
+//   setTimeout(() => {
+//     URL.revokeObjectURL(url);
+//   }, 100);
+// }
 
 /**
  * 生成 Excel 文件并返回下载链接

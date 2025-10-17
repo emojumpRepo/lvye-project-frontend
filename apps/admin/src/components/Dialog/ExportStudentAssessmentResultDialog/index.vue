@@ -407,7 +407,9 @@ watch(
                   color="#04DC70"
                   class="size-6"
                 />
-                <span>下载{{ progress.exportFileName }}.zip </span>
+                <span class="font-medium">
+                  下载 {{ progress.exportFileName }}.zip
+                </span>
               </div>
             </LyButton>
 

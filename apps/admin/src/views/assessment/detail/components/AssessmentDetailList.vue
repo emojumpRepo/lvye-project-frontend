@@ -6,7 +6,7 @@ import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index'
 
 import { computed, ref, watch } from 'vue';
 
-import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { alert, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Tabs as ATabs, Tooltip as ATooltip, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -45,6 +45,7 @@ const emit = defineEmits<{
 const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
+const selectedExportType = ref('');
 const loadTotal = ref(0); // 学生总数
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
@@ -367,9 +368,11 @@ async function handleExport(
     return;
   }
 
+  selectedExportType.value = type;
+
   switch (type) {
     case 'exportAllCompletedStatus': {
-      // 导出所有学生完成情况
+      // 导出所有学生完成情况(Excel)
       exportExcelProgressModalApi.open();
       await exportCompletionStatus(activeTab.value);
       exportExcelProgressModalApi.setState({
@@ -382,7 +385,7 @@ async function handleExport(
         message.error('请选择整体测评的数据导出！');
         break;
       }
-      // 导出个体分析报告（仅测评结果，不含答题记录）
+      // 导出个体分析报告（仅测评结果，不含答题记录）(PDF)
       exportStudentCompleteModalApi.open();
       await exportAssessmentReports(props.questionnairesTabs, false);
       break;
@@ -392,14 +395,32 @@ async function handleExport(
         message.error('请选择整体测评的数据导出！');
         break;
       }
-      // 导出个体分析报告 + 答题记录
+      // 导出个体分析报告 + 答题记录(PDF)
       exportStudentCompleteModalApi.open();
       await exportAssessmentReports(props.questionnairesTabs, true);
       break;
     }
     case 'exportAnswerResults': {
-      // 导出答题记录
-      await exportAnswers(props.questionnairesTabs);
+      // 导出答题记录(Excel)
+      exportExcelProgressModalApi.open();
+      const result = await exportAnswers({
+        questionnaireTabs: props.questionnairesTabs,
+        activeTab: activeTab.value,
+      });
+
+      if (!result) {
+        exportExcelProgressModalApi.close();
+        alert({
+          content: progress.errorMessage,
+          icon: 'warning',
+          centered: true,
+        });
+        break;
+      }
+
+      exportExcelProgressModalApi.setState({
+        confirmDisabled: false,
+      });
       break;
     }
   }
@@ -534,8 +555,11 @@ function viewStudentInfo(id: number) {
     <ExportExcelProgressModal
       :download-url="progress.downloadUrl"
       :file-name="progress.exportFileName"
-      :success-count="progress.studentInfoFetched"
-      :total-count="progress.studentInfoTotal"
+      :success-count="progress.fetchedCount"
+      :total-count="progress.totalCount"
+      :student-info-fetched="progress.studentInfoFetched"
+      :student-info-total="progress.studentInfoTotal"
+      :type="selectedExportType"
     />
     <Drawer />
   </div>

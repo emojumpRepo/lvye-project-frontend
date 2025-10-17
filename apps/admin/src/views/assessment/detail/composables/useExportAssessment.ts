@@ -4,17 +4,20 @@ import type {
   AssessmentResultVO,
   ExportProgress,
   QuestionnaireAnswerDataVO,
+  QuestionnaireResultVO,
 } from '@vben/types';
 
 import type { TabItem } from '../types';
 
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
+import type { AssessmentResult } from '#/components/Dialog/QuestionnaireResultDialog/types';
 
 import { nextTick, reactive, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 import JSZip from 'jszip';
 
+import { getAssessmentQuestionnaireResult } from '#/api/psychology';
 import { getAssessmentResult } from '#/api/psychology/assessment/index';
 import { exportAssessmentAnswersToExcel } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportAnswers';
 import { exportQuestionnaireReportToPDF } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportToPDF';
@@ -22,6 +25,12 @@ import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
 // ======================== 类型定义 ========================
 export interface StudentAssessmentResultVO extends AssessmentResultVO {
+  studentName: string; // 学生姓名
+  studentNo: string; // 学号
+  className: string; // 班级名称
+}
+
+export interface StudentQuestionnaireResultVO extends QuestionnaireResultVO {
   studentName: string; // 学生姓名
   studentNo: string; // 学号
   className: string; // 班级名称
@@ -273,6 +282,105 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   }
 
   /**
+   * 获取单个学生的问卷结果
+   */
+  async function fetchSingleQuestionnaireResult(
+    student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
+    questionnaireTabs: TabItem[],
+  ): Promise<AssessmentResult | null> {
+    const studentInfo = getStudentInfo(student);
+
+    try {
+      // 验证学生ID
+      if (!student.id) {
+        recordFailure(studentInfo, 'fetching', '学生ID不存在');
+        return null;
+      }
+
+      // 获取测评结果
+      const response = await getAssessmentQuestionnaireResult(
+        String(student.id),
+      );
+      if (!response) {
+        recordFailure(studentInfo, 'fetching', '获取测评结果失败');
+        return null;
+      }
+
+      // 更新进度
+      progress.fetchedCount++;
+
+      // 返回完整的学生测评结果
+      return {
+        className: student.className,
+        studentName: student.name,
+        studentNo: student.studentNo,
+        questionnaireResults: [
+          {
+            questionnaireId: response.questionnaireId,
+            questionnaireName:
+              questionnaireTabs.find(
+                (tab) => tab.key === String(response.questionnaireId),
+              )?.label || '',
+            completedTime: response.completedTime,
+            totalScore: response.score,
+            answers: JSON.parse(response.answers),
+          },
+        ],
+      } as AssessmentResult;
+    } catch (error: any) {
+      console.error('获取测评结果失败', error);
+      recordFailure(
+        studentInfo,
+        'fetching',
+        error?.message || '获取测评结果失败',
+      );
+      return null;
+    }
+  }
+
+  /** 批量获取所有学生的问卷结果 */
+  async function fetchAllQuestionnaireResults(
+    completedStudents: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes[],
+    questionnaireTabs: TabItem[],
+  ): Promise<AssessmentResult[]> {
+    const allResults: AssessmentResult[] = [];
+    const totalBatches = Math.ceil(
+      completedStudents.length / ASSESSMENT_RESULT_BATCH_SIZE,
+    );
+
+    // 分批处理，每批之间检查取消状态
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      // 检查是否取消
+      if (isCancelled.value) {
+        return allResults;
+      }
+
+      // 获取当前批次的学生
+      const start = batchIndex * ASSESSMENT_RESULT_BATCH_SIZE;
+      const end = Math.min(
+        start + ASSESSMENT_RESULT_BATCH_SIZE,
+        completedStudents.length,
+      );
+      const batch = completedStudents.slice(start, end);
+
+      // 并发处理当前批次
+      const batchPromises = batch.map((student) =>
+        fetchSingleQuestionnaireResult(student, questionnaireTabs),
+      );
+
+      // 等待当前批次完成并过滤掉失败的结果
+      const batchResults = await Promise.all(batchPromises);
+      allResults.push(
+        ...batchResults.filter(
+          (result): result is AssessmentResult => result !== null,
+        ),
+      );
+    }
+
+    return allResults;
+  }
+
+  /**
    * 获取所有问卷答案
    */
   function getQuestionnaireAnswers(
@@ -325,7 +433,10 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   }
 
   /** 导出答题情况（Excel） */
-  async function exportAnswers(questionnairesTabs: TabItem[]) {
+  async function exportAnswers(params: {
+    activeTab: TabItem;
+    questionnaireTabs: TabItem[];
+  }) {
     // 重置并初始化进度
     resetProgress();
     progress.fileType = 'xlsx';
@@ -341,7 +452,6 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     );
 
     if (completedStudents.length === 0) {
-      progress.currentStep = 'error';
       progress.errorMessage = '学生未完成测评，无法导出';
       return false;
     }
@@ -349,55 +459,62 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     // 更新进度
     progress.totalCount = completedStudents.length;
 
-    // 获取所有学生的测评结果
-    const assessmentResults =
-      await fetchAllAssessmentResults(completedStudents);
-    if (isCancelled.value) return;
+    let formattedAssessmentResults: AssessmentResult[] = [];
 
-    if (assessmentResults.length === 0) {
-      progress.currentStep = 'error';
-      progress.errorMessage = '未获取到有效的测评结果';
-      return false;
+    if (params.activeTab.key) {
+      formattedAssessmentResults = await fetchAllQuestionnaireResults(
+        completedStudents,
+        params.questionnaireTabs,
+      );
+    } else {
+      // 获取所有学生的整体测评结果（包含所有问卷）
+      const assessmentResults =
+        await fetchAllAssessmentResults(completedStudents);
+      if (isCancelled.value) return;
+
+      if (assessmentResults.length === 0) {
+        progress.currentStep = 'error';
+        progress.errorMessage = '未获取到有效的测评结果';
+        return false;
+      }
+
+      // 格式化测评结果
+      formattedAssessmentResults = assessmentResults.map((assessment) => {
+        return {
+          studentName: assessment.studentName,
+          studentNo: assessment.studentNo,
+          className: assessment.className,
+          questionnaireResults: assessment.questionnaireResults.map((q) => {
+            const totalScore = JSON.parse(q.answers).reduce(
+              (acc: number, answer: QuestionnaireAnswerDataVO) => {
+                return acc + (answer.score || 0);
+              },
+              0,
+            );
+            return {
+              questionnaireId: q.questionnaireId,
+              questionnaireName: q.questionnaireName,
+              completedTime: q.completedTime,
+              totalScore,
+              answers: JSON.parse(q.answers),
+            };
+          }),
+        };
+      });
     }
-
-    // 格式化测评结果
-    const formattedAssessmentResults = assessmentResults.map((assessment) => {
-      return {
-        studentName: assessment.studentName,
-        studentNo: assessment.studentNo,
-        className: assessment.className,
-        questionnaireResults: assessment.questionnaireResults.map((q) => {
-          const totalScore = JSON.parse(q.answers).reduce(
-            (acc: number, answer: QuestionnaireAnswerDataVO) => {
-              return acc + (answer.score || 0);
-            },
-            0,
-          );
-          return {
-            questionnaireId: q.questionnaireId,
-            questionnaireName: q.questionnaireName,
-            completedTime: q.completedTime,
-            totalScore,
-            answers: JSON.parse(q.answers),
-          };
-        }),
-      };
-    });
-
-    console.log('测评结果', formattedAssessmentResults);
 
     // 导出Excel
     const url = await exportAssessmentAnswersToExcel(
       formattedAssessmentResults,
-      questionnairesTabs,
+      params.questionnaireTabs,
     );
-    console.log('url', url);
+
     if (url) {
+      progress.exportFileName = `${formattedAssessmentResults.length}名学生-答题记录汇总`;
       progress.downloadUrl = url;
-      return true;
-    } else {
-      return false;
     }
+
+    return true;
   }
 
   /**
