@@ -425,7 +425,10 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
         activeTab,
       );
 
-      url && (progress.downloadUrl = url);
+      if (url) {
+        progress.exportFileName = `${studentsToProcess.length}名学生-测评结果汇总`;
+        progress.downloadUrl = url;
+      }
     } catch (error) {
       console.error('导出失败:', error);
       message.error('导出失败，请重试');
@@ -440,7 +443,6 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     // 重置并初始化进度
     resetProgress();
     progress.fileType = 'xlsx';
-    progress.exportFileName = '答题记录汇总';
 
     // 获取学生数据
     const studentsToProcess = await getStudentsToExport();
