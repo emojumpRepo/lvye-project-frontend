@@ -57,6 +57,7 @@ export interface AssessmentQuestionnaireResultVO {
   riskLevel: number;
   suggestions: string;
   reportContent: string;
+  completedTime: number;
   dimensions: Dimension[];
   standardScore: number;
   percentileRank: number;

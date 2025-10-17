@@ -1,6 +1,10 @@
 import type { Ref } from 'vue';
 
-import type { AssessmentResultVO, ExportProgress } from '@vben/types';
+import type {
+  AssessmentResultVO,
+  ExportProgress,
+  QuestionnaireAnswerDataVO,
+} from '@vben/types';
 
 import type { TabItem } from '../types';
 
@@ -12,6 +16,7 @@ import { message } from 'ant-design-vue';
 import JSZip from 'jszip';
 
 import { getAssessmentResult } from '#/api/psychology/assessment/index';
+import { exportAssessmentAnswersToExcel } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportAnswers';
 import { exportQuestionnaireReportToPDF } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportToPDF';
 import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
@@ -319,7 +324,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     }
   }
 
-  /** 导出答题情况 */
+  /** 导出答题情况（Excel） */
   async function exportAnswers(questionnairesTabs: TabItem[]) {
     // 重置并初始化进度
     resetProgress();
@@ -355,30 +360,44 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
       return false;
     }
 
-    // 排序问卷
-    if (questionnairesTabs) {
-      const tabOrderMap = new Map(
-        questionnairesTabs.map((tab, index) => [tab.key, index]),
-      );
+    // 格式化测评结果
+    const formattedAssessmentResults = assessmentResults.map((assessment) => {
+      return {
+        studentName: assessment.studentName,
+        studentNo: assessment.studentNo,
+        className: assessment.className,
+        questionnaireResults: assessment.questionnaireResults.map((q) => {
+          const totalScore = JSON.parse(q.answers).reduce(
+            (acc: number, answer: QuestionnaireAnswerDataVO) => {
+              return acc + (answer.score || 0);
+            },
+            0,
+          );
+          return {
+            questionnaireId: q.questionnaireId,
+            questionnaireName: q.questionnaireName,
+            completedTime: q.completedTime,
+            totalScore,
+            answers: JSON.parse(q.answers),
+          };
+        }),
+      };
+    });
 
-      assessmentResults.forEach((assessment) => {
-        if (assessment && assessment.questionnaireResults) {
-          assessment.questionnaireResults.sort((a, b) => {
-            const orderA =
-              tabOrderMap.get(String(a.questionnaireId)) ?? Infinity;
-            const orderB =
-              tabOrderMap.get(String(b.questionnaireId)) ?? Infinity;
-            return orderA - orderB;
-          });
-        }
-      });
-    }
-
-    console.log('测评结果', assessmentResults);
-
-    await nextTick();
+    console.log('测评结果', formattedAssessmentResults);
 
     // 导出Excel
+    const url = await exportAssessmentAnswersToExcel(
+      formattedAssessmentResults,
+      questionnairesTabs,
+    );
+    console.log('url', url);
+    if (url) {
+      progress.downloadUrl = url;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /**

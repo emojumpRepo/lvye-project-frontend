@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { message } from 'ant-design-vue';
+import { Popover as APopover, message } from 'ant-design-vue';
 
 import LyButton from '#/components/LyButton/index.vue';
 
@@ -47,18 +47,22 @@ const exportTypeButtons = [
   {
     label: '测评结果汇总（Excel）',
     value: 'exportAllCompletedStatus',
+    tip: '测评结果汇总（Excel）包含选中学生的完成时间、风险等级及各维度结果',
   },
   {
     label: '答题记录汇总（Excel）',
     value: 'exportAnswerResults',
+    tip: '答题记录汇总（Excel）包含选中学生的每题作答选项',
   },
   {
     label: '个体分析报告（PDF）',
     value: 'exportAnalysisReport',
+    tip: '单人分析报告（PDF）  批量下载选中学生的测评分析报告',
   },
   {
     label: '个体分析报告 + 答题记录（PDF）',
     value: 'exportAnalysisReportAndAnswerResults',
+    tip: '单人分析报告+单人答题记录（PDF）批量下载选中学生的测评分析报告及答题记录',
   },
 ];
 
@@ -99,7 +103,12 @@ const selectedExportType = ref('');
             @click="selectedExportType = button.value"
             size="small"
           >
-            {{ button.label }}
+            <div class="flex items-center gap-1">
+              <span>{{ button.label }}</span>
+              <APopover :content="button.tip" placement="right">
+                <IconifyIcon icon="carbon:help" />
+              </APopover>
+            </div>
           </LyButton>
         </template>
       </div>
