@@ -8,7 +8,7 @@ import { computed, ref, watch } from 'vue';
 
 import { alert, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { Tabs as ATabs, Tooltip as ATooltip, message } from 'ant-design-vue';
+import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -45,7 +45,7 @@ const emit = defineEmits<{
 const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
-const selectedExportType = ref('');
+const exportXLSXType = ref<'answer' | 'completed'>('completed');
 const loadTotal = ref(0); // 学生总数
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
@@ -128,11 +128,6 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
     .filter(Boolean);
 }
 
-/** 处理分页变化 */
-function handlePageChange() {
-  selectedRowKeys.value = [];
-}
-
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(activeTab.value.key),
@@ -141,12 +136,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     pagerConfig: {
       enabled: true,
       pageSize: 10,
-      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
       pageSizes: [10, 30, 50, 80, 100],
     },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          selectedRowKeys.value = [];
           const data = await loadStudentData(page, formValues);
           loadTotal.value = data.total;
           return data;
@@ -159,7 +154,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
-    pageChange: handlePageChange,
   },
 });
 
@@ -177,39 +171,10 @@ const {
   loadStudentData,
 });
 
-/**
- * 校验是否满足导出条件
- * 满足任一条件即可导出：
- * 1. 勾选了学生 (selectedRowKeys.value.length > 0)
- * 2. 输入了任何有效的筛选条件 (searchParams 中有值)
- * @returns {boolean} true: 满足导出条件, false: 不满足
- */
-const validateExport = computed(() => {
-  // 1. 检查是否勾选了学生
-  const hasSelections = selectedRowKeys.value.length > 0;
-
-  // // 2. 检查搜索条件是否有值
-  const searchParams = searchRef.value?.assessmentDetailSearchParams;
-  let hasSearchParams = false;
-
-  if (searchParams && typeof searchParams === 'object') {
-    hasSearchParams = Object.values(searchParams).some((value) => {
-      if (Array.isArray(value)) {
-        return value.some(Boolean);
-      }
-
-      return value !== null && value !== undefined && value !== '';
-    });
-  }
-
-  return hasSelections || (hasSearchParams && loadTotal.value > 0);
-});
-
 /** 操作按钮 */
 const actionButtons = computed(() => {
   // 先计算出通用的状态，让代码更清晰
   const isSelectionEmpty = selectedRowKeys.value.length === 0;
-  const canExport = validateExport.value;
 
   return [
     {
@@ -235,22 +200,6 @@ const actionButtons = computed(() => {
       onClick: openSelectExportAssessmentTypeModal,
       disabled: false,
       show: true,
-    },
-    {
-      label: '导出完成情况',
-      tip: '导出筛选后的学生完成情况。若勾选了学生，则仅导出所选学生',
-      value: 'exportCompletedStatus',
-      onClick: handleExportCompletedStatus,
-      disabled: !canExport,
-      show: false,
-    },
-    {
-      label: '导出测评报告',
-      tip: '导出当前筛选条件下的测评报告。若勾选了学生，则仅导出所选学生',
-      value: 'exportAssessmentResults',
-      onClick: handleExportAssessmentResults,
-      disabled: !!activeTab.value.key || !canExport,
-      show: false,
     },
   ];
 });
@@ -331,17 +280,6 @@ function viewDetail(
 }
 
 // ============== 导出功能 =================
-
-/** 导出完成情况 */
-function handleExportCompletedStatus() {
-  exportCompletionStatus(activeTab.value);
-}
-
-/** 导出测评报告 */
-function handleExportAssessmentResults() {
-  exportAssessmentReports(props.questionnairesTabs);
-}
-
 /** 打开选择导出类型弹窗 */
 function openSelectExportAssessmentTypeModal() {
   selectExportAssessmentTypeModalApi
@@ -367,14 +305,24 @@ async function handleExport(
     message.warning('暂无学生数据可导出');
     return;
   }
-
-  selectedExportType.value = type;
-
   switch (type) {
     case 'exportAllCompletedStatus': {
       // 导出所有学生完成情况(Excel)
+      exportXLSXType.value = 'completed';
       exportExcelProgressModalApi.open();
-      await exportCompletionStatus(activeTab.value);
+      const result = await exportCompletionStatus({
+        activeTab: activeTab.value,
+        questionnaireTabs: props.questionnairesTabs,
+      });
+      if (!result) {
+        exportExcelProgressModalApi.close();
+        alert({
+          content: progress.errorMessage,
+          icon: 'warning',
+          centered: true,
+        });
+        break;
+      }
       exportExcelProgressModalApi.setState({
         confirmDisabled: false,
       });
@@ -402,6 +350,7 @@ async function handleExport(
     }
     case 'exportAnswerResults': {
       // 导出答题记录(Excel)
+      exportXLSXType.value = 'answer';
       exportExcelProgressModalApi.open();
       const result = await exportAnswers({
         questionnaireTabs: props.questionnairesTabs,
@@ -466,20 +415,15 @@ function viewStudentInfo(id: number) {
     <!-- 操作按钮 -->
     <div class="my-6 flex gap-2">
       <template v-for="button in actionButtons" :key="button.value">
-        <ATooltip>
-          <template v-if="button?.tip" #title>
-            <span>{{ button.tip }}</span>
-          </template>
-          <LyButton
-            v-if="button.show"
-            size="middle"
-            type="default"
-            :disabled="button.disabled"
-            @click="button.onClick && button.onClick()"
-          >
-            {{ button.label }}
-          </LyButton>
-        </ATooltip>
+        <LyButton
+          v-if="button.show"
+          size="middle"
+          type="default"
+          :disabled="button.disabled"
+          @click="button.onClick && button.onClick()"
+        >
+          {{ button.label }}
+        </LyButton>
       </template>
     </div>
 
@@ -559,7 +503,7 @@ function viewStudentInfo(id: number) {
       :total-count="progress.totalCount"
       :student-info-fetched="progress.studentInfoFetched"
       :student-info-total="progress.studentInfoTotal"
-      :type="selectedExportType"
+      :type="exportXLSXType"
     />
     <Drawer />
   </div>
@@ -572,26 +516,26 @@ function viewStudentInfo(id: number) {
   width: 100px;
 }
 
-:deep(.vxe-cell--col-resizable) {
-  display: none !important;
-}
+// :deep(.vxe-cell--col-resizable) {
+//   display: none !important;
+// }
 
-:deep(.vxe-grid) {
-  // padding-top: 0 !important;
-  // padding-right: 0 !important;
-  // padding-left: 0 !important;
-}
+// :deep(.vxe-grid) {
+//   padding-top: 0 !important;
+//   padding-right: 0 !important;
+//   padding-left: 0 !important;
+// }
 
-:deep(.vxe-pager) {
-  background: transparent !important;
-}
+// :deep(.vxe-pager) {
+//   background: transparent !important;
+// }
 
-:deep(.vxe-pager--wrapper) {
-  align-items: center !important;
-}
+// :deep(.vxe-pager--wrapper) {
+//   align-items: center !important;
+// }
 
-:deep(.vxe-pager--sizes) {
-  width: 8em !important;
-  margin-right: 0 !important;
-}
+// :deep(.vxe-pager--sizes) {
+//   width: 8em !important;
+//   margin-right: 0 !important;
+// }
 </style>

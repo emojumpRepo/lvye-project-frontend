@@ -1,3 +1,5 @@
+import type { Dimension } from './assessment';
+
 export interface QuestionnaireVO {
   id?: number;
   questionnaireId?: number;
@@ -30,19 +32,6 @@ export interface QuestionnaireVO {
   supportIndependentUse?: number;
 }
 
-export interface QuestionnaireResultDataVO {
-  questionnaireId: number;
-  dimensionId: number;
-  dimensionCode: string;
-  dimensionName: string;
-  isAbnormal: number;
-  riskLevel: number;
-  score: number;
-  level: string;
-  studentComment: string;
-  teacherComment: string;
-}
-
 export interface QuestionnaireResultVO {
   answers: string;
   assessmentTaskNo: string;
@@ -56,6 +45,7 @@ export interface QuestionnaireResultVO {
   id: number;
   questionnaireId: number;
   resultData: string;
+  dimensions: Dimension[];
   riskLevel: number;
   score: number;
   suggestions: string;

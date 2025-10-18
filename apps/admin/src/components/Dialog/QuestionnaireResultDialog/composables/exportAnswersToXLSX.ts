@@ -260,7 +260,7 @@ function generateExcelFile(headers: string[], rows: any[][]): string {
   worksheet['!cols'] = columnWidths;
 
   // 添加工作表到工作簿
-  XLSX.utils.book_append_sheet(workbook, worksheet, '答题记录');
+  XLSX.utils.book_append_sheet(workbook, worksheet, '答题记录汇总');
 
   // 生成 Blob
   const excelBuffer = XLSX.write(workbook, {

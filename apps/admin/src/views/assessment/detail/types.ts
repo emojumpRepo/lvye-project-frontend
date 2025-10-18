@@ -60,16 +60,3 @@ export interface ExportReportsOptions {
   taskName?: string;
   questionnairesTabs?: TabItem[];
 }
-
-/** 组合式函数选项 */
-export interface UseExportAssessmentOptions {
-  modalApi: any; // 进度弹窗的API，用于更新进度
-  gridApi: any; // 表格API，用于获取选中的行
-  searchRef: Ref<any>; // 搜索参数引用
-  loadTotal: Ref<number>; // 学生总数
-  selectedRowKeys: Ref<number[]>; // 选中的行键
-  loadStudentData: (
-    page: { currentPage: number; pageSize: number },
-    formValues: any,
-  ) => Promise<{ list: any[]; total: number }>; // 加载学生数据的函数
-}

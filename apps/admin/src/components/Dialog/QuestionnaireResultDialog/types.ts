@@ -1,13 +1,16 @@
-import type { QuestionnaireAnswerDataVO } from '@vben/types';
+import type { Dimension, QuestionnaireAnswerDataVO } from '@vben/types';
 
+/** 问卷结果 */
 export interface QuestionnaireResult {
   questionnaireId: number;
   questionnaireName: string;
   completedTime: number | string;
   totalScore: number;
   answers: QuestionnaireAnswerDataVO[];
+  dimensions: Dimension[];
 }
 
+/** 测评结果 */
 export interface AssessmentResult {
   studentName: string;
   studentNo: string;

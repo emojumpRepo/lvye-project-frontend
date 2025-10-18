@@ -19,9 +19,9 @@ import JSZip from 'jszip';
 
 import { getAssessmentQuestionnaireResult } from '#/api/psychology';
 import { getAssessmentResult } from '#/api/psychology/assessment/index';
-import { exportAssessmentAnswersToExcel } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportAnswers';
+import { exportAssessmentAnswersToExcel } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportAnswersToXLSX';
+import { exportCompletedToXLSX } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportCompletedToXLSX';
 import { exportQuestionnaireReportToPDF } from '#/components/Dialog/QuestionnaireResultDialog/composables/exportToPDF';
-import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
 // ======================== 类型定义 ========================
 export interface StudentAssessmentResultVO extends AssessmentResultVO {
@@ -324,6 +324,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
             completedTime: response.completedTime,
             totalScore: response.score,
             answers: JSON.parse(response.answers),
+            dimensions: response.dimensions,
           },
         ],
       } as AssessmentResult;
@@ -410,28 +411,111 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
   /**
    * 导出完成情况（Excel）
    */
-  async function exportCompletionStatus(activeTab: TabItem) {
+  async function exportCompletionStatus(params: {
+    activeTab: TabItem;
+    questionnaireTabs: TabItem[];
+  }) {
     try {
-      // 重置进度
+      // 1. 初始化和进度设置
       resetProgress();
-      progress.exportFileName = '测评结果汇总';
+      progress.fileType = 'xlsx';
 
-      // 获取学生数据
+      // 2. 获取学生数据
       const studentsToProcess = await getStudentsToExport();
+      progress.totalCount = studentsToProcess.length;
 
-      // 导出Excel
-      const url = await exportAssessmentParticipantsToExcel(
-        studentsToProcess,
-        activeTab,
+      // 3. 筛选出已完成的测评 (status === 1)
+      const completedStudents = studentsToProcess.filter(
+        (item: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes) =>
+          item.status === 1,
       );
 
-      if (url) {
-        progress.exportFileName = `${studentsToProcess.length}名学生-测评结果汇总`;
-        progress.downloadUrl = url;
+      // 4. 更新进度 (已完成数)
+      progress.fetchedCount =
+        studentsToProcess.length - completedStudents.length;
+
+      let formattedAssessmentResults: AssessmentResult[] = [];
+
+      // 5. 获取并格式化测评结果
+      if (completedStudents.length > 0) {
+        if (params.activeTab.key) {
+          formattedAssessmentResults = await fetchAllQuestionnaireResults(
+            completedStudents,
+            params.questionnaireTabs,
+          );
+        } else {
+          // 导出所有问卷的整体测评结果
+          const assessmentResults =
+            await fetchAllAssessmentResults(completedStudents);
+
+          if (isCancelled.value) return;
+
+          if (assessmentResults.length > 0) {
+            // 格式化测评结果
+            formattedAssessmentResults = assessmentResults.map(
+              (assessment) => ({
+                ...assessment,
+                questionnaireResults: assessment.questionnaireResults.map(
+                  (q) => {
+                    // 保持原始的 JSON.parse 和 reduce 逻辑
+                    const answersData = JSON.parse(q.answers);
+                    const totalScore = answersData.reduce(
+                      (acc: number, answer: QuestionnaireAnswerDataVO) =>
+                        acc + (answer.score || 0),
+                      0,
+                    );
+                    return {
+                      ...q,
+                      totalScore,
+                      answers: answersData,
+                    };
+                  },
+                ),
+              }),
+            );
+          }
+        }
       }
+
+      // 6. 数据合并
+      const resultMap = new Map(
+        formattedAssessmentResults.map((result: any) => [
+          result.studentNo,
+          result,
+        ]),
+      );
+
+      // 合并数据：将结果合并到原始学生列表 (包含未完成的学生)
+      const mergedData = studentsToProcess.map(
+        (
+          student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
+        ) => ({
+          ...student,
+          questionnaireResults:
+            resultMap.get(student.studentNo)?.questionnaireResults || [],
+        }),
+      );
+
+      // 7. 导出Excel
+      const url = await exportCompletedToXLSX({
+        data: mergedData,
+        activeTab: params.activeTab,
+        questionnaireTabs: params.questionnaireTabs,
+      });
+
+      // 8. 更新导出进度和下载信息
+      if (url) {
+        progress.exportFileName = `${mergedData.length}名学生-测评结果汇总`;
+        progress.downloadUrl = url;
+        return true;
+      }
+
+      progress.errorMessage = '导出过程中发生了错误';
+      return false;
     } catch (error) {
       console.error('导出失败:', error);
       message.error('导出失败，请重试');
+      return false;
     }
   }
 
@@ -461,7 +545,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
     // 更新进度
     progress.totalCount = completedStudents.length;
 
-    let formattedAssessmentResults: AssessmentResult[] = [];
+    let formattedAssessmentResults = [];
 
     if (params.activeTab.key) {
       formattedAssessmentResults = await fetchAllQuestionnaireResults(
@@ -499,6 +583,7 @@ export function useExportAssessment(options: UseExportAssessmentOptions) {
               completedTime: q.completedTime,
               totalScore,
               answers: JSON.parse(q.answers),
+              dimensions: q.dimensions,
             };
           }),
         };
