@@ -185,7 +185,7 @@ function handleViewAssessmentResult(taskResultId: number) {
 </script>
 
 <template>
-  <div class="grid h-full w-[1000px] grid-cols-2 grid-rows-2 gap-6">
+  <div class="grid h-full w-full grid-cols-2 grid-rows-2 gap-6">
     <!-- 事件基本信息 -->
     <div class="row-span-1">
       <div class="flex h-full flex-col justify-between gap-3">

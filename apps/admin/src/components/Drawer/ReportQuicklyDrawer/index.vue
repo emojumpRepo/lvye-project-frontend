@@ -28,7 +28,7 @@ import { searchStudentProfile } from '#/api/psychology/student-profile';
 import LyButton from '#/components/LyButton/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
-import LyUpload from '#/components/LyUpload/index.vue';
+import { FileUpload } from '#/components/upload';
 import { getDictLabel, getDictOptions } from '#/utils/dict';
 
 interface State {
@@ -43,6 +43,20 @@ const emit = defineEmits<{
 
 const riskLevelOptions = ref<{ label: string; value: number }[]>([]);
 const fileList = ref([]); // 附件列表
+const accept = ref([
+  'png',
+  'jpg',
+  'jpeg',
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'txt',
+  'zip',
+  'rar',
+  '7z',
+]);
 const eventFormRef = ref();
 const state = reactive<State>({
   studentList: [],
@@ -58,7 +72,6 @@ const eventForm = ref<ReportCrisisEventReqVO>({
   location: '',
   riskLevel: undefined as any,
   priority: 2,
-  attachmentUrls: [],
   sourceType: 1,
 });
 
@@ -188,7 +201,10 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
 /** 上报事件 */
 async function handleReport() {
   try {
-    const eventId = await reportCrisisEvent(eventForm.value);
+    const eventId = await reportCrisisEvent({
+      ...eventForm.value,
+      attachmentUrls: fileList.value || [],
+    });
     if (!eventId) return message.error('上报危机事件失败');
     message.success('上报成功');
     selectedHandleMethodDrawerApi.close();
@@ -390,7 +406,16 @@ onMounted(() => {
         <!-- 附件上传 -->
         <div>
           <LyLabel title="附件上传" custom-title-class="font-normal text-sm" />
-          <LyUpload v-model:file-list="fileList" />
+          <FileUpload
+            v-model:value="fileList"
+            :accept="accept"
+            :max-size="5"
+            :max-number="3"
+          >
+            <template #upload-text-desc>
+              支持图片、文件、压缩包类型文件，最大1MB，最多3个文件
+            </template>
+          </FileUpload>
         </div>
       </AForm>
     </div>

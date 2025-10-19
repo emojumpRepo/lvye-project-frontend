@@ -18,6 +18,7 @@ export interface StudentInterventionItem {
   currentRiskLevel: number;
   studyStatus: number;
   counselorName: string;
+  lastUpdateTime: number;
   lastAssessmentTime: number;
   lastConsultationTime: number;
   crisisEventCount: number;

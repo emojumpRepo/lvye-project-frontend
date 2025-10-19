@@ -9,6 +9,7 @@ import { Divider, Empty, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
+import { getDictLabel } from '#/utils/dict';
 
 const props = defineProps<{
   studentProfileTimeline: PsychologyStudentProfileApi.StudentProfileTimeline[];
@@ -58,7 +59,11 @@ function handleViewDetail(
           "
           @click="activeTimelineKey = tab.key"
         >
-          {{ tab.title }}
+          {{
+            tab.key === 0
+              ? '全部'
+              : getDictLabel('student_timeline_event_type', tab.key)
+          }}
         </span>
       </div>
       <div class="w-full flex-1 space-y-4 overflow-y-auto px-4">

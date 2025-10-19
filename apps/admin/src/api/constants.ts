@@ -1,4 +1,23 @@
+import icon_done from '#/static/icons/consulting/icon_done.svg';
+import icon_guancha from '#/static/icons/consulting/icon_guancha.svg';
+import icon_test from '#/static/icons/consulting/icon_test.svg';
+import icon_zhiliao from '#/static/icons/consulting/icon_zhiliao.svg';
+import icon_zixun from '#/static/icons/consulting/icon_zixun.svg';
+import crisisContinuousIcon from '#/static/icons/crisis/crisis_continuous_icon.png';
+import crisisCriticalIcon from '#/static/icons/crisis/crisis_critical_icon.png';
+import crisisEvaluationIcon from '#/static/icons/crisis/crisis_evaluation_icon.png';
+import crisisGeneralIcon from '#/static/icons/crisis/crisis_general_icon.png';
+import crisisSevereIcon from '#/static/icons/crisis/crisis_severe_icon.png';
 import { getDictObj } from '#/utils/dict';
+
+export interface InterventionType {
+  key: number;
+  bgColor: string;
+  color: string;
+  description: string;
+  icon: string;
+  title: string;
+}
 
 export type TagType =
   | 'default'
@@ -190,3 +209,93 @@ export const EVALUATION_SOURCE = {
   COUNSELING: 1, // 访谈评估
   INTERVENTION: 2, // 危机干预
 };
+
+//  ===================== 危机干预模块UI配置 =====================
+
+// 干预卡片类型配置
+export const INTERVENTION_TYPE_MAP: InterventionType[] = [
+  {
+    key: 1,
+    title: '需要进一步评估',
+    description: '等待教师专业评估',
+    icon: crisisEvaluationIcon,
+    bgColor: '#DDE3FF',
+    color: '#8D00F1',
+  },
+  {
+    key: 2,
+    title: '持续观察',
+    description: '需要长期跟踪观察的学生',
+    icon: crisisContinuousIcon,
+    bgColor: '#D0E5FF',
+    color: '#1966FF',
+  },
+  {
+    key: 3,
+    title: '一般(一类)',
+    description: '需要关注但无需干预',
+    icon: crisisGeneralIcon,
+    bgColor: '#CFFFF1',
+    color: '#25D94C',
+  },
+  {
+    key: 4,
+    title: '严重(二类)',
+    description: '需要定期咨询干预',
+    icon: crisisSevereIcon,
+    bgColor: '#FFEAD2',
+    color: '#FF9C05',
+  },
+  {
+    key: 5,
+    title: '重大(三类)',
+    description: '需要紧急干预',
+    icon: crisisCriticalIcon,
+    bgColor: '#FFDBD0',
+    color: '#FF0831',
+  },
+];
+
+/** 根据key获取干预配置 */
+export function getInterventionTypeByDictValue(dictValue: number) {
+  return INTERVENTION_TYPE_MAP.find((item) => item.key === dictValue);
+}
+
+// 后续处理建议
+export const FOLLOW_UP_SUGGESTION = [
+  {
+    key: 1,
+    title: '需要持续咨询',
+    desc: '建议安排后续咨询会面',
+    icon: icon_zixun,
+  },
+  {
+    key: 2,
+    title: '需要继续量表测评',
+    desc: '建议安排后续咨询会面',
+    icon: icon_test,
+  },
+  {
+    key: 3,
+    title: '持续观察',
+    desc: '建议安排后续咨询会面',
+    icon: icon_guancha,
+  },
+  {
+    key: 4,
+    title: '问题基本解决',
+    desc: '建议安排后续咨询会面',
+    icon: icon_done,
+  },
+  {
+    key: 5,
+    title: '转介专业治疗',
+    desc: '建议安排后续咨询会面',
+    icon: icon_zhiliao,
+  },
+];
+
+/** 根据key获取后续处理建议 */
+export function getFollowUpSuggestionByDictValue(dictValue: number) {
+  return FOLLOW_UP_SUGGESTION.find((item) => item.key === dictValue);
+}

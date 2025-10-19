@@ -1,9 +1,5 @@
 <script lang="ts" setup>
-import type {
-  AssessmentComfirmInfo,
-  CrisisEvent,
-  CrisisEventRecord,
-} from '@vben/types';
+import type { AssessmentComfirmInfo, CrisisEvent } from '@vben/types';
 
 import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
@@ -33,7 +29,6 @@ import StepEventCard from './components/StepEventCard.vue';
 const emit = defineEmits(['refresh']);
 
 const crisisEventDetail = ref<CrisisEvent | null>(null);
-const crisisEventProcessHistory = ref<CrisisEventRecord[]>([]);
 const isOpenPsychologicalConsultDialog = ref(false);
 const crisisEventTitle = ref('');
 const currentStep = ref(1); // 当前步骤
@@ -58,7 +53,7 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   closable: false,
   footer: false,
   loading: true,
-  contentClass: '!bg-[#F7F8FB] box-border py-10 flex-center',
+  contentClass: '!bg-[#F7F8FB] box-border py-6 flex-center',
   class: 'h-full overflow-hidden',
   destroyOnClose: true,
   onOpenChange: async () => {
@@ -66,7 +61,6 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
     if (!data.id) return message.error('缺少事件ID');
     crisisEventTitle.value = data.title;
     await loadCrisisEventDetail(data.id);
-    // await loadCrisisEventProcessHistory(data.id);
     handleCrisisEventModalApi.setState({ loading: false });
   },
 });
@@ -246,7 +240,6 @@ async function reloadCrisisEvent() {
   const id = crisisEventDetail.value?.id;
   if (!id) return;
   await loadCrisisEventDetail(id);
-  await loadCrisisEventProcessHistory(id);
 }
 
 /** 创建干预评估 */
@@ -335,7 +328,7 @@ function viewAssessmentReport() {
       </div>
     </template>
 
-    <div v-if="crisisEventDetail" class="h-full w-[1400px]">
+    <div v-if="crisisEventDetail" class="h-full w-full">
       <div class="flex-center h-full w-full gap-8 overflow-hidden">
         <!-- 步骤条 -->
         <div class="h-full">
@@ -520,8 +513,8 @@ function viewAssessmentReport() {
         </div>
 
         <!-- 事件详情 -->
-        <div class="h-full flex-1">
-          <div class="flex h-full flex-col rounded-xl bg-white">
+        <div class="h-full w-2/3">
+          <div class="flex h-full w-full flex-col rounded-xl bg-white">
             <div class="box-border flex-1 overflow-hidden px-10 py-8">
               <EventReporting
                 v-if="crisisEventDetail"

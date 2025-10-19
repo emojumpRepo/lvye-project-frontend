@@ -3,10 +3,6 @@ import type { DeptGradeClassOption } from '@vben/types';
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 
-import { h } from 'vue';
-
-import { IconifyIcon } from '@vben/icons';
-
 /** 搜索表单 */
 export function useSearchFormSchema({
   deptOptions,
@@ -32,28 +28,15 @@ export function useSearchFormSchema({
       defaultValue: [''],
     },
     {
-      fieldName: 'counselorUserId',
+      fieldName: 'counselorType',
       component: 'Select',
       componentProps: {
-        options: [{ label: '全部咨询师', value: '' }],
+        options: [
+          { label: '全部咨询师', value: 0 },
+          { label: '我负责的学生', value: 1 },
+        ],
       },
-      defaultValue: '',
-    },
-    {
-      fieldName: 'searchKeyword',
-      component: 'Input',
-      componentProps: {
-        placeholder: '搜索学生姓名或学号',
-      },
-      renderComponentContent: () => ({
-        prefix: () =>
-          h(IconifyIcon, {
-            class: 'size-4',
-            icon: 'mingcute:search-line',
-            color: '#ccc',
-          }),
-      }),
-      formItemClass: 'col-span-2',
+      defaultValue: 0,
     },
   ];
 }

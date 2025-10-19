@@ -39,6 +39,7 @@ interface EventPanelData {
 }
 
 const riskSearchRef = ref<InstanceType<typeof RiskSearch>>();
+const loading = ref(true);
 
 // 事件面板图标映射
 const eventpanelIconMap: Record<number, string> = {
@@ -80,13 +81,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
     pagerConfig: {
       align: 'right',
       pageSize: 10,
-      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
       pageSizes: [10, 20, 30, 40, 50, 60],
     },
     columns: useEventGridSchema(),
     proxyConfig: {
       ajax: {
         query: async ({ page }: any, formValues: any) => {
+          loading.value = true;
           const response = await getCrisisEventList({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -94,6 +95,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...riskSearchRef.value?.crisisEventListReq,
           });
           await loadEventProcessStatistics();
+          loading.value = false;
           return response;
         },
       },
@@ -120,11 +122,13 @@ async function loadEventProcessStatistics() {
 
 /** 搜索表单搜索 */
 function handleSearch(params: CrisisEventListReq) {
+  if (loading.value) return;
   gridApi.query(params);
 }
 
 /** 事件类型搜索 */
 function handlestatusSearch(status: number) {
+  if (loading.value) return;
   gridApi.query({
     pageNo: 1,
     pageSize: 10,
@@ -286,9 +290,9 @@ function refresh() {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<!-- <style lang="scss" scoped>
 :deep(.vxe-pager--sizes) {
   width: 8em !important;
   margin-right: 0 !important;
 }
-</style>
+</style> -->

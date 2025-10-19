@@ -17,7 +17,6 @@ import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 import { useSearchFormSchema } from '../data';
 
 const emit = defineEmits<{
-  loading: [loading: boolean];
   search: [params: CrisisEventListReq];
 }>();
 
@@ -32,9 +31,10 @@ const [Form, formApi] = useVbenForm({
     counselorOptions: [],
     priorityOptions: [],
   }),
+  submitOnChange: true,
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
   submitButtonOptions: {
-    content: '查询',
+    show: false,
   },
   commonConfig: {
     componentProps: {
@@ -42,37 +42,31 @@ const [Form, formApi] = useVbenForm({
     },
     hideLabel: true,
   },
-  handleSubmit: async (values) => {
-    await handleSearch(values);
+  handleValuesChange: async (values: any) => {
+    try {
+      formApi.setLoading(true);
+      // 智能识别搜索关键词是学号还是姓名
+      const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
+
+      // 构建搜索参数
+      const params: CrisisEventListReq = {
+        studentNo: studentNo || undefined,
+        studentName: name || undefined,
+        classId: values.classId[values.classId.length - 1] || undefined,
+        counselorUserId: values.counselorUserId || undefined,
+        priority: values.priority || undefined,
+      };
+
+      crisisEventListReq.value = params;
+      emit('search', params);
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败，请重试');
+    } finally {
+      formApi.setLoading(false);
+    }
   },
 });
-
-// 处理搜索
-async function handleSearch(values: any) {
-  try {
-    emit('loading', true);
-
-    // 智能识别搜索关键词是学号还是姓名
-    const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
-
-    // 构建搜索参数
-    const params: CrisisEventListReq = {
-      studentNo: studentNo || undefined,
-      studentName: name || undefined,
-      classId: values.classId[values.classId.length - 1] || undefined,
-      counselorUserId: values.counselorUserId || undefined,
-      priority: values.priority || undefined,
-    };
-
-    crisisEventListReq.value = params;
-    emit('search', params);
-  } catch (error) {
-    console.error('搜索失败:', error);
-    message.error('搜索失败，请重试');
-  } finally {
-    emit('loading', false);
-  }
-}
 
 /** 获取心理老师列表 */
 async function loadTeacherUserList() {
@@ -81,7 +75,7 @@ async function loadTeacherUserList() {
     return response.map((item) => ({
       label: item.nickname as string,
       value: item.id,
-    })) as SelectOption[];
+    }));
   }
 
   return [];

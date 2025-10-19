@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import type { UploadProps } from 'ant-design-vue';
-
-import type { CoreAssessmentType, DetailedAssessmentType } from '#/api/consult';
+import type { CoreAssessmentType, DetailedAssessmentType } from '@vben/types';
 
 import { ref, watch } from 'vue';
 
 import { Radio as ARadio } from 'ant-design-vue';
 
-import { riskOptions } from '#/api/consult';
+import { INTERVENTION_TYPE_MAP } from '#/api/constants';
 import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
-import LyUpload from '#/components/LyUpload/index.vue';
+import { FileUpload } from '#/components/upload';
 import { getDictLabel } from '#/utils/dict';
 import { downloadPsychologicalReportTemplate } from '#/utils/export';
 
@@ -23,7 +21,7 @@ const props = withDefaults(
   {
     modelValue: () => ({ report: '', file: undefined }),
     summary: () => ({
-      riskLevel: riskOptions[0]?.key || 0,
+      riskLevel: INTERVENTION_TYPE_MAP[0]?.key || 0,
       issues: ['人际关系'],
       recommendation: 1,
     }),
@@ -37,13 +35,13 @@ const emit = defineEmits<{
 type Method = 'free' | 'template';
 const method = ref<Method>('free');
 const freeText = ref(props.modelValue.report || ''); // 自由输入
-const fileList = ref<UploadProps['fileList']>([]); // 上传文件列表
+const fileList = ref([]); // 上传文件列表
 
 /** 同步数据 */
 function sync() {
   emit('update:modelValue', {
     report: freeText.value,
-    file: (fileList.value?.[0]?.originFileObj as File) || undefined,
+    file: fileList.value[0] || undefined,
   });
 }
 
@@ -86,10 +84,7 @@ defineExpose({
         <div>
           <span class="desc-title">风险等级：</span>
           <span>
-            {{
-              riskOptions.find((opt) => opt.key === props.summary.riskLevel)
-                ?.title || '—'
-            }}
+            {{ getDictLabel('crisis_level', props.summary.riskLevel) || '—' }}
           </span>
         </div>
         <div>
@@ -167,7 +162,11 @@ defineExpose({
             margin-bottom-class="mb-3"
             custom-title-class="text-[16px] font-semibold"
           />
-          <LyUpload v-model:file-list="fileList" @sync="sync" @remove="sync" />
+          <FileUpload
+            v-model:value="fileList"
+            :accept="['pdf', 'doc', 'docx']"
+            :max-size="5"
+          />
         </section>
       </div>
     </section>

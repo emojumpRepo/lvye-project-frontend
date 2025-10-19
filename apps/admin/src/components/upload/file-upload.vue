@@ -8,11 +8,12 @@ import type { AxiosProgressEvent } from '#/api/infra/file';
 
 import { ref, toRefs, watch } from 'vue';
 
-import { CloudUpload } from '@vben/icons';
 import { $t } from '@vben/locales';
 import { isFunction, isObject, isString } from '@vben/utils';
 
-import { Button, message, Upload } from 'ant-design-vue';
+import { message, Modal, Upload } from 'ant-design-vue';
+
+import uploadIcon from '#/static/icons/consulting/upload.svg';
 
 import { checkFileType } from './helper';
 import { UploadResultStatus } from './typing';
@@ -21,17 +22,17 @@ import { useUpload, useUploadType } from './use-upload';
 defineOptions({ name: 'FileUpload', inheritAttrs: false });
 
 const props = withDefaults(defineProps<FileUploadProps>(), {
-  value: () => [],
-  directory: undefined,
-  disabled: false,
-  helpText: '',
-  maxSize: 2,
-  maxNumber: 1,
-  accept: () => [],
-  multiple: false,
-  api: undefined,
-  resultField: '',
-  showDescription: false,
+  value: () => [], // 文件列表
+  directory: undefined, // 上传目录
+  disabled: false, // 是否禁用
+  helpText: '', // 帮助文本
+  maxSize: 2, // 最大大小
+  maxNumber: 1, // 最大数量
+  accept: () => [], // 接受类型
+  multiple: false, // 是否多选
+  api: undefined, // 上传接口
+  resultField: '', // 结果字段
+  showDescription: false, // 是否显示描述
 });
 const emit = defineEmits(['change', 'update:value', 'delete', 'returnText']);
 const { accept, helpText, maxNumber, maxSize } = toRefs(props);
@@ -47,6 +48,9 @@ const fileList = ref<UploadProps['fileList']>([]);
 const isLtMsg = ref<boolean>(true); // 文件大小错误提示
 const isActMsg = ref<boolean>(true); // 文件类型错误提示
 const isFirstRender = ref<boolean>(true); // 是否第一次渲染
+const previewVisible = ref(false);
+const previewImage = ref('');
+const previewTitle = ref('');
 
 watch(
   () => props.value,
@@ -87,6 +91,7 @@ watch(
   },
 );
 
+/** 移除文件 */
 async function handleRemove(file: UploadFile) {
   if (fileList.value) {
     const index = fileList.value.findIndex((item) => item.uid === file.uid);
@@ -99,11 +104,22 @@ async function handleRemove(file: UploadFile) {
   }
 }
 
+/** 上传文件前校验 */
 async function beforeUpload(file: File) {
   const fileContent = await file.text();
   emit('returnText', fileContent);
 
-  const { maxSize, accept } = props;
+  const { maxSize, accept, maxNumber } = props;
+
+  // 检查文件数量（仅在允许多文件上传时检查）
+  const currentCount = fileList.value?.length || 0;
+  const isOverCount = maxNumber > 1 && currentCount >= maxNumber;
+  if (isOverCount) {
+    message.error(`最多只能上传 ${maxNumber} 个文件`);
+    return Upload.LIST_IGNORE;
+  }
+
+  // 检查文件类型
   const isAct = checkFileType(file, accept);
   if (!isAct) {
     message.error($t('ui.upload.acceptUpload', [accept]));
@@ -111,6 +127,8 @@ async function beforeUpload(file: File) {
     // 防止弹出多个错误提示
     setTimeout(() => (isActMsg.value = true), 1000);
   }
+
+  // 检查文件大小
   const isLt = file.size / 1024 / 1024 > maxSize;
   if (isLt) {
     message.error($t('ui.upload.maxSizeMultiple', [maxSize]));
@@ -118,9 +136,11 @@ async function beforeUpload(file: File) {
     // 防止弹出多个错误提示
     setTimeout(() => (isLtMsg.value = true), 1000);
   }
-  return (isAct && !isLt) || Upload.LIST_IGNORE;
+
+  return (isAct && !isLt && !isOverCount) || Upload.LIST_IGNORE;
 }
 
+/** 自定义上传文件 */
 async function customRequest(info: UploadRequestOption<any>) {
   let { api } = props;
   if (!api || !isFunction(api)) {
@@ -147,6 +167,7 @@ async function customRequest(info: UploadRequestOption<any>) {
   }
 }
 
+/** 获取文件列表 */
 function getValue() {
   const list = (fileList.value || [])
     .filter((item) => item?.status === UploadResultStatus.DONE)
@@ -156,17 +177,45 @@ function getValue() {
       }
       return item?.url || item?.response?.url || item?.response;
     });
-  // add by 芋艿：【特殊】单个文件的情况，获取首个元素，保证返回的是 String 类型
   if (props.maxNumber === 1) {
     return list.length > 0 ? list[0] : '';
   }
   return list;
 }
+
+/** 获取文件base64 */
+function getBase64(file: File) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.addEventListener('load', () => resolve(reader.result));
+    reader.addEventListener('error', (error) => reject(error));
+  });
+}
+
+/** 预览文件列表 */
+const handlePreview = async (file: any) => {
+  if (!file.url && !file.preview) {
+    file.preview = (await getBase64(file.originFileObj)) as string;
+  }
+  previewImage.value = file.response?.url || file.preview;
+  previewVisible.value = true;
+  previewTitle.value =
+    file.name ||
+    file.response?.url.slice(
+      Math.max(0, file.response?.url.lastIndexOf('/') + 1),
+    );
+};
+
+function handleCancel() {
+  previewVisible.value = false;
+  previewTitle.value = '';
+}
 </script>
 
 <template>
   <div>
-    <Upload
+    <Upload.Dragger
       v-bind="$attrs"
       v-model:file-list="fileList"
       :accept="getStringAccept"
@@ -175,23 +224,37 @@ function getValue() {
       :disabled="disabled"
       :max-count="maxNumber"
       :multiple="multiple"
-      list-type="text"
+      list-type="picture"
       :progress="{ showInfo: true }"
       @remove="handleRemove"
+      @preview="handlePreview"
     >
-      <div v-if="fileList && fileList.length < maxNumber">
-        <Button>
-          <CloudUpload />
-          {{ $t('ui.upload.upload') }}
-        </Button>
+      <div class="flex flex-col items-center justify-center">
+        <img :src="uploadIcon" alt="上传" class="mb-1 h-[54px] w-[54px]" />
+        <div class="mb-2 text-sm font-medium">
+          <slot name="upload-text">
+            <div>
+              <span class="font-bold">将文件拖拽到此处或，</span>
+              <span class="text-[#04DC70]">点击上传</span>
+            </div>
+          </slot>
+        </div>
+        <div class="mb-2 text-xs text-[#969997]">
+          <slot name="upload-text-desc">
+            支持{{
+              accept.join('，').replaceAll('.', '').toLocaleUpperCase()
+            }}格式, 最大{{ maxSize }}MB
+          </slot>
+        </div>
       </div>
-      <div v-if="showDescription" class="mt-2 flex flex-wrap items-center">
-        请上传不超过
-        <div class="text-primary mx-1 font-bold">{{ maxSize }}MB</div>
-        的
-        <div class="text-primary mx-1 font-bold">{{ accept.join('/') }}</div>
-        格式文件
-      </div>
-    </Upload>
+    </Upload.Dragger>
+    <Modal
+      :open="previewVisible"
+      :title="previewTitle"
+      :footer="null"
+      @cancel="handleCancel"
+    >
+      <img style="width: 100%" :src="previewImage" />
+    </Modal>
   </div>
 </template>

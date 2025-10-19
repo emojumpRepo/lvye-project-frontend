@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -34,7 +34,6 @@ import { getDictLabel } from '#/utils/dict';
 import { exportStudentsToExcel } from '#/utils/export';
 import {
   formatDeptListToTree,
-  getDeptListCache,
   getDeptTreeList,
 } from '#/utils/transformDeptToTree';
 
@@ -49,7 +48,6 @@ defineOptions({ name: 'StudentArchive' });
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
-const deptListLoaded = ref(false);
 const studentSearchRef = ref();
 
 // ============== 抽屉 ==============
@@ -111,7 +109,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxConfig: { reserve: true },
     pagerConfig: {
       align: 'right',
-      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
       pageSizes: [20, 30, 50, 80, 100],
     },
     columns: useStudentProfileGridSchema(),
@@ -162,6 +159,7 @@ async function handleSearch() {
 // 处理视图模式切换
 function handleViewModeChange({ target }: { target: any }) {
   selectedRowKeys.value = [];
+  studentSearchRef.value?.reset();
   gridApi.grid?.clearCheckboxRow();
   gridApi.grid.clearData();
   gridApi.grid.clearAll();
@@ -319,23 +317,12 @@ async function handleExport() {
 function refresh() {
   gridApi.query();
 }
-
-// 组件挂载时加载数据
-onMounted(async () => {
-  await getDeptListCache();
-  deptListLoaded.value = true;
-});
 </script>
 
 <template>
   <div class="flex h-full flex-col p-6">
     <!-- 搜索组件 -->
-    <StudentSearch
-      ref="studentSearchRef"
-      :dept-list-loaded="deptListLoaded"
-      @search="handleSearch"
-      @loading="handleLoading"
-    />
+    <StudentSearch ref="studentSearchRef" @search="handleSearch" />
 
     <!-- 数据表格 -->
     <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -479,8 +466,8 @@ onMounted(async () => {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<!-- <style lang="scss" scoped>
 :deep(.vxe-pager--sizes) {
   margin-right: 0 !important;
 }
-</style>
+</style> -->

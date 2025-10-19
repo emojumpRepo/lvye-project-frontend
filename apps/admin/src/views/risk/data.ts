@@ -15,7 +15,7 @@ export function useSearchFormSchema({
 }: {
   counselorOptions: { label: string; value: number }[];
   deptOptions: DeptGradeClassOption[];
-  priorityOptions: { label: string; value: number }[];
+  priorityOptions: { label: string; value: string }[];
 }): VbenFormSchema[] {
   return [
     {
@@ -55,7 +55,7 @@ export function useSearchFormSchema({
       fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
-        placeholder: '搜索学生姓名或学号',
+        placeholder: '搜索学生姓名',
       },
       renderComponentContent: () => ({
         prefix: () =>
@@ -89,7 +89,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'studentName',
       title: '学生信息',
       slots: { default: 'studentName' },
-      width: '15%',
+      width: '13%',
     },
     {
       field: 'className',
@@ -125,7 +125,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'reportedAt',
       title: '上报时间',
       slots: { default: 'reportedAt' },
-      width: '12%',
+      width: '13%',
     },
     {
       field: 'actions',

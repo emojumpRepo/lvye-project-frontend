@@ -1,57 +1,40 @@
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { h, ref } from 'vue';
+import { h } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { getDictOptions } from '#/utils/dict';
-
 /** 搜索表单 */
-export function useSearchFormSchema(): VbenFormSchema[] {
-  /** 年级列表 */
-  const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
-  const stored = localStorage.getItem('deptList');
-  if (stored) {
-    deptList.value = JSON.parse(stored);
-  }
-
-  /** 班级列表 */
-  const classList = deptList.value.reduce(
-    (acc, item) => {
-      if (item.children) {
-        acc.push(...item.children);
-      }
-      return acc;
-    },
-    [] as { label: string; value: number }[],
-  );
-
-  /** 心理状态 */
-  const studentProfileStatusList = getDictOptions(
-    'student_psychological_status',
-  );
-
-  /** 毕业状态 */
-  const graduationStatusList = getDictOptions('student_graduation_status');
-
+export function useSearchFormSchema({
+  deptOptions,
+  studentProfileStatusList,
+  graduationStatusList,
+}: {
+  deptOptions: DeptGradeClassOption[];
+  graduationStatusList: { label: string; value: number }[];
+  studentProfileStatusList: { label: string; value: number }[];
+}): VbenFormSchema[] {
   return [
     {
-      fieldName: 'gradeDeptId',
-      component: 'Select',
+      fieldName: 'classId',
+      component: 'Cascader',
       componentProps: {
-        options: [{ label: '全部年级', value: '' }, ...deptList.value],
+        options: [
+          { label: '全部班级', value: '', isLeaf: true },
+          ...deptOptions,
+        ],
+        defaultValue: [''],
+        expandTrigger: 'hover',
+        changeOnSelect: true,
+        allowClear: false,
+        showSearch: false,
+        style: { cursor: 'pointer' },
       },
-      defaultValue: '',
-    },
-    {
-      fieldName: 'classDeptId',
-      component: 'Select',
-      componentProps: {
-        options: [{ label: '全部班级', value: '' }, ...classList],
-      },
-      defaultValue: '',
+      defaultValue: [''],
     },
     {
       fieldName: 'graduationStatus',

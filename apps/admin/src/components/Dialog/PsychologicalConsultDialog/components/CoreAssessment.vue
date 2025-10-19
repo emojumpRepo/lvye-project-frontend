@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import type { CoreAssessmentType } from '#/api/consult';
+import type { CoreAssessmentType } from '@vben/types';
 
 import { computed, ref } from 'vue';
 
 import { Input as AInput } from 'ant-design-vue';
 
-import { riskOptions } from '#/api/consult';
+import { FOLLOW_UP_SUGGESTION, INTERVENTION_TYPE_MAP } from '#/api/constants';
 import LyLabel from '#/components/LyLabel/index.vue';
-import icon_done from '#/static/icons/consulting/icon_done.svg';
-import icon_guancha from '#/static/icons/consulting/icon_guancha.svg';
-import icon_test from '#/static/icons/consulting/icon_test.svg';
-import icon_zhiliao from '#/static/icons/consulting/icon_zhiliao.svg';
-import icon_zixun from '#/static/icons/consulting/icon_zixun.svg';
+import { getDictLabel } from '#/utils/dict';
 
 const props = withDefaults(
   defineProps<{
@@ -53,39 +49,6 @@ const selectedRecs = computed({
 // --- 组件内部 UI 状态 ---
 const customIssueInput = ref('');
 const showIssueInput = ref(false);
-
-const recOptions = [
-  {
-    key: 1,
-    title: '需要持续咨询',
-    desc: '建议安排后续咨询会面',
-    icon: icon_zixun,
-  },
-  {
-    key: 2,
-    title: '需要继续量表测评',
-    desc: '建议安排后续咨询会面',
-    icon: icon_test,
-  },
-  {
-    key: 3,
-    title: '持续观察',
-    desc: '建议安排后续咨询会面',
-    icon: icon_guancha,
-  },
-  {
-    key: 4,
-    title: '问题基本解决',
-    desc: '建议安排后续咨询会面',
-    icon: icon_done,
-  },
-  {
-    key: 5,
-    title: '转介专业治疗',
-    desc: '建议安排后续咨询会面',
-    icon: icon_zhiliao,
-  },
-];
 
 /** 选择风险等级 */
 function selectRisk(key: number) {
@@ -148,10 +111,10 @@ defineExpose({
         custom-title-class="text-[16px] font-semibold"
       />
       <div
-        class="grid grid-cols-4 gap-4 rounded-xl bg-[#F7F8FA] px-8 py-6 max-lg:grid-cols-2"
+        class="grid grid-cols-5 gap-3 rounded-xl bg-[#F7F8FA] p-6 max-lg:grid-cols-2"
       >
         <button
-          v-for="opt in riskOptions"
+          v-for="opt in INTERVENTION_TYPE_MAP"
           :key="opt.key"
           type="button"
           class="group flex w-full flex-col items-center rounded-xl border border-solid p-4 text-left transition-colors"
@@ -164,12 +127,12 @@ defineExpose({
         >
           <span
             class="mb-3 inline-block size-3 rounded-full"
-            :style="{ backgroundColor: opt.dot }"
+            :style="{ backgroundColor: opt.color }"
           ></span>
           <span class="text-[14px] font-medium text-black">
-            {{ opt.title }}
+            {{ getDictLabel('crisis_level', opt.key) }}
           </span>
-          <div class="text-[12px] text-[#979899]">{{ opt.desc }}</div>
+          <div class="text-[12px] text-[#979899]">{{ opt.description }}</div>
         </button>
       </div>
     </section>
@@ -243,7 +206,7 @@ defineExpose({
 
       <div class="grid grid-cols-2 gap-4">
         <button
-          v-for="rec in recOptions"
+          v-for="rec in FOLLOW_UP_SUGGESTION"
           :key="rec.key"
           type="button"
           class="flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-colors"

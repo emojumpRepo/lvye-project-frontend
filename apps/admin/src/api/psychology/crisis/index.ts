@@ -1,25 +1,26 @@
-import type { PageParam, PageResult } from '@vben/request';
+import type { PageResult } from '@vben/request';
 import type {
   CrisisBoardData,
   CrisisEvent,
   CrisisEventRecord,
+  StudentPageItem,
 } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
 /** 五级干预看板统计数据分页查询参数 */
-export interface CrisisBoardDataPageReq extends PageParam {
-  pageNo: number;
-  pageSize: number;
+export interface CrisisBoardDataPageReq {
+  pageNo?: number;
+  pageSize?: number;
   riskLevel?: number;
-  onlyMine?: boolean;
-  sortField?: string;
-  sortOrder?: string;
+  classId?: number;
+  counselorType?: number; // 0: 全部咨询师 1: 我负责的学生
 }
 
 /** 危机事件列表查询参数 */
-export interface CrisisEventListReq extends PageParam {
+export interface CrisisEventListReq {
   studentProfileId?: number;
+  studentNo?: string;
   processStatus?: number;
   riskLevel?: number;
   priority?: number;
@@ -41,6 +42,14 @@ export interface CrisisEventProcessHistoryReq {
 export function getCrisisBoardData(params: CrisisBoardDataPageReq) {
   return requestClient.get<CrisisBoardData[]>(
     '/psychology/intervention/dashboard/summary',
+    { params },
+  );
+}
+
+/** 获取风险等级看板统计数据 */
+export function getRiskLevelBoardData(params: CrisisBoardDataPageReq) {
+  return requestClient.get<StudentPageItem>(
+    '/psychology/intervention/dashboard/risk-level-summary',
     { params },
   );
 }

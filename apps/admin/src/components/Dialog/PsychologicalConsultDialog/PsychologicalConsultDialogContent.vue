@@ -1,7 +1,10 @@
 <script lang="ts" setup>
-import type { AssessmentComfirmInfo } from '@vben/types';
+import type {
+  AssessmentComfirmInfo,
+  CoreAssessmentType,
+  DetailedAssessmentType,
+} from '@vben/types';
 
-import type { CoreAssessmentType, DetailedAssessmentType } from '#/api/consult';
 import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
 import { computed, ref } from 'vue';

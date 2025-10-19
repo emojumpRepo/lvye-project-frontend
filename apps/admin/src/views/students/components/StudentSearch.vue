@@ -1,33 +1,38 @@
 <script setup lang="ts">
+import type { DeptGradeClassOption } from '@vben/types';
+
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { parseSearchKeyword } from '#/utils/calculateTool';
+import { getDictOptions } from '#/utils/dict';
+import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
-const props = defineProps<{
-  deptListLoaded: boolean;
-}>();
-
 // 定义 emit 事件
 const emit = defineEmits<{
-  loading: [loading: boolean];
   search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
 }>();
 
 // 搜索参数
 const searchParams = ref<PsychologyStudentProfileApi.StudentProfilePageReq>();
+const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 const [Form, formApi] = useVbenForm({
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema({
+    deptOptions: [],
+    studentProfileStatusList: [],
+    graduationStatusList: [],
+  }),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
+  submitOnChange: true,
   commonConfig: {
     componentProps: {
       class: 'w-full mr-2',
@@ -35,67 +40,62 @@ const [Form, formApi] = useVbenForm({
     hideLabel: true,
   },
   submitButtonOptions: {
-    content: '查询',
-    class: 'bg-[#04DC70]',
+    show: false,
   },
-  handleSubmit: async (values) => {
-    await handleSearch(values);
+  handleValuesChange: async (values: any) => {
+    try {
+      formApi.setLoading(true);
+      // 智能识别搜索关键词是学号还是姓名
+      const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
+
+      // 构建搜索参数
+      const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
+        studentNo,
+        name,
+        gradeDeptId: values.gradeDeptId || undefined,
+        classDeptId: values.classDeptId || undefined,
+        graduationStatus: values.graduationStatus || undefined,
+        psychologicalStatus: values.psychologicalStatus || undefined,
+      };
+
+      searchParams.value = params;
+      emit('search', params);
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败，请重试');
+    } finally {
+      formApi.setLoading(false);
+    }
   },
 });
 
-// 处理搜索
-async function handleSearch(values: any) {
-  try {
-    emit('loading', true);
-
-    // 智能识别搜索关键词是学号还是姓名
-    const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
-
-    // 构建搜索参数
-    const params: PsychologyStudentProfileApi.StudentProfilePageReq = {
-      studentNo,
-      name,
-      gradeDeptId: values.gradeDeptId || undefined,
-      classDeptId: values.classDeptId || undefined,
-      graduationStatus: values.graduationStatus || undefined,
-      psychologicalStatus: values.psychologicalStatus || undefined,
-    };
-
-    searchParams.value = params;
-    emit('search', params);
-  } catch (error) {
-    console.error('搜索失败:', error);
-    message.error('搜索失败，请重试');
-  } finally {
-    emit('loading', false);
-  }
+function reset() {
+  formApi.form.resetForm();
 }
 
-// 重置搜索
-function handleReset() {
-  formApi.resetForm();
-  searchParams.value = {
-    pageNo: 1,
-    pageSize: 10,
-  };
-  emit('search', searchParams.value);
-}
-
-watch(
-  () => props.deptListLoaded,
-  () => {
-    if (props.deptListLoaded) {
-      formApi.updateSchema(useSearchFormSchema());
-    }
-  },
-  { immediate: true },
-);
+onMounted(async () => {
+  deptOptions.value = await getDeptGradeClassDictOptions();
+  const studentProfileStatusList = getDictOptions(
+    'student_psychological_status',
+    'number',
+  );
+  const graduationStatusList = getDictOptions(
+    'student_graduation_status',
+    'number',
+  );
+  formApi.updateSchema(
+    useSearchFormSchema({
+      deptOptions: deptOptions.value,
+      studentProfileStatusList,
+      graduationStatusList,
+    }),
+  );
+});
 
 // 暴露方法给父组件
 defineExpose({
-  handleSearch,
-  handleReset,
   searchParams,
+  reset,
 });
 </script>
 

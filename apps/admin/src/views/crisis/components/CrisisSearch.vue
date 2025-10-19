@@ -1,37 +1,56 @@
 <script setup lang="ts">
 import type { DeptGradeClassOption } from '@vben/types';
 
-import type { CrisisEventListReq } from '#/api/psychology/crisis';
+import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import { message } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
-import { parseSearchKeyword } from '#/utils/calculateTool';
 import { getDeptGradeClassDictOptions } from '#/utils/transformDeptToTree';
 
 import { useSearchFormSchema } from '../data';
 
+const props = defineProps<{
+  loading: boolean;
+}>();
+
 const emit = defineEmits<{
-  loading: [loading: boolean];
-  search: [params: CrisisEventListReq];
+  search: [params: CrisisBoardDataPageReq];
 }>();
 
 const deptOptions = ref<DeptGradeClassOption[]>([]);
 
 // 搜索参数
-const crisisEventListReq = ref<CrisisEventListReq>({
-  pageNo: 1,
-  pageSize: 10,
-});
+const crisisEventListReq = ref<CrisisBoardDataPageReq>();
+
+// 用于控制表单是否禁用
+watch(
+  () => props.loading,
+  (newVal: boolean) => {
+    if (newVal) {
+      formApi.setState({
+        commonConfig: {
+          disabled: true,
+        },
+      });
+    } else {
+      formApi.setState({
+        commonConfig: {
+          disabled: false,
+        },
+      });
+    }
+  },
+);
 
 const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema({ deptOptions: deptOptions.value }),
-  wrapperClass: 'grid-cols-12 md:grid-cols-9',
+  wrapperClass: 'grid-cols-6',
   submitButtonOptions: {
-    content: '查询',
+    show: false,
   },
   commonConfig: {
     componentProps: {
@@ -39,41 +58,29 @@ const [Form, formApi] = useVbenForm({
     },
     hideLabel: true,
   },
-  handleSubmit: async (values) => {
-    await handleSearch(values);
+  handleValuesChange: async (values: any) => {
+    try {
+      const params: CrisisBoardDataPageReq = {
+        classId: values.classId[values.classId.length - 1] || undefined,
+        counselorType: values.counselorType || undefined,
+      };
+
+      crisisEventListReq.value = params;
+      emit('search', params);
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败，请重试');
+    }
   },
 });
-
-// 处理搜索
-async function handleSearch(values: any) {
-  try {
-    emit('loading', true);
-
-    // 智能识别搜索关键词是学号还是姓名
-    const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
-
-    // 构建搜索参数
-    const params: CrisisEventListReq = {
-      ...crisisEventListReq.value,
-      studentNo: studentNo || undefined,
-      studentName: name || undefined,
-      classId: values.classId || undefined,
-      counselorUserId: values.counselorUserId || undefined,
-    };
-
-    crisisEventListReq.value = params;
-    emit('search', params);
-  } catch (error) {
-    console.error('搜索失败:', error);
-    message.error('搜索失败，请重试');
-  } finally {
-    emit('loading', false);
-  }
-}
 
 onMounted(async () => {
   deptOptions.value = await getDeptGradeClassDictOptions();
   formApi.updateSchema(useSearchFormSchema({ deptOptions: deptOptions.value }));
+});
+
+defineExpose({
+  crisisEventListReq,
 });
 </script>
 

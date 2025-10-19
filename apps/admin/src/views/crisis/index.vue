@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { CrisisBoardData } from '@vben/types';
 
+import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
+
 import { onMounted, ref } from 'vue';
 
 import { Spin as ASpin } from 'ant-design-vue';
@@ -14,35 +16,73 @@ defineOptions({ name: 'CrisisIntervention' });
 
 const loading = ref(true);
 const interventionList = ref<CrisisBoardData[]>([]);
+const crisisSearchRef = ref<InstanceType<typeof CrisisSearch>>();
 
-onMounted(async () => {
+/**
+ * 加载五级看板数据
+ * @param params 搜索参数
+ */
+async function loadCrisisBoardData(params?: CrisisBoardDataPageReq) {
+  loading.value = true;
   try {
     const response = await getCrisisBoardData({
       pageNo: 1,
-      pageSize: 10,
+      pageSize: 5,
+      ...params,
     });
-    console.log('五级看板数据', response);
     if (response.length > 0) {
       interventionList.value = response;
     }
   } catch (error) {
-    console.error('五级看板数据', error);
+    console.error('获取五级看板数据失败:', error);
   } finally {
     loading.value = false;
   }
+}
+
+/**
+ * 更新指定干预卡片的学生列表数据
+ * @param dictValue 风险等级字典值
+ * @param studentPage 学生分页数据
+ */
+function handleUpdateStudentPage(
+  dictValue: number,
+  studentPage: CrisisBoardData['studentPage'],
+) {
+  const item = interventionList.value.find(
+    (item) => item.dictValue === dictValue,
+  );
+  if (item) {
+    item.studentPage = studentPage;
+  }
+}
+
+onMounted(async () => {
+  await loadCrisisBoardData();
 });
 </script>
 
 <template>
   <div class="flex flex-col gap-4 p-6">
     <!-- 搜索表单 -->
-    <CrisisSearch :loading="loading" />
+    <CrisisSearch
+      ref="crisisSearchRef"
+      @search="loadCrisisBoardData"
+      :loading="loading"
+    />
 
     <!-- 列表 -->
     <ASpin :spinning="loading" class="flex-center">
       <div class="grid grid-cols-5 gap-5" :class="{ 'h-[300px]': loading }">
         <template v-for="item in interventionList" :key="item.type">
-          <InterventionCard :intervention-item="item" />
+          <InterventionCard
+            :intervention-item="item"
+            :search-params="crisisSearchRef?.crisisEventListReq"
+            @update-student-page="
+              (studentPage) =>
+                handleUpdateStudentPage(item.dictValue, studentPage)
+            "
+          />
         </template>
       </div>
     </ASpin>

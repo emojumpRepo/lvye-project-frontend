@@ -15,3 +15,14 @@ export interface AssessmentComfirmInfo {
   studentInfo: StudentInfo;
   consultInfo: ConsultInfo;
 }
+
+export interface CoreAssessmentType {
+  issues: string[];
+  recommendation: number;
+  riskLevel: number;
+}
+
+export interface DetailedAssessmentType {
+  report?: string;
+  file?: File;
+}

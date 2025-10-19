@@ -66,7 +66,6 @@ const studentAssessmentHistory = ref<
 
 const psychologicalStatusTag = ref<PsychologicalStatusTag>();
 const coreProblemTags = ref<string[]>([]); // 核心问题标签
-const studentSpecialMark = ref<DictDataType[]>([]);
 const studentSexMap = ref<DictDataType[]>([]);
 const loading = ref(false);
 const timelineTabs = ref<{ key: number; title: string }[]>([]);
@@ -122,22 +121,11 @@ const footerButtons = ref<FooterButton[]>([
 
 /** 获取核心问题标签 */
 const getSpecialMarkLabels = (specialMarks: string): string[] => {
-  if (
-    !specialMarks ||
-    !studentSpecialMark.value ||
-    studentSpecialMark.value.length === 0
-  ) {
+  if (!specialMarks) {
     return [];
   }
 
-  const markValues = specialMarks.split(',').map((item) => item.trim());
-
-  const labels = markValues.map((value) => {
-    const found = studentSpecialMark.value.find((item) => item.value === value);
-    return found?.label;
-  });
-
-  return labels.filter(Boolean) as string[];
+  return specialMarks.split(',').map((item) => item.trim());
 };
 
 /** 新增记录弹窗 */
@@ -151,6 +139,7 @@ const [ExportStudnetInfoModal, exportStudnetInfoModalApi] = useVbenModal({
   connectedComponent: ExportStudnetInfoDialog,
 });
 
+/** 学生详情抽屉 */
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[800px]',
   contentClass: 'bg-gray-50 p-0',
@@ -250,6 +239,8 @@ async function loadStudentProfileTimeline(id: number) {
       title: '全部',
       key: 0,
     });
+
+    console.log('timelineTabs', timelineTabs.value);
     activeTimelineKey.value = timelineTabs.value[0]?.key || 0;
   } catch (error) {
     console.error('加载学生时间线数据失败', error);
@@ -316,7 +307,6 @@ function handleStartAssessment() {
 }
 
 onMounted(async () => {
-  studentSpecialMark.value = await getDictOptions('student_special_mark');
   studentSexMap.value = await getDictOptions('system_user_sex');
 });
 </script>
@@ -389,7 +379,7 @@ onMounted(async () => {
               <template v-if="coreProblemTags.length > 0">
                 <div v-for="tag in coreProblemTags" :key="tag">
                   <span
-                    class="inline-block rounded-md border border-solid border-gray-200 p-2 text-xs text-gray-700"
+                    class="inline-block rounded-md border border-solid border-gray-200 px-2 py-1 text-xs text-gray-700"
                   >
                     {{ tag }}
                   </span>
