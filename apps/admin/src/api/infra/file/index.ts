@@ -76,3 +76,8 @@ export function uploadFile(
   }
   return requestClient.upload('/infra/file/upload', data, { onUploadProgress });
 }
+
+/** 获取单文件信息 */
+export function getFileById(id: number) {
+  return requestClient.get<InfraFileApi.File>(`/infra/file/get?id=${id}`);
+}

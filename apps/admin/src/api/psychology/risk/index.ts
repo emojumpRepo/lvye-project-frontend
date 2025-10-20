@@ -9,7 +9,7 @@ export interface ReportCrisisEventReqVO {
   location: string;
   riskLevel: number;
   priority: number;
-  attachmentUrls?: string[];
+  attachments?: string[];
   sourceType: number;
 }
 
@@ -21,6 +21,8 @@ export interface InterventionAssessmentReqVO {
   problemTypes: string[];
   riskLevel: number;
   summary?: string;
+  fileId?: number;
+  attachments?: number[];
 }
 
 /** 上报危机事件 */

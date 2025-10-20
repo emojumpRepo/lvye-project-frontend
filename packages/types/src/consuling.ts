@@ -24,5 +24,5 @@ export interface CoreAssessmentType {
 
 export interface DetailedAssessmentType {
   report?: string;
-  file?: File;
+  fileId?: number;
 }

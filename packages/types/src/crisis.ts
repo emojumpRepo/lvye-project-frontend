@@ -54,12 +54,13 @@ export interface CrisisEventRecord {
   id: number;
   eventId: number;
   taskResultId?: number;
+  assessmentId?: number;
   operatorName?: string;
   operateTime?: number;
   action: string;
   content?: string;
   reason?: string;
-  attachments?: string[];
+  attachments?: number[];
 }
 
 /** 评估记录 */
@@ -74,6 +75,7 @@ export interface AssessmentRecord {
   followUpSuggestion: number;
   followUpSuggestionName: string;
   content: string;
+  attachments: number[];
   createTime: number;
 }
 
@@ -126,4 +128,5 @@ export interface CrisisEvent {
     taskNo: string;
   };
   latestAssessments: AssessmentRecord[];
+  allAssessmentRecords: AssessmentRecord[];
 }

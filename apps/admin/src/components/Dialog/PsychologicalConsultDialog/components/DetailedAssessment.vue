@@ -35,17 +35,18 @@ const emit = defineEmits<{
 type Method = 'free' | 'template';
 const method = ref<Method>('free');
 const freeText = ref(props.modelValue.report || ''); // 自由输入
-const fileList = ref([]); // 上传文件列表
+const fileList = ref<{ id: number; url: string }[]>([]); // 上传文件列表
 
 /** 同步数据 */
 function sync() {
   emit('update:modelValue', {
     report: freeText.value,
-    file: fileList.value[0] || undefined,
+    fileId: fileList.value.length > 0 ? fileList.value[0]?.id : undefined,
   });
 }
 
 watch(freeText, sync);
+watch(fileList, sync, { deep: true });
 
 /** 校验数据 */
 function validate() {

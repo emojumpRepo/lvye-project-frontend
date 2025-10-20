@@ -3,7 +3,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
-defineProps<{
+const props = defineProps<{
   id?: number;
   name: string;
   status?: number;
@@ -22,7 +22,7 @@ const emits = defineEmits<{
     <div class="flex items-center gap-1 whitespace-nowrap text-[#4C4C4D]">
       {{ name }}
       <IconifyIcon
-        v-if="id && status !== 6"
+        v-if="id && status !== 5"
         icon="mynaui:edit"
         class="size-4 self-end text-[#4C4C4D] hover:text-[#1966FF]"
         @click="

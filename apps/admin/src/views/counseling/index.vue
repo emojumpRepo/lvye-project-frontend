@@ -154,11 +154,7 @@ function handleViewDetail(
                 {{ option.label }}
               </RadioButton>
             </RadioGroup>
-            <LyButton
-              size="middle"
-              type="success"
-              @click="handleCreateConsult"
-            >
+            <LyButton size="middle" type="success" @click="handleCreateConsult">
               新建预约
             </LyButton>
           </div>

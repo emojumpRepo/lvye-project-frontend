@@ -3,10 +3,13 @@ import type { CrisisEventRecord } from '@vben/types';
 
 import { computed } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
+import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import CrisisAttachmentsDialog from '#/components/Dialog/CrisisAttachmentsDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
@@ -18,8 +21,15 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'edit', record: CrisisEventRecord): void;
   (e: 'viewAssessmentResult', taskResultId: number): void;
+  (e: 'viewRecordAssessmentReport', recordId: number): void;
 }>();
 
+const [CrisisAttachmentsModal, crisisAttachmentsModalApi] = useVbenModal({
+  // 连接抽离的组件
+  connectedComponent: CrisisAttachmentsDialog,
+});
+
+/** 记录内容 */
 const recordContent = computed(() => {
   if (
     ['CHOOSE_PROCESS', 'REASSIGN_HANDLER'].includes(
@@ -38,6 +48,33 @@ const recordContent = computed(() => {
   }
   return props.eventProcessingRecord.content;
 });
+
+/** 查看附件 */
+function handleViewAttachments() {
+  crisisAttachmentsModalApi
+    .setData({
+      attachments: props.eventProcessingRecord.attachments,
+    })
+    .open();
+}
+
+/** 查看报告 */
+function viewRecord() {
+  const { action, taskResultId, assessmentId } = props.eventProcessingRecord;
+  if (action === 'CREATE_ASSESSMENT' && taskResultId) {
+    if (!taskResultId) {
+      return message.error('暂无报告');
+    }
+    emits('viewAssessmentResult', taskResultId);
+  } else if (action === 'CLOSE' || action === 'STAGE_ASSESSMENT') {
+    if (!assessmentId) {
+      return message.error('暂无报告');
+    }
+    emits('viewRecordAssessmentReport', assessmentId || 0);
+  } else {
+    return message.error('暂无报告');
+  }
+}
 </script>
 
 <template>
@@ -56,35 +93,48 @@ const recordContent = computed(() => {
             )
           }}
         </span>
+        <IconifyIcon
+          v-if="
+            [
+              'CHOOSE_PROCESS',
+              'REASSIGN_HANDLER',
+              'REPORT',
+              'UPDATE_DESCRIPTION',
+            ].includes(eventProcessingRecord!.action!) &&
+            crisisEventStatus !== 6
+          "
+          icon="mynaui:edit"
+          class="size-4 cursor-pointer text-[#666666] hover:text-[#1966FF]"
+          @click="emits('edit', eventProcessingRecord)"
+        />
       </div>
       <!-- 查看报告 -->
       <LyButton
         v-if="
-          eventProcessingRecord.action === 'CREATE_ASSESSMENT' &&
-          eventProcessingRecord.taskResultId
+          (eventProcessingRecord.action === 'CREATE_ASSESSMENT' &&
+            eventProcessingRecord.taskResultId) ||
+          eventProcessingRecord.action === 'CLOSE' ||
+          eventProcessingRecord.action === 'STAGE_ASSESSMENT'
         "
         type="success"
         ghost
         size="small"
-        @click="
-          emits('viewAssessmentResult', eventProcessingRecord.taskResultId)
-        "
+        @click="viewRecord"
       >
         查看报告
       </LyButton>
-      <IconifyIcon
+      <!-- 上报附件 -->
+      <span
         v-if="
-          [
-            'CHOOSE_PROCESS',
-            'REASSIGN_HANDLER',
-            'REPORT',
-            'UPDATE_DESCRIPTION',
-          ].includes(eventProcessingRecord!.action!) && crisisEventStatus !== 6
+          eventProcessingRecord.attachments &&
+          eventProcessingRecord.attachments.length > 0 &&
+          eventProcessingRecord.action === 'REPORT'
         "
-        icon="mynaui:edit"
-        class="size-5 cursor-pointer text-[#666666] hover:text-[#1966FF]"
-        @click="emits('edit', eventProcessingRecord)"
-      />
+        class="cursor-pointer text-[#1966FF]"
+        @click="handleViewAttachments"
+      >
+        附件
+      </span>
     </div>
 
     <div class="line-clamp-2 text-[#17191A]">
@@ -92,6 +142,8 @@ const recordContent = computed(() => {
         {{ recordContent }}
       </span>
     </div>
-    <div class="text-[#04DC70]">{{ eventProcessingRecord.operatorName }}</div>
+    <span class="text-[#04DC70]">{{ eventProcessingRecord.operatorName }}</span>
+
+    <CrisisAttachmentsModal />
   </div>
 </template>

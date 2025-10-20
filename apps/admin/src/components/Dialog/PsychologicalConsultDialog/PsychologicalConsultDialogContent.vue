@@ -55,7 +55,7 @@ const coreAssessmentData = ref<CoreAssessmentType>({
 // 详细评估数据
 const detailedAssessmentData = ref<DetailedAssessmentType>({
   report: '',
-  file: undefined,
+  fileId: undefined,
 });
 // 问题类型
 const availableIssues = ref<string[]>([
@@ -118,7 +118,12 @@ async function handleNext() {
       problemTypes: coreAssessmentData.value.issues,
       followUpSuggestion: coreAssessmentData.value.recommendation,
       content: detailedAssessmentData.value.report || '',
+      fileId: detailedAssessmentData.value.fileId,
+      attachments: detailedAssessmentData.value.fileId
+        ? [detailedAssessmentData.value.fileId]
+        : undefined,
     };
+
     emit('publish', params);
   } else {
     emit('next');

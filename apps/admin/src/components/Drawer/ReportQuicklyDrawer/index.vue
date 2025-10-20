@@ -163,20 +163,36 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
           );
           if (isDuplicate) {
             confirm({
-              beforeClose: async ({ isConfirm }) => {
-                if (isConfirm) {
-                  await handleReport();
-                }
-                return true;
-              },
               content: '该学生24小时内已被您上报过，是否继续？',
               icon: 'warning',
-            });
+            })
+              .then(() => {
+                confirm({
+                  beforeClose: async ({ isConfirm }) => {
+                    if (isConfirm) {
+                      await handleReport();
+                      return true;
+                    }
+                    return true;
+                  },
+                  content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
+                  cancelText: '返回修改',
+                  confirmText: '确认上报',
+                  title: '信息确认',
+                  icon: 'success',
+                }).catch(() => {
+                  return true;
+                });
+              })
+              .catch(() => {
+                return true;
+              });
           } else {
             confirm({
               beforeClose: async ({ isConfirm }) => {
                 if (isConfirm) {
                   await handleReport();
+                  return true;
                 }
                 return true;
               },
@@ -185,6 +201,8 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
               confirmText: '确认上报',
               title: '信息确认',
               icon: 'success',
+            }).catch(() => {
+              return true;
             });
           }
         } catch (error) {
@@ -203,7 +221,7 @@ async function handleReport() {
   try {
     const eventId = await reportCrisisEvent({
       ...eventForm.value,
-      attachmentUrls: fileList.value || [],
+      attachments: fileList.value.map((file: any) => file.id) || [],
     });
     if (!eventId) return message.error('上报危机事件失败');
     message.success('上报成功');
@@ -413,7 +431,7 @@ onMounted(() => {
             :max-number="3"
           >
             <template #upload-text-desc>
-              支持图片、文件、压缩包类型文件，最大1MB，最多3个文件
+              支持图片、文档、压缩包类型文件，最大5MB，最多3个文件
             </template>
           </FileUpload>
         </div>

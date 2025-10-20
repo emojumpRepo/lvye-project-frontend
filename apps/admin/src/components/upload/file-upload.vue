@@ -59,7 +59,7 @@ watch(
       isInnerOperate.value = false;
       return;
     }
-    let value: string[] = [];
+    let value: { id: number; url: string }[] = [];
     if (v) {
       if (Array.isArray(v)) {
         value = v;
@@ -68,21 +68,36 @@ watch(
       }
       fileList.value = value.map((item, i) => {
         if (item && isString(item)) {
+          const fileUrl = item as unknown as string;
           return {
             uid: `${-i}`,
-            name: item.slice(Math.max(0, item.lastIndexOf('/') + 1)),
+            name: fileUrl.slice(Math.max(0, fileUrl.lastIndexOf('/') + 1)),
             status: UploadResultStatus.DONE,
-            url: item,
+            url: fileUrl,
+            response: { url: fileUrl },
           };
         } else if (item && isObject(item)) {
-          return item;
+          const obj = item as any;
+          const fileUrl: string = obj.url || '';
+          return {
+            uid: `${-i}`,
+            name:
+              obj.name ||
+              (fileUrl
+                ? fileUrl.slice(Math.max(0, fileUrl.lastIndexOf('/') + 1))
+                : ''),
+            status: UploadResultStatus.DONE,
+            url: fileUrl,
+            response: obj,
+          } as any;
         }
         return null;
       }) as UploadProps['fileList'];
     }
-    if (!isFirstRender.value) {
-      emit('change', value);
+    if (isFirstRender.value) {
       isFirstRender.value = false;
+    } else {
+      emit('change', value);
     }
   },
   {
@@ -175,11 +190,8 @@ function getValue() {
       if (item?.response && props?.resultField) {
         return item?.response;
       }
-      return item?.url || item?.response?.url || item?.response;
+      return item?.response;
     });
-  if (props.maxNumber === 1) {
-    return list.length > 0 ? list[0] : '';
-  }
   return list;
 }
 

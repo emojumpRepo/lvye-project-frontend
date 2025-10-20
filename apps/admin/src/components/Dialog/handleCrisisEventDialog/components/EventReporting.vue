@@ -27,6 +27,7 @@ const emit = defineEmits<{
     e: 'handleQuickAssign',
     data: { content?: string; id?: number; recordId?: number; type: string },
   ): void;
+  (e: 'viewRecordAssessmentReport', recordId: number): void;
 }>();
 
 const eventDescription = ref('');
@@ -182,6 +183,11 @@ function handleViewAssessmentResult(taskResultId: number) {
     })
     .open();
 }
+
+/** 查看记录评估报告 */
+function viewRecordAssessmentReport(recordId: number) {
+  emit('viewRecordAssessmentReport', recordId);
+}
 </script>
 
 <template>
@@ -225,6 +231,7 @@ function handleViewAssessmentResult(taskResultId: number) {
               :crisis-event-status="crisisEventDetail.status"
               @edit="handleEditEventRecord"
               @view-assessment-result="handleViewAssessmentResult"
+              @view-record-assessment-report="viewRecordAssessmentReport"
             />
           </template>
         </div>

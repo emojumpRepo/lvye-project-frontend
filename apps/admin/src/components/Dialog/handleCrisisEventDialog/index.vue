@@ -15,6 +15,7 @@ import {
   getCrisisEventDetail,
   submitStageAssessment,
 } from '#/api/psychology';
+import AssessmentReportDialog from '#/components/Dialog/AssessmentReportDialog/index.vue';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
 import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
@@ -81,6 +82,11 @@ const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
   connectedComponent: SelectHandleMethodDrawer,
 });
 
+// 评估报告
+const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
+  connectedComponent: AssessmentReportDialog,
+});
+
 // 步骤条
 const crisisEventHandlingSteps = computed(() => {
   if (!crisisEventDetail.value) return [];
@@ -103,9 +109,13 @@ const crisisEventHandlingSteps = computed(() => {
     {
       label: '执行处理',
       description: (() => {
-        if (crisisEventDetail.value.processMethod) return '待处理';
+        if (!crisisEventDetail.value.processMethod) {
+          return '待选择';
+        }
         if (status >= 3) return '已处理';
-        return '待选择';
+        return crisisEventDetail.value.pendingAssessmentTask
+          ? '处理中'
+          : '待处理';
       })(),
       done: status >= 2,
       key: 3,
@@ -297,11 +307,18 @@ async function closeInterventionAssessment(
   }
 }
 
-/** 查看测评记录 */
+/** 查看记录评估报告 */
+function viewRecordAssessmentReport(recordId: number) {
+  const record = crisisEventDetail.value?.allAssessmentRecords.find(
+    (record) => record.id === recordId,
+  );
+  if (!record) return message.error('暂无报告');
 
-/** 查看最终评估报告 */
-function viewAssessmentReport() {
-  console.log('查看最终评估报告');
+  assessmentReportModalApi
+    .setData({
+      assessmentReport: record,
+    })
+    .open();
 }
 </script>
 
@@ -391,10 +408,11 @@ function viewAssessmentReport() {
                           crisisEventDetail.latestAssessments.length > 0) ||
                         crisisEventDetail.processMethod
                       "
-                      class="flex items-center gap-2"
+                      class="flex flex-col items-center gap-2"
                     >
+                      <span class="text-sm">最近一次处理方式：</span>
                       <LyTag
-                        size="middle"
+                        size="small"
                         :tag-category-key="
                           crisisEventDetail.latestAssessments[0]
                             ?.followUpSuggestion
@@ -458,11 +476,9 @@ function viewAssessmentReport() {
                         <LyTag
                           tag-category-key="crisis_level"
                           :dict-value="
-                            crisisEventDetail.latestAssessments.length > 1
-                              ? crisisEventDetail.latestAssessments[1]
-                                  ?.riskLevel
-                              : crisisEventDetail.latestAssessments[0]
-                                  ?.riskLevel
+                            crisisEventDetail.latestAssessments[
+                              crisisEventDetail.latestAssessments.length - 1
+                            ]?.riskLevel
                           "
                         />
                       </div>
@@ -471,11 +487,9 @@ function viewAssessmentReport() {
                         <LyTag
                           tag-category-key="follow_up_suggestion"
                           :dict-value="
-                            crisisEventDetail.latestAssessments.length > 1
-                              ? crisisEventDetail.latestAssessments[1]
-                                  ?.followUpSuggestion
-                              : crisisEventDetail.latestAssessments[0]
-                                  ?.followUpSuggestion
+                            crisisEventDetail.latestAssessments[
+                              crisisEventDetail.latestAssessments.length - 1
+                            ]?.followUpSuggestion
                           "
                         />
                       </div>
@@ -503,7 +517,13 @@ function viewAssessmentReport() {
                   type="primary"
                   ghost
                   size="small"
-                  @click="viewAssessmentReport"
+                  @click="
+                    viewRecordAssessmentReport(
+                      crisisEventDetail.latestAssessments[
+                        crisisEventDetail.latestAssessments.length - 1
+                      ]?.id || 0,
+                    )
+                  "
                 >
                   查看报告
                 </LyButton>
@@ -522,6 +542,7 @@ function viewAssessmentReport() {
                 @set-loading="setLoading"
                 @reload-crisis-event="reloadCrisisEvent"
                 @handle-quick-assign="handleQuickAssign"
+                @view-record-assessment-report="viewRecordAssessmentReport"
               />
             </div>
           </div>
@@ -540,6 +561,7 @@ function viewAssessmentReport() {
       :publish="createInterventionAssessment"
     />
     <CreateSimpleAssessmentModal @reload-crisis-event="reloadCrisisEvent" />
+    <AssessmentReportModal />
   </HandleCrisisEventModal>
 </template>
 

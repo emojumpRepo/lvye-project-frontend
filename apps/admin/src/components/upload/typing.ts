@@ -33,5 +33,5 @@ export interface FileUploadProps {
   resultField?: string;
   // 是否显示下面的描述
   showDescription?: boolean;
-  value?: string | string[];
+  value?: { id: number; url: string }[];
 }

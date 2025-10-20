@@ -30,6 +30,7 @@
     "@form-create/antd-designer": "catalog:",
     "@tinymce/tinymce-vue": "catalog:",
     "@toast-ui/calendar": "catalog:",
+    "@vben-core/shadcn-ui": "workspace:*",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",

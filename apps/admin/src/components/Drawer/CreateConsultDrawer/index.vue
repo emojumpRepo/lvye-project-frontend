@@ -71,6 +71,7 @@ const [ConfirmModal, confirmModalApi] = useVbenModal({
   connectedComponent: ConfirmDialog,
 });
 
+/** 构建学生选项 */
 function buildStudentOption(res: any): StudentOption {
   return {
     label: [res.studentName, res.className, res.studentNumber]
@@ -83,6 +84,7 @@ function buildStudentOption(res: any): StudentOption {
   } as any;
 }
 
+/** 映射咨询类型 */
 function mapConsultType(
   rawType: number | string | undefined,
   options: string[],
@@ -99,6 +101,7 @@ function mapConsultType(
   return '';
 }
 
+/** 创建快照 */
 function takeSnapshot(): DrawerSnapshot {
   return {
     currentDate: currentDate.value,
@@ -131,6 +134,7 @@ function takeSnapshot(): DrawerSnapshot {
   };
 }
 
+/** 恢复快照 */
 function restoreSnapshot(snap: DrawerSnapshot) {
   form.value.student = snap.form.student as any;
   form.value.consultDate = snap.form.consultDate as any;
@@ -359,6 +363,7 @@ function submitConsult() {
   });
 }
 
+/** 确认创建或更新咨询预约 */
 async function handleConfirmCreateOrUpdate() {
   // 组合日期(年月日)与时间(时分秒)
   const dateStr = form.value.consultDate
@@ -402,6 +407,7 @@ async function handleConfirmCreateOrUpdate() {
   }
 }
 
+/** 重置表单 */
 function resetForm() {
   formRef.value?.resetFields();
   clearSearchState();
@@ -412,6 +418,7 @@ function resetForm() {
 
 // ==================== 咨询预约详情相关 ====================
 
+/** 加载咨询预约详情 */
 async function loadConsultationRecord() {
   if (!isDetail.value) {
     return;
@@ -471,21 +478,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-3/4',
   contentClass: 'p-0',
   confirmText: '创建预约',
-  // 关闭时卸载内容，避免残留状态
-  destroyOnClose: true as any,
+  destroyOnClose: true,
   onConfirm: submitConsult,
-  onClosed: () => {
-    // 彻底清理所有本地状态
-    resetForm();
-    isEdit.value = false;
-    currentConsultationRecordId.value = undefined;
-    currentConsultationRecord.value = undefined as any;
-    currentDate.value = '';
-    timeRange.value = undefined;
-    weekViewDate.value = dayjs();
-    showConfirmDialog.value = false;
-    clearSearchState();
-  },
   onOpenChange: (isOpen: boolean) => {
     if (isOpen) {
       const data = drawerApi.getData<{
@@ -900,8 +894,10 @@ function disabledRangeTime(
         <LyButton size="middle" @click="onFooterSecondaryClick">
           {{ footerSecondaryText }}
         </LyButton>
+
         <template
           v-if="
+            !isDetail ||
             currentConsultationRecord?.status === COUNSELING_STATUS.APPOINTMENT
           "
         >

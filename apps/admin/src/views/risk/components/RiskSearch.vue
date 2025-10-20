@@ -46,13 +46,18 @@ const [Form, formApi] = useVbenForm({
     try {
       formApi.setLoading(true);
       // 智能识别搜索关键词是学号还是姓名
-      const { studentNo, name } = parseSearchKeyword(values.searchKeyword);
+      const { studentNo, name } = parseSearchKeyword(
+        values?.searchKeyword ?? '',
+      );
 
       // 构建搜索参数
       const params: CrisisEventListReq = {
         studentNo: studentNo || undefined,
         studentName: name || undefined,
-        classId: values.classId[values.classId.length - 1] || undefined,
+        classId:
+          (Array.isArray(values?.classId)
+            ? values.classId[values.classId.length - 1]
+            : undefined) || undefined,
         counselorUserId: values.counselorUserId || undefined,
         priority: values.priority || undefined,
       };
@@ -82,16 +87,22 @@ async function loadTeacherUserList() {
 }
 
 onMounted(async () => {
-  deptOptions.value = await getDeptGradeClassDictOptions();
-  const counselorOptions = await loadTeacherUserList();
-  const priorityOptions = await getDictOptions('crisis_event_priority');
-  formApi.updateSchema(
-    useSearchFormSchema({
-      deptOptions: deptOptions.value,
-      counselorOptions,
-      priorityOptions,
-    }),
-  );
+  try {
+    deptOptions.value = (await getDeptGradeClassDictOptions()) || [];
+    const counselorOptions = (await loadTeacherUserList()) || [];
+    const priorityOptions =
+      (await getDictOptions('crisis_event_priority')) || [];
+    formApi.updateSchema(
+      useSearchFormSchema({
+        deptOptions: deptOptions.value,
+        counselorOptions,
+        priorityOptions,
+      }),
+    );
+  } catch (error) {
+    console.error('初始化搜索表单失败', error);
+    message.error('初始化失败，请刷新重试');
+  }
 });
 
 defineExpose({
