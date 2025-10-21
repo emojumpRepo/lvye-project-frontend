@@ -27,10 +27,11 @@ export interface InterventionAssessmentReqVO {
 
 /** 上报危机事件 */
 export function reportCrisisEvent(data: ReportCrisisEventReqVO) {
-  return requestClient.post<number>(
-    '/psychology/intervention/event/create',
-    data,
-  );
+  return requestClient.post<{
+    eventId: string;
+    id: number;
+    title: string;
+  }>('/psychology/intervention/event/create', data);
 }
 
 /** 检测重复上报事件 */

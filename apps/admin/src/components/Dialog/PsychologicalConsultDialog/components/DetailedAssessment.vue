@@ -36,6 +36,7 @@ type Method = 'free' | 'template';
 const method = ref<Method>('free');
 const freeText = ref(props.modelValue.report || ''); // 自由输入
 const fileList = ref<{ id: number; url: string }[]>([]); // 上传文件列表
+const containerRef = ref();
 
 /** 同步数据 */
 function sync() {
@@ -72,7 +73,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div ref="containerRef" class="space-y-6">
     <!-- 评估结论总结 -->
     <div>
       <LyLabel

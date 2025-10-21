@@ -10,7 +10,6 @@ import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import CrisisAttachmentsDialog from '#/components/Dialog/CrisisAttachmentsDialog/index.vue';
-import LyButton from '#/components/LyButton/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
 const props = defineProps<{
@@ -109,32 +108,32 @@ function viewRecord() {
         />
       </div>
       <!-- 查看报告 -->
-      <LyButton
+      <div
         v-if="
           (eventProcessingRecord.action === 'CREATE_ASSESSMENT' &&
             eventProcessingRecord.taskResultId) ||
           eventProcessingRecord.action === 'CLOSE' ||
           eventProcessingRecord.action === 'STAGE_ASSESSMENT'
         "
-        type="success"
-        ghost
-        size="small"
+        class="flex cursor-pointer items-center gap-1"
         @click="viewRecord"
       >
-        查看报告
-      </LyButton>
+        <IconifyIcon icon="mdi:eye" color="#1966FF" class="size-4" />
+        <span class="text-[#1966FF]"> 报告 </span>
+      </div>
       <!-- 上报附件 -->
-      <span
+      <div
         v-if="
           eventProcessingRecord.attachments &&
           eventProcessingRecord.attachments.length > 0 &&
           eventProcessingRecord.action === 'REPORT'
         "
-        class="cursor-pointer text-[#1966FF]"
+        class="flex cursor-pointer items-center gap-1"
         @click="handleViewAttachments"
       >
-        附件
-      </span>
+        <IconifyIcon icon="si:attachment-line" color="#1966FF" class="size-4" />
+        <span class="text-[#1966FF]"> 附件 </span>
+      </div>
     </div>
 
     <div class="line-clamp-2 text-[#17191A]">

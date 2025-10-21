@@ -510,7 +510,7 @@ function viewRecordAssessmentReport(recordId: number) {
               </template>
 
               <!-- step5: 流程完成 -->
-              <template v-if="key === 5">
+              <!-- <template v-if="key === 5">
                 <LyButton
                   class="mt-2"
                   v-if="crisisEventDetail.status === 5"
@@ -527,7 +527,7 @@ function viewRecordAssessmentReport(recordId: number) {
                 >
                   查看报告
                 </LyButton>
-              </template>
+              </template> -->
             </template>
           </CommonDialogSteps>
         </div>

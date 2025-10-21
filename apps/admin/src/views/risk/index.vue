@@ -47,8 +47,8 @@ const eventpanelIconMap: Record<number, string> = {
   1: crisisEventConsultIcon,
   2: crisisEventEvaluationIcon,
   3: crisisEventContinuousIcon,
-  4: crisisEventResolvedIcon,
-  5: crisisEventClosedIcon,
+  4: crisisEventClosedIcon,
+  6: crisisEventResolvedIcon,
 };
 
 // 面板数据
@@ -181,7 +181,7 @@ function refresh() {
     <!-- 事件面板 -->
     <div class="grid grid-cols-6 gap-5">
       <div
-        v-for="eventPanel in eventPanelData"
+        v-for="eventPanel in eventPanelData.filter((item) => item.type !== 5)"
         :key="eventPanel.type"
         class="flex cursor-pointer items-center justify-between rounded-xl bg-white p-6 hover:shadow-sm"
         @click="handlestatusSearch(eventPanel.type)"
@@ -286,7 +286,7 @@ function refresh() {
 
     <HandleCrisisEventModal @refresh="refresh" />
     <SystemSettingDrawer />
-    <ReportFastDrawer @refresh="refresh" />
+    <ReportFastDrawer @refresh="refresh" @view-detail="handleViewDetail" />
   </div>
 </template>
 

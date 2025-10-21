@@ -22,7 +22,7 @@ const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
   fullscreenButton: false,
   header: false,
   footer: false,
-  class: '!w-[800px]',
+  class: '!w-[720px]',
   onOpenChange: async (open) => {
     if (open) {
       const data = assessmentReportModalApi.getData();
@@ -53,7 +53,7 @@ function downloadFile(file: InfraFileApi.File) {
   <AssessmentReportModal>
     <div class="space-y-6 p-6">
       <!-- 报告总结部分 -->
-      <div class="border-b border-gray-200 pb-4">
+      <div>
         <div class="mb-2 flex items-center">
           <div class="mr-3 h-6 w-1 bg-blue-500"></div>
           <h2 class="text-lg font-semibold text-gray-800">评估结论</h2>
@@ -92,7 +92,7 @@ function downloadFile(file: InfraFileApi.File) {
       </div>
 
       <!-- 报告内容部分 -->
-      <div class="border-b border-gray-200 pb-4">
+      <div>
         <div class="mb-3 flex items-center">
           <div class="mr-3 h-6 w-1 bg-green-500"></div>
           <h2 class="text-lg font-semibold text-gray-800">评估内容</h2>

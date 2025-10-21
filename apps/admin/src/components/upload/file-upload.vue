@@ -34,7 +34,13 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   resultField: '', // 结果字段
   showDescription: false, // 是否显示描述
 });
-const emit = defineEmits(['change', 'update:value', 'delete', 'returnText']);
+const emit = defineEmits([
+  'change',
+  'update:value',
+  'delete',
+  'returnText',
+  'scroll',
+]);
 const { accept, helpText, maxNumber, maxSize } = toRefs(props);
 const isInnerOperate = ref<boolean>(false);
 const { getStringAccept } = useUploadType({
@@ -162,6 +168,7 @@ async function customRequest(info: UploadRequestOption<any>) {
     api = useUpload(props.directory).httpRequest;
   }
   try {
+    emit('scroll');
     // 上传文件
     const progressEvent: AxiosProgressEvent = (e) => {
       const percent = Math.trunc((e.loaded / e.total!) * 100);

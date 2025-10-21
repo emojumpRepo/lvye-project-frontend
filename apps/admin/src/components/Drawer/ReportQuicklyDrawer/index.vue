@@ -5,7 +5,7 @@ import type { SearchStudentProfileVO } from '@vben/types';
 
 import type { ReportCrisisEventReqVO } from '#/api/psychology';
 
-import { onMounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -39,9 +39,11 @@ interface State {
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
+  (e: 'viewDetail', data: { eventId: string; id: number; title: string }): void;
 }>();
 
 const riskLevelOptions = ref<{ label: string; value: number }[]>([]);
+const containerRef = ref();
 const fileList = ref([]); // 附件列表
 const accept = ref([
   'png',
@@ -119,6 +121,7 @@ const riskPriority = ref([
 const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
   {
     class: 'w-[720px]',
+    contentClass: '!overflow-hidden !p-0',
     destroyOnClose: true,
     onOpenChange: (open) => {
       if (open) {
@@ -151,6 +154,8 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
     },
     onConfirm() {
       eventFormRef.value.validate().then(async () => {
+        let eventData: null | { eventId: string; id: number; title: string } =
+          null;
         try {
           selectedHandleMethodDrawerApi.lock();
 
@@ -170,19 +175,40 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
                 confirm({
                   beforeClose: async ({ isConfirm }) => {
                     if (isConfirm) {
-                      await handleReport();
-                      return true;
+                      const data = await handleReport();
+                      if (data?.id) {
+                        eventData = data;
+                        return true;
+                      }
+                      return false;
                     }
-                    return true;
                   },
                   content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
                   cancelText: '返回修改',
                   confirmText: '确认上报',
                   title: '信息确认',
-                  icon: 'success',
-                }).catch(() => {
-                  return true;
-                });
+                  icon: 'question',
+                })
+                  .then(() => {
+                    confirm({
+                      content: `您已成功上报危机事件，事件编号为：${eventData?.eventId}。`,
+                      title: '上报成功',
+                      cancelText: '继续上报',
+                      confirmText: '查看任务进度',
+                      icon: 'success',
+                    })
+                      .then(() => {
+                        selectedHandleMethodDrawerApi.close();
+                        eventData && emit('viewDetail', eventData);
+                      })
+                      .catch(() => {
+                        reset();
+                        eventData = null;
+                      });
+                  })
+                  .catch(() => {
+                    return true;
+                  });
               })
               .catch(() => {
                 return true;
@@ -191,19 +217,40 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
             confirm({
               beforeClose: async ({ isConfirm }) => {
                 if (isConfirm) {
-                  await handleReport();
-                  return true;
+                  const data = await handleReport();
+                  if (data?.id) {
+                    eventData = data;
+                    return true;
+                  }
+                  return false;
                 }
-                return true;
               },
               content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
               cancelText: '返回修改',
               confirmText: '确认上报',
               title: '信息确认',
-              icon: 'success',
-            }).catch(() => {
-              return true;
-            });
+              icon: 'question',
+            })
+              .then(() => {
+                confirm({
+                  content: `您已成功上报危机事件，事件编号为：${eventData?.eventId}。`,
+                  title: '上报成功',
+                  cancelText: '继续上报',
+                  confirmText: '查看任务进度',
+                  icon: 'success',
+                })
+                  .then(() => {
+                    selectedHandleMethodDrawerApi.close();
+                    eventData && emit('viewDetail', eventData);
+                  })
+                  .catch(() => {
+                    reset();
+                    eventData = null;
+                  });
+              })
+              .catch(() => {
+                return true;
+              });
           }
         } catch (error) {
           console.error('上报危机事件失败', error);
@@ -216,20 +263,34 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
   },
 );
 
+/** 重置表单 */
+function reset() {
+  eventFormRef.value.resetFields();
+  fileList.value = [];
+  Object.assign(state, {
+    studentList: [],
+    value: [],
+    fetching: false,
+  });
+  containerRef.value.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+}
+
 /** 上报事件 */
 async function handleReport() {
   try {
-    const eventId = await reportCrisisEvent({
+    const data = await reportCrisisEvent({
       ...eventForm.value,
       attachments: fileList.value.map((file: any) => file.id) || [],
     });
-    if (!eventId) return message.error('上报危机事件失败');
-    message.success('上报成功');
-    selectedHandleMethodDrawerApi.close();
+    if (!data.id) return null;
     emit('refresh');
+    return data;
   } catch (error) {
     console.error('上报危机事件失败', error);
-    message.error('上报失败');
+    return null;
   }
 }
 
@@ -268,6 +329,21 @@ function handleSaveDraft() {
   message.success('草稿已保存');
 }
 
+/**
+ * 滚动到容器底部
+ */
+async function scrollToBottom() {
+  await nextTick();
+  if (containerRef.value) {
+    setTimeout(() => {
+      containerRef.value.scrollTo({
+        top: containerRef.value.scrollHeight,
+        behavior: 'smooth',
+      });
+    }, 200);
+  }
+}
+
 onMounted(() => {
   riskLevelOptions.value = getDictOptions('crisis_level', 'number').map(
     (item) => ({
@@ -294,7 +370,7 @@ onMounted(() => {
       <LyButton type="default" @click="handleSaveDraft">保存草稿</LyButton>
     </template>
 
-    <div class="p-2">
+    <div ref="containerRef" class="h-full overflow-y-auto p-6">
       <div class="mb-6 text-sm text-[#FF9C05]">
         温馨提示：请详细填写学生异常行为信息, 我们将及时处理并通知相关负责人
       </div>
@@ -429,6 +505,7 @@ onMounted(() => {
             :accept="accept"
             :max-size="5"
             :max-number="3"
+            @scroll="() => scrollToBottom()"
           >
             <template #upload-text-desc>
               支持图片、文档、压缩包类型文件，最大5MB，最多3个文件
