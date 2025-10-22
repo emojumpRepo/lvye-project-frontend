@@ -1,5 +1,12 @@
 <script lang="ts" setup>
+import type {
+  AssessmentComfirmInfo,
+  CrisisEventOpParams,
+  ReportAbnormalParams,
+} from '@vben/types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { ref } from 'vue';
@@ -22,12 +29,16 @@ import {
   getStudentProfilePage,
 } from '#/api/psychology/student-profile';
 import BulkDeleteStudentDialog from '#/components/Dialog/BulkDeleteStudentDialog/index.vue';
+import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
+import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
+import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import CreateStudentDrawer from '#/components/Drawer/CreateStudentDrawer/index.vue';
 import GraduatedStudentProfileDrawer from '#/components/Drawer/GraduatedStudentProfileDrawer/index.vue';
+import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
 import StudentBulkClassTransferDrawer from '#/components/Drawer/StudentBulkClassTransferDrawer/index.vue';
 import StudentBulkImportDrawer from '#/components/Drawer/StudentBulkImportDrawer/index.vue';
-import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import StudentDetailDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
 import StudentGradeGraduationDrawer from '#/components/Drawer/StudentGradeGraduationDrawer/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
@@ -50,10 +61,10 @@ const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
 const studentSearchRef = ref();
 
-// ============== 抽屉 ==============
+// ====================== 抽屉 ===========================
 // 详情抽屉
-const [Drawer, drawerApi] = useVbenDrawer({
-  connectedComponent: StudentDrawer,
+const [StudentProfileDrawer, studentDetailDrawerApi] = useVbenDrawer({
+  connectedComponent: StudentDetailDrawer,
 });
 
 // 新增学生抽屉
@@ -87,9 +98,9 @@ const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
   },
 });
 
-// 批量删除学生确认框
-const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
-  connectedComponent: BulkDeleteStudentDialog,
+// 上报异常弹窗
+const [ReportAbnormalDrawer, reportAbnormalDrawerApi] = useVbenDrawer({
+  connectedComponent: ReportQuicklyDrawer,
 });
 
 // 已毕业学生档案抽屉
@@ -97,9 +108,40 @@ const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
   connectedComponent: GraduatedStudentProfileDrawer,
 });
 
+// ========================== 弹窗 =============================
+
+/** 危机事件弹窗 */
+const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
+  connectedComponent: HandleCrisisEventDialog,
+});
+
+// 批量删除学生确认框
+const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
+  connectedComponent: BulkDeleteStudentDialog,
+});
+
+// 创建测评
+const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
+  useVbenModal({
+    connectedComponent: CreateSimpleAssessmentDialog,
+  });
+
 // ============== 视图模式与选择 ==============
 const viewMode = ref<'group' | 'list'>('list');
 const selectedRowKeys = ref<number[]>([]);
+const isOpenPsychologicalAssessmentDialog = ref(false);
+const confirmInfo = ref<AssessmentComfirmInfo>({
+  studentInfo: {
+    studentName: '',
+    className: '',
+    studentNo: '',
+  },
+  consultInfo: {
+    consultant: '',
+    consultType: '',
+    consultTime: '',
+  },
+});
 
 // Grid 定义
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -317,6 +359,57 @@ async function handleExport() {
 function refresh() {
   gridApi.query();
 }
+
+// =============== 学生详情底部按钮触发事件 ==================
+
+/** 评估 */
+function handleEvaluate(data: AssessmentComfirmInfo) {
+  confirmInfo.value = data;
+  isOpenPsychologicalAssessmentDialog.value = true;
+}
+
+/** 上报异常 */
+function handleReportAbnormal(data: ReportAbnormalParams) {
+  reportAbnormalDrawerApi
+    .setData({
+      selectedStudent: {
+        key: data?.id,
+        value: data?.id,
+        label: `${data?.name}（${data?.className}）学号：${data?.studentNo}`,
+        originLabel: `${data?.name}（${data?.className}）学号：${data?.studentNo}`,
+      },
+    })
+    .open();
+}
+
+/** 查看危机事件 */
+function viewCrisisEvent(data: CrisisEventOpParams) {
+  handleCrisisEventModalApi.setData(data).open();
+}
+
+/** 预约访谈 */
+function handleInterview() {}
+
+/** 发起测评 */
+function handleStartAssessment(
+  studentProfile: PsychologyStudentProfileApi.StudentProfile,
+) {
+  createSimpleAssessmentModalApi
+    .setData({
+      id: studentProfile?.id,
+      className: studentProfile?.className,
+      studentName: studentProfile?.name,
+      studentNo: studentProfile?.studentNo,
+      studentUserId: studentProfile?.userId,
+    })
+    .open();
+}
+
+/** 完成评估 */
+async function publishAssessment(params: InterventionAssessmentReqVO) {
+  console.log('评估参数', params);
+  return true;
+}
 </script>
 
 <template>
@@ -407,7 +500,8 @@ function refresh() {
                   {
                     label: '查看详情',
                     type: 'link',
-                    onClick: () => drawerApi.setData({ id: row.id }).open(),
+                    onClick: () =>
+                      studentDetailDrawerApi.setData({ id: row.id }).open(),
                   },
                   // {
                   //   label: '删除',
@@ -454,8 +548,14 @@ function refresh() {
       </div>
     </div>
 
-    <!-- 详情抽屉 -->
-    <Drawer @refresh="refresh" />
+    <!-- 学生档案抽屉 -->
+    <StudentProfileDrawer
+      @refresh="refresh"
+      @evaluate="handleEvaluate"
+      @report-abnormal="handleReportAbnormal"
+      @start-assessment="handleStartAssessment"
+      @interview="handleInterview"
+    />
     <CreateDrawer @refresh="refresh" />
     <BulkClassTransferDrawer />
     <BulkImportDrawer @refresh="refresh" />
@@ -463,6 +563,14 @@ function refresh() {
     <BulkDeleteStudentModal @refresh="refresh" />
     <GraduatedFileDrawer />
     <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
+    <HandleCrisisEventModal />
+    <PsychologicalConsultDialog
+      v-model:open="isOpenPsychologicalAssessmentDialog"
+      :comfirm-info="confirmInfo"
+      :publish="publishAssessment"
+    />
+    <ReportAbnormalDrawer @view-detail="viewCrisisEvent" />
+    <CreateSimpleAssessmentModal />
   </div>
 </template>
 

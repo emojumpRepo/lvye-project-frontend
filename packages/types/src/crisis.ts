@@ -130,3 +130,18 @@ export interface CrisisEvent {
   latestAssessments: AssessmentRecord[];
   allAssessmentRecords: AssessmentRecord[];
 }
+
+/** 打开危机事件参数 */
+export interface CrisisEventOpParams {
+  id: number;
+  title: string;
+  eventId?: string;
+}
+
+/** 上报异常参数 */
+export interface ReportAbnormalParams {
+  className: string;
+  id: number;
+  name: string;
+  studentNo: string;
+}

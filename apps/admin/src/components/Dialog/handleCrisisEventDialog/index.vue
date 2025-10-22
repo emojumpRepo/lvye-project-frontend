@@ -57,12 +57,20 @@ const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
   contentClass: '!bg-[#F7F8FB] box-border py-6 flex-center',
   class: 'h-full overflow-hidden',
   destroyOnClose: true,
-  onOpenChange: async () => {
-    const data = handleCrisisEventModalApi.getData();
-    if (!data.id) return message.error('缺少事件ID');
-    crisisEventTitle.value = data.title;
-    await loadCrisisEventDetail(data.id);
-    handleCrisisEventModalApi.setState({ loading: false });
+  onOpenChange: async (open) => {
+    if (open) {
+      try {
+        const data = handleCrisisEventModalApi.getData();
+        if (!data.id) return message.error('缺少事件ID');
+        crisisEventTitle.value = data.title;
+        await loadCrisisEventDetail(data.id);
+      } catch (error) {
+        console.error('加载危机事件详情失败', error);
+        message.error('加载危机事件详情失败');
+      } finally {
+        handleCrisisEventModalApi.setState({ loading: false });
+      }
+    }
   },
 });
 

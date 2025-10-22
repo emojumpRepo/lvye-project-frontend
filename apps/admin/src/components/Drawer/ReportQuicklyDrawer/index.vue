@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Rule } from 'ant-design-vue/es/form';
 
-import type { SearchStudentProfileVO } from '@vben/types';
+import type { CrisisEventOpParams, SearchStudentProfileVO } from '@vben/types';
 
 import type { ReportCrisisEventReqVO } from '#/api/psychology';
 
@@ -39,7 +39,7 @@ interface State {
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
-  (e: 'viewDetail', data: { eventId: string; id: number; title: string }): void;
+  (e: 'viewDetail', data: CrisisEventOpParams): void;
 }>();
 
 const riskLevelOptions = ref<{ label: string; value: number }[]>([]);
@@ -125,6 +125,12 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
     destroyOnClose: true,
     onOpenChange: (open) => {
       if (open) {
+        const data = selectedHandleMethodDrawerApi.getData();
+        if (data.selectedStudent) {
+          eventForm.value.studentProfileId = data.selectedStudent.key;
+          state.value = [data.selectedStudent];
+          return;
+        }
         const draft = localStorage.getItem('report_crisis_event_draft');
         if (draft) {
           selectedHandleMethodDrawerApi.lock();
