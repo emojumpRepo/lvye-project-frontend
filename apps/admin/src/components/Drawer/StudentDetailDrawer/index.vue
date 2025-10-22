@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { AssessmentComfirmInfo, ReportAbnormalParams } from '@vben/types';
+
 import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile/index';
 import type { DictDataType } from '#/utils/dict';
@@ -52,6 +54,13 @@ interface PsychologicalStatusTag {
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
+  (e: 'evaluate', data: AssessmentComfirmInfo): void;
+  (e: 'reportAbnormal', data: ReportAbnormalParams): void;
+  (e: 'interview'): void;
+  (
+    e: 'startAssessment',
+    studentProfile: PsychologyStudentProfileApi.StudentProfile,
+  ): void;
 }>();
 
 const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>();
@@ -83,12 +92,27 @@ const baseInfo = ref([
 const footerButtons = ref<FooterButton[]>([
   {
     label: '评估',
-    value: 'assessment',
+    value: 'evaluate',
     icon: 'solar:health-bold',
     type: 'dashed',
     color: '#578FFF',
     class: 'border-[#578FFF] text-[#578FFF] hover:bg-[#578FFF]/10',
-    onClick: () => handleAssessment(),
+    onClick: () => {
+      if (!studentProfile.value?.id) return message.error('评估失败！');
+      studentDetailDrawerApi.close();
+      emit('evaluate', {
+        studentInfo: {
+          studentName: studentProfile.value?.name || '',
+          className: studentProfile.value?.className || '',
+          studentNo: studentProfile.value?.studentNo || '',
+        },
+        consultInfo: {
+          consultant: studentProfile.value?.updater || '',
+          consultType: '',
+          consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        },
+      });
+    },
   },
   {
     icon: 'ep:warn-triangle-filled',
@@ -97,7 +121,16 @@ const footerButtons = ref<FooterButton[]>([
     type: 'dashed',
     color: '#FF9C05',
     class: 'border-[#FF9C05] text-[#FF9C05] hover:bg-[#FF9C05]/10',
-    onClick: () => handleReportAbnormal(),
+    onClick: () => {
+      if (!studentProfile.value?.id) return message.error('上报异常失败！');
+      studentDetailDrawerApi.close();
+      emit('reportAbnormal', {
+        className: studentProfile.value?.className || '',
+        id: studentProfile.value?.id || 0,
+        name: studentProfile.value?.name || '',
+        studentNo: studentProfile.value?.studentNo || '',
+      });
+    },
   },
   {
     icon: 'solar:chat-round-line-bold',
@@ -106,7 +139,11 @@ const footerButtons = ref<FooterButton[]>([
     type: 'primary',
     color: '#578FFF',
     class: 'border-[#578FFF] bg-[#578FFF] text-white hover:bg-[#578FFF]/80',
-    onClick: () => handleInterview(),
+    onClick: () => {
+      if (!studentProfile.value?.id) return message.error('预约访谈失败！');
+      studentDetailDrawerApi.close();
+      emit('interview');
+    },
   },
   {
     icon: 'material-symbols:event-note',
@@ -115,7 +152,11 @@ const footerButtons = ref<FooterButton[]>([
     type: 'primary',
     color: '#04DC70',
     class: 'border-[#04DC70] bg-[#04DC70] text-white hover:bg-[#04DC70]/80',
-    onClick: () => handleStartAssessment(),
+    onClick: () => {
+      if (!studentProfile.value) return message.error('发起测评失败！');
+      studentDetailDrawerApi.close();
+      emit('startAssessment', studentProfile.value);
+    },
   },
 ]);
 
@@ -140,7 +181,7 @@ const [ExportStudnetInfoModal, exportStudnetInfoModalApi] = useVbenModal({
 });
 
 /** 学生详情抽屉 */
-const [Drawer, drawerApi] = useVbenDrawer({
+const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
   class: 'w-[800px]',
   contentClass: 'bg-gray-50 p-0',
   showCancelButton: false,
@@ -149,7 +190,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
   destroyOnClose: true,
   onOpenChange: async (open) => {
     if (!open) return;
-    const data = drawerApi.getData();
+    const data = studentDetailDrawerApi.getData();
     if (!data.id) return;
 
     loading.value = true;
@@ -240,7 +281,6 @@ async function loadStudentProfileTimeline(id: number) {
       key: 0,
     });
 
-    console.log('timelineTabs', timelineTabs.value);
     activeTimelineKey.value = timelineTabs.value[0]?.key || 0;
   } catch (error) {
     console.error('加载学生时间线数据失败', error);
@@ -265,7 +305,7 @@ async function loadStudentAssessmentHistory(id: number) {
 function updateLoading(value: boolean) {
   loading.value = value;
   if (!value) {
-    // drawerApi.close();
+    // studentDetailDrawerApi.close();
     emit('refresh');
   }
 }
@@ -282,28 +322,8 @@ function handleCreateStudentEventRecord() {
  * 导出信息
  */
 function handleExportInfo() {
-  // message.warning('即将上线');
-  exportStudnetInfoModalApi.open();
-}
-
-/** 评估 */
-function handleAssessment() {
   message.warning('即将上线');
-}
-
-/** 上报异常 */
-function handleReportAbnormal() {
-  message.warning('即将上线');
-}
-
-/** 预约访谈 */
-function handleInterview() {
-  message.warning('即将上线');
-}
-
-/** 发起测评 */
-function handleStartAssessment() {
-  message.warning('即将上线');
+  // exportStudnetInfoModalApi.open();
 }
 
 onMounted(async () => {
@@ -311,7 +331,7 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <Drawer title="学生360°档案">
+  <StudentDetailDrawer title="学生360°档案">
     <template #title>
       <div class="flex items-center gap-2">
         <img
@@ -419,12 +439,18 @@ onMounted(async () => {
               </Tabs.TabPane>
             </Tabs>
             <div class="absolute right-7 top-1.5 flex items-center gap-2">
-              <LyButton type="default" size="middle" @click="handleExportInfo">
+              <LyButton
+                type="default"
+                size="middle"
+                @click="handleExportInfo"
+                :disabled="loading"
+              >
                 导出信息
               </LyButton>
               <LyButton
                 type="success"
                 size="middle"
+                :disabled="loading"
                 @click="handleCreateStudentEventRecord"
               >
                 新增记录
@@ -439,6 +465,7 @@ onMounted(async () => {
       <div class="flex items-center justify-end gap-2">
         <button
           v-for="button in footerButtons"
+          :disabled="loading"
           :key="button.value"
           class="flex items-center gap-1 rounded-md border border-solid px-7 py-2 text-sm"
           :class="button.class"
@@ -456,7 +483,7 @@ onMounted(async () => {
 
     <CreateStudentEventRecordModal />
     <ExportStudnetInfoModal />
-  </Drawer>
+  </StudentDetailDrawer>
 </template>
 
 <style lang="scss" scoped>
