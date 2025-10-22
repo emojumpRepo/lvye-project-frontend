@@ -23,6 +23,7 @@ export interface InterventionAssessmentReqVO {
   summary?: string;
   fileId?: number;
   attachments?: number[];
+  assessmentMode: number;
 }
 
 /** 上报危机事件 */

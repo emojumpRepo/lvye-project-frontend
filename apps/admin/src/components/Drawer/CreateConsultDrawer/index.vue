@@ -273,6 +273,94 @@ const durationText = computed(() => {
   });
 });
 
+// ==================== Drawer 配置 ====================
+const [Drawer, drawerApi] = useVbenDrawer({
+  class: 'w-3/4',
+  contentClass: 'p-0',
+  confirmText: '创建预约',
+  destroyOnClose: true,
+  onOpenChange: async (isOpen: boolean) => {
+    if (isOpen) {
+      drawerApi.setState({ loading: true });
+      const data = drawerApi.getData<{
+        currentDate?: string;
+        id?: number;
+        timeRange?: { date: Date; end: Date | string; start: Date | string };
+      }>();
+      console.log('打开抽屉', data);
+
+      if (data.id) {
+        currentConsultationRecordId.value = data.id;
+        isEdit.value = false;
+        await loadConsultationRecord();
+      } else {
+        currentDate.value = data.currentDate || '';
+        timeRange.value = data.timeRange;
+        isEdit.value = true;
+      }
+      // 加载教师数据
+      await fetchTeacherOptions();
+      drawerApi.setState({ loading: false });
+    }
+  },
+  onConfirm: submitConsult,
+});
+
+/** 加载咨询预约详情 */
+async function loadConsultationRecord() {
+  if (!isDetail.value) {
+    return;
+  }
+  const res = await getConsultationRecord(
+    currentConsultationRecordId.value as number,
+  );
+  currentConsultationRecord.value = res;
+  // 将详情数据回填到表单
+  try {
+    const startMs = (res as any).appointmentStartTime as number | undefined;
+    const endMs = (res as any).appointmentEndTime as number | undefined;
+
+    // 回填学生信息（Select 使用 label-in-value）
+    form.value.student = buildStudentOption(res);
+
+    // 回填日期与时间
+    if (startMs) {
+      form.value.consultDate = dayjs(startMs);
+    }
+    if (startMs && endMs) {
+      form.value.consultTime = [dayjs(startMs), dayjs(endMs)] as any;
+    }
+
+    // 回填类型（后端可能返回字符串或数字），基于 consultTypeOptions 做映射
+    form.value.consultType = mapConsultType(
+      (res as any).consultationType,
+      consultTypeOptions.value,
+    );
+
+    // 回填老师与地点、重点
+    form.value.consultTeacher = (res as any).counselorUserId || '';
+    form.value.consultLocation = (res as any).location || '';
+    form.value.consultFocus = (res as any).notes || '';
+
+    // 同步周视图驱动数据
+    if (startMs) {
+      currentDate.value = dayjs(startMs).format('YYYY-MM-DD');
+    }
+    if (startMs && endMs) {
+      timeRange.value = {
+        date: new Date(startMs),
+        start: new Date(startMs),
+        end: new Date(endMs),
+      } as any;
+    }
+
+    // 记录原始快照用于“取消编辑”恢复
+    originalSnapshot.value = takeSnapshot();
+  } catch (error) {
+    console.error('回填预约详情到表单失败:', error);
+  }
+}
+
 // ==================== 周视图相关函数 ====================
 function formatWeekViewDate(value: dayjs.Dayjs) {
   return [
@@ -306,12 +394,14 @@ function getWeekDays() {
 }
 
 // ==================== 自定义访谈类型函数 ====================
+/** 显示增加类型输入框 */
 function showAddCustomType() {
   showAddTypeInput.value = true;
   newTypeName.value = '';
   formRef.value?.clearValidate('consultType');
 }
 
+/** 确认增加类型 */
 function confirmAddType() {
   if (!newTypeName.value.trim()) {
     message.error('请输入自定义类型名称');
@@ -324,6 +414,7 @@ function confirmAddType() {
   newTypeName.value = '';
 }
 
+/** 取消增加类型 */
 function cancelAddType() {
   showAddTypeInput.value = false;
   newTypeName.value = '';
@@ -332,7 +423,7 @@ function cancelAddType() {
   }
 }
 
-// ==================== 时间冲突检查函数 ====================
+/** 时间范围变化 */
 function onTimeRangeChange(
   value: [dayjs.Dayjs | null | string, dayjs.Dayjs | null | string] | null,
   _dateString?: [string, string],
@@ -416,92 +507,6 @@ function resetForm() {
   dateTip.value = '';
 }
 
-// ==================== 咨询预约详情相关 ====================
-
-/** 加载咨询预约详情 */
-async function loadConsultationRecord() {
-  if (!isDetail.value) {
-    return;
-  }
-  const res = await getConsultationRecord(
-    currentConsultationRecordId.value as number,
-  );
-  currentConsultationRecord.value = res;
-  // 将详情数据回填到表单
-  try {
-    const startMs = (res as any).appointmentStartTime as number | undefined;
-    const endMs = (res as any).appointmentEndTime as number | undefined;
-
-    // 回填学生信息（Select 使用 label-in-value）
-    form.value.student = buildStudentOption(res);
-
-    // 回填日期与时间
-    if (startMs) {
-      form.value.consultDate = dayjs(startMs);
-    }
-    if (startMs && endMs) {
-      form.value.consultTime = [dayjs(startMs), dayjs(endMs)] as any;
-    }
-
-    // 回填类型（后端可能返回字符串或数字），基于 consultTypeOptions 做映射
-    form.value.consultType = mapConsultType(
-      (res as any).consultationType,
-      consultTypeOptions.value,
-    );
-
-    // 回填老师与地点、重点
-    form.value.consultTeacher = (res as any).counselorUserId || '';
-    form.value.consultLocation = (res as any).location || '';
-    form.value.consultFocus = (res as any).notes || '';
-
-    // 同步周视图驱动数据
-    if (startMs) {
-      currentDate.value = dayjs(startMs).format('YYYY-MM-DD');
-    }
-    if (startMs && endMs) {
-      timeRange.value = {
-        date: new Date(startMs),
-        start: new Date(startMs),
-        end: new Date(endMs),
-      } as any;
-    }
-
-    // 记录原始快照用于“取消编辑”恢复
-    originalSnapshot.value = takeSnapshot();
-  } catch (error) {
-    console.error('回填预约详情到表单失败:', error);
-  }
-}
-
-// ==================== Drawer 配置 ====================
-const [Drawer, drawerApi] = useVbenDrawer({
-  class: 'w-3/4',
-  contentClass: 'p-0',
-  confirmText: '创建预约',
-  destroyOnClose: true,
-  onConfirm: submitConsult,
-  onOpenChange: (isOpen: boolean) => {
-    if (isOpen) {
-      const data = drawerApi.getData<{
-        currentDate?: string;
-        id?: number;
-        timeRange?: { date: Date; end: Date | string; start: Date | string };
-      }>();
-      // 打开时加载教师数据
-      fetchTeacherOptions();
-      if (data.id) {
-        currentConsultationRecordId.value = data.id;
-        isEdit.value = false;
-        loadConsultationRecord();
-      } else {
-        isEdit.value = true;
-        currentDate.value = data.currentDate || '';
-        timeRange.value = data.timeRange;
-      }
-    }
-  },
-});
-
 // ==================== 监听器 ====================
 watch(
   () => form.value.student,
@@ -572,6 +577,7 @@ function disabledRangeTime(
         }}</span>
       </div>
     </template>
+
     <!-- 抽屉内容 -->
     <div class="grid h-full w-full grid-cols-2 overflow-hidden">
       <!-- 左侧预约访谈部分 -->

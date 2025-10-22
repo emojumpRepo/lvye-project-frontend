@@ -14,7 +14,7 @@ interface SearchParams {
   pageSize?: number;
   counselorUserId?: number;
   status?: string;
-  consultTime?: string;
+  consultTime?: number;
   studentName?: string;
 }
 
@@ -27,51 +27,39 @@ const emit = defineEmits<{
 const teacherOptions = ref<{ label: string; value: number }[]>([]);
 
 // 搜索参数
-const searchParams = ref<SearchParams>({
-  pageNo: 1,
-  pageSize: 10,
-});
+const searchParams = ref<SearchParams>();
 
 const [Form, formApi] = useVbenForm({
   schema: useSearchFormSchema(),
   layout: 'horizontal',
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
+  submitButtonOptions: {
+    show: false,
+  },
   commonConfig: {
     componentProps: {
       class: 'w-full mr-2',
     },
     hideLabel: true,
   },
-  handleSubmit: async (values) => {
-    await handleSearch(values);
-  },
-  handleReset: async () => {
-    formApi.resetForm();
-    await handleSearch({});
+  handleValuesChange: async (values) => {
+    try {
+      // 构建搜索参数
+      const params: SearchParams = {
+        studentName: values.searchKeyword,
+        status: values.status || undefined,
+        consultTime: values.consultTime || undefined,
+        counselorUserId: values.counselorUserId || undefined,
+      };
+
+      searchParams.value = params;
+      emit('search', params);
+    } catch (error) {
+      console.error('搜索失败:', error);
+      message.error('搜索失败，请重试');
+    }
   },
 });
-
-// 处理搜索
-async function handleSearch(values: any) {
-  console.log('values', values);
-  try {
-    // 构建搜索参数
-    const params: SearchParams = {
-      ...searchParams.value,
-      pageNo: 1, // 重置到第一页
-      studentName: values.searchKeyword,
-      status: values.status || undefined,
-      consultTime: values.consultTime || undefined,
-      counselorUserId: values.counselorUserId || undefined,
-    };
-
-    searchParams.value = params;
-    emit('search', params);
-  } catch (error) {
-    console.error('搜索失败:', error);
-    message.error('搜索失败，请重试');
-  }
-}
 
 async function getTeacherOptions() {
   try {
@@ -92,6 +80,10 @@ async function getTeacherOptions() {
 
 onMounted(async () => {
   await getTeacherOptions();
+});
+
+defineExpose({
+  searchParams,
 });
 </script>
 

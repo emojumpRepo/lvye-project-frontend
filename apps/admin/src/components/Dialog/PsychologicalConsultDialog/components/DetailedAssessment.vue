@@ -19,7 +19,7 @@ const props = withDefaults(
     summary?: CoreAssessmentType;
   }>(),
   {
-    modelValue: () => ({ report: '', file: undefined }),
+    modelValue: () => ({ report: '', fileId: undefined, assessmentMode: 1 }),
     summary: () => ({
       riskLevel: INTERVENTION_TYPE_MAP[0]?.key || 0,
       issues: ['人际关系'],
@@ -43,6 +43,7 @@ function sync() {
   emit('update:modelValue', {
     report: freeText.value,
     fileId: fileList.value.length > 0 ? fileList.value[0]?.id : undefined,
+    assessmentMode: method.value === 'free' ? 1 : 2,
   });
 }
 

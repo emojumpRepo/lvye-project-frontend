@@ -15,7 +15,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="statistic-card">
+  <div class="statistic-card p-4">
     <!-- 统计数值区域 -->
     <div class="flex flex-col">
       <Statistic
@@ -27,7 +27,7 @@ defineProps<{
 
     <!-- 统计图标区域 -->
     <div
-      class="flex h-[40px] w-[40px] items-center justify-center rounded-full"
+      class="flex items-center justify-center rounded-full"
       :style="{ backgroundColor: iconBg }"
     >
       <IconifyIcon
@@ -45,7 +45,6 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.2rem 1rem;
   background-image: linear-gradient(
     90deg,
     #fff 0%,

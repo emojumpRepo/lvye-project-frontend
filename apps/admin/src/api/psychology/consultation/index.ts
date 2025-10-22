@@ -1,4 +1,5 @@
 import type { PageParam, PageResult } from '@vben/request';
+import type { StatisticsConsultationCount } from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
@@ -23,6 +24,7 @@ export namespace PsychologyConsultationApi {
     notes?: string;
     notifyStudent: boolean;
     status: number;
+    currentStep?: number;
     createTime?: Date;
     updateTime?: Date;
   }
@@ -131,6 +133,18 @@ export namespace PsychologyConsultationApi {
     riskLevelDistribution: Record<string, number>;
     sourceTypeDistribution: Record<string, number>;
   }
+
+  /** 完成评估请求 */
+  export interface SaveAssessmentReq {
+    appointmentId: number;
+    riskLevel: number;
+    problemTypes?: string[];
+    followUpSuggestion: number;
+    assessmentMode: number;
+    content?: string;
+    fileId?: number;
+    draft: boolean;
+  }
 }
 
 // ==================== 心理咨询记录管理 ====================
@@ -220,6 +234,52 @@ export function exportConsultationRecord(
       params,
     },
   );
+}
+
+/** 完成评估 */
+export function saveAssessment(
+  data: PsychologyConsultationApi.SaveAssessmentReq,
+) {
+  return requestClient.post('/psychology/consultation/assessment/save', data);
+}
+
+/** 统计咨询状态数量 */
+export function getConsultationStatusCount() {
+  return requestClient.get<StatisticsConsultationCount>(
+    '/psychology/consultation/statistics',
+  );
+}
+
+/** 补录评估 */
+export function supplementEvalute({
+  id,
+  actualTime,
+  notes,
+}: {
+  actualTime: number;
+  id: number;
+  notes: string;
+}) {
+  return requestClient.put(
+    `/psychology/consultation/appointment/${id}/supplement`,
+    {
+      actualTime,
+      notes,
+    },
+  );
+}
+
+/** 时间冲突校验 */
+export function checkTimeConflict(data: {
+  appointmentEndTime: number;
+  appointmentStartTime: number;
+  counselorUserId: number;
+  excludeId?: number; // 排除指定预约ID
+}) {
+  return requestClient.post<{
+    hasConflict: boolean;
+    message: string;
+  }>('/psychology/consultation/appointment/check-time-conflict', data);
 }
 
 // ==================== 危机干预事件管理 ====================

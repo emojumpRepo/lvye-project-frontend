@@ -17,13 +17,14 @@ export interface CounselingRecordRow {
   id: number;
   studentName: string;
   studentClass: string;
+  studentNo: string;
   time: number; // timestamp
   duration: number; // minutes
   type: string; // 访谈类型
   teacher: string; // 访谈老师
   location: string; // 地点
   status: '已取消' | '已完成' | '已逾期' | '已预约';
-  progress: number; // 0-100
+  currentStep: number;
 }
 
 export function useGridColumns(): VxeTableGridOptions['columns'] {
@@ -31,7 +32,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'studentName',
       title: '学生信息',
-      width: '15%',
+      width: '12%',
       slots: { default: 'studentName' },
     },
     {
@@ -41,9 +42,14 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       visible: false,
     },
     {
+      field: 'studentNumber',
+      title: '学号',
+      visible: false,
+    },
+    {
       field: 'consultTime',
       title: '时间',
-      width: '25%',
+      width: '20%',
       slots: { default: 'consultTime' },
     },
     {
@@ -57,19 +63,19 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '访谈类型',
       width: '10%',
     },
-    { field: 'counselorName', title: '访谈老师', width: '10%' },
-    { field: 'location', title: '地点', width: '13%' },
+    { field: 'counselorName', title: '访谈老师', width: '13%' },
+    { field: 'location', title: '地点', width: '10%' },
     {
       field: 'stauts',
       title: '状态',
-      width: '15%',
+      width: '10%',
       slots: { default: 'stauts' },
     },
     {
-      field: 'progress',
+      field: 'currentStep',
       title: '进度',
       width: '15%',
-      slots: { default: 'progress' },
+      slots: { default: 'currentStep' },
     },
     {
       title: '操作',
@@ -93,9 +99,7 @@ export async function queryConsultationPage(
     counselorUserId: counselorUserId || undefined,
     studentName: studentName || undefined,
     status: status !== undefined && status !== '' ? Number(status) : undefined,
-    // 这里的日期控件是单值，后端入参是时间范围数组，按同一天处理
-    startTime: consultTime ? [consultTime] : undefined,
-    endTime: consultTime ? [consultTime] : undefined,
+    consultTime: consultTime ? dayjs(consultTime).valueOf() : undefined,
   } as any;
 
   const res: PageResult<PsychologyConsultationApi.ConsultationRecord> =
@@ -125,9 +129,10 @@ export async function queryConsultationPage(
       counselorName: item.counselorName || '-',
       location: item.location || '-',
       status: (item.status as any) ?? '',
-      progress: 0,
+      currentStep: item.currentStep ?? 0,
       appointmentStartTime: item.appointmentStartTime,
       appointmentEndTime: item.appointmentEndTime,
+      studentNumber: item.studentNumber,
     } as any;
   });
 

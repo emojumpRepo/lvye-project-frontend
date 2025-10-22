@@ -1,27 +1,37 @@
 <script setup lang="ts">
+import type { Dayjs } from 'dayjs';
+
+import type { AssessmentComfirmInfo } from '@vben/types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
-import { onMounted, ref } from 'vue';
+import { h, onMounted, ref } from 'vue';
 
-import { prompt, useVbenModal } from '@vben/common-ui';
+import { alert, prompt, useVbenModal } from '@vben/common-ui';
 
 import {
   Input as AInput,
   RadioGroup as ARadioGroup,
+  Result as AResult,
   Steps as ASteps,
   message,
 } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { COUNSELING_STATUS } from '#/api/constants';
 import {
   cancelConsultationRecord,
   completeConsultationRecord,
+  saveAssessment,
+  supplementEvalute,
 } from '#/api/psychology/consultation';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
+import SupplementEvaluteDialog from '#/components/Dialog/SupplementEvaluteDialog/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
@@ -32,10 +42,24 @@ defineOptions({ name: 'CounselingList' });
 
 const emit = defineEmits<{
   (e: 'viewDetail', row: PsychologyConsultationApi.ConsultationRecord): void;
+  (e: 'statistics'): void;
 }>();
 
 const loading = ref(false);
 const isOpenPsychologicalConsultDialogModal = ref(false);
+const currentRowId = ref<number | undefined>();
+const confirmInfo = ref<AssessmentComfirmInfo>({
+  studentInfo: {
+    studentName: '',
+    className: '',
+    studentNo: '',
+  },
+  consultInfo: {
+    consultant: '',
+    consultType: '',
+    consultTime: '',
+  },
+});
 
 /** 调整预约时间弹窗 */
 const [AdjustAppointmentTimeModal, appointmentDetailModalApi] = useVbenModal({
@@ -47,6 +71,11 @@ const [ConfirmCancelModal, confirmCancelModalApi] = useVbenModal({
   connectedComponent: ConfirmDialog,
 });
 
+/** 补评估弹窗 */
+const [SupplementEvaluteModal, supplementEvaluteModalApi] = useVbenModal({
+  connectedComponent: SupplementEvaluteDialog,
+});
+
 const currentCancelRow =
   ref<null | PsychologyConsultationApi.ConsultationRecord>(null);
 const currentCancelReason = ref<string>('');
@@ -55,10 +84,16 @@ const currentCancelReason = ref<string>('');
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    height: '520px',
+    height: '550px',
     keepSource: true,
+    pagerConfig: {
+      pageSize: 10,
+      pageSizes: [10, 20, 30, 40, 50, 60],
+    },
     proxyConfig: {
-      ajax: { query: queryConsultationPage },
+      ajax: {
+        query: queryConsultationPage,
+      },
     },
     rowConfig: { keyField: 'id' },
     toolbarConfig: {
@@ -75,13 +110,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 处理搜索 */
 function handleSearch(params: any) {
-  console.log('params', params);
   gridApi.query({ ...params });
 }
 
 /** 查看详情 */
 function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
   emit('viewDetail', row);
+}
+
+/** 是否逾期 */
+function isOverdue(row: PsychologyConsultationApi.ConsultationRecord) {
+  return (
+    dayjs(row.appointmentEndTime).add(30, 'minute').isBefore(dayjs()) &&
+    row.status !== COUNSELING_STATUS.CLOSED &&
+    row.status !== COUNSELING_STATUS.CANCELED
+  );
 }
 
 /** 完成心理咨询预约 */
@@ -94,9 +137,9 @@ function handleFinish(row: PsychologyConsultationApi.ConsultationRecord) {
         { label: '稍后填写评估', value: 2 },
       ],
     },
-    content: '是否确认完成咨询，选择后续处理方式',
+    content: '是否确认完成咨询，选择后续处理方式？',
     icon: 'success',
-    title: '完成咨询',
+    title: '确定完成咨询',
     modelPropName: 'value',
     beforeClose: (scope) => {
       // 如果是确认操作但没有选择值，则阻拦关闭
@@ -112,14 +155,128 @@ function handleFinish(row: PsychologyConsultationApi.ConsultationRecord) {
     }
     gridApi.query();
     if (val === 1) {
-      handleEvalute();
+      handleEvalute(row);
+    } else {
+      alert({
+        buttonAlign: 'center',
+        content: h(AResult, {
+          status: 'success',
+          subTitle: '请及时填写评估报告',
+          title: '咨询已完成',
+        }),
+      });
     }
   });
 }
 
+/** 补录咨询 */
+function handleSupplementEvalute(
+  row: PsychologyConsultationApi.ConsultationRecord,
+) {
+  supplementEvaluteModalApi.setData(row).open();
+}
+
+/** 确认补录 */
+async function confirmSupplementEvalute(
+  form: {
+    actualTime: Dayjs;
+    id: number;
+    notes: string;
+  },
+  row: PsychologyConsultationApi.ConsultationRecord,
+) {
+  if (!form.id) return message.error('咨询记录不存在');
+  try {
+    supplementEvaluteModalApi.lock();
+    const result = await supplementEvalute({
+      id: form.id,
+      actualTime: dayjs(form.actualTime).valueOf(),
+      notes: form.notes,
+    });
+    if (!result) return message.error('补录失败');
+
+    await refresh();
+    supplementEvaluteModalApi.close();
+    message.success('补录成功');
+    prompt({
+      component: ARadioGroup,
+      componentProps: {
+        options: [
+          { label: '立即填写评估', value: 1 },
+          { label: '稍后填写评估', value: 2 },
+        ],
+      },
+      content: '您已完成咨询，是否开始评估？',
+      icon: 'success',
+      title: '确认评估',
+      modelPropName: 'value',
+      beforeClose: (scope) => {
+        // 如果是确认操作但没有选择值，则阻拦关闭
+        if (scope.isConfirm && !scope.value) {
+          message.warning('请选择处理方式');
+          return false; // 返回false阻拦关闭
+        }
+        return true; // 返回true允许关闭
+      },
+    }).then(async (val) => {
+      if (val === 1) {
+        handleEvalute(row);
+      } else {
+        alert({
+          buttonAlign: 'center',
+          content: h(AResult, {
+            status: 'success',
+            subTitle: '请及时填写评估报告',
+            title: '咨询已完成',
+          }),
+        });
+      }
+    });
+  } catch (error) {
+    console.error('补录失败', error);
+    message.error('补录失败');
+    return false;
+  } finally {
+    supplementEvaluteModalApi.unlock();
+  }
+}
+
 /** 评估 */
-function handleEvalute() {
+function handleEvalute(row: PsychologyConsultationApi.ConsultationRecord) {
+  confirmInfo.value = {
+    studentInfo: {
+      studentName: row.studentName || '',
+      className: row.className || '',
+      studentNo: row.studentNumber || '',
+    },
+    consultInfo: {
+      consultant: row.counselorName || '',
+      consultType: row.consultationType || '',
+      consultTime: dayjs(row.appointmentStartTime).format(
+        'YYYY-MM-DD HH:mm:ss',
+      ),
+    },
+  };
+  currentRowId.value = row.id;
   isOpenPsychologicalConsultDialogModal.value = true;
+}
+
+/** 确认完成评估 */
+async function completedEvalute(params: InterventionAssessmentReqVO) {
+  if (!currentRowId.value) return message.error('请先选择咨询记录');
+  try {
+    const response = await saveAssessment({
+      ...params,
+      appointmentId: currentRowId.value,
+      draft: false,
+    });
+    if (!response) return false;
+    await refresh();
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
 
 /** 调整时间 */
@@ -217,10 +374,14 @@ function handleCancelCancelModal() {
   fn?.();
 }
 
+/** 刷新数据 */
+function refresh() {
+  gridApi.query();
+  emit('statistics');
+}
+
 defineExpose({
-  refresh: () => {
-    gridApi.query();
-  },
+  refresh,
 });
 
 onMounted(() => {
@@ -269,17 +430,19 @@ onMounted(() => {
               tag-category-key="counseling_status"
               :tag-label="getDictLabel('counseling_status', row.status)"
             />
-            <span class="text-[#FF0831]" v-if="row.overdue">（评估逾期）</span>
+            <span class="text-[#FF0831]" v-if="isOverdue(row)">
+              （已逾期）
+            </span>
           </div>
         </template>
 
         <!-- 进度 -->
-        <template #progress>
+        <template #currentStep="{ row }">
           <ASteps
             type="inline"
-            :current="0"
+            :initial="1"
+            :current="row.currentStep"
             :items="[{}, {}, {}]"
-            class="!w-full !px-10"
           />
         </template>
 
@@ -297,28 +460,43 @@ onMounted(() => {
                 label: '完成',
                 type: 'link',
                 color: 'success',
-                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                ifShow: () =>
+                  !isOverdue(row) &&
+                  row.status === COUNSELING_STATUS.APPOINTMENT,
                 onClick: () => handleFinish(row),
+              },
+              {
+                label: '补录咨询',
+                type: 'link',
+                color: 'success',
+                ifShow: () =>
+                  isOverdue(row) &&
+                  row.status === COUNSELING_STATUS.APPOINTMENT,
+                onClick: () => handleSupplementEvalute(row),
               },
               {
                 label: '评估',
                 type: 'link',
                 color: 'success',
                 ifShow: () => row.status === COUNSELING_STATUS.COMPLETED,
-                onClick: handleEvalute,
+                onClick: () => handleEvalute(row),
               },
             ]"
             :drop-down-actions="[
               {
                 label: '调整时间',
                 type: 'link',
-                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                ifShow: () =>
+                  !isOverdue(row) &&
+                  row.status === COUNSELING_STATUS.APPOINTMENT,
                 onClick: () => handleAdjustTime(row),
               },
               {
                 label: '取消预约',
                 type: 'link',
-                ifShow: () => row.status === COUNSELING_STATUS.APPOINTMENT,
+                ifShow: () =>
+                  !isOverdue(row) &&
+                  row.status === COUNSELING_STATUS.APPOINTMENT,
                 onClick: () => handleCancel(row),
               },
             ]"
@@ -327,14 +505,17 @@ onMounted(() => {
       </Grid>
     </div>
 
-    <AdjustAppointmentTimeModal @refresh="gridApi.query()" />
+    <AdjustAppointmentTimeModal @refresh="refresh" />
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalConsultDialogModal"
+      :comfirm-info="confirmInfo"
+      :publish="completedEvalute"
     />
     <ConfirmCancelModal
       @confirm="handleConfirmCancelModal"
       @cancel="handleCancelCancelModal"
     />
+    <SupplementEvaluteModal @confirm="confirmSupplementEvalute" />
   </div>
 </template>
 

@@ -25,4 +25,12 @@ export interface CoreAssessmentType {
 export interface DetailedAssessmentType {
   report?: string;
   fileId?: number;
+  assessmentMode: number;
+}
+
+export interface StatisticsConsultationCount {
+  todayCount: number;
+  completedCount: number;
+  pendingCount: number;
+  overdueCount: number;
 }

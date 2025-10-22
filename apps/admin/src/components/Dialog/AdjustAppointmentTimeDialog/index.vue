@@ -140,7 +140,7 @@ watch(
 
 <template>
   <AdjustAppointmentTimeModal title="调整预约时间">
-    <div>
+    <div class="p-2">
       <!-- 时间选择 -->
       <div class="flex gap-2">
         <div class="flex w-full items-center gap-4">

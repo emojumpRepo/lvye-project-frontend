@@ -1,13 +1,16 @@
 <script lang="ts" setup>
+import type { StatisticsConsultationCount } from '@vben/types';
+
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 
-import { RadioButton, RadioGroup } from 'ant-design-vue';
+import { message, RadioButton, RadioGroup } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
+import { getConsultationStatusCount } from '#/api/psychology/consultation';
 import ConsultMoreDrawerComponent from '#/components/Drawer/ConsultMoreDrawer/index.vue';
 import CreateConsultDrawerComponent from '#/components/Drawer/CreateConsultDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -39,14 +42,20 @@ const [ConsultMoreDrawer, consultMoreDrawerApi] = useVbenDrawer({
 });
 
 const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
+const statisticsConsultationCount = ref<StatisticsConsultationCount>({
+  todayCount: 0,
+  completedCount: 0,
+  pendingCount: 0,
+  overdueCount: 0,
+});
 
 const today = computed(
   () => `${dayjs().format('YYYY-MM-DD')} ${dayjs().format('dddd')}`,
 );
 
 /** 刷新咨询记录列表 */
-function onRefresh() {
-  counselingListRef.value?.refresh();
+async function onRefresh() {
+  await counselingListRef.value?.refresh();
 }
 
 /** 打开咨询预约抽屉 */
@@ -136,6 +145,22 @@ function handleViewDetail(
     })
     .open();
 }
+
+/** 获取咨询统计数据 */
+async function fetchStatisticsConsultationCount() {
+  try {
+    const data = await getConsultationStatusCount();
+    if (!data) return message.error('获取咨询统计数据失败');
+    statisticsConsultationCount.value = data;
+  } catch (error) {
+    console.error('获取咨询统计数据失败', error);
+    message.error('获取咨询统计数据失败');
+  }
+}
+
+onMounted(async () => {
+  await fetchStatisticsConsultationCount();
+});
 </script>
 
 <template>
@@ -168,7 +193,7 @@ function handleViewDetail(
           icon-color="#247eff"
           icon-src="flowbite:messages-solid"
           title="今天访谈数"
-          :value="12000"
+          :value="statisticsConsultationCount?.todayCount"
         />
 
         <StatisticCard
@@ -176,7 +201,7 @@ function handleViewDetail(
           icon-color="#04dc70"
           icon-src="fluent:clipboard-task-24-filled"
           title="已完成数"
-          :value="900"
+          :value="statisticsConsultationCount?.completedCount"
         />
 
         <StatisticCard
@@ -184,7 +209,7 @@ function handleViewDetail(
           icon-color="#ff9900"
           icon-src="ph:clock-countdown-fill"
           title="待完成数"
-          :value="12"
+          :value="statisticsConsultationCount?.pendingCount"
         />
 
         <StatisticCard
@@ -192,7 +217,7 @@ function handleViewDetail(
           icon-color="#f4532f"
           icon-src="ph:seal-warning-fill"
           title="逾期评估数"
-          :value="100"
+          :value="statisticsConsultationCount?.overdueCount"
         />
       </div>
 
@@ -201,6 +226,7 @@ function handleViewDetail(
           <!-- 访谈记录列表 -->
           <CounselingList
             @view-detail="handleViewDetail"
+            @statistics="fetchStatisticsConsultationCount"
             ref="counselingListRef"
           />
         </template>

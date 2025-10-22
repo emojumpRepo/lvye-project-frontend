@@ -56,6 +56,7 @@ const coreAssessmentData = ref<CoreAssessmentType>({
 const detailedAssessmentData = ref<DetailedAssessmentType>({
   report: '',
   fileId: undefined,
+  assessmentMode: 1,
 });
 // 问题类型
 const availableIssues = ref<string[]>([
@@ -114,6 +115,7 @@ function handlePrev() {
 async function handleNext() {
   if (props.step === 3) {
     const params = {
+      assessmentMode: detailedAssessmentData.value.assessmentMode,
       riskLevel: coreAssessmentData.value.riskLevel,
       problemTypes: coreAssessmentData.value.issues,
       followUpSuggestion: coreAssessmentData.value.recommendation,

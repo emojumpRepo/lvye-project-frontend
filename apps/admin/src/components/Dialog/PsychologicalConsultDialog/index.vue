@@ -3,11 +3,15 @@ import type { AssessmentComfirmInfo } from '@vben/types';
 
 import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 
 import { alert, useVbenModal } from '@vben/common-ui';
 
-import { Modal as AModal, Spin as ASpin } from 'ant-design-vue';
+import {
+  Modal as AModal,
+  Result as AResult,
+  Spin as ASpin,
+} from 'ant-design-vue';
 
 import { CommonDialogHeader } from '#/components/Dialog/CommonDialog';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
@@ -48,10 +52,20 @@ async function onPublished(params: InterventionAssessmentReqVO) {
     hasPublished.value = response;
     if (hasPublished.value) {
       alert({
-        content: '评估已完成',
-        icon: 'success',
+        buttonAlign: 'center',
+        title: '',
+        content: h(AResult, {
+          status: 'success',
+          subTitle: '',
+          title: '您的评估已完成！',
+        }),
       }).then(() => {
         open.value = false;
+      });
+    } else {
+      alert({
+        content: '评估失败，请重试',
+        icon: 'error',
       });
     }
   });
