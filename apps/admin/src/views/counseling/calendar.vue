@@ -1,15 +1,26 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 
+import type { TimeRangeAppointment } from '@vben/types';
+
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
+import { useUserStore } from '@vben/stores';
 
 // @ts-ignore
 import Calendar from '@toast-ui/calendar';
-import { DatePicker, RadioButton, RadioGroup, Tooltip } from 'ant-design-vue';
+import {
+  DatePicker,
+  message,
+  RadioButton,
+  RadioGroup,
+  Tooltip,
+} from 'ant-design-vue';
 import dayjs from 'dayjs';
+import { storeToRefs } from 'pinia';
 
+import { getTimeRangeAppointment } from '#/api/psychology/consultation';
 import LyButton from '#/components/LyButton/index.vue';
 
 import '@toast-ui/calendar/dist/toastui-calendar.min.css';
@@ -21,7 +32,11 @@ const emit = defineEmits<{
   (e: 'timeClick', payload: { date: Date; end: Date; start: Date }): void;
   (
     e: 'moreEventsClick',
-    payload: { date: Date; target: HTMLElement | null },
+    payload: {
+      counselorUserId: number;
+      date: Date;
+      target: HTMLElement | null;
+    },
   ): void;
   (e: 'eventClick', payload: { date: Date; event: any }): void;
 }>();
@@ -36,6 +51,9 @@ enum CalendarViewType {
 
 type PickerMode = 'date' | 'month' | 'week';
 
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
+
 // 日历组件实例
 const calendarContainer = ref<HTMLElement | null>(null);
 const calendar = ref<Calendar | null>(null);
@@ -44,25 +62,18 @@ let removeMonthSingleSelect: (() => void) | null = null;
 
 // 日历视图类型
 const calendarView = ref<CalendarViewType>(CalendarViewType.Month);
-
+const pickerType = ref<PickerMode>(CalendarViewType.Month);
 const leftArrowTip = ref('上个月');
 const rightArrowTip = ref('下个月');
-
 const selectedDate = ref<Dayjs>(dayjs());
-const pickerType = ref<CalendarViewType>(CalendarViewType.Month);
-
 const isAllTeachers = ref(false);
+const offset = ref(0);
 
 /**
  * 辅助函数：将 dayjs/Date/原始值统一转换为 Date
  */
 function toDateLike(input: any): Date {
   return typeof input?.toDate === 'function' ? input.toDate() : new Date(input);
-}
-
-function handleAllTeachers() {
-  isAllTeachers.value = !isAllTeachers.value;
-  console.log('全部老师');
 }
 
 /**
@@ -87,14 +98,91 @@ function getClickedDateFromBase(base: Date, dayNum: number): Date {
 }
 
 /**
- * 生成随机的日历ID (1-3)
+ * 辅助函数：生成随机的日历ID (1-3)
  */
 function getRandomCalendarId(): string {
   return String(Math.floor(Math.random() * 3) + 1);
 }
 
-function handleToday() {
+/** 辅助函数：重构数据 */
+function extractAndFormatAppointments(data: TimeRangeAppointment) {
+  if (!data?.dailyData) return [];
+
+  const allAppointments = data.dailyData.flatMap(
+    (dailyItem) => dailyItem.appointments || [],
+  );
+
+  const formattedAppointments = allAppointments.map((appointment) => {
+    return {
+      id: appointment.id,
+      calendarId: getRandomCalendarId(),
+      title: `${appointment.studentName} - ${appointment.counselorName}`,
+      category: 'time',
+      start: dayjs(appointment.appointmentStartTime).toISOString(),
+      end: dayjs(appointment.appointmentEndTime).toISOString(),
+      body: appointment.consultationType,
+      location: appointment.location,
+    };
+  });
+
+  return formattedAppointments;
+}
+
+/** 辅助函数：格式化日期 */
+function formatDate(value: Dayjs) {
+  switch (calendarView.value) {
+    case CalendarViewType.Month: {
+      return `${dayjs(value).format('YYYY年MM月')}`;
+    }
+    case CalendarViewType.Week: {
+      return `${dayjs(value).startOf('week').format('YYYY年MM月DD日')} ~ ${dayjs(
+        value,
+      )
+        .endOf('week')
+        .format('DD日')}`;
+    }
+    default: {
+      return `${dayjs(value).format('YYYY年MM月DD日')}`;
+    }
+  }
+}
+
+/** 加载时间范围预约数据 */
+async function loadTimeRangeAppointmentData() {
+  calendar.value?.clear();
+  try {
+    const counselorUserId =
+      !isAllTeachers.value && userInfo.value?.id
+        ? Number(userInfo.value.id)
+        : undefined;
+    const referenceDate = dayjs(selectedDate.value).format('YYYY-MM-DD');
+    const data = await getTimeRangeAppointment({
+      timeGranularity: calendarView.value,
+      counselorUserId,
+      referenceDate,
+      offset: offset.value,
+    });
+
+    if (data) {
+      const formattedAppointments = extractAndFormatAppointments(data);
+      calendar.value.createEvents(formattedAppointments);
+    }
+  } catch (error) {
+    console.error('加载时间范围预约数据失败:', error);
+    message.error('加载时间范围预约数据失败');
+  }
+}
+
+/** 点击全部老师按钮 */
+async function handleAllTeachers() {
+  isAllTeachers.value = !isAllTeachers.value;
+  await loadTimeRangeAppointmentData();
+}
+
+/** 点击今日按钮 */
+async function handleToday() {
   if (calendar.value) {
+    offset.value = 0;
     calendar.value.today();
     // 更新选择器日期为今天
     selectedDate.value = dayjs();
@@ -102,25 +190,28 @@ function handleToday() {
     if (calendarView.value === CalendarViewType.Month) {
       updateVisibleWeeksCount();
     }
+    await loadTimeRangeAppointmentData();
   }
 }
 
-function handleDateChange(value: Dayjs | string, _dateString: string) {
+/** 日期选择器变化 */
+async function handleDateChange(value: Dayjs | string, _dateString: string) {
+  console.log('handleDateChange', value, calendar.value);
   if (calendar.value && value) {
     const dateValue = typeof value === 'string' ? dayjs(value) : value;
+    offset.value = 0;
     selectedDate.value = dateValue;
     calendar.value.setDate(dateValue.toDate());
     // 月视图时需要重新计算周数
     if (calendarView.value === CalendarViewType.Month) {
       updateVisibleWeeksCount();
     }
+    await loadTimeRangeAppointmentData();
   }
 }
 
-/**
- * 前移按钮点击
- */
-function handlePrevious() {
+/** 前移按钮点击 */
+async function handlePrevious() {
   if (!calendar.value) return;
 
   const currentDate = calendar.value.getDate();
@@ -149,18 +240,18 @@ function handlePrevious() {
     }
   }
 
+  offset.value -= 1;
   selectedDate.value = newDate;
   calendar.value.setDate(newDate.toDate());
 
   if (calendarView.value === CalendarViewType.Month) {
     updateVisibleWeeksCount();
   }
+  await loadTimeRangeAppointmentData();
 }
 
-/**
- * 后移按钮点击
- */
-function handleNext() {
+/** 后移按钮点击 */
+async function handleNext() {
   if (!calendar.value) return;
 
   const currentDate = calendar.value.getDate();
@@ -189,18 +280,18 @@ function handleNext() {
     }
   }
 
+  offset.value += 1;
   selectedDate.value = newDate;
   calendar.value.setDate(newDate.toDate());
 
   if (calendarView.value === CalendarViewType.Month) {
     updateVisibleWeeksCount();
   }
+  await loadTimeRangeAppointmentData();
 }
 
-/**
- * 切换日历视图
- */
-function handleChangeCalendarView() {
+/** 切换日历视图 */
+async function handleChangeCalendarView() {
   if (calendar.value) {
     calendar.value.changeView(calendarView.value);
     // 保持当前选择的日期，不要重置为今天
@@ -213,30 +304,11 @@ function handleChangeCalendarView() {
   selectedDate.value = dayjs(currentDate);
 
   updateVisibleWeeksCount();
+  await loadTimeRangeAppointmentData();
 }
 
-function formatDate(value: Dayjs) {
-  switch (calendarView.value) {
-    case CalendarViewType.Month: {
-      return `${dayjs(value).format('YYYY年MM月')}`;
-    }
-    case CalendarViewType.Week: {
-      return `${dayjs(value).startOf('week').format('YYYY年MM月DD日')} ~ ${dayjs(
-        value,
-      )
-        .endOf('week')
-        .format('DD日')}`;
-    }
-    default: {
-      return `${dayjs(value).format('YYYY年MM月DD日')}`;
-    }
-  }
-}
-
-/**
- * 初始化日历
- */
-function initCalendar() {
+/** 初始化日历 */
+async function initCalendar() {
   calendar.value = new Calendar(calendarContainer.value, {
     defaultView: calendarView.value,
     // 日历分组配置
@@ -313,92 +385,8 @@ function initCalendar() {
     },
   });
 
-  // 创建mock事件
-  createMockEvents();
-}
-
-/**
- * 创建mock事件数据
- */
-function createMockEvents() {
-  if (!calendar.value) return;
-
-  const today = dayjs();
-  const events = [
-    {
-      id: '1',
-      calendarId: getRandomCalendarId(),
-      title: '个人心理咨询 - 张三',
-      category: 'time',
-      start: today.hour(9).minute(0).toISOString(),
-      end: today.hour(10).minute(0).toISOString(),
-      body: '焦虑症治疗',
-      location: '咨询室A',
-    },
-    {
-      id: '2',
-      calendarId: getRandomCalendarId(),
-      title: '心理评估 - 李四',
-      category: 'time',
-      start: today.hour(14).minute(30).toISOString(),
-      end: today.hour(15).minute(30).toISOString(),
-      body: 'MMPI心理测试',
-      location: '咨询室B',
-    },
-    {
-      id: '3',
-      calendarId: getRandomCalendarId(),
-      title: '初次咨询 - 王五',
-      category: 'time',
-      start: today.hour(16).minute(0).toISOString(),
-      end: today.hour(17).minute(0).toISOString(),
-      body: '抑郁情绪咨询',
-      location: '咨询室C',
-    },
-    {
-      id: '3',
-      calendarId: getRandomCalendarId(),
-      title: '初次咨询 - 王五',
-      category: 'time',
-      start: today.hour(16).minute(0).toISOString(),
-      end: today.hour(17).minute(0).toISOString(),
-      body: '抑郁情绪咨询',
-      location: '咨询室C',
-    },
-    {
-      id: '1',
-      calendarId: getRandomCalendarId(),
-      title: '个人心理咨询 - 张三',
-      category: 'time',
-      start: today.add(1, 'day').hour(9).minute(0).toISOString(),
-      end: today.add(1, 'day').hour(10).minute(0).toISOString(),
-      body: '焦虑症治疗',
-      location: '咨询室A',
-    },
-    {
-      id: '2',
-      calendarId: getRandomCalendarId(),
-      title: '心理评估 - 李四',
-      category: 'time',
-      start: today.add(1, 'day').hour(14).minute(30).toISOString(),
-      end: today.add(1, 'day').hour(15).minute(30).toISOString(),
-      body: 'MMPI心理测试',
-      location: '咨询室B',
-    },
-    {
-      id: '3',
-      calendarId: getRandomCalendarId(),
-      title: '初次咨询 - 王五',
-      category: 'time',
-      start: today.add(1, 'day').hour(16).minute(0).toISOString(),
-      end: today.add(1, 'day').hour(17).minute(0).toISOString(),
-      body: '抑郁情绪咨询',
-      location: '咨询室C',
-    },
-  ];
-
-  // 使用Toast UI Calendar的createEvents方法创建事件
-  calendar.value.createEvents(events);
+  // 加载预约数据
+  await loadTimeRangeAppointmentData();
 }
 
 /**
@@ -439,6 +427,7 @@ function updateVisibleWeeksCount() {
 // 事件监听器清理函数
 let removeCalendarEvents: (() => void) | null = null;
 
+/** 设置日历事件监听器 */
 function setupCalendarEvents() {
   if (!calendar.value) return;
 
@@ -482,14 +471,12 @@ function setupCalendarEvents() {
   };
 }
 
-/**
- * 设置月视图单选
- */
+/** 设置月视图单选 */
 function setupMonthSingleSelect() {
   if (!calendarContainer.value) return;
 
   const container = calendarContainer.value;
-
+  /** 辅助函数：获取月视图单元格元素 */
   function getMonthCellElement(node: HTMLElement | null): HTMLElement | null {
     let current: HTMLElement | null = node;
     while (current && current !== container) {
@@ -526,7 +513,11 @@ function setupMonthSingleSelect() {
         const isMoreBtn = isMoreHeaderTarget(targetEl);
 
         if (isMoreBtn) {
-          emit('moreEventsClick', { date: clicked, target: null });
+          emit('moreEventsClick', {
+            counselorUserId: userInfo.value?.id,
+            date: clicked,
+            target: null,
+          });
         } else {
           emit('monthCellClick', { date: clicked });
         }
@@ -540,13 +531,14 @@ function setupMonthSingleSelect() {
   };
 }
 
+/** 监听日历视图变化 */
 watch(
   calendarView,
   (newVal) => {
     if (newVal === CalendarViewType.Day) {
       leftArrowTip.value = '前一天';
       rightArrowTip.value = '后一天';
-      pickerType.value = CalendarViewType.Day;
+      pickerType.value = 'date';
     } else if (newVal === CalendarViewType.Month) {
       leftArrowTip.value = '上个月';
       rightArrowTip.value = '下个月';
@@ -560,8 +552,8 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
-  initCalendar();
+onMounted(async () => {
+  await initCalendar();
   setupMonthSingleSelect();
   setupCalendarEvents();
   updateVisibleWeeksCount();
@@ -580,6 +572,10 @@ onUnmounted(() => {
     removeCalendarEvents();
     removeCalendarEvents = null;
   }
+});
+
+defineExpose({
+  loadTimeRangeAppointmentData,
 });
 </script>
 
@@ -630,10 +626,13 @@ onUnmounted(() => {
             </template>
           </LyButton>
         </Tooltip>
+
+        <!-- 日期选择器 -->
         <DatePicker
           v-model:value="selectedDate"
           :picker="pickerType as PickerMode"
           show-today
+          :allow-clear="false"
           input-read-only
           :format="formatDate"
           @change="handleDateChange"

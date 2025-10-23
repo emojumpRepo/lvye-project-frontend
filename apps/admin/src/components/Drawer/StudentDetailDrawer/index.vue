@@ -22,13 +22,14 @@ import {
 } from '#/api/psychology/student-profile/index';
 import CreateStudentEventRecordDialog from '#/components/Dialog/CreateStudentEventRecordDialog/index.vue';
 import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
-import AssessmentListTab from '#/components/Drawer/StudentDrawer/components/AssessmentListTab.vue';
-import ConsultationListTab from '#/components/Drawer/StudentDrawer/components/ConsultationListTab.vue';
-import PersonalInfoTab from '#/components/Drawer/StudentDrawer/components/PersonalInfoTab.vue';
-import TimelineTab from '#/components/Drawer/StudentDrawer/components/TimelineTab.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import { calculateAge } from '#/utils/calculateTool';
 import { getDictObj, getDictOptions } from '#/utils/dict';
+
+import AssessmentListTab from './components/AssessmentListTab.vue';
+import ConsultationListTab from './components/ConsultationListTab.vue';
+import PersonalInfoTab from './components/PersonalInfoTab.vue';
+import TimelineTab from './components/TimelineTab.vue';
 
 interface FooterButton {
   label: string;

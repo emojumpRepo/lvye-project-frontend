@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
-import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import StudentDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 

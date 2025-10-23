@@ -1,5 +1,10 @@
 import type { PageParam, PageResult } from '@vben/request';
-import type { StatisticsConsultationCount } from '@vben/types';
+import type {
+  ConsultationAppointmentByDate,
+  StatisticsConsultationCount,
+  TimeRangeAppointment,
+  WeeklyAppointment,
+} from '@vben/types';
 
 import { requestClient } from '#/api/request';
 
@@ -145,6 +150,14 @@ export namespace PsychologyConsultationApi {
     fileId?: number;
     draft: boolean;
   }
+
+  /** 时间范围预约 */
+  export interface TimeRangeAppointment {
+    timeGranularity: 'day' | 'month' | 'week';
+    counselorUserId?: number;
+    referenceDate?: string;
+    offset?: number;
+  }
 }
 
 // ==================== 心理咨询记录管理 ====================
@@ -280,6 +293,38 @@ export function checkTimeConflict(data: {
     hasConflict: boolean;
     message: string;
   }>('/psychology/consultation/appointment/check-time-conflict', data);
+}
+
+/** 获取每周预约 */
+export function getWeeklyAppointment(weekOffset: number) {
+  return requestClient.get<WeeklyAppointment>(
+    `/psychology/consultation/appointment/weekly?weekOffset=${weekOffset}`,
+  );
+}
+
+/** 获取时间范围预约 */
+export function getTimeRangeAppointment(
+  params: PsychologyConsultationApi.TimeRangeAppointment,
+) {
+  return requestClient.get<TimeRangeAppointment>(
+    '/psychology/consultation/appointment/time-range-data',
+    {
+      params,
+    },
+  );
+}
+
+/** 根据日期查询咨询预约数据 */
+export function getConsultationAppointmentByDate(params: {
+  counselorUserId?: number;
+  date: string;
+}) {
+  return requestClient.get<ConsultationAppointmentByDate>(
+    `/psychology/consultation/appointment/by-date`,
+    {
+      params,
+    },
+  );
 }
 
 // ==================== 危机干预事件管理 ====================

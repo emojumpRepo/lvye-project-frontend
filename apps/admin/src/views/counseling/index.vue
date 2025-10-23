@@ -11,7 +11,7 @@ import { message, RadioButton, RadioGroup } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getConsultationStatusCount } from '#/api/psychology/consultation';
-import ConsultMoreDrawerComponent from '#/components/Drawer/ConsultMoreDrawer/index.vue';
+import ConsultMoreDrawer from '#/components/Drawer/ConsultMoreDrawer/index.vue';
 import CreateConsultDrawerComponent from '#/components/Drawer/CreateConsultDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
@@ -28,6 +28,7 @@ const viewTypeOptions = [
 ];
 
 const counselingListRef = ref<InstanceType<typeof CounselingList>>();
+const counselingCalendarRef = ref<InstanceType<typeof CounselingCalendar>>();
 
 const isProcessingMoreClick = ref(false); // 是否正在处理更多事件点击
 
@@ -37,8 +38,8 @@ const [ConsultRecordDrawer, consultRecordDrawerApi] = useVbenDrawer({
 });
 
 // 更多预约列表抽屉
-const [ConsultMoreDrawer, consultMoreDrawerApi] = useVbenDrawer({
-  connectedComponent: ConsultMoreDrawerComponent,
+const [ConsultationMoreDrawer, consultationMoreDrawerApi] = useVbenDrawer({
+  connectedComponent: ConsultMoreDrawer,
 });
 
 const viewType = ref(1); // 视图类型，1:咨询记录，2:日历视图
@@ -55,7 +56,11 @@ const today = computed(
 
 /** 刷新咨询记录列表 */
 async function onRefresh() {
-  await counselingListRef.value?.refresh();
+  if (viewType.value === 1) {
+    await counselingListRef.value?.refresh();
+  } else {
+    counselingCalendarRef.value?.loadTimeRangeAppointmentData();
+  }
 }
 
 /** 打开咨询预约抽屉 */
@@ -99,18 +104,19 @@ function handleCreateConsult(
   }, 100);
 }
 
-/** 打开预约列表抽屉 */
-function handleViewMoreAppointments(moreEventsBtnInfo?: any) {
+/** 打开更多预约列表抽屉 */
+function handleViewMoreAppointments(params: {
+  counselorUserId: number;
+  date: Date;
+  target: HTMLElement | null;
+}) {
   // 立即设置标志，防止后续的 monthCellClick 事件被处理
   isProcessingMoreClick.value = true;
 
-  const currentDate = moreEventsBtnInfo?.date
-    ? dayjs(moreEventsBtnInfo.date).format('YYYY-MM-DD')
-    : dayjs().format('YYYY-MM-DD');
-
-  consultMoreDrawerApi
+  consultationMoreDrawerApi
     .setData({
-      currentDate,
+      counselorUserId: params.counselorUserId,
+      date: dayjs(params.date).format('YYYY-MM-DD'),
     })
     .open();
 
@@ -233,6 +239,7 @@ onMounted(async () => {
         <template v-else>
           <!-- 日历视图 -->
           <CounselingCalendar
+            ref="counselingCalendarRef"
             @time-click="handleCreateConsult"
             @month-cell-click="handleCreateConsult"
             @more-events-click="handleViewMoreAppointments"
@@ -242,7 +249,7 @@ onMounted(async () => {
       </Transition>
     </div>
     <ConsultRecordDrawer @refresh="onRefresh" />
-    <ConsultMoreDrawer />
+    <ConsultationMoreDrawer @view-detail="handleViewDetail" />
   </Page>
 </template>
 

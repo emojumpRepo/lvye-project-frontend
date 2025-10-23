@@ -2,7 +2,7 @@
 import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import InfoSectionForm from '#/components/Drawer/StudentDrawer/components/InfoSectionForm.vue';
+import InfoSectionForm from './InfoSectionForm.vue';
 
 const props = defineProps<{
   parentInfo:

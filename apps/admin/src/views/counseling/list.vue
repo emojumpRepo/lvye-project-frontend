@@ -122,8 +122,7 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
 function isOverdue(row: PsychologyConsultationApi.ConsultationRecord) {
   return (
     dayjs(row.appointmentEndTime).add(30, 'minute').isBefore(dayjs()) &&
-    row.status !== COUNSELING_STATUS.CLOSED &&
-    row.status !== COUNSELING_STATUS.CANCELED
+    row.status === COUNSELING_STATUS.APPOINTMENT
   );
 }
 

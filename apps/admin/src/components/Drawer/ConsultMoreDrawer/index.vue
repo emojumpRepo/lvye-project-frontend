@@ -1,127 +1,70 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import type { ConsultationAppointmentByDate } from '@vben/types';
+
+import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
+
+import { ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义预约数据类型
-interface Appointment {
-  id: string;
-  studentName: string;
-  studentClass: string;
-  time: string;
-  duration: number;
-  type: string;
-  teacher: string;
-  location: string;
-  status: 'booked' | 'closed' | 'completed-overdue';
-  statusText: string;
-}
+import { message } from 'ant-design-vue';
+import dayjs from 'dayjs';
+
+import { getConsultationAppointmentByDate } from '#/api/psychology/consultation';
+import LyTag from '#/components/LyTag/index.vue';
+
+const emit = defineEmits<{
+  (
+    e: 'viewDetail',
+    payload: PsychologyConsultationApi.ConsultationRecord,
+  ): void;
+}>();
 
 // 模拟数据
-const appointments = ref<Appointment[]>([
-  {
-    id: '1',
-    studentName: '张小明',
-    studentClass: '高一(3)班',
-    time: '09:00',
-    duration: 60,
-    type: '学业压力咨询',
-    teacher: '李老师',
-    location: '心理咨询室A',
-    status: 'booked',
-    statusText: '已预约',
-  },
-  {
-    id: '2',
-    studentName: '张小明',
-    studentClass: '高一(3)班',
-    time: '10:30',
-    duration: 45,
-    type: '学业压力咨询',
-    teacher: '李老师',
-    location: '心理咨询室A',
-    status: 'closed',
-    statusText: '已闭环',
-  },
-  {
-    id: '3',
-    studentName: '张小明',
-    studentClass: '高一(3)班',
-    time: '14:00',
-    duration: 50,
-    type: '学业压力咨询',
-    teacher: '李老师',
-    location: '心理咨询室A',
-    status: 'completed-overdue',
-    statusText: '已完成(评估逾期)',
-  },
-  {
-    id: '4',
-    studentName: '张小明',
-    studentClass: '高一(3)班',
-    time: '15:30',
-    duration: 30,
-    type: '学业压力咨询',
-    teacher: '李老师',
-    location: '心理咨询室A',
-    status: 'completed-overdue',
-    statusText: '已完成(评估逾期)',
-  },
-  {
-    id: '5',
-    studentName: '张小明',
-    studentClass: '高一(3)班',
-    time: '16:00',
-    duration: 40,
-    type: '学业压力咨询',
-    teacher: '李老师',
-    location: '心理咨询室A',
-    status: 'completed-overdue',
-    statusText: '已完成(评估逾期)',
-  },
-]);
+const appointments = ref<ConsultationAppointmentByDate['appointments']>([]);
 
 // 当前日期
 const currentDate = ref('');
-
-// 计算属性
-const appointmentCount = computed(() => appointments.value.length);
-
-// 状态样式
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'booked': {
-      return 'text-gray-700';
-    }
-    case 'closed': {
-      return 'text-gray-700';
-    }
-    case 'completed-overdue': {
-      return 'text-orange-500';
-    }
-    default: {
-      return 'text-gray-700';
-    }
-  }
-};
-
-// 查看详情
-const handleViewDetails = (appointment: Appointment) => {
-  console.log('查看详情:', appointment);
-  // 这里可以打开详情抽屉或跳转到详情页面
-};
 
 // Drawer 配置
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[800px]',
   contentClass: 'p-0',
-  onOpenChange: (isOpen: boolean) => {
+  footer: false,
+  onOpenChange: async (isOpen: boolean) => {
     if (isOpen) {
-      const data = drawerApi.getData<{ currentDate: string }>();
-      currentDate.value = data.currentDate;
+      drawerApi.setState({ loading: true });
+      const data = drawerApi.getData<{
+        counselorUserId: number;
+        date: string;
+      }>();
+      currentDate.value = data.date;
+      try {
+        const response = await getConsultationAppointmentByDate({
+          counselorUserId: data.counselorUserId,
+          date: data.date,
+        });
+        if (!response) return message.error('获取咨询预约数据失败');
+
+        if (response.appointments.length > 0) {
+          appointments.value = response.appointments;
+        }
+      } catch (error) {
+        console.error('获取咨询预约数据失败', error);
+        message.error('获取咨询预约数据失败');
+      }
+      drawerApi.setState({ loading: false });
     }
   },
 });
+
+// 查看详情
+const handleViewDetails = (
+  appointment: PsychologyConsultationApi.ConsultationRecord,
+) => {
+  drawerApi.close();
+  emit('viewDetail', appointment);
+};
 
 // 暴露 API
 defineExpose({
@@ -142,7 +85,7 @@ defineExpose({
         <span>预约列表</span>
         <span>/</span>
         <span>{{ currentDate }}</span>
-        <span>(共{{ appointmentCount }}个)</span>
+        <span>(共{{ appointments.length }}个)</span>
       </div>
     </template>
 
@@ -162,17 +105,26 @@ defineExpose({
                 src="../../../static/icons/consulting/icon_more.svg"
                 class="w-4"
               />
-              <span class="font-semibold text-gray-900">{{
-                appointment.studentName
-              }}</span>
-              <span class="text-sm text-[#979899]">{{
-                appointment.studentClass
-              }}</span>
+              <span class="font-semibold text-gray-900">
+                {{ appointment.studentName }}（{{ appointment.className }}）
+              </span>
             </div>
-            <div class="flex items-center gap-3 text-sm text-[#979899]">
-              <span>{{ appointment.time }} </span>
+            <div class="flex items-center gap-3 text-xs text-[#979899]">
+              <span>
+                {{
+                  dayjs(appointment.appointmentStartTime).format(
+                    'YYYY-MM-DD HH:mm',
+                  )
+                }}
+                -
+                {{
+                  dayjs(appointment.appointmentEndTime).format(
+                    'YYYY-MM-DD HH:mm',
+                  )
+                }}
+              </span>
               <div class="h-[11px] w-[0.5px] bg-[#EAEBED]"></div>
-              <span>{{ appointment.duration }}分钟</span>
+              <span>{{ appointment.durationMinutes }}分钟</span>
             </div>
           </div>
 
@@ -182,21 +134,26 @@ defineExpose({
           <div class="flex flex-wrap gap-12 text-sm">
             <div class="flex items-center">
               <span>访谈类型：</span>
-              <span class="text-[#979899]">{{ appointment.type }}</span>
+              <span>
+                {{ appointment.consultationType }}
+              </span>
             </div>
             <div class="flex items-center">
               <span>访谈老师：</span>
-              <span class="text-[#979899]">{{ appointment.teacher }}</span>
+              <span>
+                {{ appointment.counselorName }}
+              </span>
             </div>
             <div class="flex items-center">
               <span>访谈地点：</span>
-              <span class="text-[#979899]">{{ appointment.location }}</span>
+              <span class="">{{ appointment.location }}</span>
             </div>
             <div class="flex items-center">
               <span>状态：</span>
-              <span class="text-[#979899]">
-                {{ appointment.statusText }}
-              </span>
+              <LyTag
+                tag-category-key="counseling_status"
+                :dict-value="appointment.status"
+              />
             </div>
           </div>
 
