@@ -27,6 +27,17 @@ export namespace SystemUserApi {
     deptId: number;
     deptName: string;
   }
+
+  export interface RoleInfo {
+    roleId: number;
+    roleCode: string;
+  }
+
+  export interface UserRole {
+    id: number;
+    nickname: string;
+    roleInfo: RoleInfo[];
+  }
 }
 
 /** 查询用户管理列表 */
@@ -102,5 +113,12 @@ export function getTeacherUserList(role?: 'psychology_teacher' | 'teacher') {
     {
       params: { role },
     },
+  );
+}
+
+/** 查询用户角色列表 */
+export async function getUserRoleList() {
+  return requestClient.get<SystemUserApi.UserRole[]>(
+    '/system/user/list-user-role',
   );
 }

@@ -119,7 +119,7 @@ function handleStudentClick(board: StudentInterventionItem) {
               </div>
               <div class="text-xs text-[#979899]">
                 <span>负责人：</span>
-                <span>{{ board.counselorName }}</span>
+                <span>{{ board.counselorName || '--' }}</span>
               </div>
               <div class="text-xs text-[#979899]">
                 {{ dayjs(board.lastUpdateTime).format('YYYY-MM-DD HH:mm:ss') }}

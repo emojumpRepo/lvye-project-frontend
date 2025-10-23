@@ -35,6 +35,7 @@ const [Form, formApi] = useVbenForm({
 });
 
 const [Modal, modalApi] = useVbenModal({
+  fullscreenButton: false,
   async onConfirm() {
     const { valid } = await formApi.validate();
     if (!valid) {

@@ -25,10 +25,19 @@ const [FormModal, formModalApi] = useVbenModal({
 });
 
 const userList = ref<SystemUserApi.User[]>([]);
+const checkedIds = ref<number[]>([]);
 
 /** 获取负责人名称 */
-function getLeaderName(userId: number) {
-  return userList.value.find((user) => user.id === userId)?.nickname;
+function getLeaderName(userIds: number[]) {
+  if (!userIds || userIds.length === 0) {
+    return undefined;
+  }
+  return userIds
+    .map(
+      (userId) => userList.value.find((user) => user.id === userId)?.nickname,
+    )
+    .filter(Boolean)
+    .join('、');
 }
 
 /** 刷新表格 */
@@ -39,6 +48,8 @@ async function onRefresh() {
 
 /** 切换树形展开/收缩状态 */
 const isExpanded = ref(true);
+
+/** 切换树形展开/收缩状态 */
 function toggleExpand() {
   isExpanded.value = !isExpanded.value;
   gridApi.grid.setAllTreeExpand(isExpanded.value);
@@ -127,7 +138,7 @@ async function handleDelete(row: SystemDeptApi.Dept) {
   }
 }
 
-const checkedIds = ref<number[]>([]);
+/** 选中行变更 */
 function handleRowCheckboxChange({
   records,
 }: {
@@ -154,7 +165,7 @@ async function handleDeleteBatch() {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(getLeaderName),
+    columns: useGridColumns(),
     height: 'auto',
     proxyConfig: {
       ajax: {
@@ -198,6 +209,7 @@ onMounted(async () => {
   <Page auto-content-height>
     <FormModal @success="onRefresh" />
     <Grid table-title="部门列表">
+      <!-- 工具栏 -->
       <template #toolbar-tools>
         <TableAction
           :actions="[
@@ -225,6 +237,13 @@ onMounted(async () => {
           ]"
         />
       </template>
+
+      <!-- 负责人列 -->
+      <template #leaderUserIds="{ row }">
+        <span>{{ getLeaderName(row.leaderUserIds) }}</span>
+      </template>
+
+      <!-- 操作列 -->
       <template #actions="{ row }">
         <TableAction
           :actions="[

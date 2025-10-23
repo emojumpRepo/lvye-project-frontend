@@ -75,7 +75,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'eventId',
-      title: '事件优先级',
+      title: '预警详情',
       slots: { default: 'eventId' },
       width: '15%',
     },
@@ -99,13 +99,13 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'priority',
-      title: '优先级',
+      title: '预警优先级',
       slots: { default: 'priority' },
       width: '10%',
     },
     {
       field: 'status',
-      title: '状态',
+      title: '当前状态',
       slots: { default: 'status' },
       width: '10%',
     },

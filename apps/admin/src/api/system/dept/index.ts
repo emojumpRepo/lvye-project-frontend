@@ -9,6 +9,7 @@ export namespace SystemDeptApi {
     status: number;
     sort: number;
     leaderUserId: number;
+    leaderUserIds: number[];
     phone: string;
     email: string;
     createTime: Date;

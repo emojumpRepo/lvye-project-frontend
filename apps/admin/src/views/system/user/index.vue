@@ -5,7 +5,7 @@ import type { SystemUserApi } from '#/api/system/user';
 
 import { ref } from 'vue';
 
-import { confirm, DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { Card, message } from 'ant-design-vue';
@@ -198,7 +198,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 </script>
 
 <template>
-  <Page auto-content-height><FormModal @success="onRefresh" />
+  <Page auto-content-height>
+    <FormModal @success="onRefresh" />
     <ResetPasswordModal @success="onRefresh" />
     <AssignRoleModal @success="onRefresh" />
     <ImportModal @success="onRefresh" />
