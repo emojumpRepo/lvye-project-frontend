@@ -268,19 +268,22 @@ export function useGridColumns<T = SystemUserApi.User>(
     {
       field: 'id',
       title: '用户编号',
+      visible: false,
     },
     {
       field: 'username',
       title: '用户名称',
+      visible: false,
     },
     {
       field: 'nickname',
-      title: '用户昵称',
+      title: '教师信息',
+      slots: { default: 'nickname' },
     },
-    {
-      field: 'deptName',
-      title: '部门',
-    },
+    // {
+    //   field: 'deptName',
+    //   title: '部门',
+    // },
     {
       field: 'roleName',
       title: '角色',
@@ -310,7 +313,7 @@ export function useGridColumns<T = SystemUserApi.User>(
     },
     {
       title: '操作',
-      width: 180,
+      width: '15%',
       fixed: 'right',
       slots: { default: 'actions' },
     },

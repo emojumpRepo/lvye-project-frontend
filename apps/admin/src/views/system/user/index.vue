@@ -8,7 +8,7 @@ import { ref } from 'vue';
 import { confirm, Page, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { Card, message } from 'ant-design-vue';
+import { Avatar, Card, message } from 'ant-design-vue';
 
 import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -170,6 +170,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useGridColumns(handleStatusChange),
     height: 'auto',
     keepSource: true,
+    cellConfig: {
+      height: 60,
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
@@ -250,8 +253,22 @@ const [Grid, gridApi] = useVbenVxeGrid({
             />
           </template>
 
+          <template #nickname="{ row }">
+            <div class="flex items-center gap-5 pl-3">
+              <Avatar class="bg-primary text-white">
+                {{ row.nickname.slice(0, 1).toUpperCase() }}
+              </Avatar>
+              <div class="flex flex-col items-start gap-1">
+                <span class="text-sm font-medium">{{ row.nickname }}</span>
+                <span class="text-xs text-[#4C4C4D]">
+                  用户名：{{ row.username || '-' }}
+                </span>
+              </div>
+            </div>
+          </template>
+
           <template #roleName="{ row }">
-            <div>
+            <div class="flex-center flex-wrap gap-2">
               <LyTag
                 v-for="role in row.roleInfo"
                 :key="role.roleId"
