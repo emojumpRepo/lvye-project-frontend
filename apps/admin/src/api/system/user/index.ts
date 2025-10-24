@@ -3,6 +3,12 @@ import type { PageParam, PageResult } from '@vben/request';
 import { requestClient } from '#/api/request';
 
 export namespace SystemUserApi {
+  export interface RoleInfo {
+    roleId: number;
+    roleCode: string;
+    roleName: string;
+  }
+
   /** 用户信息 */
   export interface User {
     id?: number;
@@ -19,6 +25,7 @@ export namespace SystemUserApi {
     status: number;
     remark: string;
     createTime?: Date;
+    roleInfo: RoleInfo[];
   }
 
   export interface TeacherUser {

@@ -152,7 +152,7 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
             confirmText: '确认',
             content: '检测到草稿，是否恢复？（确认后将清除草稿）',
             icon: 'success',
-          }).then(() => {
+          }).finally(() => {
             selectedHandleMethodDrawerApi.unlock();
           });
         }

@@ -6,7 +6,6 @@ import { handleTree } from '@vben/utils';
 
 import { z } from '#/adapter/form';
 import { getDeptList } from '#/api/system/dept';
-import { getSimplePostList } from '#/api/system/post';
 import { getSimpleRoleList } from '#/api/system/role';
 import {
   CommonStatusEnum,
@@ -64,18 +63,18 @@ export function useFormSchema(): VbenFormSchema[] {
         treeDefaultExpandAll: true,
       },
     },
-    {
-      fieldName: 'postIds',
-      label: '岗位',
-      component: 'ApiSelect',
-      componentProps: {
-        api: getSimplePostList,
-        labelField: 'name',
-        valueField: 'id',
-        mode: 'multiple',
-        placeholder: '请选择岗位',
-      },
-    },
+    // {
+    //   fieldName: 'postIds',
+    //   label: '岗位',
+    //   component: 'ApiSelect',
+    //   componentProps: {
+    //     api: getSimplePostList,
+    //     labelField: 'name',
+    //     valueField: 'id',
+    //     mode: 'multiple',
+    //     placeholder: '请选择岗位',
+    //   },
+    // },
     {
       fieldName: 'email',
       label: '邮箱',
@@ -281,6 +280,11 @@ export function useGridColumns<T = SystemUserApi.User>(
     {
       field: 'deptName',
       title: '部门',
+    },
+    {
+      field: 'roleName',
+      title: '角色',
+      slots: { default: 'roleName' },
     },
     {
       field: 'mobile',

@@ -11,7 +11,7 @@ import {
   crisisInterventionSystemSetting,
   getCrisisInterventionSystemSetting,
 } from '#/api/psychology/crisis';
-import { getTeacherUserList } from '#/api/system/user';
+import { getUserRoleList } from '#/api/system/user';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -113,9 +113,9 @@ const [CrisisInterventionSettingDrawer, crisisInterventionSettingDrawerApi] =
     },
   });
 
-/** 获取心理老师列表 */
+/** 获取用户列表 */
 async function loadTeacherUserList() {
-  const response = await getTeacherUserList('psychology_teacher');
+  const response = await getUserRoleList();
   if (response) {
     teacherUserList.value = response.map((item) => ({
       label: item.nickname as string,

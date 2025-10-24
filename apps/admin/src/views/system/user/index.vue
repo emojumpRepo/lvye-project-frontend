@@ -18,6 +18,7 @@ import {
   getUserPage,
   updateUserStatus,
 } from '#/api/system/user';
+import LyTag from '#/components/LyTag/index.vue';
 import { $t } from '#/locales';
 import { DICT_TYPE, getDictLabel } from '#/utils';
 
@@ -248,6 +249,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
               ]"
             />
           </template>
+
+          <template #roleName="{ row }">
+            <div>
+              <LyTag
+                v-for="role in row.roleInfo"
+                :key="role.roleId"
+                color-type="success"
+                :tag-label="role.roleName"
+              />
+            </div>
+          </template>
+
           <template #actions="{ row }">
             <TableAction
               :actions="[
