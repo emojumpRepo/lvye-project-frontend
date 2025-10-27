@@ -7,7 +7,7 @@ import type { ReportCrisisEventReqVO } from '#/api/psychology';
 
 import { nextTick, onMounted, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { useDebounceFn } from '@vueuse/core';
 import {
@@ -25,11 +25,12 @@ import {
   reportCrisisEvent,
 } from '#/api/psychology/index';
 import { searchStudentProfile } from '#/api/psychology/student-profile';
+import ConfirmReportDialog from '#/components/Dialog/ConfirmReportDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { FileUpload } from '#/components/upload';
-import { getDictLabel, getDictOptions } from '#/utils/dict';
+import { getDictOptions } from '#/utils/dict';
 
 interface State {
   studentList: SearchStudentProfileVO[];
@@ -118,6 +119,41 @@ const riskPriority = ref([
   },
 ]);
 
+// 确认上报弹窗
+const [ConfirmReportModal, confirmReportModalApi] = useVbenModal({
+  connectedComponent: ConfirmReportDialog,
+  fullscreenButton: false,
+  onConfirm: async () => {
+    try {
+      confirmReportModalApi.lock();
+      const data = await handleReport();
+      if (data?.id) {
+        confirmReportModalApi.close();
+        confirm({
+          content: `您已成功上报危机事件，事件编号为：${data?.eventId}。`,
+          title: '上报成功',
+          cancelText: '继续上报',
+          confirmText: '查看任务进度',
+          icon: 'success',
+        })
+          .then(() => {
+            selectedHandleMethodDrawerApi.close();
+            data && emit('viewDetail', data);
+          })
+          .catch(() => {
+            reset();
+          });
+      } else {
+        message.error('上报失败');
+      }
+    } catch {
+      message.error('上报失败');
+    } finally {
+      confirmReportModalApi.unlock();
+    }
+  },
+});
+
 const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
   {
     class: 'w-[720px]',
@@ -145,6 +181,7 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
                     dayjs(draftData.eventForm.eventTime),
                 };
                 state.value = draftData.state;
+                fileList.value = draftData.fileList || [];
                 localStorage.removeItem('report_crisis_event_draft');
               }
               return true;
@@ -160,8 +197,6 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
     },
     onConfirm() {
       eventFormRef.value.validate().then(async () => {
-        let eventData: null | { eventId: string; id: number; title: string } =
-          null;
         try {
           selectedHandleMethodDrawerApi.lock();
 
@@ -172,95 +207,31 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
           const isDuplicate = await checkDuplicateReportEvent(
             eventForm.value.studentProfileId,
           );
+
           if (isDuplicate) {
             confirm({
               content: '该学生24小时内已被您上报过，是否继续？',
               icon: 'warning',
             })
               .then(() => {
-                confirm({
-                  beforeClose: async ({ isConfirm }) => {
-                    if (isConfirm) {
-                      const data = await handleReport();
-                      if (data?.id) {
-                        eventData = data;
-                        return true;
-                      }
-                      return false;
-                    }
-                  },
-                  content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
-                  cancelText: '返回修改',
-                  confirmText: '确认上报',
-                  title: '信息确认',
-                  icon: 'question',
-                })
-                  .then(() => {
-                    confirm({
-                      content: `您已成功上报危机事件，事件编号为：${eventData?.eventId}。`,
-                      title: '上报成功',
-                      cancelText: '继续上报',
-                      confirmText: '查看任务进度',
-                      icon: 'success',
-                    })
-                      .then(() => {
-                        selectedHandleMethodDrawerApi.close();
-                        eventData && emit('viewDetail', eventData);
-                      })
-                      .catch(() => {
-                        reset();
-                        eventData = null;
-                      });
+                confirmReportModalApi
+                  .setData({
+                    ...eventForm.value,
+                    studentInfo: state.value[0].label,
                   })
-                  .catch(() => {
-                    return true;
-                  });
+                  .open();
               })
               .catch(() => {
                 return true;
               });
           } else {
-            confirm({
-              beforeClose: async ({ isConfirm }) => {
-                if (isConfirm) {
-                  const data = await handleReport();
-                  if (data?.id) {
-                    eventData = data;
-                    return true;
-                  }
-                  return false;
-                }
-              },
-              content: `${state.value[0]?.label}\n\n风险等级：${getDictLabel('questionnaire_result_risk_level', eventForm.value.riskLevel)}\n\n紧急程度：${getDictLabel('crisis_event_priority', eventForm.value.priority)}`,
-              cancelText: '返回修改',
-              confirmText: '确认上报',
-              title: '信息确认',
-              icon: 'question',
-            })
-              .then(() => {
-                confirm({
-                  content: `您已成功上报危机事件，事件编号为：${eventData?.eventId}。`,
-                  title: '上报成功',
-                  cancelText: '继续上报',
-                  confirmText: '查看任务进度',
-                  icon: 'success',
-                })
-                  .then(() => {
-                    selectedHandleMethodDrawerApi.close();
-                    eventData && emit('viewDetail', eventData);
-                  })
-                  .catch(() => {
-                    reset();
-                    eventData = null;
-                  });
+            confirmReportModalApi
+              .setData({
+                ...eventForm.value,
+                studentInfo: state.value[0].label,
               })
-              .catch(() => {
-                return true;
-              });
+              .open();
           }
-        } catch (error) {
-          console.error('上报危机事件失败', error);
-          message.error('上报失败');
         } finally {
           selectedHandleMethodDrawerApi.unlock();
         }
@@ -330,7 +301,11 @@ function handleSelect(value: any) {
 function handleSaveDraft() {
   localStorage.setItem(
     'report_crisis_event_draft',
-    JSON.stringify({ eventForm: eventForm.value, state: state.value }),
+    JSON.stringify({
+      eventForm: eventForm.value,
+      state: state.value,
+      fileList: fileList.value,
+    }),
   );
   message.success('草稿已保存');
 }
@@ -470,7 +445,7 @@ onMounted(() => {
         </AForm.Item>
 
         <!-- 风险等级 -->
-        <AForm.Item name="riskLevel">
+        <!-- <AForm.Item name="riskLevel">
           <LyLabel
             title="危机事件等级"
             required
@@ -481,7 +456,7 @@ onMounted(() => {
             placeholder="请选择危机事件等级"
             :options="riskLevelOptions"
           />
-        </AForm.Item>
+        </AForm.Item> -->
 
         <!-- 紧急程度 -->
         <AForm.Item name="priority">
@@ -520,6 +495,7 @@ onMounted(() => {
         </div>
       </AForm>
     </div>
+    <ConfirmReportModal />
   </SelectHandleMethodDrawer>
 </template>
 

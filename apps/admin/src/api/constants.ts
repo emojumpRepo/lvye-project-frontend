@@ -299,3 +299,32 @@ export const FOLLOW_UP_SUGGESTION = [
 export function getFollowUpSuggestionByDictValue(dictValue: number) {
   return FOLLOW_UP_SUGGESTION.find((item) => item.key === dictValue);
 }
+
+// 危机干预定级
+export const CRISIS_LEVEL_MAP = [
+  {
+    key: 2,
+    title: '持续观察',
+    color: '#009DFF',
+  },
+  {
+    key: 3,
+    title: '一般危机(一类)',
+    color: '#1966FF',
+  },
+  {
+    key: 4,
+    title: '严重危机(二类)',
+    color: '#FF9C05',
+  },
+  {
+    key: 5,
+    title: '重大危机(三类)',
+    color: '#FF0831',
+  },
+];
+
+/** 根据key获取危机干预定级 */
+export function getCrisisLevelByDictValue(dictValue: number) {
+  return CRISIS_LEVEL_MAP.find((item) => item.key === dictValue);
+}

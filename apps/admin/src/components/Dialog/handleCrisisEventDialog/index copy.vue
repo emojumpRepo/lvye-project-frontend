@@ -5,7 +5,7 @@ import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -17,9 +17,10 @@ import {
 } from '#/api/psychology';
 import AssessmentReportDialog from '#/components/Dialog/AssessmentReportDialog/index.vue';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
-import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
+import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import EditEventRecordDialog from '#/components/Dialog/EditEventRecordDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
+import SelectHandleMethodDrawer from '#/components/Drawer/SelectHandleMethodDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 
@@ -78,14 +79,20 @@ const [EditEventRecordModal, editEventRecordApi] = useVbenModal({
   connectedComponent: EditEventRecordDialog,
 });
 
+// 创建量表评估任务弹窗
+const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
+  useVbenModal({
+    connectedComponent: CreateSimpleAssessmentDialog,
+  });
+
+// 选择处理方式弹窗
+const [HandleMethodDrawer, HandleMethodDrawerApi] = useVbenDrawer({
+  connectedComponent: SelectHandleMethodDrawer,
+});
+
 // 评估报告
 const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
   connectedComponent: AssessmentReportDialog,
-});
-
-// 开始评估
-const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
-  connectedComponent: CreateEvaluationDialog,
 });
 
 // 步骤条
@@ -108,20 +115,51 @@ const crisisEventHandlingSteps = computed(() => {
       key: 2,
     },
     {
+      label: '执行处理',
+      description: (() => {
+        if (!crisisEventDetail.value.processMethod) {
+          return '待选择';
+        }
+        if (status >= 3) return '已处理';
+        return crisisEventDetail.value.pendingAssessmentTask
+          ? '处理中'
+          : '待处理';
+      })(),
+      done: status >= 2,
+      key: 3,
+    },
+    {
       label: '最终评估',
       description: status >= 4 ? '已评估' : '待评估',
       done: status >= 4,
-      key: 3,
+      key: 4,
     },
     {
       label: '流程完成',
       description: status >= 5 ? '已完成' : '未完成',
       done: status >= 5,
-      key: 4,
+      key: 5,
     },
   ];
 
   return steps;
+});
+
+// 是否显示开始处理按钮
+const isShowStartAssessmentButton = computed(() => {
+  if (!crisisEventDetail.value) return false;
+
+  const { processMethod, pendingAssessmentTask } = crisisEventDetail.value;
+  if (
+    currentStep.value === 2 &&
+    processMethod &&
+    processMethod !== 3 &&
+    processMethod !== 4 &&
+    !pendingAssessmentTask
+  )
+    return true;
+
+  return false;
 });
 
 /**
@@ -172,13 +210,38 @@ function handleQuickAssign(data: {
   editEventRecordApi.setData(data).open();
 }
 
+/** 选择处理方式 */
+function handleSelectHandleMethod() {
+  HandleMethodDrawerApi.setData({
+    id: crisisEventDetail.value?.id,
+  }).open();
+}
+
+/** 开始处理 */
+function startProcess() {
+  switch (crisisEventDetail.value?.processStatus) {
+    case 1: {
+      message.info('即将上线心理咨询');
+      break;
+    }
+    case 2: {
+      createSimpleAssessmentModalApi
+        .setData({
+          id: crisisEventDetail.value?.id,
+          studentName: crisisEventDetail.value?.studentName,
+          className: crisisEventDetail.value?.className,
+          studentNo: crisisEventDetail.value?.studentNumber,
+          studentUserId: crisisEventDetail.value?.studentUserId,
+        })
+        .open();
+      break;
+    }
+  }
+}
+
 /** 开始评估 */
 function startAssessment() {
-  createEvaluationModalApi
-    .setData({
-      confirmInfo: confirmInfo.value,
-    })
-    .open();
+  isOpenPsychologicalConsultDialog.value = true;
 }
 
 /** 关闭弹窗 */
@@ -342,8 +405,77 @@ function viewRecordAssessmentReport(recordId: number) {
                 </div>
               </template>
 
-              <!-- step4: 评估 -->
+              <!-- step3: 执行处理 -->
               <template v-if="key === 3">
+                <div class="my-2 flex w-full flex-col gap-3">
+                  <!-- 处理文案 -->
+                  <div class="flex flex-col gap-2">
+                    <div
+                      v-if="
+                        (crisisEventDetail.latestAssessments &&
+                          crisisEventDetail.latestAssessments.length > 0) ||
+                        crisisEventDetail.processMethod
+                      "
+                      class="flex flex-col items-center gap-2"
+                    >
+                      <span class="text-sm">最近一次处理方式：</span>
+                      <LyTag
+                        size="small"
+                        :tag-category-key="
+                          crisisEventDetail.latestAssessments[0]
+                            ?.followUpSuggestion
+                            ? 'follow_up_suggestion'
+                            : 'intervention_process_method'
+                        "
+                        :dict-value="
+                          crisisEventDetail.latestAssessments[0]
+                            ?.followUpSuggestion ||
+                          crisisEventDetail.processMethod
+                        "
+                      />
+                    </div>
+                    <div
+                      v-if="
+                        crisisEventDetail.pendingAssessmentTask &&
+                        crisisEventDetail.pendingAssessmentTask.status !== 2
+                      "
+                    >
+                      等待学生完成测评...
+                    </div>
+                  </div>
+
+                  <div class="flex w-full flex-col gap-3">
+                    <template
+                      v-if="
+                        currentStep === 2 && !crisisEventDetail.processMethod
+                      "
+                    >
+                      <LyButton
+                        type="primary"
+                        ghost
+                        size="small"
+                        @click="handleSelectHandleMethod"
+                      >
+                        开始选择
+                      </LyButton>
+                    </template>
+
+                    <template v-if="isShowStartAssessmentButton">
+                      <LyButton
+                        type="primary"
+                        ghost
+                        size="small"
+                        @click="startProcess"
+                      >
+                        开始处理
+                      </LyButton>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
+              <!-- step4: 评估 -->
+              <template v-if="key === 4">
                 <div class="my-2 flex w-full flex-col gap-3">
                   <template v-if="currentStep >= 4">
                     <div class="flex flex-col gap-2">
@@ -373,7 +505,7 @@ function viewRecordAssessmentReport(recordId: number) {
                   </template>
                   <div class="flex w-full flex-col gap-3">
                     <LyButton
-                      v-if="currentStep === 2 && crisisEventDetail.status !== 5"
+                      v-if="currentStep === 3 && crisisEventDetail.status !== 5"
                       type="primary"
                       ghost
                       size="small"
@@ -384,6 +516,26 @@ function viewRecordAssessmentReport(recordId: number) {
                   </div>
                 </div>
               </template>
+
+              <!-- step5: 流程完成 -->
+              <!-- <template v-if="key === 5">
+                <LyButton
+                  class="mt-2"
+                  v-if="crisisEventDetail.status === 5"
+                  type="primary"
+                  ghost
+                  size="small"
+                  @click="
+                    viewRecordAssessmentReport(
+                      crisisEventDetail.latestAssessments[
+                        crisisEventDetail.latestAssessments.length - 1
+                      ]?.id || 0,
+                    )
+                  "
+                >
+                  查看报告
+                </LyButton>
+              </template> -->
             </template>
           </CommonDialogSteps>
         </div>
@@ -407,13 +559,17 @@ function viewRecordAssessmentReport(recordId: number) {
     </div>
 
     <EditEventRecordModal @reload-crisis-event="reloadCrisisEvent" />
+    <HandleMethodDrawer
+      @set-loading="setLoading"
+      @reload-crisis-event="reloadCrisisEvent"
+    />
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalConsultDialog"
       :comfirm-info="confirmInfo"
       :publish="createInterventionAssessment"
     />
+    <CreateSimpleAssessmentModal @reload-crisis-event="reloadCrisisEvent" />
     <AssessmentReportModal />
-    <CreateEvaluationModal />
   </HandleCrisisEventModal>
 </template>
 
