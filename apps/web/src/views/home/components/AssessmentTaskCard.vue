@@ -46,12 +46,7 @@ const TASK_STATUS_MAP: Record<
 };
 
 function getActionText(task: AssessmentTask) {
-  if (
-    (task as any)?.participantStatus ===
-      AssessmentTaskParticipantStatus.COMPLETED &&
-    (task as any)?.resultGenerating === true
-  )
-    return '结果生成中';
+  if ((task as any)?.resultGenerating === true) return '结果生成中';
   return TASK_STATUS_MAP[task.participantStatus]?.actionText ?? '去答题';
 }
 
@@ -180,9 +175,7 @@ const [PrivacyModal, privacyModalApi] = useVbenModal({
       <button
         class="box-border shrink-0 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         :disabled="
-          ((task as any)?.participantStatus ===
-            AssessmentTaskParticipantStatus.COMPLETED &&
-            (task as any)?.resultGenerating === true) ||
+          (task as any)?.resultGenerating === true ||
           (task.status === ASSESSMENT_STATUS.ENDED &&
             task.participantStatus !==
               AssessmentTaskParticipantStatus.COMPLETED)

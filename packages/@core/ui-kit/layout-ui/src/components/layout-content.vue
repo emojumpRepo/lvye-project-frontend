@@ -25,6 +25,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {});
+const bgImage =
+  'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
 
 const { contentElement, overlayStyle } = useLayoutContentStyle();
 
@@ -43,8 +45,6 @@ const style = computed((): CSSProperties => {
       ? { margin: '0 auto', width: `${props.contentCompactWidth}px` }
       : {};
 
-  const bgImage =
-    'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
   return {
     ...compactStyle,
     flex: 1,
@@ -53,16 +53,21 @@ const style = computed((): CSSProperties => {
     paddingLeft: `${paddingLeft}px`,
     paddingRight: `${paddingRight}px`,
     paddingTop: `${paddingTop}px`,
-    backgroundImage: `url(${bgImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
+    // backgroundImage: `url(${bgImage})`,
+    // backgroundSize: 'cover',
+    // backgroundPosition: 'center',
+    // backgroundRepeat: 'no-repeat',
   };
 });
 </script>
 
 <template>
-  <main ref="contentElement" :style="style" class="bg-background-deep relative">
+  <main
+    ref="contentElement"
+    :style="style"
+    class="bg-background-deep relative !bg-[#f7f8fa]"
+  >
+    <img :src="bgImage" width="100%" class="absolute inset-0" />
     <Slot :style="overlayStyle">
       <slot name="overlay"></slot>
     </Slot>

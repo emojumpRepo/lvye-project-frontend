@@ -110,7 +110,7 @@ function trimAnswer(answer?: string) {
         </div>
 
         <!-- 答案：按题型展示 -->
-        <div class="mt-2 space-y-2">
+        <div v-if="trimAnswer(item.answer)" class="mt-2 space-y-2">
           <!-- 单选题：radio -->
           <div v-if="item.type === 'radio'">
             <Radio.Group :value="trimAnswer(item.answer)">
@@ -181,14 +181,15 @@ function trimAnswer(answer?: string) {
             >
               {{ formatAnswer(trimAnswer(item.answer)) }}
             </span>
-            <span
-              v-else
-              class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-500"
-            >
-              未答/无需作答
-            </span>
           </div>
         </div>
+
+        <span
+          v-else
+          class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-500"
+        >
+          未答/无需作答
+        </span>
       </div>
     </div>
   </div>

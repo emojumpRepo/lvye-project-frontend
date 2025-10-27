@@ -1,9 +1,31 @@
 <script setup lang="ts">
 import type { QuestionnaireResultDataVO } from '@vben/types';
 
-defineProps<{
-  questionnaireResult: QuestionnaireResultDataVO;
+import { computed } from 'vue';
+
+const props = defineProps<{
+  dimension: QuestionnaireResultDataVO;
+  getDimensionColor: (config: {
+    isAbnormal: number;
+    questionnaireName: string;
+    riskLevel: number;
+    type: 'bg' | 'color';
+  }) => string;
+  questionnaireName: string;
 }>();
+
+const questionnaireDimension = computed(() => {
+  const data = {
+    questionnaireName: props.questionnaireName,
+    riskLevel: props.dimension.riskLevel,
+    isAbnormal: props.dimension.isAbnormal,
+  };
+  return {
+    ...props.dimension,
+    color: props.getDimensionColor({ ...data, type: 'color' }),
+    backgroundColor: props.getDimensionColor({ ...data, type: 'bg' }),
+  };
+});
 </script>
 
 <template>
@@ -15,34 +37,26 @@ defineProps<{
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-medium text-gray-900">
-            {{ questionnaireResult?.dimensionName }}
+            {{ questionnaireDimension?.dimensionName }}
           </h3>
           <div
+            v-if="dimension?.level"
             class="rounded-full px-3 py-1 text-sm font-medium"
-            :class="[
-              questionnaireResult?.isAbnormal === 0
-                ? 'text-primary bg-[#14E77E14]'
-                : 'bg-[#FF083114] text-[#FF0831]',
-            ]"
+            :style="{
+              backgroundColor: questionnaireDimension?.backgroundColor,
+              color: questionnaireDimension?.color,
+            }"
           >
-            {{ questionnaireResult?.isAbnormal === 0 ? '正常' : '异常' }}
+            {{ dimension.level }}
           </div>
-          <!-- <div
-            v-if="questionnaireResult?.level"
-            class="rounded-full px-3 py-1 text-sm font-medium"
-            :class="
-              questionnaireResult?.isAbnormal === 0
-                ? 'text-primary bg-[#14E77E14]'
-                : 'bg-[#FF083114] text-[#FF0831]'
-            "
-          >
-            {{ questionnaireResult.level }}
-          </div> -->
         </div>
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-500">得分:</span>
-          <span class="text-2xl font-bold text-[#14E77E]">
-            {{ questionnaireResult?.score }}
+          <span
+            class="mb-1 text-2xl font-bold"
+            :style="{ color: questionnaireDimension?.color }"
+          >
+            {{ dimension?.score }}
           </span>
         </div>
       </div>
@@ -51,15 +65,15 @@ defineProps<{
     <!-- 评价内容 -->
     <div class="space-y-4 p-4">
       <!-- 学生评价 -->
-      <div class="rounded-lg bg-[#1966FF14] p-4">
+      <!-- <div class="rounded-lg bg-[#1966FF14] p-4">
         <div class="mb-3 flex items-center gap-2">
           <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
           <h4 class="text-sm font-semibold text-[#1966FF]">学生建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
-          {{ questionnaireResult?.studentComment }}
+          {{ dimension?.studentComment }}
         </p>
-      </div>
+      </div> -->
 
       <!-- 教师评价 -->
       <div class="rounded-lg bg-[#FF9C0514] p-4">
@@ -68,7 +82,7 @@ defineProps<{
           <h4 class="text-sm font-semibold text-[#FF9C05]">教师建议</h4>
         </div>
         <p class="text-sm leading-relaxed text-gray-700">
-          {{ questionnaireResult?.teacherComment }}
+          {{ dimension?.teacherComment }}
         </p>
       </div>
     </div>

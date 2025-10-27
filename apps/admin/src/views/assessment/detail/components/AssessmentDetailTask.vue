@@ -10,6 +10,7 @@ import {
   Empty as AEmpty,
   Progress as AProgress,
   Spin as ASpin,
+  message,
 } from 'ant-design-vue';
 
 import { getAssessmentStatistics } from '#/api/psychology/assessment';
@@ -26,24 +27,38 @@ const assessmentStatistics =
 
 watch(
   () => props.taskNo,
-  (newTaskNo) => {
+  async (newTaskNo) => {
     if (newTaskNo) {
       loading.value = true;
-      getAssessmentStatistics({
-        taskNo: newTaskNo,
-        includeDeptTree: 1,
-      })
-        .then((response) => {
-          assessmentStatistics.value = response;
-          activeKey.value = response.deptTree?.[0]?.deptId;
-        })
-        .finally(() => {
-          loading.value = false;
-        });
+      await loadAssessmentStatistics(newTaskNo);
+      activeKey.value = assessmentStatistics.value?.deptTree?.[0]?.deptId;
+      loading.value = false;
     }
   },
   { immediate: true },
 );
+
+/**
+ * 加载测评统计数据
+ * @param taskNo 任务编号
+ */
+async function loadAssessmentStatistics(taskNo: string) {
+  try {
+    await getAssessmentStatistics({
+      taskNo,
+      includeDeptTree: 1,
+    }).then((response) => {
+      assessmentStatistics.value = response;
+    });
+  } catch (error) {
+    console.error('加载测评统计失败', error);
+    message.error('加载测评统计失败');
+  }
+}
+
+defineExpose({
+  loadAssessmentStatistics,
+});
 </script>
 
 <template>
@@ -100,7 +115,9 @@ watch(
               </div>
             </div>
 
-            <div class="scroll-area h-[200px] overflow-y-scroll">
+            <div
+              class="scroll-area h-[200px] overflow-y-scroll [scrollbar-gutter:stable]"
+            >
               <ACollapse
                 v-model:active-key="activeKey"
                 accordion
@@ -176,6 +193,10 @@ watch(
 
 :deep(.ant-progress-bg) {
   background-color: #04dc70 !important;
+}
+
+:deep(.ant-collapse-expand-icon) {
+  padding-inline-end: 15.5px !important;
 }
 
 .scroll-area::-webkit-scrollbar {

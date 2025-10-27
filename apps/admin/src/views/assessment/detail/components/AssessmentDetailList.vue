@@ -1,17 +1,21 @@
 <script lang="ts" setup>
+import type { TabItem } from '../types';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
 import { ref, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
+import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { exportAssessmentParticipantsToExcel } from '#/utils/export';
@@ -22,32 +26,46 @@ import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
 interface Props {
   taskNo?: string;
   taskName?: string;
-  questionnaireId?: string;
   questionnairesTabs?: { key: string; label: string }[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   taskNo: '',
   taskName: '',
-  questionnaireId: '',
-  hasHealthSelfAssessment: false,
   questionnairesTabs: () => [],
 });
 
-const activeTabKey = defineModel<string>('activeTabKey'); // 问卷Tab
+const emit = defineEmits<{
+  (e: 'tabChange', key: any): void;
+}>();
+
+// 问卷Tab
+const activeTab = defineModel<TabItem>('activeTab', {
+  default: () => ({
+    key: '',
+    label: '',
+  }),
+});
 
 const actionButtons = ref([
-  // {
-  //   label: '批量发送提醒',
-  //   value: 'batchSendReminder',
-  //   onClick: handleBatchSendReminder,
-  // },
+  {
+    label: '批量发送提醒',
+    value: 'batchSendReminder',
+    onClick: handleBatchSendReminder,
+    show: false,
+  },
   {
     label: '批量转入评估',
     value: 'batchTransferToIntervention',
     onClick: handleBatchTransferToIntervention,
+    show: true,
   },
-  { label: '批量导出', value: 'batchExport', onClick: handleExport },
+  {
+    label: '批量导出',
+    value: 'batchExport',
+    onClick: handleExport,
+    show: true,
+  },
 ]);
 
 const selectedRowKeys = ref<number[]>([]);
@@ -65,6 +83,11 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   connectedComponent: QuestionnaireResultDialog,
 });
 
+// 详情抽屉
+const [Drawer, drawerApi] = useVbenDrawer({
+  connectedComponent: StudentDrawer,
+});
+
 /** 处理行选中 */
 function handleRowCheckboxChange({ records }: { records: any[] }) {
   selectedRowKeys.value = records
@@ -74,13 +97,14 @@ function handleRowCheckboxChange({ records }: { records: any[] }) {
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
-    height: '400px',
+    columns: useGridColumns(activeTab.value.key),
+    // height: '400px',
     keepSource: true,
     pagerConfig: {
       enabled: true,
       pageSize: 10,
       layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
+      pageSizes: [10, 20, 30, 40, 50, 60],
     },
     proxyConfig: {
       ajax: {
@@ -113,7 +137,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         },
       },
     },
-    rowConfig: { keyField: 'seq', isHover: true },
+    rowConfig: { keyField: 'seq' },
     toolbarConfig: { refresh: false, search: true, custom: false, zoom: false },
   } as VxeTableGridOptions<PsychologyAssessmentApi.ParticipantsQuestionnairePageRes>,
   gridEvents: {
@@ -123,11 +147,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 watch(
-  () => [props.taskNo, props.questionnaireId],
-  async ([newTaskNo, newQuestionnaireId]) => {
-    if (newTaskNo || newQuestionnaireId) {
+  () => [props.taskNo, activeTab.value.key],
+  async ([newTaskNo, newActiveTabKey]) => {
+    // 更新列配置
+    if (gridApi) {
+      gridApi.setGridOptions({
+        columns: useGridColumns(newActiveTabKey),
+      });
+    }
+
+    if (newTaskNo || newActiveTabKey) {
       queryParams.value.taskNo = newTaskNo!;
-      queryParams.value.questionnaireId = Number(newQuestionnaireId) || 0;
+      queryParams.value.questionnaireId = Number(newActiveTabKey) || 0;
       searchRef.value?.handleReset();
       selectedRowKeys.value = [];
       if ((gridApi as any)?.grid?.commitProxy) {
@@ -160,17 +191,22 @@ function handleBatchTransferToIntervention() {
   message.warning('即将上线');
 }
 
+/** 切换tab */
+function handleTabChange(key: any) {
+  emit('tabChange', key);
+}
+
 /** 查看详情 */
 function viewDetail(
   row: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes,
 ) {
-  if (props.questionnaireId) {
+  if (activeTab.value.key) {
     questionnaireResultModalApi
       .setData({
         id: row?.id,
         name: row?.name,
         questionnaireName: row?.questionnaireName,
-        questionnaireId: props.questionnaireId,
+        questionnaireId: activeTab.value.key,
       })
       .open();
   } else {
@@ -204,13 +240,18 @@ async function handleExport() {
       return;
     }
 
-    exportAssessmentParticipantsToExcel(completedStudents);
+    exportAssessmentParticipantsToExcel(completedStudents, activeTab.value);
   } catch (error) {
     console.error(error);
     message.error('导出失败，请重试');
   } finally {
     loading.value = false;
   }
+}
+
+/** 查看详情 */
+function viewStudentInfo(id: number) {
+  drawerApi.setData({ id }).open();
 }
 </script>
 
@@ -220,14 +261,15 @@ async function handleExport() {
     <ATabs
       :tab-bar-gutter="10"
       class="mb-3 mt-2"
-      v-model:active-key="activeTabKey"
+      v-model:active-key="activeTab.key"
+      @change="handleTabChange"
     >
       <ATabs.TabPane v-for="tab in props.questionnairesTabs" :key="tab.key">
         <template #tab>
           <span
             class="rounded-full bg-white px-3 py-2 text-center text-xs font-medium text-[#979899] transition-all duration-300"
             :class="{
-              '!bg-primary !text-white': activeTabKey === tab.key,
+              '!bg-primary !text-white': activeTab.key === tab.key,
             }"
           >
             {{ tab.label }}
@@ -243,40 +285,66 @@ async function handleExport() {
     />
 
     <div class="my-6 flex gap-2">
-      <LyButton
-        v-for="item in actionButtons"
-        :key="item.value"
-        size="middle"
-        type="default"
-        :disabled="selectedRowKeys.length === 0"
-        @click="item.onClick && item.onClick()"
-      >
-        {{ item.label }}
-      </LyButton>
+      <template v-for="button in actionButtons" :key="button.value">
+        <LyButton
+          v-if="button.show"
+          size="middle"
+          type="default"
+          :disabled="selectedRowKeys.length === 0"
+          @click="button.onClick && button.onClick()"
+        >
+          {{ button.label }}
+        </LyButton>
+      </template>
     </div>
     <Grid>
+      <!-- 学生名称 -->
+      <template #name="{ row }">
+        <span
+          class="cursor-pointer"
+          @click="viewStudentInfo(row.studentProfileId)"
+        >
+          {{ row.name }}
+        </span>
+      </template>
+
+      <!-- 完成状态  -->
       <template #status="{ row }">
         <LyTag
           :color-type="row.status === 1 ? 'success' : 'error'"
           :tag-label="row.status === 1 ? '已完成' : '未完成'"
         />
       </template>
+
+      <!-- 完成时间 -->
       <template #finishTime="{ row }">
         <span v-if="!row.finishTime">--</span>
         <span v-else>
           {{ dayjs(row.finishTime).format('YYYY-MM-DD HH:mm:ss') }}
         </span>
       </template>
-      <template #score="{ row }">
-        <span v-if="!row.score">--</span>
-        <span v-else class="text-primary font-bold">{{ row.score }}</span>
-      </template>
+
+      <!-- 风险等级/测评结果 -->
       <template #riskLevel="{ row }">
-        <LyTag
-          v-if="row.riskLevel"
-          tag-category-key="questionnaire_result_risk_level"
-          :dict-value="row.riskLevel"
-        />
+        <template v-if="row.riskLevel">
+          <LyTag
+            v-if="
+              activeTab.key &&
+              (activeTab.label.includes('睡眠质量') ||
+                activeTab.label.includes('电子游戏使用情况')) &&
+              row.level
+            "
+            :color-type="DICT_Value_COLOR_MAP[row.riskLevel] || 'default'"
+            :tag-label="row.level"
+          />
+
+          <LyTag
+            v-else
+            tag-category-key="questionnaire_result_risk_level"
+            :dict-value="row.riskLevel"
+          />
+        </template>
+
         <span v-else>--</span>
       </template>
       <template #actions="{ row }">
@@ -293,7 +361,9 @@ async function handleExport() {
         />
       </template>
     </Grid>
+
     <QuestionnaireResultModal />
+    <Drawer />
   </div>
 </template>
 

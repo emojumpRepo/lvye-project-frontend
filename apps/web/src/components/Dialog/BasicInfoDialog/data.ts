@@ -51,22 +51,22 @@ export function useBasicInfoFormSchema(): VbenFormSchema[] {
       },
       help: '年龄不得小于6岁',
     },
-    {
-      component: 'DatePicker',
-      fieldName: 'birthDate',
-      label: '实际出生日期',
-      help: '要求年龄大于6岁',
-      rules: 'birthDateValidation',
-      componentProps: {
-        placeholder: '请选择出生日期',
-        class: 'w-full',
-        disabledDate: (current: any) => {
-          // 禁用2018年之后的日期（年龄小于7岁）
-          const minDate = new Date('2018-01-01');
-          return current && current.toDate() >= minDate;
-        },
-      },
-    },
+    // {
+    //   component: 'DatePicker',
+    //   fieldName: 'birthDate',
+    //   label: '实际出生日期',
+    //   help: '要求年龄大于6岁',
+    //   rules: 'birthDateValidation',
+    //   componentProps: {
+    //     placeholder: '请选择出生日期',
+    //     class: 'w-full',
+    //     disabledDate: (current: any) => {
+    //       // 禁用2018年之后的日期（年龄小于7岁）
+    //       const minDate = new Date('2018-01-01');
+    //       return current && current.toDate() >= minDate;
+    //     },
+    //   },
+    // },
     {
       component: 'InputNumber',
       fieldName: 'height',

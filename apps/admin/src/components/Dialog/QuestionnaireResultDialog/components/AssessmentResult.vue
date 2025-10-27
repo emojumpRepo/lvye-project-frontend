@@ -11,51 +11,61 @@ import LyTag from '#/components/LyTag/index.vue';
 
 const props = defineProps<{
   assessmentResult: AssessmentResultVO;
+  getDimensionColor: (config: {
+    isAbnormal: number;
+    questionnaireName: string;
+    riskLevel: number;
+    type: 'bg' | 'color';
+  }) => string;
 }>();
 
 const columns = [
   {
     title: '维度名称',
-    dataIndex: 'dimensionName',
+    dataIndex: 'name',
     width: '40%',
   },
   {
     title: '得分',
     dataIndex: 'score',
-    width: '20%',
-  },
-  {
-    title: '是否异常',
-    dataIndex: 'isAbnormal',
-    width: '20%',
+    width: '30%',
   },
   {
     title: '测评结果',
     dataIndex: 'level',
-    width: '20%',
+    width: '30%',
   },
 ];
 
-/**
- * 计算问卷结果
- */
 const questionnaireResults = computed(() => {
-  const hasHealthSelfAssessment =
-    props.assessmentResult.questionnaireResults.some(
-      (item) => item.questionnaireId === 12,
-    );
-  return hasHealthSelfAssessment
-    ? props.assessmentResult.questionnaireResults.filter(
-        (item) => item.questionnaireId === 12,
-      )
-    : props.assessmentResult.questionnaireResults;
-});
+  const results = props.assessmentResult?.questionnaireResults;
 
-// 干预建议
-// const interventionSuggestions = computed(() => {
-//   const parsed = JSON.parse(props.assessmentResult.interventionSuggestions);
-//   return parsed.sort((a: any, b: any) => a.priority - b.priority);
-// });
+  if (!results?.length) {
+    return [];
+  }
+
+  return results.map((result) => {
+    if (!result.dimensions || result.dimensions.length === 0) {
+      return {
+        ...result,
+        dimensions: [],
+      };
+    }
+
+    return {
+      ...result,
+      dimensions: result.dimensions.map((dimension) => ({
+        ...dimension,
+        color: props.getDimensionColor({
+          questionnaireName: result.questionnaireName,
+          riskLevel: dimension.riskLevel,
+          isAbnormal: dimension.isAbnormal,
+          type: 'color',
+        }),
+      })),
+    };
+  });
+});
 </script>
 
 <template>
@@ -73,8 +83,8 @@ const questionnaireResults = computed(() => {
       <div class="flex items-center gap-3">
         <span class="font-medium text-gray-600">风险等级:</span>
         <LyTag
-          color-type="success"
-          :tag-label="assessmentResult.riskLevelIntervention.riskLevelName"
+          tag-category-key="questionnaire_result_risk_level"
+          :dict-value="assessmentResult.riskLevelIntervention.riskLevel"
         />
       </div>
 
@@ -110,35 +120,21 @@ const questionnaireResults = computed(() => {
     </div>
 
     <div class="space-y-6">
-      <div v-for="item in questionnaireResults" :key="item.questionnaireId">
+      <div v-for="result in questionnaireResults" :key="result.questionnaireId">
         <Table
-          v-if="JSON.parse(item.reportContent).length > 0"
+          v-if="result.dimensions.length > 0"
           bordered
           :columns="columns"
-          :data-source="JSON.parse(item.reportContent)"
+          :data-source="result.dimensions"
           :pagination="false"
         >
           <template #bodyCell="{ column, text, record }">
-            <template v-if="column.dataIndex === 'isAbnormal'">
-              <template
-                v-if="
-                  !item.questionnaireName.includes('睡眠质量') &&
-                  !item.questionnaireName.includes('电子游戏使用情况')
-                "
-              >
-                <LyTag
-                  :color-type="text === 0 ? 'success' : 'error'"
-                  :tag-label="text === 0 ? '正常' : '异常'"
-                />
-              </template>
-              <template v-else>
-                <span>--</span>
-              </template>
-            </template>
-
             <template v-if="column.dataIndex === 'level'">
               <div class="flex items-center gap-2">
-                <span class="text-sm leading-relaxed text-gray-700">
+                <span
+                  class="text-sm leading-relaxed text-gray-700"
+                  :style="{ color: record.color }"
+                >
                   {{ text || '无' }}
                 </span>
                 <Popover
@@ -146,40 +142,32 @@ const questionnaireResults = computed(() => {
                   placement="right"
                   :overlay-style="{ maxWidth: '300px', wordWrap: 'break-word' }"
                 >
-                  <IconifyIcon icon="carbon:help" />
+                  <IconifyIcon icon="carbon:help" :color="record.color" />
                 </Popover>
               </div>
             </template>
           </template>
           <template #title>
             <div class="font-bold">
-              {{ item.questionnaireName }}
+              {{ result.questionnaireName }}
             </div>
           </template>
           <template #footer>
             <div class="flex flex-col gap-5">
               <template
-                v-for="content in JSON.parse(item.reportContent)"
-                :key="content.dimensionName"
+                v-for="content in result.dimensions"
+                :key="content.dimensionId"
               >
                 <div class="space-y-2">
                   <div
                     class="flex items-center gap-2 font-bold"
-                    :class="
-                      content.isAbnormal === 0
-                        ? 'text-[#04DC70]'
-                        : 'text-[#FF0831]'
-                    "
+                    :style="{ color: content.color }"
                   >
                     <div
                       class="h-1 w-1 rounded-full"
-                      :class="
-                        content.isAbnormal === 0
-                          ? 'bg-[#04DC70]'
-                          : 'bg-[#FF0831]'
-                      "
+                      :style="{ backgroundColor: content.color }"
                     ></div>
-                    {{ content.dimensionName }}
+                    {{ content.name }}
                   </div>
                   <div class="rounded-lg">
                     <span class="font-bold text-gray-600">教师建议：</span>

@@ -1,12 +1,12 @@
 {
-  "env": {
-    "ANTHROPIC_AUTH_TOKEN": "sk-Ky5O3qAsmeLvWJkeHgbGWy1sXKfOWaaP",
-    "ANTHROPIC_BASE_URL": "https://api.packycode.com",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1
-  },
-  "permissions": {
-    "allow": [],
-    "deny": []
-  },
-  "apiKeyHelper": "echo 'sk-Ky5O3qAsmeLvWJkeHgbGWy1sXKfOWaaP'"
-}
+    "env": {
+      "ANTHROPIC_AUTH_TOKEN": "sk-H9EwASok5cJqyC0eh3I4ncoN4EchhRco",
+      "ANTHROPIC_BASE_URL": "https://share-api.packycode.com",
+      "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1
+    },
+    "permissions": {
+      "allow": [],
+      "deny": []
+    },
+    "apiKeyHelper": "echo 'sk-H9EwASok5cJqyC0eh3I4ncoN4EchhRco'"
+  }

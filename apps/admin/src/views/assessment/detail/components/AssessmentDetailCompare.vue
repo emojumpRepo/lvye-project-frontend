@@ -15,7 +15,6 @@ import { IconifyIcon } from '@vben/icons';
 import {
   Collapse as ACollapse,
   Empty as AEmpty,
-  Progress as AProgress,
   Spin as ASpin,
   message,
 } from 'ant-design-vue';
@@ -23,6 +22,8 @@ import {
 import { getAssessmentTaskRiskLevelStatistics } from '#/api/psychology/assessment/index';
 import LyCardTitle from '#/components/LyCardTitle/index.vue';
 import { getDictLabel } from '#/utils/dict';
+
+import AssessmentCollapse from './AssessmentCollapse.vue';
 
 const props = defineProps<{
   activeType: ActiveType;
@@ -36,10 +37,10 @@ const activeKey = ref<number>(0);
 
 // 风险等级配置
 const riskLevelConfigs: RiskLevelConfig[] = [
-  { level: 4, color: '#FF0831' },
-  { level: 3, color: '#FF9C05' },
-  { level: 2, color: '#1966FF' },
   { level: 1, color: '#04DC70' },
+  { level: 2, color: '#1966FF' },
+  { level: 3, color: '#FF9C05' },
+  { level: 4, color: '#FF0831' },
 ];
 
 // 计算风险等级统计数据
@@ -103,37 +104,28 @@ const riskLevelDeptList = computed(() => {
   return deptList;
 });
 
-// 监听数据变化，设置默认激活项
-watch(
-  () => riskLevelDeptList.value,
-  (newList) => {
-    if (newList.length > 0 && newList[0]) {
-      activeKey.value = newList[0].id;
-    }
-  },
-  { immediate: true },
-);
-
 /**
  * 获取风险等级进度
  * @param grade 班级风险等级列表
  * @returns 风险等级进度
  */
 function getRiskLevelProgress(grade: ClassRiskLevel | GradeRiskLevel) {
-  const result: Record<string, string> = {};
+  const result: Array<{ color: string; percent: number }> = [];
 
   grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
-    const percent = `${(riskLevel.count / grade.total) * 100}%`;
+    const percent = (riskLevel.count / grade.total) * 100;
     const color =
       riskLevelConfigs.find((config) => config.level === riskLevel.riskLevel)
         ?.color || '#000000';
 
-    if (percent !== '0%') {
-      result[percent] = color;
+    if (percent > 0) {
+      result.push({ color, percent });
     }
   });
-  if (Object.keys(result).length === 0) {
-    result['100%'] = '#e9eaec';
+
+  // 如果没有数据，显示灰色背景
+  if (result.length === 0) {
+    result.push({ color: '#e9eaec', percent: 100 });
   }
 
   return result;
@@ -143,43 +135,69 @@ watch(
   () => props.taskNo,
   async (newTaskNo: string) => {
     if (newTaskNo) {
-      try {
-        loading.value = true;
-        const response = await getAssessmentTaskRiskLevelStatistics(newTaskNo);
-        if (!response) {
-          assessmentTaskRiskLevelStatistics.value = undefined;
-          return message.error('获取风险统计信息失败');
-        }
-        assessmentTaskRiskLevelStatistics.value = response;
-
-        // 处理风险等级颜色
-        assessmentTaskRiskLevelStatistics.value.gradeList.forEach((grade) => {
-          grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
-            riskLevel.color = riskLevelConfigs.find(
-              (config) => config.level === riskLevel.riskLevel,
-            )?.color;
-          });
-          // 处理班级数据
-          if (grade.classList) {
-            grade.classList.forEach((classItem) => {
-              classItem.riskLevelList?.forEach((riskLevel: RiskLevel) => {
-                riskLevel.color = riskLevelConfigs.find(
-                  (config) => config.level === riskLevel.riskLevel,
-                )?.color;
-              });
-            });
-          }
-        });
-      } catch (error) {
-        console.error('获取风险统计信息失败', error);
-        message.error('获取风险统计信息失败，请重试');
-      } finally {
-        loading.value = false;
+      loading.value = true;
+      await loadAssessmentTaskRiskLevelStatistics(newTaskNo);
+      loading.value = false;
+      // 数据加载完成后，设置默认激活项
+      if (riskLevelDeptList.value.length > 0 && riskLevelDeptList.value[0]) {
+        activeKey.value = riskLevelDeptList.value[0].id;
       }
     }
   },
   { immediate: true },
 );
+
+// 监听类型切换，设置默认激活项
+watch(
+  () => props.activeType,
+  () => {
+    // 切换类型时，设置默认激活项
+    if (riskLevelDeptList.value.length > 0 && riskLevelDeptList.value[0]) {
+      activeKey.value = riskLevelDeptList.value[0].id;
+    }
+  },
+);
+
+/**
+ * 加载评估任务风险等级统计数据
+ * @param taskNo 评估任务编号
+ */
+async function loadAssessmentTaskRiskLevelStatistics(taskNo: string) {
+  try {
+    const response = await getAssessmentTaskRiskLevelStatistics(taskNo);
+    if (!response) {
+      assessmentTaskRiskLevelStatistics.value = undefined;
+      return message.error('获取风险统计信息失败');
+    }
+    assessmentTaskRiskLevelStatistics.value = response;
+
+    // 处理风险等级颜色
+    assessmentTaskRiskLevelStatistics.value.gradeList.forEach((grade) => {
+      grade.riskLevelList.forEach((riskLevel: RiskLevel) => {
+        riskLevel.color = riskLevelConfigs.find(
+          (config) => config.level === riskLevel.riskLevel,
+        )?.color;
+      });
+      // 处理班级数据
+      if (grade.classList) {
+        grade.classList.forEach((classItem) => {
+          classItem.riskLevelList?.forEach((riskLevel: RiskLevel) => {
+            riskLevel.color = riskLevelConfigs.find(
+              (config) => config.level === riskLevel.riskLevel,
+            )?.color;
+          });
+        });
+      }
+    });
+  } catch (error) {
+    console.error('获取风险统计信息失败', error);
+    message.error('获取风险统计信息失败，请重试');
+  }
+}
+
+defineExpose({
+  loadAssessmentTaskRiskLevelStatistics,
+});
 </script>
 
 <template>
@@ -213,7 +231,9 @@ watch(
               </div>
             </div>
 
-            <div class="scroll-area h-[200px] overflow-y-auto">
+            <div
+              class="scroll-area h-[200px] overflow-y-auto [scrollbar-gutter:stable]"
+            >
               <ACollapse
                 v-model:active-key="activeKey"
                 accordion
@@ -227,66 +247,23 @@ watch(
                     class="size-2.5"
                   />
                 </template>
+
                 <!-- 统一的风险等级显示 -->
                 <ACollapse.Panel
                   v-for="item in riskLevelDeptList"
                   :key="item.id"
                 >
                   <template #header>
-                    <div class="flex items-center justify-between gap-8">
-                      <div class="whitespace-nowrap">
-                        {{ item.name }}
-                      </div>
-                      <!-- all 模式在头部显示风险等级 -->
-                      <template v-if="activeType === 'all'">
-                        <div
-                          class="flex w-full items-center justify-center gap-12"
-                        >
-                          <div
-                            v-for="child in item.riskLevelList"
-                            :key="child.riskLevel"
-                            class="flex items-center justify-between"
-                          >
-                            <span
-                              class="text-primary whitespace-nowrap text-sm"
-                              :style="{ color: child.color }"
-                            >
-                              {{ child.count }}
-                            </span>
-                          </div>
-                          <AProgress
-                            :percent="100"
-                            :size="10"
-                            :show-info="false"
-                            :stroke-color="item.progressColor"
-                          />
-                        </div>
-                      </template>
-                    </div>
+                    <AssessmentCollapse
+                      :item="item"
+                      :show-progress="activeType === 'all'"
+                      :gap="0"
+                    />
                   </template>
 
                   <!-- 班级模式内容 -->
                   <template v-if="item.type === 'class'">
-                    <div class="flex items-center justify-center gap-12">
-                      <div
-                        v-for="child in item.riskLevelList"
-                        :key="child.riskLevel"
-                        class="flex items-center justify-between"
-                      >
-                        <span
-                          class="text-primary whitespace-nowrap text-sm"
-                          :style="{ color: child.color }"
-                        >
-                          {{ child.count }}
-                        </span>
-                      </div>
-                      <AProgress
-                        :percent="100"
-                        :size="10"
-                        :show-info="false"
-                        :stroke-color="item.progressColor"
-                      />
-                    </div>
+                    <AssessmentCollapse :item="item" :show-class-name="false" />
                   </template>
 
                   <!-- 年级模式内容 -->
@@ -294,26 +271,10 @@ watch(
                     <div class="flex flex-col gap-4">
                       <!-- grade 模式显示年级风险等级 -->
                       <template v-if="activeType === 'grade'">
-                        <div class="flex items-center justify-center gap-8">
-                          <div
-                            v-for="child in item.riskLevelList"
-                            :key="child.riskLevel"
-                            class="flex items-center justify-between"
-                          >
-                            <span
-                              class="text-primary whitespace-nowrap text-sm"
-                              :style="{ color: child.color }"
-                            >
-                              {{ child.count }}
-                            </span>
-                          </div>
-                          <AProgress
-                            :percent="100"
-                            :size="10"
-                            :show-info="false"
-                            :stroke-color="item.progressColor"
-                          />
-                        </div>
+                        <AssessmentCollapse
+                          :item="item"
+                          :show-class-name="false"
+                        />
                       </template>
 
                       <!-- all 模式显示班级列表 -->
@@ -323,31 +284,7 @@ watch(
                           v-for="classItem in item.classList"
                           :key="classItem.id"
                         >
-                          <span class="whitespace-nowrap">
-                            {{ classItem.name }}
-                          </span>
-                          <div
-                            class="flex w-full items-center justify-center gap-12"
-                          >
-                            <div
-                              v-for="child in classItem.riskLevelList"
-                              :key="child.riskLevel"
-                              class="flex items-center justify-between"
-                            >
-                              <span
-                                class="text-primary whitespace-nowrap text-sm"
-                                :style="{ color: child.color }"
-                              >
-                                {{ child.count }}
-                              </span>
-                            </div>
-                            <AProgress
-                              :percent="100"
-                              :size="10"
-                              :show-info="false"
-                              :stroke-color="classItem.progressColor"
-                            />
-                          </div>
+                          <AssessmentCollapse :item="classItem" />
                         </div>
                       </template>
                     </div>
@@ -381,6 +318,10 @@ watch(
 
 :deep(.ant-spin-container) {
   height: 100% !important;
+}
+
+:deep(.ant-collapse-expand-icon) {
+  padding-inline-end: 15.5px !important;
 }
 
 .scroll-area::-webkit-scrollbar {

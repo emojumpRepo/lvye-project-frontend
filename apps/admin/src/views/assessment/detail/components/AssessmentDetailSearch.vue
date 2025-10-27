@@ -70,6 +70,7 @@ async function handleSearch(values: any) {
 // 重置搜索
 function handleReset() {
   formApi.form.resetForm();
+  assessmentDetailSearchParams.value = undefined;
 }
 
 onMounted(async () => {
