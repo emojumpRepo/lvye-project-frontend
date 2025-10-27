@@ -17,6 +17,7 @@ import { useSearchFormSchema } from '../data';
 
 // 定义 emit 事件
 const emit = defineEmits<{
+  report: [];
   search: [params: PsychologyStudentProfileApi.StudentProfilePageReq];
 }>();
 
@@ -29,9 +30,10 @@ const [Form, formApi] = useVbenForm({
     deptOptions: [],
     studentProfileStatusList: [],
     graduationStatusList: [],
+    riskLevelList: [],
   }),
   layout: 'horizontal',
-  wrapperClass: 'grid-cols-12 md:grid-cols-9',
+  wrapperClass: 'grid-cols-10 md:grid-cols-6',
   submitOnChange: true,
   commonConfig: {
     componentProps: {
@@ -56,6 +58,7 @@ const [Form, formApi] = useVbenForm({
         classDeptId: values.classDeptId || undefined,
         graduationStatus: values.graduationStatus || undefined,
         psychologicalStatus: values.psychologicalStatus || undefined,
+        riskLevel: values.riskLevel || undefined,
       };
 
       searchParams.value = params;
@@ -83,11 +86,13 @@ onMounted(async () => {
     'student_graduation_status',
     'number',
   );
+  const riskLevelList = getDictOptions('risk_level', 'number');
   formApi.updateSchema(
     useSearchFormSchema({
       deptOptions: deptOptions.value,
       studentProfileStatusList,
       graduationStatusList,
+      riskLevelList,
     }),
   );
 });
@@ -106,7 +111,6 @@ defineExpose({
       title="学生管理档案"
       icon-bg="linear-gradient(143.39deg, #B6CDFF 11.39%, #DB88FF 89.3%)"
     />
-
     <!-- 筛选表单 -->
     <Form />
   </div>
@@ -118,7 +122,7 @@ defineExpose({
 }
 
 :deep(.form-actions) {
-  grid-column: -3 / -1 !important;
+  // grid-column: -3 / -1 !important;
   padding-bottom: 0 !important;
 }
 </style>

@@ -31,6 +31,7 @@ const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
     fullscreenButton: false,
     destroyOnClose: true,
     class: '!w-[1000px]',
+    headerClass: 'px-5 py-3',
     onOpenChange: () => {
       const data = createSimpleAssessmentModalApi.getData();
       if (data) {
@@ -130,7 +131,14 @@ provide('CommonDialogContentLoading', {
 </script>
 
 <template>
-  <CreateSimpleAssessmentModal title="创建量表评估任务">
+  <CreateSimpleAssessmentModal title="创建测评任务">
+    <template #title>
+      <div class="flex items-center gap-2 text-lg font-semibold">
+        <IconifyIcon icon="simple-icons:task" class="size-5" color="#04DC70" />
+        <span>创建测评任务</span>
+      </div>
+    </template>
+
     <div class="flex flex-col gap-6 px-6 py-4">
       <!-- 测评对象 -->
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">

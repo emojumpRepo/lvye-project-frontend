@@ -189,9 +189,18 @@ const [Drawer, drawerApi] = useVbenDrawer({
       const data = drawerApi.getData<{
         currentDate?: string;
         id?: number;
+        studentProfile?: {
+          className: string;
+          studentName: string;
+          studentNumber: string;
+          studentProfileId: number;
+        };
         timeRange?: { date: Date; end: Date | string; start: Date | string };
       }>();
-      console.log('打开抽屉', data);
+
+      if (data.studentProfile) {
+        form.value.student = buildStudentOption(data.studentProfile);
+      }
 
       if (data.id) {
         currentConsultationRecordId.value = data.id;
@@ -588,10 +597,10 @@ async function onTeacherChange(value: any) {
 
 // ==================== 表单提交相关 ====================
 /** 提交咨询预约 */
-function submitConsult() {
-  formRef.value?.validate().then(() => {
+async function submitConsult() {
+  formRef.value?.validate().then(async () => {
     if (isDetail.value) {
-      handleConfirmCreateOrUpdate();
+      await handleConfirmCreateOrUpdate();
     } else {
       confirmModalApi.open();
     }
@@ -601,6 +610,7 @@ function submitConsult() {
 /** 确认创建或更新咨询预约 */
 async function handleConfirmCreateOrUpdate() {
   formRef.value?.validate().then(async () => {
+    drawerApi.lock();
     // 组合日期(年月日)与时间(时分秒)
     const dateStr = form.value.consultDate
       ? dayjs(form.value.consultDate).format('YYYY-MM-DD')
@@ -636,10 +646,13 @@ async function handleConfirmCreateOrUpdate() {
       }
 
       showConfirmDialog.value = false;
+      message.success('创建咨询预约成功');
       drawerApi.close();
       emit('refresh');
     } catch (error) {
       console.error('创建咨询预约失败:', error);
+    } finally {
+      drawerApi.unlock();
     }
   });
 }

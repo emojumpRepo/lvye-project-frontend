@@ -226,20 +226,25 @@ function refresh() {
 
       <!-- 优先级 -->
       <template #priority="{ row }">
-        <div class="text-[#4C4C4D]">
+        <div v-if="row.priority" class="text-[#4C4C4D]">
           {{ getDictLabel('crisis_event_priority', row.priority) }}
         </div>
-        <!-- <LyTag
-          tag-category-key="crisis_event_priority"
-          :dict-value="String(row.priority)"
-        /> -->
+        <div v-else>--</div>
+      </template>
+
+      <!-- 预警来源 -->
+      <template #sourceType="{ row }">
+        <div v-if="row.sourceType" class="text-[#4C4C4D]">
+          {{ getDictLabel('crisis_event_report_source', row.sourceType) }}
+        </div>
+        <div v-else>--</div>
       </template>
 
       <!-- 当前状态 -->
       <template #status="{ row }">
         <LyTag
-          tag-category-key="intervention_process_status"
-          :dict-value="String(row.processStatus)"
+          tag-category-key="crisis_event_status"
+          :dict-value="String(row.status)"
         />
       </template>
 

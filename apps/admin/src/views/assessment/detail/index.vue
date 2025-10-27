@@ -65,7 +65,7 @@ const actionButtons = ref([
     label: '导出数据',
     value: 'export',
     onClick: handleExport,
-    show: true,
+    show: false,
   },
 ]);
 

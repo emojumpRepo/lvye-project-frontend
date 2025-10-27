@@ -2,6 +2,7 @@ import type { DeptGradeClassOption } from '@vben/types';
 
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { DictDataType } from '#/utils/dict';
 
 import { h } from 'vue';
 
@@ -12,10 +13,12 @@ export function useSearchFormSchema({
   deptOptions,
   counselorOptions,
   priorityOptions,
+  sourceTypeOptions,
 }: {
-  counselorOptions: { label: string; value: number }[];
+  counselorOptions: DictDataType[];
   deptOptions: DeptGradeClassOption[];
-  priorityOptions: { label: string; value: string }[];
+  priorityOptions: DictDataType[];
+  sourceTypeOptions: DictDataType[];
 }): VbenFormSchema[] {
   return [
     {
@@ -52,6 +55,14 @@ export function useSearchFormSchema({
       defaultValue: '',
     },
     {
+      fieldName: 'sourceType',
+      component: 'Select',
+      componentProps: {
+        options: [{ label: '全部预警来源', value: '' }, ...sourceTypeOptions],
+      },
+      defaultValue: '',
+    },
+    {
       fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
@@ -77,7 +88,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'eventId',
       title: '预警详情',
       slots: { default: 'eventId' },
-      width: '15%',
+      width: '13%',
     },
     {
       field: 'description',
@@ -89,7 +100,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'studentName',
       title: '学生信息',
       slots: { default: 'studentName' },
-      width: '13%',
+      width: '12%',
     },
     {
       field: 'className',
@@ -104,6 +115,12 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       width: '10%',
     },
     {
+      field: 'sourceType',
+      title: '预警来源',
+      slots: { default: 'sourceType' },
+      width: '10%',
+    },
+    {
       field: 'status',
       title: '当前状态',
       slots: { default: 'status' },
@@ -113,7 +130,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'handlerName',
       title: '负责人',
       slots: { default: 'handlerName' },
-      width: '15%',
+      width: '10%',
     },
     {
       field: 'progress',
@@ -131,7 +148,7 @@ export function useEventGridSchema(): VxeTableGridOptions['columns'] {
       field: 'actions',
       fixed: 'right',
       title: '操作',
-      width: '10%',
+      width: '8%',
       slots: { default: 'actions' },
     },
   ];

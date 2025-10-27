@@ -3,6 +3,7 @@ import type { DeptGradeClassOption } from '@vben/types';
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+import type { DictDataType } from '#/utils/dict';
 
 import { h } from 'vue';
 
@@ -13,10 +14,12 @@ export function useSearchFormSchema({
   deptOptions,
   studentProfileStatusList,
   graduationStatusList,
+  riskLevelList,
 }: {
   deptOptions: DeptGradeClassOption[];
-  graduationStatusList: { label: string; value: number }[];
-  studentProfileStatusList: { label: string; value: number }[];
+  graduationStatusList: DictDataType[];
+  riskLevelList: DictDataType[];
+  studentProfileStatusList: DictDataType[];
 }): VbenFormSchema[] {
   return [
     {
@@ -40,7 +43,7 @@ export function useSearchFormSchema({
       fieldName: 'graduationStatus',
       component: 'Select',
       componentProps: {
-        options: [{ label: '是否毕业', value: '' }, ...graduationStatusList],
+        options: [{ label: '就读状态', value: '' }, ...graduationStatusList],
       },
       defaultValue: '',
     },
@@ -51,6 +54,17 @@ export function useSearchFormSchema({
         options: [
           { label: '全部心理状态', value: '' },
           ...studentProfileStatusList,
+        ],
+      },
+      defaultValue: '',
+    },
+    {
+      fieldName: 'riskLevel',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '最近一次风险评估定级', value: '' },
+          ...riskLevelList,
         ],
       },
       defaultValue: '',
@@ -70,7 +84,7 @@ export function useSearchFormSchema({
             color: '#ccc',
           }),
       }),
-      formItemClass: 'col-span-2',
+      // formItemClass: 'col-span-2',
     },
   ];
 }

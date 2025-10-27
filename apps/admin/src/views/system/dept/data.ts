@@ -101,7 +101,9 @@ export function useFormSchema(): VbenFormSchema[] {
 
                 // 检查用户的角色
                 const hasPsychologyTeacher = user.roleInfo.some(
-                  (role) => role.roleCode === 'psychology_teacher',
+                  (role) =>
+                    role.roleCode === 'psychology_teacher' ||
+                    role.roleCode === 'default_psychology_teacher',
                 );
                 const hasTeacher = user.roleInfo.some(
                   (role) => role.roleCode === 'teacher',

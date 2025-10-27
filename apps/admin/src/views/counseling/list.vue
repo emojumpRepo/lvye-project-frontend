@@ -337,10 +337,6 @@ function handleCancel(row: PsychologyConsultationApi.ConsultationRecord) {
         (confirmCancelModalApi as any)._pendingCancel = onCancel;
       });
     },
-  }).then(() => {
-    // 到这里，说明已通过二次确认并关闭了 prompt
-    // 后续真正提交逻辑可在这里或现有 handleCancelConfirm 中进行
-    // 保留现有流程，由二次确认按钮触发 handleCancelConfirm
   });
 }
 

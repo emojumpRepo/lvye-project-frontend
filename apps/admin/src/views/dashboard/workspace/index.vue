@@ -1,29 +1,36 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
 
+import { useVbenDrawer } from '@vben/common-ui';
 import { ChevronRight } from '@vben/icons';
 
 import { Empty } from 'ant-design-vue';
 
 import { getConfigKey } from '#/api/infra/config';
+import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
+import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
 import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
 
+const [ReportFastDrawer, reportFastDrawerApi] = useVbenDrawer({
+  connectedComponent: ReportQuicklyDrawer,
+});
+
 const systemWelcome = ref('');
 
 // Data for new WorkSpaceCard + WorkSpaceItem lists (sample to match figma)
-const taskList = [];
+const taskList = ref([]);
 
-const interveneList = [];
+const interveneList = ref([]);
 
-const alertsList = [];
+const alertsList = ref([]);
 
 // pagination state and handlers
 const taskPage = ref(1);
 const taskPageSize = ref(5);
 const pagedTaskList = computed(() =>
-  taskList.slice(
+  taskList.value.slice(
     (taskPage.value - 1) * taskPageSize.value,
     taskPage.value * taskPageSize.value,
   ),
@@ -39,7 +46,7 @@ function onTaskRefresh() {
 const intervenePage = ref(1);
 const intervenePageSize = ref(5);
 const pagedInterveneList = computed(() =>
-  interveneList.slice(
+  interveneList.value.slice(
     (intervenePage.value - 1) * intervenePageSize.value,
     intervenePage.value * intervenePageSize.value,
   ),
@@ -55,7 +62,7 @@ function onInterveneRefresh() {
 const alertsPage = ref(1);
 const alertsPageSize = ref(5);
 const pagedAlertsList = computed(() =>
-  alertsList.slice(
+  alertsList.value.slice(
     (alertsPage.value - 1) * alertsPageSize.value,
     alertsPage.value * alertsPageSize.value,
   ),
@@ -66,6 +73,10 @@ function onAlertsPageChange(page: number, pageSize: number) {
 }
 function onAlertsRefresh() {
   // TODO: hook to real data source
+}
+
+function handleQuickReport() {
+  reportFastDrawerApi.open();
 }
 
 onMounted(async () => {
@@ -85,7 +96,13 @@ onMounted(async () => {
   <div
     class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10"
   >
-    <PageTitle :title="systemWelcome" />
+    <PageTitle :title="systemWelcome">
+      <template #action>
+        <LyButton size="middle" type="success" @click="handleQuickReport">
+          快速上报
+        </LyButton>
+      </template>
+    </PageTitle>
     <!-- Responsive grid with better breakpoints -->
     <div
       class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3"
@@ -187,5 +204,7 @@ onMounted(async () => {
         </div>
       </WorkSpaceCard>
     </div>
+
+    <ReportFastDrawer />
   </div>
 </template>

@@ -6,7 +6,7 @@ import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { computed, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
 
 import {
   Badge as ABadge,
@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
-import StudentDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
+import AdjustStudentRiskLevelDialog from '#/components/Dialog/AdjustStudentRiskLevelDialog/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
@@ -36,20 +36,57 @@ const currentPage = ref(1);
 const pageSize = ref(5);
 const loading = ref(false);
 
-const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
-  class: 'w-[800px]',
-  connectedComponent: StudentDrawer,
-});
+// const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
+//   class: 'w-[800px]',
+//   connectedComponent: StudentDrawer,
+// });
+
+const [AdjustStudentRiskLevelModal, adjustStudentRiskLevelModalApi] =
+  useVbenModal({
+    connectedComponent: AdjustStudentRiskLevelDialog,
+  });
 
 // 当前干预卡片类型
 const interventionType = computed((): InterventionType | undefined => {
   return getInterventionTypeByDictValue(props.interventionItem.dictValue);
 });
 
+// 学生卡片样式配置
+const getStudentCardStyles = computed(() => {
+  return (board: StudentInterventionItem) => {
+    const isGraduated = board.studyStatus === 1;
+
+    return {
+      // 卡片容器样式
+      cardClass: [
+        'mr-1 cursor-pointer space-y-2 rounded-xl p-4 transition-colors',
+        isGraduated
+          ? 'bg-gray-100 hover:bg-gray-150'
+          : 'bg-[#F7F8FA] hover:bg-[#f2f3f5]',
+      ],
+      // 学生姓名和班级样式
+      nameClass: [
+        'flex items-center gap-1 text-sm font-bold',
+        isGraduated ? 'text-gray-400' : 'text-gray-900',
+      ],
+      // 负责人信息样式
+      counselorClass: [
+        'text-xs',
+        isGraduated ? 'text-gray-400' : 'text-[#979899]',
+      ],
+      // 时间信息样式
+      timeClass: ['text-xs', isGraduated ? 'text-gray-400' : 'text-[#979899]'],
+      // 是否显示毕业标识
+      showGraduatedBadge: isGraduated,
+    };
+  };
+});
+
 /** 分页
  * @param page 页码
  */
 async function handlePageChange(page: number) {
+  if (props.interventionItem.studentPage.total === 0) return;
   try {
     loading.value = true;
     const response = await getRiskLevelBoardData({
@@ -69,7 +106,13 @@ async function handlePageChange(page: number) {
 
 /** 查看学生详情 */
 function handleStudentClick(board: StudentInterventionItem) {
-  studentDetailDrawerApi.setData({ id: board.studentProfileId }).open();
+  adjustStudentRiskLevelModalApi
+    .setData({
+      studentName: board.studentName,
+      riskLevel: board.currentRiskLevel,
+      studentProfileId: board.studentProfileId,
+    })
+    .open();
 }
 </script>
 
@@ -109,19 +152,26 @@ function handleStudentClick(board: StudentInterventionItem) {
             <div
               v-for="board in interventionItem.studentPage.list"
               :key="board.studentProfileId"
-              class="mr-1 cursor-pointer space-y-2 rounded-xl bg-[#F7F8FA] p-4 hover:bg-[#f2f3f5]"
+              :class="getStudentCardStyles(board).cardClass"
               @click="handleStudentClick(board)"
             >
-              <div class="flex items-center gap-1 text-sm font-bold">
+              <div :class="getStudentCardStyles(board).nameClass">
                 <span>{{ truncateText(board.studentName, 6) }}</span>
                 <ADivider type="vertical" />
                 <span>{{ board.className }}</span>
+                <!-- 毕业标识 -->
+                <span
+                  v-if="getStudentCardStyles(board).showGraduatedBadge"
+                  class="ml-1 rounded bg-gray-300 px-1.5 py-0.5 text-xs text-gray-600"
+                >
+                  已毕业
+                </span>
               </div>
-              <div class="text-xs text-[#979899]">
+              <div :class="getStudentCardStyles(board).counselorClass">
                 <span>负责人：</span>
                 <span>{{ board.counselorName || '--' }}</span>
               </div>
-              <div class="text-xs text-[#979899]">
+              <div :class="getStudentCardStyles(board).timeClass">
                 {{ dayjs(board.lastUpdateTime).format('YYYY-MM-DD HH:mm:ss') }}
               </div>
             </div>
@@ -138,17 +188,19 @@ function handleStudentClick(board: StudentInterventionItem) {
         <div class="flex justify-end">
           <APagination
             v-model:current="currentPage"
-            :total="interventionItem.studentPage.total"
+            :total="interventionItem.studentPage.total || 0"
             :default-page-size="pageSize"
             :show-size-changer="false"
-            simple
+            :show-total="(total) => `共 ${total} 个学生`"
+            size="small"
             @change="handlePageChange"
           />
         </div>
       </div>
     </ASpin>
 
-    <StudentDetailDrawer />
+    <!-- <StudentDetailDrawer /> -->
+    <AdjustStudentRiskLevelModal />
   </div>
 </template>
 

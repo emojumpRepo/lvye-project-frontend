@@ -30,6 +30,7 @@ export interface CrisisEventListReq {
   studentName?: string;
   classId?: number;
   counselorUserId?: number;
+  sourceType?: number;
 }
 
 /** 获取危机事件处理历史记录请求参数 */

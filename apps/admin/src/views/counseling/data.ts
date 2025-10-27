@@ -32,13 +32,11 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'studentName',
       title: '学生信息',
-      width: '12%',
       slots: { default: 'studentName' },
     },
     {
       field: 'className',
       title: '班级',
-      width: '10%',
       visible: false,
     },
     {
@@ -48,39 +46,35 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'consultTime',
-      title: '时间',
-      width: '20%',
+      title: '预约时间',
       slots: { default: 'consultTime' },
     },
     {
       field: 'durationMinutes',
       title: '时长',
-      width: '10%',
       visible: false,
     },
     {
       field: 'consultationType',
-      title: '访谈类型',
-      width: '10%',
+      title: '咨询类型',
     },
     { field: 'counselorName', title: '访谈老师', width: '13%' },
-    { field: 'location', title: '地点', width: '10%' },
+    // { field: 'location', title: '地点', width: '10%' },
     {
       field: 'stauts',
       title: '状态',
-      width: '10%',
       slots: { default: 'stauts' },
     },
     {
       field: 'currentStep',
       title: '进度',
-      width: '15%',
       slots: { default: 'currentStep' },
+      visible: false,
     },
     {
       title: '操作',
       fixed: 'right',
-      width: '16%',
+      width: '250',
       resizable: false,
       slots: { default: 'actions' },
     },

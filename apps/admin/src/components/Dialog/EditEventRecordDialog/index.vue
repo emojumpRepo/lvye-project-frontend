@@ -16,7 +16,6 @@ import {
   updateHandler,
 } from '#/api/psychology/risk';
 import { getTeacherUserList } from '#/api/system/user';
-import LyLabel from '#/components/LyLabel/index.vue';
 
 interface HandleUserOption {
   label: string;
@@ -233,18 +232,18 @@ function updateProcessRecord() {
 
 <template>
   <EditEventRecordModal :title="title">
-    <div class="px-2">
+    <div class="p-2">
       <div>
         <AForm ref="formRef" :model="editForm">
           <!-- 负责人选择 -->
           <AForm.Item
             name="handleUserId"
+            label="负责人"
             v-if="
               params?.type === 'ASSIGN_HANDLER' ||
               (params?.type === 'REASSIGN_HANDLER' && params.id)
             "
           >
-            <LyLabel title="负责人" custom-title-class="font-normal text-sm" />
             <ASelect
               v-model:value="editForm.handleUserId"
               class="w-full"
@@ -254,22 +253,28 @@ function updateProcessRecord() {
           </AForm.Item>
 
           <!-- 更新原因 -->
-          <AForm.Item name="reason" v-if="params?.type !== 'ASSIGN_HANDLER'">
-            <div v-if="params?.recordId" class="mb-3 text-sm font-bold">
-              {{ config.title }}：
+          <div class="flex flex-col gap-3">
+            <div v-if="params?.recordId" class="mb-2 flex items-center gap-2">
+              <div class="h-2 w-2 rounded-full bg-[#1966FF]"></div>
+              <span class="text-sm font-semibold text-[#1966FF]">
+                {{ config.title }}
+              </span>
             </div>
-            <LyLabel
-              :title="config.label"
-              custom-title-class="font-normal text-sm"
-            />
-            <ATextarea
-              v-model:value="editForm.content"
-              :rows="4"
-              :maxlength="100"
-              show-count
-              placeholder="请填写"
-            />
-          </AForm.Item>
+            <AForm.Item
+              name="reason"
+              class="mb-0"
+              v-if="params?.type !== 'ASSIGN_HANDLER'"
+              :label="config.label"
+            >
+              <ATextarea
+                v-model:value="editForm.content"
+                :rows="4"
+                :maxlength="100"
+                show-count
+                placeholder="请填写"
+              />
+            </AForm.Item>
+          </div>
         </AForm>
       </div>
     </div>

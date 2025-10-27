@@ -222,7 +222,7 @@ onMounted(async () => {
           icon-bg="#ffeded"
           icon-color="#f4532f"
           icon-src="ph:seal-warning-fill"
-          title="逾期评估数"
+          title="逾期/待评估数"
           :value="statisticsConsultationCount?.overdueCount"
         />
       </div>

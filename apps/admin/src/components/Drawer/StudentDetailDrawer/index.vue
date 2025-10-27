@@ -57,7 +57,10 @@ const emit = defineEmits<{
   (e: 'refresh'): void;
   (e: 'evaluate', data: AssessmentComfirmInfo): void;
   (e: 'reportAbnormal', data: ReportAbnormalParams): void;
-  (e: 'interview'): void;
+  (
+    e: 'interview',
+    studentProfile: PsychologyStudentProfileApi.StudentProfile,
+  ): void;
   (
     e: 'startAssessment',
     studentProfile: PsychologyStudentProfileApi.StudentProfile,
@@ -143,7 +146,7 @@ const footerButtons = ref<FooterButton[]>([
     onClick: () => {
       if (!studentProfile.value?.id) return message.error('预约访谈失败！');
       studentDetailDrawerApi.close();
-      emit('interview');
+      emit('interview', studentProfile.value);
     },
   },
   {

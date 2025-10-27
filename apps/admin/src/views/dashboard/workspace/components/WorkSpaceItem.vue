@@ -105,7 +105,8 @@ const statusBadgeClasses = computed(() => {
 
 const secondaryBadgeClasses = computed(() => {
   if (!props.secondaryBadge) return '';
-  const common = 'px-1.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs leading-tight whitespace-nowrap border';
+  const common =
+    'px-1.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs leading-tight whitespace-nowrap border';
   // Match figma swatches
   if (props.secondaryBadge.type === 'ai') {
     return `${common} text-[#01BE5F] bg-[#F2FFF6] border-[#00EC76]`;
@@ -123,16 +124,22 @@ const secondaryBadgeClasses = computed(() => {
     class="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
     :class="[containerClasses]"
   >
-    <div class="flex flex-1 flex-col gap-1 min-w-0">
+    <div class="flex min-w-0 flex-1 flex-col gap-1">
       <div class="flex flex-col gap-1.5">
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span class="text-xs font-semibold text-black sm:text-sm truncate max-w-[120px] sm:max-w-none">
+          <span
+            class="max-w-[120px] truncate text-xs font-semibold text-black sm:max-w-none sm:text-sm"
+          >
             {{ name }}
           </span>
-          <span class="size-0.5 shrink-0 overflow-hidden rounded-full hidden sm:block">
+          <span
+            class="hidden size-0.5 shrink-0 overflow-hidden rounded-full sm:block"
+          >
             <span class="block size-0.5 rounded-full bg-black"></span>
           </span>
-          <span class="text-xs font-semibold text-black sm:text-sm truncate max-w-[150px] sm:max-w-none">
+          <span
+            class="max-w-[150px] truncate text-xs font-semibold text-black sm:max-w-none sm:text-sm"
+          >
             {{ className }}
           </span>
         </div>
@@ -146,20 +153,27 @@ const secondaryBadgeClasses = computed(() => {
         </div>
       </div>
 
-      <div v-if="description" class="line-clamp-2 text-[10px] text-[#959599] sm:text-xs sm:line-clamp-1">
+      <div
+        v-if="description"
+        class="line-clamp-2 text-[10px] text-[#959599] sm:line-clamp-1 sm:text-xs"
+      >
         {{ description }}
       </div>
 
-      <div class="flex flex-wrap items-center gap-1 text-[10px] text-[#959599] sm:gap-1.5 sm:text-xs">
+      <div
+        class="flex flex-wrap items-center gap-1 text-[10px] text-[#959599] sm:gap-1.5 sm:text-xs"
+      >
         <span v-if="date">{{ date }}</span>
         <span v-if="date && time" class="hidden sm:inline">·</span>
         <span v-if="time">{{ time }}</span>
-        <span v-if="(date || time) && counselor" class="hidden sm:inline">·</span>
+        <span v-if="(date || time) && counselor" class="hidden sm:inline">
+          ·
+        </span>
         <span v-if="counselor">咨询师：{{ counselor }}</span>
       </div>
     </div>
 
-    <div class="mt-2 self-end sm:mt-0 sm:ml-3 sm:self-center shrink-0">
+    <div class="mt-2 shrink-0 self-end sm:ml-3 sm:mt-0 sm:self-center">
       <slot name="rightAction">
         <LyButton
           v-if="rightAction"

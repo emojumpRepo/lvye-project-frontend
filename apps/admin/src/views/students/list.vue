@@ -33,6 +33,7 @@ import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssess
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
+import CreateConsultDrawer from '#/components/Drawer/CreateConsultDrawer/index.vue';
 import CreateStudentDrawer from '#/components/Drawer/CreateStudentDrawer/index.vue';
 import GraduatedStudentProfileDrawer from '#/components/Drawer/GraduatedStudentProfileDrawer/index.vue';
 import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
@@ -55,11 +56,6 @@ import {
 } from './data';
 
 defineOptions({ name: 'StudentArchive' });
-
-// ============== 数据状态 ==============
-const loading = ref(false);
-const graduationDrawerOpen = ref<boolean>(false);
-const studentSearchRef = ref();
 
 // ====================== 抽屉 ===========================
 // 详情抽屉
@@ -103,6 +99,11 @@ const [ReportAbnormalDrawer, reportAbnormalDrawerApi] = useVbenDrawer({
   connectedComponent: ReportQuicklyDrawer,
 });
 
+// 预约访谈弹窗
+const [AppointConsultDrawer, appointConsultDrawerApi] = useVbenDrawer({
+  connectedComponent: CreateConsultDrawer,
+});
+
 // 已毕业学生档案抽屉
 const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
   connectedComponent: GraduatedStudentProfileDrawer,
@@ -125,6 +126,11 @@ const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
   useVbenModal({
     connectedComponent: CreateSimpleAssessmentDialog,
   });
+
+// ============== 数据状态 ==============
+const loading = ref(false);
+const graduationDrawerOpen = ref<boolean>(false);
+const studentSearchRef = ref();
 
 // ============== 视图模式与选择 ==============
 const viewMode = ref<'group' | 'list'>('list');
@@ -388,7 +394,20 @@ function viewCrisisEvent(data: CrisisEventOpParams) {
 }
 
 /** 预约访谈 */
-function handleInterview() {}
+function handleInterview(
+  studentProfile: PsychologyStudentProfileApi.StudentProfile,
+) {
+  appointConsultDrawerApi
+    .setData({
+      studentProfile: {
+        studentName: studentProfile.name,
+        className: studentProfile.className,
+        studentNumber: studentProfile.studentNo,
+        studentProfileId: studentProfile.id,
+      },
+    })
+    .open();
+}
 
 /** 发起测评 */
 function handleStartAssessment(
@@ -556,21 +575,34 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
       @start-assessment="handleStartAssessment"
       @interview="handleInterview"
     />
+    <!-- 创建学生抽屉 -->
     <CreateDrawer @refresh="refresh" />
+    <!-- 批量换班抽屉 -->
     <BulkClassTransferDrawer />
+    <!-- 批量导入抽屉 -->
     <BulkImportDrawer @refresh="refresh" />
+    <!-- 删除学生确认框 -->
     <DeleteStudentModal />
+    <!-- 批量删除学生确认框 -->
     <BulkDeleteStudentModal @refresh="refresh" />
+    <!-- 已毕业学生档案抽屉 -->
     <GraduatedFileDrawer />
+    <!-- 年级毕业抽屉 -->
     <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
+    <!-- 危机事件弹窗 -->
     <HandleCrisisEventModal />
+    <!-- 心理咨询弹窗 -->
     <PsychologicalConsultDialog
       v-model:open="isOpenPsychologicalAssessmentDialog"
       :comfirm-info="confirmInfo"
       :publish="publishAssessment"
     />
+    <!-- 上报异常弹窗 -->
     <ReportAbnormalDrawer @view-detail="viewCrisisEvent" />
+    <!-- 创建测评弹窗 -->
     <CreateSimpleAssessmentModal />
+    <!-- 预约访谈弹窗 -->
+    <AppointConsultDrawer />
   </div>
 </template>
 

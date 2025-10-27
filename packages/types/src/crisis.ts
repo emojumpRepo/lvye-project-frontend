@@ -79,7 +79,8 @@ export interface AssessmentRecord {
   createTime: number;
 }
 
-export interface AssessmentTask {
+/** 危机评估任务 */
+export interface CrisisAssessmentTask {
   status: number;
   taskId: number;
   taskName: string;
