@@ -8,6 +8,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { Tag } from 'ant-design-vue';
 
 import { parseCalculateFormula } from '../utils/formula-parser';
+import { formatQuestionIndex } from '../utils/question-index';
 
 interface Props {
   config: null | QuestionnaireConfigVO;
@@ -36,15 +37,8 @@ const formulaInfo = computed(() => {
 // 格式化题目索引显示
 const formattedQuestionIndex = computed(() => {
   if (!props.config?.questionIndex) return '无';
-
-  if (props.config.questionIndex === 'all') {
-    return '全部题目';
-  }
-
-  return props.config.questionIndex
-    .split(',')
-    .map((item: string) => `第${item}题`)
-    .join('、');
+  const { text } = formatQuestionIndex(props.config.questionIndex);
+  return text;
 });
 
 // 获取计算类型标签

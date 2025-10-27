@@ -4,7 +4,6 @@ import type { AssessmentScenario } from '@vben/types';
 import type {
   AbnormalFactorAggregationConfig,
   CalculateStrategyType,
-  DimensionInterlockConfig,
 } from './data';
 
 import type { AssessmentResultConfigDO } from '#/api/psychology/assessment-result-config';
@@ -36,6 +35,7 @@ import {
   getAssessmentResultConfigsByScenarioId,
   updateAssessmentResultConfig,
 } from '#/api/psychology/assessment-result-config';
+import { getAssessmentDimensionsByScenario } from '#/api/psychology/questionnaire/index';
 
 interface Emits {
   (e: 'success'): void;
@@ -45,6 +45,7 @@ const emit = defineEmits<Emits>();
 
 const selectedScenario = ref<AssessmentScenario | null>(null);
 const loading = ref(false);
+const dimensionOptions = ref<{ label: string; value: string }[]>([]);
 
 // 策略类型配置
 const strategyTypes = [
@@ -81,6 +82,7 @@ const resultConfig = ref({
   suggestions: '',
   comment: '',
   status: true,
+  riskLevel: 1, // 新增风险等级字段
 });
 
 // 已有配置列表
@@ -97,12 +99,14 @@ const [Modal, modalApi] = useVbenModal({
       if (data?.scenario) {
         selectedScenario.value = data.scenario;
         loadScenarioConfigs();
+        loadScenarioDimensions();
         initDefaultForm();
       }
     } else {
       // 关闭时重置
       selectedScenario.value = null;
       configList.value = [];
+      dimensionOptions.value = [];
     }
   },
 });
@@ -131,6 +135,26 @@ async function loadScenarioConfigs() {
   }
 }
 
+// 加载场景相关维度
+async function loadScenarioDimensions() {
+  if (!selectedScenario.value?.id) return;
+
+  try {
+    const list = await getAssessmentDimensionsByScenario(
+      selectedScenario.value.id,
+    );
+    const arr = Array.isArray(list) ? list : [];
+    dimensionOptions.value = arr.map((d: any) => {
+      const key = d.dimensionCode || String(d.id);
+      const label = `${d.dimensionName || key}（${key}）`;
+      return { label, value: key };
+    });
+  } catch (error) {
+    console.error('加载维度列表失败:', error);
+    dimensionOptions.value = [];
+  }
+}
+
 // 初始化默认表单
 function initDefaultForm() {
   currentStrategyType.value = 'abnormalFactorAggregation';
@@ -146,6 +170,7 @@ function initDefaultForm() {
     suggestions: '',
     comment: '',
     status: true,
+    riskLevel: 1,
   };
 }
 
@@ -203,30 +228,61 @@ function generateAbnormalFactorFormula(): string {
   return JSON.stringify({ abnormalFactorAggregation: config });
 }
 
-// 生成多维度联动策略公式
+// 生成多维度联动策略公式（V2）
 function generateDimensionInterlockFormula(): string {
-  const config: DimensionInterlockConfig = {
-    selfDimension: strategyFormData.value.selfDimension || 'anxiety_level',
-    otherDimensions: strategyFormData.value.otherDimensions || [
-      'depression_level',
-      'stress_level',
-    ],
-    interlockTable: [
-      {
-        condition: {
-          selfLevel: 'NONE',
-          otherLevelCounts: { MILD: 0, MODERATE: 0, SEVERE: 0 },
-        },
-        result: {
-          level: resultConfig.value.level || '正常',
-          riskLevel: 1,
-          description: resultConfig.value.description || '未发现显著心理问题',
-        },
-      },
-    ],
+  const mainDim = String(strategyFormData.value.mainDimension || '');
+  const otherDims = (strategyFormData.value.otherDimensions || []).map(String);
+  const mapOp: Record<string, string> = {
+    eq: '==',
+    gt: '>',
+    gte: '>=',
+    lt: '<',
+    lte: '<=',
+    ne: '!=',
   };
-
-  return JSON.stringify({ dimensionInterlock: config });
+  const buildCond = (c: any) => {
+    if (c.type === 'mainRisk') {
+      return {
+        cmp: {
+          lhs: { dim: 'main', var: 'riskLevel' },
+          op: mapOp[c.operator || 'eq'] || '==',
+          rhs: Number(c.value || 1),
+        },
+      };
+    }
+    return {
+      cmp: {
+        lhs: { dim: 'other', var: `riskLevel${Number(c.riskLevel || 1)}Count` },
+        op: mapOp[c.operator || 'eq'] || '==',
+        rhs: Number(c.value || 0),
+      },
+    };
+  };
+  const buildBranch = (b: any) => {
+    const conds = (b.conditions || []).map((x: any) => buildCond(x));
+    const logic =
+      conds.length <= 1 ? conds[0] || {} : { [b.topLogic || 'and']: conds };
+    return {
+      ...logic,
+      result: {
+        riskLevel: Number(resultConfig.value.riskLevel || 0) || undefined,
+        description: String(resultConfig.value.description || ''),
+      },
+    };
+  };
+  const branches = (strategyFormData.value.branches || []).map((b: any) =>
+    buildBranch(b),
+  );
+  return JSON.stringify({
+    strategy: 'multi_linkage',
+    multiDimensionV2: {
+      mainDimension: mainDim,
+      otherDimensions: otherDims,
+      othersApply: strategyFormData.value.othersApply || 'any',
+      branchLogic: strategyFormData.value.branchLogic || 'or',
+      branches,
+    },
+  });
 }
 
 // 生成自定义表达式公式
@@ -314,6 +370,7 @@ async function handleEdit(config: any) {
       suggestions: config.suggestions || '',
       comment: config.comment || '',
       status: config.status === 1,
+      riskLevel: 1,
     };
 
     // 解析计算公式
@@ -332,12 +389,72 @@ async function handleEdit(config: any) {
                 riskLevel: t.riskLevel || 1,
               })) || [],
           };
-        } else if (formula.dimensionInterlock) {
+        } else if (formula.multiDimensionV2) {
           currentStrategyType.value = 'dimensionInterlock';
+          const md = formula.multiDimensionV2;
           strategyFormData.value = {
-            selfDimension: formula.dimensionInterlock.selfDimension || '',
-            otherDimensions: formula.dimensionInterlock.otherDimensions || [],
+            mainDimension: md.mainDimension || '',
+            otherDimensions: md.otherDimensions || [],
+            othersApply: md.othersApply || 'any',
+            branchLogic: md.branchLogic || 'or',
+            branches: (md.branches || []).map((b: any) => {
+              const conditions: any[] = [];
+              const extractConds = (node: any): any[] => {
+                if (node?.cmp) return [node];
+                if (node?.and) return node.and;
+                if (node?.or) return node.or;
+                return [];
+              };
+              const cmpList = extractConds(b);
+              for (const c of cmpList) {
+                const lhs = c?.cmp?.lhs || {};
+                const op = c?.cmp?.op;
+                const rhs = c?.cmp?.rhs;
+                const opMap: Record<string, string> = {
+                  '==': 'eq',
+                  '>': 'gt',
+                  '>=': 'gte',
+                  '<': 'lt',
+                  '<=': 'lte',
+                  '!=': 'ne',
+                };
+                if (lhs?.dim === 'main' && lhs?.var === 'riskLevel') {
+                  conditions.push({
+                    type: 'mainRisk',
+                    operator: opMap[op] || 'eq',
+                    value: Number(rhs || 1),
+                  });
+                } else if (
+                  lhs?.dim === 'other' &&
+                  typeof lhs?.var === 'string' &&
+                  /riskLevel\d+Count/.test(lhs.var)
+                ) {
+                  const match = lhs.var.match(/riskLevel(\d+)Count/);
+                  const num = match ? Number(match[1]) : 1;
+                  conditions.push({
+                    type: 'otherCount',
+                    riskLevel: num,
+                    operator: opMap[op] || 'eq',
+                    value: Number(rhs || 0),
+                  });
+                }
+              }
+              let topLogic = 'and';
+              if (b?.or) topLogic = 'or';
+              return { topLogic, conditions };
+            }),
           };
+          // 回填结果配置
+          const r0 = md.branches?.[0]?.result;
+          if (r0) {
+            if (typeof r0.riskLevel === 'number')
+              resultConfig.value.riskLevel = r0.riskLevel;
+            if (
+              typeof r0.description === 'string' &&
+              !resultConfig.value.description
+            )
+              resultConfig.value.description = r0.description;
+          }
         } else {
           currentStrategyType.value = 'customExpression';
           strategyFormData.value = {
@@ -404,8 +521,16 @@ function handleStrategyTypeChange(strategyType: CalculateStrategyType) {
     }
     case 'dimensionInterlock': {
       strategyFormData.value = {
-        selfDimension: 'anxiety_level',
-        otherDimensions: ['depression_level', 'stress_level'],
+        mainDimension: '',
+        otherDimensions: [],
+        othersApply: 'any',
+        branchLogic: 'or',
+        branches: [
+          {
+            topLogic: 'and',
+            conditions: [{ type: 'mainRisk', operator: 'eq', value: 1 }],
+          },
+        ],
       };
       break;
     }
@@ -706,24 +831,205 @@ const formRef = ref();
             </div>
           </template>
 
-          <!-- 多维度联动策略 -->
+          <!-- 多维度联动策略（V2：主维度风险值 + 其他维度某等级数量阈值） -->
           <template v-else-if="currentStrategyType === 'dimensionInterlock'">
             <Row :gutter="16">
               <Col :span="12">
-                <Form.Item label="主维度编码">
-                  <Input
-                    v-model:value="strategyFormData.selfDimension"
-                    placeholder="例如：anxiety_level"
+                <Form.Item label="主维度">
+                  <Select
+                    v-model:value="strategyFormData.mainDimension"
+                    :options="dimensionOptions"
+                    placeholder="选择主维度"
+                    allow-clear
                   />
                 </Form.Item>
               </Col>
               <Col :span="12">
-                <Form.Item label="其他参考维度">
+                <Form.Item label="其他维度">
                   <Select
                     v-model:value="strategyFormData.otherDimensions"
-                    mode="tags"
-                    placeholder="选择其他参考维度编码"
+                    :options="dimensionOptions"
+                    mode="multiple"
+                    placeholder="选择其他参考维度（多个）"
                   />
+                </Form.Item>
+              </Col>
+              <Col :span="24">
+                <Form.Item label="分支（从上到下优先匹配）">
+                  <div class="space-y-3">
+                    <div
+                      v-for="(br, bi) in strategyFormData.branches || []"
+                      :key="bi"
+                      class="rounded-lg border p-3"
+                    >
+                      <div class="mb-2 flex items-center justify-between">
+                        <div class="text-sm font-medium">分支 {{ bi + 1 }}</div>
+                        <div class="flex items-center gap-2">
+                          <Form.Item label="分支逻辑" class="mb-0">
+                            <a-radio-group
+                              v-model:value="br.topLogic"
+                              size="small"
+                            >
+                              <a-radio-button value="and">AND</a-radio-button>
+                              <a-radio-button value="or">OR</a-radio-button>
+                            </a-radio-group>
+                          </Form.Item>
+                          <Button
+                            v-if="(strategyFormData.branches?.length || 0) > 1"
+                            size="small"
+                            danger
+                            @click="strategyFormData.branches.splice(bi, 1)"
+                          >
+                            删除分支
+                          </Button>
+                        </div>
+                      </div>
+                      <!-- 条件列表：主维度风险等级 / 其他维度某等级数量阈值 -->
+                      <div class="space-y-2">
+                        <div
+                          v-for="(c, ci) in br.conditions || []"
+                          :key="ci"
+                          class="rounded border p-2"
+                        >
+                          <div class="grid grid-cols-12 items-center gap-2">
+                            <div class="col-span-3">
+                              <Select
+                                v-model:value="c.type"
+                                :options="[
+                                  {
+                                    label: '主维度风险等级',
+                                    value: 'mainRisk',
+                                  },
+                                  {
+                                    label: '其他维度',
+                                    value: 'otherCount',
+                                  },
+                                ]"
+                              />
+                            </div>
+                            <template v-if="c.type === 'mainRisk'">
+                              <div class="col-span-3">
+                                <Select
+                                  v-model:value="c.operator"
+                                  :options="[
+                                    { label: '等于(=)', value: 'eq' },
+                                    { label: '大于(>)', value: 'gt' },
+                                    { label: '≥', value: 'gte' },
+                                    { label: '小于(<)', value: 'lt' },
+                                    { label: '≤', value: 'lte' },
+                                    { label: '不等于(≠)', value: 'ne' },
+                                  ]"
+                                />
+                              </div>
+                              <div class="col-span-4">
+                                <Select
+                                  v-model:value="c.value"
+                                  :options="[
+                                    { label: '无/低风险(1)', value: 1 },
+                                    { label: '轻度风险(2)', value: 2 },
+                                    { label: '中度风险(3)', value: 3 },
+                                    { label: '重度风险(4)', value: 4 },
+                                  ]"
+                                />
+                              </div>
+                            </template>
+                            <template v-else>
+                              <div class="col-span-2">
+                                <Select
+                                  v-model:value="c.riskLevel"
+                                  :options="[
+                                    { label: '无/低风险数量', value: 1 },
+                                    { label: '轻度风险数量', value: 2 },
+                                    { label: '中度风险数量', value: 3 },
+                                    { label: '重度风险数量', value: 4 },
+                                  ]"
+                                  placeholder="统计哪个风险等级的数量"
+                                />
+                              </div>
+                              <div class="col-span-3">
+                                <Select
+                                  v-model:value="c.operator"
+                                  :options="[
+                                    { label: '等于(=)', value: 'eq' },
+                                    { label: '大于(>)', value: 'gt' },
+                                    { label: '大于等于(≥)', value: 'gte' },
+                                    { label: '小于(<)', value: 'lt' },
+                                    { label: '小于等于(≤)', value: 'lte' },
+                                    { label: '不等于(≠)', value: 'ne' },
+                                  ]"
+                                />
+                              </div>
+                              <div class="col-span-2">
+                                <InputNumber
+                                  v-model:value="c.value"
+                                  :min="0"
+                                  class="w-full"
+                                />
+                              </div>
+                            </template>
+                            <div class="col-span-2 text-right">
+                              <Button
+                                v-if="(br.conditions?.length || 0) > 1"
+                                size="small"
+                                danger
+                                @click="br.conditions.splice(ci, 1)"
+                              >
+                                删除
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          type="dashed"
+                          block
+                          @click="
+                            (br.conditions || (br.conditions = [])).push({
+                              type: 'mainRisk',
+                              operator: 'eq',
+                              value: 1,
+                            })
+                          "
+                        >
+                          新增条件
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      type="dashed"
+                      block
+                      @click="
+                        (
+                          strategyFormData.branches ||
+                          (strategyFormData.branches = [])
+                        ).push({
+                          topLogic: 'and',
+                          conditions: [
+                            { type: 'mainRisk', operator: 'eq', value: 1 },
+                          ],
+                        })
+                      "
+                    >
+                      新增分支
+                    </Button>
+                    <Form.Item label="分支间逻辑" class="mt-4">
+                      <a-radio-group
+                        v-model:value="strategyFormData.branchLogic"
+                        size="small"
+                      >
+                        <a-radio-button value="or">或 (OR)</a-radio-button>
+                        <a-radio-button value="and">且 (AND)</a-radio-button>
+                      </a-radio-group>
+                    </Form.Item>
+                    <Form.Item label="其他维度匹配方式">
+                      <a-radio-group
+                        v-model:value="strategyFormData.othersApply"
+                        size="small"
+                      >
+                        <a-radio-button value="any">任意(other)</a-radio-button>
+                        <a-radio-button value="all">全部(other)</a-radio-button>
+                      </a-radio-group>
+                    </Form.Item>
+                  </div>
                 </Form.Item>
               </Col>
             </Row>
@@ -755,6 +1061,15 @@ const formRef = ref();
                 <Input
                   v-model:value="resultConfig.level"
                   placeholder="例如：正常、轻度关注、中度风险、高度风险"
+                />
+              </Form.Item>
+            </Col>
+            <Col :span="8">
+              <Form.Item label="风险等级">
+                <Select
+                  v-model:value="resultConfig.riskLevel"
+                  :options="riskLevelOptions"
+                  placeholder="选择风险等级"
                 />
               </Form.Item>
             </Col>

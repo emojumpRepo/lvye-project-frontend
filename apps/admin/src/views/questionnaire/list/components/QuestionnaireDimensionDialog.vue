@@ -205,24 +205,22 @@ function handleRefresh() {
 
         <!-- 参与模块计算 -->
         <template #participateModuleCalc="{ row }">
-          <Tag :color="row.participateModuleCalc === 1 ? 'blue' : 'default'">
-            {{ row.participateModuleCalc === 1 ? '是' : '否' }}
+          <Tag :color="row.participateModuleCalc ? 'blue' : 'default'">
+            {{ row.participateModuleCalc ? '是' : '否' }}
           </Tag>
         </template>
 
         <!-- 参与测评计算 -->
         <template #participateAssessmentCalc="{ row }">
-          <Tag
-            :color="row.participateAssessmentCalc === 1 ? 'blue' : 'default'"
-          >
-            {{ row.participateAssessmentCalc === 1 ? '是' : '否' }}
+          <Tag :color="row.participateAssessmentCalc ? 'blue' : 'default'">
+            {{ row.participateAssessmentCalc ? '是' : '否' }}
           </Tag>
         </template>
 
         <!-- 参与排行 -->
         <template #participateRanking="{ row }">
-          <Tag :color="row.participateRanking === 1 ? 'blue' : 'default'">
-            {{ row.participateRanking === 1 ? '是' : '否' }}
+          <Tag :color="row.participateRanking ? 'blue' : 'default'">
+            {{ row.participateRanking ? '是' : '否' }}
           </Tag>
         </template>
 

@@ -126,7 +126,17 @@ function handleBack() {
 async function handleContinue() {
   // 有测试场景的模式
   if (hasScenario.value) {
-    // 如果当前是最后一个场景，则不进行跳转，直接提交回答
+    // 若当前插槽内仍有未完成问卷，则继续当前插槽内的下一份问卷
+    const hasRemainingInCurrentSlot = (
+      selectedSlot.value?.questionnaires || []
+    ).some((q: any) => !q.completed);
+
+    if (hasRemainingInCurrentSlot) {
+      await startEvaluation(currentTaskNo.value || '', router);
+      return;
+    }
+
+    // 当前插槽全部完成后：若为最后场景则返回场景页，否则进入下一场景
     if (isLastScene.value) {
       // 移除页面关闭前确认事件
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -143,6 +153,7 @@ async function handleContinue() {
       }, 100);
       return;
     }
+
     const nextScene = getNextSlot();
     if (nextScene) {
       // 先切换到下一个插槽
@@ -182,11 +193,20 @@ function handleComplete(payload: null | Record<string, unknown>) {
 
   // 更新当前问卷的完成状态
   if (hasScenario.value && selectedSlot.value?.questionnaires?.length) {
-    // 有场景模式：更新当前场景中正在进行的问卷为完成
-    const target =
-      selectedSlot.value.questionnaires.find((q: any) => !q.completed) ||
-      selectedSlot.value.questionnaires[0];
-    if (target) target.completed = true;
+    // 有场景模式：根据路由中的 questionnaireId 精确标记完成
+    const qid = Number(route.query.questionnaireId);
+    if (qid) {
+      const target = selectedSlot.value.questionnaires.find(
+        (q: any) => q.questionnaireId === qid,
+      );
+      if (target) target.completed = true;
+    } else {
+      // 兜底：找首个未完成标记
+      const fallback = selectedSlot.value.questionnaires.find(
+        (q: any) => !q.completed,
+      );
+      if (fallback) fallback.completed = true;
+    }
   } else {
     // 无场景模式：更新当前问卷的完成状态
     const questionnaireId = route.query.questionnaireId as string;

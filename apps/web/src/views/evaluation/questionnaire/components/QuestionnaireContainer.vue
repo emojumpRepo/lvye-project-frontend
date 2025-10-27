@@ -40,6 +40,10 @@ const emit = defineEmits<Emits>();
 const showIntro = ref(false);
 const isIframeCompleted = ref(false);
 const iframeCompletionPayload = ref<null | Record<string, unknown>>(null);
+const hasRemainingInCurrentSlot = computed(() => {
+  const list = (props.sceneData?.questionnaires as any[]) || [];
+  return list.some((q) => !q.completed);
+});
 
 const bgUrl = computed(() => {
   const introBgImgUrl =
@@ -93,6 +97,15 @@ watch(
   },
 );
 
+// iframe 内容切换时，重置完成状态，避免沿用上一份问卷的完成标记
+watch(
+  () => props.iframeSrc,
+  () => {
+    isIframeCompleted.value = false;
+    iframeCompletionPayload.value = null;
+  },
+);
+
 // 不再冗余输出 showIntro 的每次变化
 </script>
 
@@ -126,15 +139,15 @@ watch(
       <template v-if="showContinueButton && isIframeCompleted">
         <!-- 有场景模式 -->
         <template v-if="hasScenario">
-          <template v-if="!isLastScene">
+          <template v-if="isLastScene && !hasRemainingInCurrentSlot">
             <LyButton
               type="success"
               size="middle"
               class="continue-button"
               @click="handleContinue"
             >
-              继续答题
-              <ArrowRight class="ml-2 size-5" />
+              提交回答
+              <Check class="ml-2 size-5" />
             </LyButton>
           </template>
           <template v-else>
@@ -144,8 +157,8 @@ watch(
               class="continue-button"
               @click="handleContinue"
             >
-              提交回答
-              <Check class="ml-2 size-5" />
+              继续答题
+              <ArrowRight class="ml-2 size-5" />
             </LyButton>
           </template>
         </template>

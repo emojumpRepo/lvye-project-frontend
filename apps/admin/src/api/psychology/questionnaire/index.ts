@@ -95,6 +95,8 @@ export interface QuestionnaireResultConfigVO {
   status: number; // 状态（0：禁用，1：启用）
   createTime?: string; // 创建时间
   updateTime?: string; // 更新时间
+  matchOrder: number; // 匹配优先级
+  isMultiHit?: number; // 是否可多命中（0：否，1：是）
 }
 
 export interface QuestionnaireResultConfigBaseVO {
@@ -109,6 +111,8 @@ export interface QuestionnaireResultConfigBaseVO {
   level: string;
   description?: string;
   status?: number;
+  matchOrder: number;
+  isMultiHit?: number; // 是否可多命中（0：否，1：是）
 }
 
 export interface QuestionnaireResultConfigPageReqVO {
@@ -326,6 +330,16 @@ export const deleteQuestionnaireDimension = (id: number) => {
   );
 };
 
+// 根据测评场景插槽ID获得维度列表
+export function getDimensionListByScenarioSlot(scenarioSlotId: number) {
+  return requestClient.get<QuestionnaireDimensionVO[]>(
+    '/psychology/questionnaire-dimension/list-by-scenario-slot',
+    {
+      params: { scenarioSlotId },
+    },
+  );
+}
+
 // =============== 问卷结果配置 API（新架构） ===============
 
 export const getQuestionnaireResultConfigPage = (
@@ -393,5 +407,13 @@ export const getQuestionnaireListSimple = (supportIndependentUse = 1) => {
         supportIndependentUse,
       },
     },
+  );
+};
+
+// 根据测评场景ID获取参与测评计算的维度列表
+export const getAssessmentDimensionsByScenario = (scenarioId: number) => {
+  return requestClient.get<QuestionnaireDimensionVO[]>(
+    '/psychology/questionnaire-dimension/list-by-scenario',
+    { params: { scenarioId } },
   );
 };

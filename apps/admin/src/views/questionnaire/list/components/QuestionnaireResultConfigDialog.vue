@@ -21,6 +21,7 @@ import {
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 
 import { useResultConfigGridColumns } from '../data';
+import { formatQuestionIndex } from '../utils/question-index';
 import QuestionnaireResultConfigForm from './QuestionnaireResultConfigForm.vue';
 
 interface Emits {
@@ -210,16 +211,9 @@ function getCalculateTypeLabel(calculateType: number) {
       <ConfigGrid>
         <!-- 题目索引 -->
         <template #questionIndex="{ row }">
-          <span>{{
-            row.questionIndex === 'all'
-              ? '全部题目'
-              : row.questionIndex
-                  .split(',')
-                  .map((item: string) => {
-                    return `第${item}题`;
-                  })
-                  .join('、')
-          }}</span>
+          <a-tooltip :title="formatQuestionIndex(row.questionIndex).fullText">
+            <span>{{ formatQuestionIndex(row.questionIndex).text }}</span>
+          </a-tooltip>
         </template>
 
         <!-- 计算类型 -->

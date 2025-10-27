@@ -24,6 +24,7 @@ import {
   getAssessmentScenarioSlots,
   updateAssessmentScenario,
 } from '#/api/psychology/scenario';
+import ModuleResultConfigDialog from '#/components/Dialog/ScenarioDialog/module-result/ModuleResultConfigDialog.vue';
 import { useScenarioFormSchema } from '#/views/assessment/scenario/data';
 
 interface Props {
@@ -71,7 +72,7 @@ const loadingQuestionnaires = ref(false);
 async function loadQuestionnaireOptions() {
   try {
     loadingQuestionnaires.value = true;
-    const list = await getQuestionnaireListSimple(0);
+    const list = await getQuestionnaireListSimple();
     const arr = Array.isArray(list) ? list : [];
     questionnaireOptions.value = arr
       .map((q: any) => ({
@@ -215,11 +216,14 @@ async function handleSubmit(): Promise<boolean> {
     // 转换数据格式，清理临时字段
     const cleanSlots = slotsRef.value.map((slot) => {
       const { _tempId, ...cleanSlot } = slot as any;
+      cleanSlot.questionnaireIds = cleanSlot.questionnaireIds?.join(',') ?? '';
+      cleanSlot.metadataJson = cleanSlot.metadataJson || '{}';
       return cleanSlot;
     });
 
     const formData: PsychologyScenarioApi.AssessmentScenarioVO = {
       ...(values as PsychologyScenarioApi.AssessmentScenarioVO),
+      metadataJson: values.metadataJson || '{}',
       isActive: !!values.isActive,
       slots: cleanSlots,
     };
@@ -361,6 +365,22 @@ const [Modal, modalApi] = useVbenModal({
     }
   },
 });
+
+// 模块结果配置对话框
+const [ModuleResultConfigModal, moduleResultConfigModalApi] = useVbenModal({
+  connectedComponent: ModuleResultConfigDialog,
+  destroyOnClose: true,
+});
+
+function openModuleResultConfig(rowItem: any) {
+  if (!rowItem?.id && !rowItem?._tempId) {
+    message.warning('请先保存场景后再配置模块结果');
+    return;
+  }
+  moduleResultConfigModalApi
+    .setData({ scenarioSlot: rowItem, scenario: currentRecord.value })
+    .open();
+}
 </script>
 
 <template>
@@ -450,6 +470,13 @@ const [Modal, modalApi] = useVbenModal({
             />
           </template>
           <template v-else-if="column.key === 'actions'">
+            <Button
+              type="link"
+              size="small"
+              @click="openModuleResultConfig(rowItem)"
+            >
+              结果配置
+            </Button>
             <Popconfirm
               title="确定删除该槽位？"
               @confirm="() => slotsRef.splice(index, 1)"
@@ -464,6 +491,7 @@ const [Modal, modalApi] = useVbenModal({
       </Table>
     </div>
   </Modal>
+  <ModuleResultConfigModal />
 </template>
 
 <style lang="scss">
