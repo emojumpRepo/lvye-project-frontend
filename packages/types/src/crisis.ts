@@ -60,7 +60,7 @@ export interface CrisisEventRecord {
   action: string;
   content?: string;
   reason?: string;
-  attachments?: number[];
+  attachmentIds?: number[];
 }
 
 /** 评估记录 */
@@ -94,6 +94,7 @@ export interface CrisisAssessmentTask {
 /** 危机事件详情 */
 export interface CrisisEvent {
   id: number;
+  eventId: string;
   studentProfileId: number;
   studentName: string;
   studentNumber: string;
@@ -111,7 +112,6 @@ export interface CrisisEvent {
   reporterUserId: number;
   reporterName: string;
   reportedAt: number;
-  urgencyLevel: number;
   priority: number;
   location: string;
   processMethod: number;

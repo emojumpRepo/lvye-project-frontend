@@ -15,15 +15,15 @@ export interface ReportCrisisEventReqVO {
 
 // 创建干预评估请求参数
 export interface InterventionAssessmentReqVO {
-  content: string;
-  followUpSuggestion: number;
   id?: number;
-  problemTypes: string[];
-  riskLevel: number;
+  problemTypes?: string[];
+  consultRecord?: string;
+  attachmentIds?: number[];
+  riskLevel?: number;
+  hasMedicalVisit?: boolean;
+  medicalVisitRecord?: string;
+  observationRecord?: string;
   summary?: string;
-  fileId?: number;
-  attachments?: number[];
-  assessmentMode: number;
 }
 
 /** 上报危机事件 */

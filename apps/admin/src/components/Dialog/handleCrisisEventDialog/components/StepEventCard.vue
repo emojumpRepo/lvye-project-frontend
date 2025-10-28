@@ -3,7 +3,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
-const props = defineProps<{
+defineProps<{
   id?: number;
   name: string;
   status?: number;

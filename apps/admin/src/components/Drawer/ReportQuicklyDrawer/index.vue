@@ -188,6 +188,7 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
             },
             confirmText: '确认',
             content: '检测到草稿，是否恢复？（确认后将清除草稿）',
+            title: '恢复草稿',
             icon: 'success',
           }).finally(() => {
             selectedHandleMethodDrawerApi.unlock();
@@ -211,6 +212,7 @@ const [SelectHandleMethodDrawer, selectedHandleMethodDrawerApi] = useVbenDrawer(
           if (isDuplicate) {
             confirm({
               content: '该学生24小时内已被您上报过，是否继续？',
+              title: '重复上报',
               icon: 'warning',
             })
               .then(() => {

@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   directory: undefined, // 上传目录
   disabled: false, // 是否禁用
   helpText: '', // 帮助文本
-  maxSize: 2, // 最大大小
+  maxSize: 10, // 最大大小
   maxNumber: 1, // 最大数量
   accept: () => [], // 接受类型
   multiple: false, // 是否多选

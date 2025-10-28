@@ -41,7 +41,9 @@ const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
   },
 });
 
+/** 下载文件 */
 function downloadFile(file: InfraFileApi.File) {
+  console.log('文件信息', file);
   const link = document.createElement('a');
   link.href = file?.url ?? '';
   link.download = file?.name ?? '';
@@ -62,7 +64,7 @@ function downloadFile(file: InfraFileApi.File) {
           <div class="flex items-center">
             <span>风险水平：</span>
             <LyTag
-              tag-category-key="crisis_level"
+              tag-category-key="risk_level"
               :dict-value="assessmentReport?.riskLevel"
             />
           </div>
@@ -139,7 +141,11 @@ function downloadFile(file: InfraFileApi.File) {
           </div>
         </div>
         <div v-else class="flex items-center gap-2">
-          <IconifyIcon icon="bxs:file" color="#04DC70" class="size-5" />
+          <IconifyIcon
+            icon="mdi:attachment-off"
+            color="#04DC70"
+            class="size-5"
+          />
           <div class="text-sm text-gray-500">暂无附件</div>
         </div>
       </div>

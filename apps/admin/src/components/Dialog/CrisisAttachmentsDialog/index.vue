@@ -8,7 +8,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import { getFileById } from '#/api/infra/file';
 
-const attachments = ref<InfraFileApi.File[]>([]);
+const attachmentIds = ref<InfraFileApi.File[]>([]);
 
 const [CrisisAttachmentsModal, crisisAttachmentsModalApi] = useVbenModal({
   fullscreenButton: false,
@@ -19,10 +19,10 @@ const [CrisisAttachmentsModal, crisisAttachmentsModalApi] = useVbenModal({
   onOpenChange: async (open) => {
     if (open) {
       const data = crisisAttachmentsModalApi.getData();
-      if (data.attachments.length > 0) {
+      if (data.attachmentIds.length > 0) {
         crisisAttachmentsModalApi.lock();
-        attachments.value = await Promise.all(
-          data.attachments.map((id: number) => getFileById(id)),
+        attachmentIds.value = await Promise.all(
+          data.attachmentIds.map((id: number) => getFileById(id)),
         );
         crisisAttachmentsModalApi.unlock();
       }
@@ -54,13 +54,13 @@ const getFileType = (fileName: string, mimeType: string) => {
 
 // 分类文件
 const categorizedFiles = computed(() => {
-  if (!attachments.value) return { images: [], documents: [], archives: [] };
+  if (!attachmentIds.value) return { images: [], documents: [], archives: [] };
 
   const images: InfraFileApi.File[] = [];
   const documents: InfraFileApi.File[] = [];
   const archives: InfraFileApi.File[] = [];
 
-  attachments.value.forEach((file) => {
+  attachmentIds.value.forEach((file) => {
     const type = getFileType(file.name ?? '', file.type ?? '');
     if (type === 'image') images.push(file);
     else if (type === 'archive') archives.push(file);
@@ -92,7 +92,7 @@ const downloadFile = (file: InfraFileApi.File) => {
         <IconifyIcon icon="mdi:attachment" class="mr-2 text-xl text-blue-500" />
         <h3 class="text-lg font-semibold text-gray-800">附件列表</h3>
         <div class="ml-auto text-sm text-gray-500">
-          共 {{ attachments?.length || 0 }} 个文件
+          共 {{ attachmentIds?.length || 0 }} 个文件
         </div>
       </div>
 
@@ -202,7 +202,7 @@ const downloadFile = (file: InfraFileApi.File) => {
 
       <!-- 空状态 -->
       <div
-        v-if="!attachments || attachments.length === 0"
+        v-if="!attachmentIds || attachmentIds.length === 0"
         class="py-12 text-center"
       >
         <IconifyIcon

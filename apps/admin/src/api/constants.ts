@@ -305,21 +305,25 @@ export const CRISIS_LEVEL_MAP = [
   {
     key: 2,
     title: '持续观察',
+    description: '需要持续观察的学生',
     color: '#009DFF',
   },
   {
     key: 3,
     title: '一般危机(一类)',
+    description: '需要关注但无需干预的学生',
     color: '#1966FF',
   },
   {
     key: 4,
     title: '严重危机(二类)',
+    description: '需要定期咨询干预的学生',
     color: '#FF9C05',
   },
   {
     key: 5,
     title: '重大危机(三类)',
+    description: '需要紧急干预的学生',
     color: '#FF0831',
   },
 ];

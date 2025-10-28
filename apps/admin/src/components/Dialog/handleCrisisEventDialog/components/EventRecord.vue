@@ -38,7 +38,8 @@ const recordContent = computed(() => {
     return `${props.eventProcessingRecord.content}，原因：${props.eventProcessingRecord.reason}`;
   } else if (
     props.eventProcessingRecord.action === 'STAGE_ASSESSMENT' ||
-    props.eventProcessingRecord.action === 'CLOSE'
+    props.eventProcessingRecord.action === 'CLOSE' ||
+    props.eventProcessingRecord.action === 'REPORT'
   ) {
     return `${props.eventProcessingRecord.reason}`;
   }
@@ -52,7 +53,7 @@ const recordContent = computed(() => {
 function handleViewAttachments() {
   crisisAttachmentsModalApi
     .setData({
-      attachments: props.eventProcessingRecord.attachments,
+      attachmentIds: props.eventProcessingRecord.attachmentIds,
     })
     .open();
 }
@@ -77,7 +78,7 @@ function viewRecord() {
 </script>
 
 <template>
-  <div class="mr-1 space-y-3 rounded-xl bg-[#F7F8FA] p-4 text-sm">
+  <div class="mr-1 space-y-2 rounded-xl bg-[#F7F8FA] p-4 text-sm">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="font-bold">
@@ -124,8 +125,8 @@ function viewRecord() {
       <!-- 上报附件 -->
       <div
         v-if="
-          eventProcessingRecord.attachments &&
-          eventProcessingRecord.attachments.length > 0 &&
+          eventProcessingRecord.attachmentIds &&
+          eventProcessingRecord.attachmentIds.length > 0 &&
           eventProcessingRecord.action === 'REPORT'
         "
         class="flex cursor-pointer items-center gap-1"
@@ -136,12 +137,13 @@ function viewRecord() {
       </div>
     </div>
 
-    <div class="line-clamp-2 text-[#17191A]">
+    <div class="line-clamp-2 leading-6 text-[#17191A]">
       <span>
         {{ recordContent }}
       </span>
     </div>
-    <span class="text-[#04DC70]">{{ eventProcessingRecord.operatorName }}</span>
+
+    <div class="text-[#04DC70]">{{ eventProcessingRecord.operatorName }}</div>
 
     <CrisisAttachmentsModal />
   </div>

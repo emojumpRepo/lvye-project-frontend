@@ -197,14 +197,11 @@ async function reloadCrisisEvent() {
   await loadCrisisEventDetail(id);
 }
 
-/** 创建干预评估 */
+/** 创建危机干预评估 */
 async function createInterventionAssessment(
   params: InterventionAssessmentReqVO,
 ): Promise<boolean> {
-  return await (params.followUpSuggestion === 1 ||
-  params.followUpSuggestion === 2
-    ? createStageAssessment(params)
-    : closeInterventionAssessment(params));
+  return await closeInterventionAssessment(params);
 }
 
 /** 创建阶段性评估 */
@@ -234,10 +231,16 @@ async function closeInterventionAssessment(
   params: InterventionAssessmentReqVO,
 ): Promise<boolean> {
   try {
+    console.log('最终评估数据', {
+      id: crisisEventDetail.value?.id,
+      ...params,
+      summary: params.consultRecord,
+    });
+
     const response = await closeEvent({
       id: crisisEventDetail.value?.id,
       ...params,
-      summary: params.content,
+      summary: params.consultRecord,
     });
     if (!response) {
       message.error('创建评估失败');
@@ -350,7 +353,7 @@ function viewRecordAssessmentReport(recordId: number) {
                       <div class="flex items-center gap-1">
                         风险等级：
                         <LyTag
-                          tag-category-key="crisis_level"
+                          tag-category-key="risk_level"
                           :dict-value="
                             crisisEventDetail.latestAssessments[
                               crisisEventDetail.latestAssessments.length - 1
@@ -358,7 +361,7 @@ function viewRecordAssessmentReport(recordId: number) {
                           "
                         />
                       </div>
-                      <div>
+                      <!-- <div>
                         评估建议：
                         <LyTag
                           tag-category-key="follow_up_suggestion"
@@ -368,7 +371,7 @@ function viewRecordAssessmentReport(recordId: number) {
                             ]?.followUpSuggestion
                           "
                         />
-                      </div>
+                      </div> -->
                     </div>
                   </template>
                   <div class="flex w-full flex-col gap-3">
@@ -413,7 +416,7 @@ function viewRecordAssessmentReport(recordId: number) {
       :publish="createInterventionAssessment"
     />
     <AssessmentReportModal />
-    <CreateEvaluationModal />
+    <CreateEvaluationModal :publish="createInterventionAssessment" />
   </HandleCrisisEventModal>
 </template>
 
