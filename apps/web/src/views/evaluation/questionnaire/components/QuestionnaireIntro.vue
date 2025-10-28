@@ -19,18 +19,48 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const showTips = ref(false);
+// 当前对话索引（用于字符串数组的对话展示）
+const currentDialogIndex = ref(0);
 
 // 对话任务图片（对话气泡阶段）
 const koalaUrl = computed(() => {
   return props.sceneData?.metadata?.introConfig.characterConfig.imageUrl;
 });
 
+// 判断description是否为数组
+const descriptionList = computed(() => {
+  const desc =
+    props.sceneData?.metadata?.introConfig.characterConfig.description;
+  if (Array.isArray(desc)) {
+    return desc;
+  }
+  return desc ? [desc] : [];
+});
+
+// 当前显示的对话内容
+const currentDescription = computed(() => {
+  return descriptionList.value[currentDialogIndex.value] || '';
+});
+
+// 是否还有下一条对话
+const hasNextDialog = computed(() => {
+  return currentDialogIndex.value < descriptionList.value.length - 1;
+});
+
 function handleIntroNext() {
   showTips.value = true;
+  currentDialogIndex.value = 0; // 重置对话索引
 }
 
 function handleIntroClose() {
   emit('close');
+}
+
+// 继续下一条对话
+function handleContinueDialog() {
+  if (hasNextDialog.value) {
+    currentDialogIndex.value++;
+  }
 }
 
 function handleStart() {
@@ -89,12 +119,19 @@ function handleStart() {
                 {{ sceneData?.metadata?.introConfig.characterConfig.name }}
               </div>
               <div class="bubble-content">
-                {{
-                  sceneData?.metadata?.introConfig.characterConfig.description
-                }}
+                {{ currentDescription }}
               </div>
               <div class="bubble-actions">
-                <button class="btn-start" @click="handleStart">
+                <!-- 如果还有下一条对话，显示继续按钮 -->
+                <button
+                  v-if="hasNextDialog"
+                  class="btn-continue"
+                  @click="handleContinueDialog"
+                >
+                  继续 <ArrowRight class="size-4" />
+                </button>
+                <!-- 对话展示完毕，显示开始作答按钮 -->
+                <button v-else class="btn-start" @click="handleStart">
                   开始作答 <ArrowRight class="size-4" />
                 </button>
               </div>
@@ -398,7 +435,7 @@ function handleStart() {
 .coach-figure {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: 10%;
   height: 80%;
   max-height: 420px;
   object-fit: contain;
@@ -407,7 +444,7 @@ function handleStart() {
 
 .coach-bubble {
   position: absolute;
-  bottom: 24px;
+  bottom: 10%;
   left: 20%;
   width: min(720px, 75%);
   padding: 18px 20px 16px;
@@ -419,12 +456,12 @@ function handleStart() {
 
 .bubble-header {
   position: absolute;
-  top: -12%;
+  top: -25px;
   left: 10%;
   display: inline-block;
   padding: 6px 12px;
   margin-bottom: 10px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: #065f46;
   background: #ecfdf5;
@@ -434,7 +471,7 @@ function handleStart() {
 }
 
 .bubble-content {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.8;
   color: #374151;
 }
@@ -445,7 +482,8 @@ function handleStart() {
   margin-top: 14px;
 }
 
-.btn-start {
+.btn-start,
+.btn-continue {
   display: flex;
   gap: 4px;
   align-items: center;
@@ -454,14 +492,17 @@ function handleStart() {
   font-weight: 800;
   color: #fff;
   cursor: pointer;
-  background: #f59e0b; /* 柔和橙色 */
   border: none;
   border-radius: 9999px;
-  box-shadow: 0 10px 22px rgb(245 158 11 / 30%);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
     background 0.15s ease;
+}
+
+.btn-start {
+  background: #f59e0b; /* 柔和橙色 */
+  box-shadow: 0 10px 22px rgb(245 158 11 / 30%);
 }
 
 .btn-start:hover {
@@ -470,6 +511,20 @@ function handleStart() {
 }
 
 .btn-start:active {
+  transform: translateY(0);
+}
+
+.btn-continue {
+  background: #22c55e; /* 绿色 */
+  box-shadow: 0 10px 22px rgb(34 197 94 / 30%);
+}
+
+.btn-continue:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.btn-continue:active {
   transform: translateY(0);
 }
 </style>
