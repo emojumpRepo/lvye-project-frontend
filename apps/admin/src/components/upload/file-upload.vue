@@ -23,7 +23,7 @@ defineOptions({ name: 'FileUpload', inheritAttrs: false });
 
 const props = withDefaults(defineProps<FileUploadProps>(), {
   value: () => [], // 文件列表
-  directory: undefined, // 上传目录
+  directory: 'admin', // 上传目录
   disabled: false, // 是否禁用
   helpText: '', // 帮助文本
   maxSize: 10, // 最大大小

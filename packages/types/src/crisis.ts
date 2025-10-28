@@ -75,7 +75,10 @@ export interface AssessmentRecord {
   followUpSuggestion: number;
   followUpSuggestionName: string;
   content: string;
-  attachments: number[];
+  hasMedicalVisit: boolean;
+  medicalVisitRecord: string;
+  observationRecord: string;
+  attachmentIds: number[];
   createTime: number;
 }
 
@@ -118,6 +121,7 @@ export interface CrisisEvent {
   processReason: string;
   closureSummary: string;
   progress: number;
+  closed: boolean;
   autoAssigned: boolean;
   createTime: number;
   updateTime: number;

@@ -31,6 +31,7 @@ const [Form, formApi] = useVbenForm({
     counselorOptions: [],
     priorityOptions: [],
     sourceTypeOptions: [],
+    crisisEventStatusOptions: [],
   }),
   submitOnChange: true,
   wrapperClass: 'grid-cols-12 md:grid-cols-9',
@@ -62,6 +63,7 @@ const [Form, formApi] = useVbenForm({
         counselorUserId: values.counselorUserId || undefined,
         priority: values.priority || undefined,
         sourceType: values.sourceType || undefined,
+        status: values.status || undefined,
       };
 
       crisisEventListReq.value = params;
@@ -96,12 +98,15 @@ onMounted(async () => {
       (await getDictOptions('crisis_event_priority', 'number')) || [];
     const sourceTypeOptions =
       (await getDictOptions('crisis_event_report_source', 'number')) || [];
+    const crisisEventStatusOptions =
+      (await getDictOptions('crisis_event_status', 'number')) || [];
     formApi.updateSchema(
       useSearchFormSchema({
         deptOptions: deptOptions.value,
         counselorOptions,
         priorityOptions,
         sourceTypeOptions,
+        crisisEventStatusOptions,
       }),
     );
   } catch (error) {

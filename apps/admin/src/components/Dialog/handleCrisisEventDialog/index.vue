@@ -5,7 +5,7 @@ import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { confirm, useVbenModal } from '@vben/common-ui';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ import {
   closeEvent,
   getCrisisEventDetail,
   submitStageAssessment,
+  switchEventCloseStatus,
 } from '#/api/psychology';
 import AssessmentReportDialog from '#/components/Dialog/AssessmentReportDialog/index.vue';
 import { CommonDialogSteps } from '#/components/Dialog/CommonDialog';
@@ -231,12 +232,6 @@ async function closeInterventionAssessment(
   params: InterventionAssessmentReqVO,
 ): Promise<boolean> {
   try {
-    console.log('最终评估数据', {
-      id: crisisEventDetail.value?.id,
-      ...params,
-      summary: params.consultRecord,
-    });
-
     const response = await closeEvent({
       id: crisisEventDetail.value?.id,
       ...params,
@@ -268,6 +263,41 @@ function viewRecordAssessmentReport(recordId: number) {
     })
     .open();
 }
+
+/** 关闭危机事件 */
+function handleCloseEvent() {
+  confirm({
+    title: crisisEventDetail.value?.closed ? '开启事件' : '关闭事件',
+    content: crisisEventDetail.value?.closed
+      ? '确定要开启事件吗？'
+      : '关闭后无法操作事件，确定要关闭事件吗？',
+    icon: crisisEventDetail.value?.closed ? 'success' : 'warning',
+  }).then(async () => {
+    if (!crisisEventDetail.value?.id) return message.error('事件ID不存在');
+    try {
+      const response = await switchEventCloseStatus(
+        crisisEventDetail.value?.id,
+        !crisisEventDetail.value?.closed,
+      );
+      if (!response)
+        return message.error(
+          crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+        );
+      await reloadCrisisEvent();
+      message.success(
+        crisisEventDetail.value?.closed ? '开启事件成功' : '关闭事件成功',
+      );
+    } catch (error) {
+      console.error(
+        crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+        error,
+      );
+      message.error(
+        crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+      );
+    }
+  });
+}
 </script>
 
 <template>
@@ -290,6 +320,14 @@ function viewRecordAssessmentReport(recordId: number) {
             <div class="text-lg font-bold">{{ crisisEventTitle }}事件</div>
           </div>
         </div>
+        <LyButton
+          v-if="crisisEventDetail?.status !== 5"
+          :type="crisisEventDetail?.closed ? 'success' : 'error'"
+          size="small"
+          @click="handleCloseEvent"
+        >
+          {{ crisisEventDetail?.closed ? '开启事件' : '关闭事件' }}
+        </LyButton>
       </div>
     </template>
 
@@ -311,6 +349,7 @@ function viewRecordAssessmentReport(recordId: number) {
                     v-if="currentStep >= 1"
                     :name="crisisEventDetail.reporterName"
                     :time="crisisEventDetail.reportedAt"
+                    :closed="crisisEventDetail.closed"
                   />
                 </div>
               </template>
@@ -324,6 +363,7 @@ function viewRecordAssessmentReport(recordId: number) {
                       :name="crisisEventDetail.handlerName"
                       :time="crisisEventDetail.updateTime"
                       :status="crisisEventDetail.status"
+                      :closed="crisisEventDetail.closed"
                       @handle-quick-assign="handleQuickAssign"
                     />
                   </div>

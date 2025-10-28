@@ -14,8 +14,10 @@ export function useSearchFormSchema({
   counselorOptions,
   priorityOptions,
   sourceTypeOptions,
+  crisisEventStatusOptions,
 }: {
   counselorOptions: DictDataType[];
+  crisisEventStatusOptions: DictDataType[];
   deptOptions: DeptGradeClassOption[];
   priorityOptions: DictDataType[];
   sourceTypeOptions: DictDataType[];
@@ -63,6 +65,17 @@ export function useSearchFormSchema({
       defaultValue: '',
     },
     {
+      fieldName: 'status',
+      component: 'Select',
+      componentProps: {
+        options: [
+          { label: '全部事件状态', value: '' },
+          ...crisisEventStatusOptions,
+        ],
+      },
+      defaultValue: '',
+    },
+    {
       fieldName: 'searchKeyword',
       component: 'Input',
       componentProps: {
@@ -76,7 +89,7 @@ export function useSearchFormSchema({
             color: '#ccc',
           }),
       }),
-      formItemClass: 'col-span-2',
+      // formItemClass: 'col-span-2',
     },
   ];
 }

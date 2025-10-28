@@ -77,7 +77,7 @@ const [ReportFastDrawer, reportFastDrawerApi] = useVbenDrawer({
 // 表格视图
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    height: '590px',
+    height: '700px',
     pagerConfig: {
       align: 'right',
       pageSize: 10,
@@ -179,7 +179,7 @@ function refresh() {
     </RiskSearch>
 
     <!-- 事件面板 -->
-    <div class="grid grid-cols-6 gap-5">
+    <div v-if="false" class="grid grid-cols-6 gap-5">
       <div
         v-for="eventPanel in eventPanelData.filter((item) => item.type !== 5)"
         :key="eventPanel.type"

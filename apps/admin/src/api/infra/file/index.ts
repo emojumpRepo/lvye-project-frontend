@@ -81,3 +81,16 @@ export function uploadFile(
 export function getFileById(id: number) {
   return requestClient.get<InfraFileApi.File>(`/infra/file/get?id=${id}`);
 }
+
+/** 下载文件 */
+export function downloadFile({
+  configId,
+  path,
+}: {
+  configId: number;
+  path: string;
+}) {
+  return requestClient.get(`/infra/file/${configId}/get/${path}`, {
+    responseType: 'blob',
+  });
+}

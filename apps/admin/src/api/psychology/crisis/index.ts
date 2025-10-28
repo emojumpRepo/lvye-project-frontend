@@ -29,6 +29,7 @@ export interface CrisisEventListReq {
   endTime?: number;
   studentName?: string;
   classId?: number;
+  status?: number;
   counselorUserId?: number;
   sourceType?: number;
 }

@@ -125,3 +125,11 @@ export function closeEvent(params: InterventionAssessmentReqVO) {
     { ...params },
   );
 }
+
+/** 切换危机事件关闭状态 */
+export function switchEventCloseStatus(id: number, closed: boolean) {
+  return requestClient.put<boolean>(
+    `/psychology/intervention/event/${id}/toggle-closed`,
+    { closed },
+  );
+}

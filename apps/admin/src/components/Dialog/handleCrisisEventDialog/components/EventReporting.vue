@@ -229,6 +229,7 @@ function viewRecordAssessmentReport(recordId: number) {
             <EventRecord
               :event-processing-record="record"
               :crisis-event-status="crisisEventDetail.status"
+              :closed="crisisEventDetail.closed"
               @edit="handleEditEventRecord"
               @view-assessment-result="handleViewAssessmentResult"
               @view-record-assessment-report="viewRecordAssessmentReport"

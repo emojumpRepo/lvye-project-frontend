@@ -13,6 +13,7 @@ import CrisisAttachmentsDialog from '#/components/Dialog/CrisisAttachmentsDialog
 import { getDictLabel } from '#/utils/dict';
 
 const props = defineProps<{
+  closed: boolean;
   crisisEventStatus: number;
   eventProcessingRecord: CrisisEventRecord;
 }>();
@@ -95,6 +96,7 @@ function viewRecord() {
         </span>
         <IconifyIcon
           v-if="
+            !closed &&
             [
               'CHOOSE_PROCESS',
               'REASSIGN_HANDLER',
