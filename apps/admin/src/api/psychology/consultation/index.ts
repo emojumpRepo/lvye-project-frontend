@@ -142,13 +142,15 @@ export namespace PsychologyConsultationApi {
   /** 完成评估请求 */
   export interface SaveAssessmentReq {
     appointmentId: number;
-    riskLevel: number;
+    riskLevel?: number;
     problemTypes?: string[];
-    followUpSuggestion: number;
-    assessmentMode: number;
+    followUpSuggestion?: number;
     content?: string;
-    fileId?: number;
-    draft: boolean;
+    attachmentIds?: number[];
+    hasMedicalVisit?: boolean;
+    medicalVisitRecord?: string;
+    observationRecord?: string;
+    draft?: boolean;
   }
 
   /** 时间范围预约 */

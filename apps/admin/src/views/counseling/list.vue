@@ -30,6 +30,7 @@ import {
 } from '#/api/psychology/consultation';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
+import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import SupplementEvaluteDialog from '#/components/Dialog/SupplementEvaluteDialog/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
@@ -74,6 +75,11 @@ const [ConfirmCancelModal, confirmCancelModalApi] = useVbenModal({
 /** 补评估弹窗 */
 const [SupplementEvaluteModal, supplementEvaluteModalApi] = useVbenModal({
   connectedComponent: SupplementEvaluteDialog,
+});
+
+/** 创建评估弹窗 */
+const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
+  connectedComponent: CreateEvaluationDialog,
 });
 
 const currentCancelRow =
@@ -257,16 +263,22 @@ function handleEvalute(row: PsychologyConsultationApi.ConsultationRecord) {
     },
   };
   currentRowId.value = row.id;
-  isOpenPsychologicalConsultDialogModal.value = true;
+  createEvaluationModalApi
+    .setData({
+      confirmInfo: confirmInfo.value,
+    })
+    .open();
 }
 
 /** 确认完成评估 */
 async function completedEvalute(params: InterventionAssessmentReqVO) {
   if (!currentRowId.value) return message.error('请先选择咨询记录');
+
   try {
     const response = await saveAssessment({
       ...params,
       appointmentId: currentRowId.value,
+      content: params.consultRecord,
       draft: false,
     });
     if (!response) return false;
@@ -511,6 +523,7 @@ onMounted(() => {
       @cancel="handleCancelCancelModal"
     />
     <SupplementEvaluteModal @confirm="confirmSupplementEvalute" />
+    <CreateEvaluationModal :publish="completedEvalute" />
   </div>
 </template>
 
