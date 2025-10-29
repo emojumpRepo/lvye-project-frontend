@@ -81,7 +81,6 @@ export function useStudentSearch() {
         }));
 
       studentSearchState.data = data;
-      console.log('学生搜索数据', studentSearchState.data);
     } finally {
       if (fetchId === lastFetchId) {
         studentSearchState.fetching = false;

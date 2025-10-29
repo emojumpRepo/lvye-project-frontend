@@ -314,21 +314,21 @@ function handleImport() {
 
 // 批量换班
 function handleBulkChangeClass() {
-  message.warning('即将上线');
-  //   const selectedStudents = gridApi.grid.getCheckboxRecords();
-  //   bulkClassTransferDrawerApi.setData({ selectedStudents }).open();
+  // message.warning('即将上线');
+  const selectedStudents = gridApi.grid.getCheckboxRecords();
+  bulkClassTransferDrawerApi.setData({ selectedStudents }).open();
 }
 
 // 已毕业学生档案
 function handleGraduatedStudentFile() {
-  message.warning('即将上线');
-  // graduatedFileDrawerApi.open();
+  // message.warning('即将上线');
+  graduatedFileDrawerApi.open();
 }
 
 // 年级毕业
 function handleGraduated() {
-  message.warning('即将上线');
-  // graduationDrawerOpen.value = true;
+  // message.warning('即将上线');
+  graduationDrawerOpen.value = true;
 }
 
 // 导出数据
@@ -578,7 +578,7 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
     <!-- 创建学生抽屉 -->
     <CreateDrawer @refresh="refresh" />
     <!-- 批量换班抽屉 -->
-    <BulkClassTransferDrawer />
+    <BulkClassTransferDrawer @refresh="refresh" />
     <!-- 批量导入抽屉 -->
     <BulkImportDrawer @refresh="refresh" />
     <!-- 删除学生确认框 -->
@@ -588,7 +588,10 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
     <!-- 已毕业学生档案抽屉 -->
     <GraduatedFileDrawer />
     <!-- 年级毕业抽屉 -->
-    <StudentGradeGraduationDrawer v-model:open="graduationDrawerOpen" />
+    <StudentGradeGraduationDrawer
+      v-model:open="graduationDrawerOpen"
+      @refresh="refresh"
+    />
     <!-- 危机事件弹窗 -->
     <HandleCrisisEventModal />
     <!-- 心理咨询弹窗 -->

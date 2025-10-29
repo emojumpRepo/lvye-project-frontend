@@ -8,8 +8,8 @@ import { requestClient } from '#/api/request';
 export namespace PsychologyStudentProfileApi {
   /** 学生档案信息 */
   export interface StudentProfile {
-    id?: number;
-    userId?: number;
+    id: number;
+    userId: number;
     studentNo: string;
     name: string;
     birthDate?: string;
@@ -285,5 +285,57 @@ export function searchStudentProfile({
   return requestClient.get<SearchStudentProfileVO[]>(
     '/psychology/student-profile/search',
     { params: { studentNo, name } },
+  );
+}
+
+/** 验证学生是否是心理老师负责的学生 */
+export function verifyCounselor(params: {
+  counselorUserId: number;
+  studentProfileId: number;
+}) {
+  return requestClient.get<boolean>(
+    '/psychology/student-profile/verify-counselor',
+    {
+      params,
+    },
+  );
+}
+
+/** 批量毕业学生 */
+export function batchGraduateStudents(params: {
+  enrollmentYear: number;
+  extraIds: number[];
+  gradeDeptId: number;
+  graduationYear: number;
+}) {
+  return requestClient.put<number>(
+    '/psychology/student-profile/batch-graduate',
+    params,
+  );
+}
+
+/** 检查毕业年级中心理状态异常的学生 */
+export function checkGraduateStudents(params: {
+  enrollmentYear: number;
+  gradeDeptId: number;
+}) {
+  return requestClient.get<PsychologyStudentProfileApi.StudentProfile[]>(
+    '/psychology/student-profile/check-abnormal-graduating-students',
+    {
+      params,
+    },
+  );
+}
+
+/** 学生换班 */
+export function studentClassTransfer(params: {
+  classDeptId: number;
+  gradeDeptId: number;
+  reason: string;
+  studentProfileIds: number[];
+}) {
+  return requestClient.put<number>(
+    '/psychology/student-profile/batch-transfer-class',
+    params,
   );
 }

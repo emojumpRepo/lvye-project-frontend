@@ -1,14 +1,41 @@
 <script lang="ts" setup>
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
+import { onMounted, ref } from 'vue';
+
 import { Empty } from 'ant-design-vue';
 
-// import { getStudentProfileTimeline } from '#/api/psychology/student-profile';
+import { getStudentAssessmentHistory } from '#/api/psychology';
+
 import RecordCard from './RecordCard.vue';
 
-defineProps<{
-  studentAssessmentHistory: PsychologyStudentProfileApi.StudentAssessmentHistory[];
+const props = defineProps<{
+  studentProfileId?: number;
 }>();
+
+const studentAssessmentHistory = ref<
+  PsychologyStudentProfileApi.StudentAssessmentHistory[]
+>([]);
+
+/**
+ * 加载学生测评历史数据
+ * @param id 学生id
+ */
+async function loadStudentAssessmentHistory(id: number) {
+  try {
+    const assessmentHistory = await getStudentAssessmentHistory(id);
+    if (assessmentHistory.length === 0) return;
+    studentAssessmentHistory.value = assessmentHistory;
+  } catch (error) {
+    console.error('加载学生测评历史数据失败', error);
+  }
+}
+
+onMounted(async () => {
+  if (props.studentProfileId) {
+    await loadStudentAssessmentHistory(props.studentProfileId);
+  }
+});
 </script>
 
 <template>

@@ -6,18 +6,18 @@ export const specialStudentColumns = [
   },
   {
     title: '学号',
-    dataIndex: 'studentId',
-    key: 'studentId',
+    dataIndex: 'studentNo',
+    key: 'studentNo',
   },
   {
     title: '班级',
-    dataIndex: 'class',
-    key: 'class',
+    dataIndex: 'className',
+    key: 'className',
   },
   {
     title: '当前心理状态',
-    dataIndex: 'status',
-    key: 'status',
+    dataIndex: 'psychologicalStatus',
+    key: 'psychologicalStatus',
   },
   {
     title: '操作',

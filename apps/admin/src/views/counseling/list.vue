@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { COUNSELING_STATUS } from '#/api/constants';
+import { getConfigPage } from '#/api/infra/config';
 import {
   cancelConsultationRecord,
   completeConsultationRecord,
@@ -48,6 +49,7 @@ const emit = defineEmits<{
 
 const loading = ref(false);
 const isOpenPsychologicalConsultDialogModal = ref(false);
+const uploadExpireTime = ref<number>(24);
 const currentRowId = ref<number | undefined>();
 const confirmInfo = ref<AssessmentComfirmInfo>({
   studentInfo: {
@@ -124,11 +126,22 @@ function handleViewDetail(row: PsychologyConsultationApi.ConsultationRecord) {
   emit('viewDetail', row);
 }
 
-/** 是否逾期 */
+/** 是否预约逾期 */
 function isOverdue(row: PsychologyConsultationApi.ConsultationRecord) {
   return (
     dayjs(row.appointmentEndTime).add(30, 'minute').isBefore(dayjs()) &&
     row.status === COUNSELING_STATUS.APPOINTMENT
+  );
+}
+
+/** 是否评估逾期 */
+function isEvaluationOverdue(
+  row: PsychologyConsultationApi.ConsultationRecord,
+) {
+  return (
+    dayjs(row.appointmentEndTime)
+      .add(uploadExpireTime.value, 'hour')
+      .isBefore(dayjs()) && row.status === COUNSELING_STATUS.COMPLETED
   );
 }
 
@@ -207,13 +220,13 @@ async function confirmSupplementEvalute(
       component: ARadioGroup,
       componentProps: {
         options: [
-          { label: '立即填写评估', value: 1 },
-          { label: '稍后填写评估', value: 2 },
+          { label: '点击上传纪要', value: 1 },
+          { label: '稍后再来', value: 2 },
         ],
       },
-      content: '您已完成咨询，是否开始评估？',
+      content: '您已完成咨询，是否开始上传报告？',
       icon: 'success',
-      title: '确认评估',
+      title: '确认上传',
       modelPropName: 'value',
       beforeClose: (scope) => {
         // 如果是确认操作但没有选择值，则阻拦关闭
@@ -231,7 +244,7 @@ async function confirmSupplementEvalute(
           buttonAlign: 'center',
           content: h(AResult, {
             status: 'success',
-            subTitle: '请及时填写评估报告',
+            subTitle: '请及时填写上传报告',
             title: '咨询已完成',
           }),
         });
@@ -387,12 +400,25 @@ function refresh() {
   emit('statistics');
 }
 
+/** 获取上传逾期时间 */
+async function getUploadExpireTime() {
+  const result = await getConfigPage({
+    pageNo: 1,
+    pageSize: 10,
+    key: 'intervention.reportExpireTime',
+  });
+  if (result?.list?.[0]?.value) {
+    uploadExpireTime.value = Number(result?.list?.[0]?.value);
+  }
+}
+
 defineExpose({
   refresh,
 });
 
-onMounted(() => {
+onMounted(async () => {
   gridApi.query();
+  await getUploadExpireTime();
 });
 </script>
 
@@ -440,6 +466,9 @@ onMounted(() => {
             <span class="text-[#FF0831]" v-if="isOverdue(row)">
               （已逾期）
             </span>
+            <span class="text-[#FF0831]" v-if="isEvaluationOverdue(row)">
+              （上传已逾期）
+            </span>
           </div>
         </template>
 
@@ -482,7 +511,7 @@ onMounted(() => {
                 onClick: () => handleSupplementEvalute(row),
               },
               {
-                label: '评估',
+                label: '上传报告',
                 type: 'link',
                 color: 'success',
                 ifShow: () => row.status === COUNSELING_STATUS.COMPLETED,

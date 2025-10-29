@@ -10,19 +10,19 @@ import { onMounted, ref } from 'vue';
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Divider, message, Spin, Tabs } from 'ant-design-vue';
+import { Badge, Divider, message, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getStudentPsychologicalStatusTag } from '#/api/constants';
 import { getStudentParentProfile } from '#/api/psychology/student-parent-profile';
 import {
-  getStudentAssessmentHistory,
   getStudentProfile,
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
 import CreateStudentEventRecordDialog from '#/components/Dialog/CreateStudentEventRecordDialog/index.vue';
 import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
+import LyTag from '#/components/LyTag/index.vue';
 import { calculateAge } from '#/utils/calculateTool';
 import { getDictObj, getDictOptions } from '#/utils/dict';
 
@@ -67,18 +67,26 @@ const emit = defineEmits<{
   ): void;
 }>();
 
+// 学生档案
 const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>();
+// 学生家长档案
 const studentParentProfile =
   ref<PsychologyStudentParentProfileApi.StudentParentProfile[]>();
+// 学生时间线
 const studentProfileTimeline = ref<
   PsychologyStudentProfileApi.StudentProfileTimeline[]
 >([]);
+// 学生测评历史
 const studentAssessmentHistory = ref<
   PsychologyStudentProfileApi.StudentAssessmentHistory[]
 >([]);
 
 const psychologicalStatusTag = ref<PsychologicalStatusTag>();
-const coreProblemTags = ref<string[]>([]); // 核心问题标签
+interface CoreProblemTagStat {
+  label: string;
+  count: number;
+}
+const coreProblemTags = ref<CoreProblemTagStat[]>([]); // 核心问题标签（带数量）
 const studentSexMap = ref<DictDataType[]>([]);
 const loading = ref(false);
 const timelineTabs = ref<{ key: number; title: string }[]>([]);
@@ -164,13 +172,23 @@ const footerButtons = ref<FooterButton[]>([
   },
 ]);
 
-/** 获取核心问题标签 */
-const getSpecialMarkLabels = (specialMarks: string): string[] => {
+/** 获取核心问题标签统计 */
+const getSpecialMarkStats = (specialMarks: string): CoreProblemTagStat[] => {
   if (!specialMarks) {
     return [];
   }
-
-  return specialMarks.split(',').map((item) => item.trim());
+  const items = specialMarks
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  const counter = new Map<string, number>();
+  for (const item of items) {
+    counter.set(item, (counter.get(item) || 0) + 1);
+  }
+  return [...counter.entries()].map(([label, count]) => ({
+    label,
+    count,
+  }));
 };
 
 /** 新增记录弹窗 */
@@ -203,7 +221,6 @@ const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
       const studentParentProfileData = await getStudentParentProfile(data.id);
       studentParentProfile.value = studentParentProfileData;
       await loadStudentProfileTimeline(data.id);
-      await loadStudentAssessmentHistory(data.id);
     }
     loading.value = false;
   },
@@ -239,7 +256,7 @@ async function loadStudentProfile(id: number) {
     )) as PsychologicalStatusTag;
 
     // 核心问题标签
-    coreProblemTags.value = getSpecialMarkLabels(
+    coreProblemTags.value = getSpecialMarkStats(
       studentProfileData?.specialMarks || '',
     );
 
@@ -291,20 +308,6 @@ async function loadStudentProfileTimeline(id: number) {
   }
 }
 
-/**
- * 加载学生测评历史数据
- * @param id 学生id
- */
-async function loadStudentAssessmentHistory(id: number) {
-  try {
-    const assessmentHistory = await getStudentAssessmentHistory(id);
-    if (assessmentHistory.length === 0) return;
-    studentAssessmentHistory.value = assessmentHistory;
-  } catch (error) {
-    console.error('加载学生测评历史数据失败', error);
-  }
-}
-
 /** 更新加载状态 */
 function updateLoading(value: boolean) {
   loading.value = value;
@@ -349,7 +352,8 @@ onMounted(async () => {
     <Spin :spinning="loading" wrapper-class-name="h-full">
       <!-- 基础信息 -->
       <div class="flex h-full flex-col gap-3">
-        <div class="bg-white px-4 pb-3 pt-6">
+        <div class="flex flex-col gap-6 bg-white px-4 pb-3 pt-6">
+          <!-- 学生信息 -->
           <div class="flex flex-col gap-4">
             <div class="flex items-center gap-2.5">
               <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
@@ -362,38 +366,29 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <div
-            class="my-7 flex items-center justify-between rounded-lg border border-solid px-4 py-3"
-            :style="psychologicalStatusTag?.colorConfig.style"
-          >
-            <div class="flex items-center gap-1 text-sm font-bold">
-              <IconifyIcon
-                icon="solar:health-bold"
-                :color="psychologicalStatusTag?.colorConfig.color"
-                class="size-5"
-              />
-              <span>心理状态：</span>
-              <span
-                :style="{ color: psychologicalStatusTag?.colorConfig.color }"
-              >
-                {{ psychologicalStatusTag?.label }}
-              </span>
-            </div>
-            <div class="text-xs text-[#979899]">
-              <span v-if="studentProfile?.updater">
-                {{
-                  studentProfile?.updater === '管理员'
-                    ? studentProfile?.updater
-                    : `${studentProfile?.updater}老师`
-                }}
-              </span>
-              <span>{{
-                `更新于${dayjs(studentProfile?.updateTime).format(
-                  'YYYY-MM-DD HH:mm:ss',
-                )}`
-              }}</span>
+
+          <!-- 风险评估定级/最近测评结果 -->
+          <div class="flex items-center gap-3">
+            <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
+            <div class="flex items-center gap-8">
+              <div class="flex items-center gap-1 text-sm">
+                <span class="font-bold">最近1次风险评估定级：</span>
+                <LyTag
+                  tag-category-key="risk_level"
+                  :dict-value="studentProfile?.riskLevel"
+                />
+              </div>
+              <div>
+                <span class="font-bold">最近1次测评结果：</span>
+                <LyTag
+                  tag-category-key="questionnaire_result_risk_level"
+                  :dict-value="studentProfile?.riskLevel"
+                />
+              </div>
             </div>
           </div>
+
+          <!-- 问题标签 -->
           <div class="flex flex-col gap-4">
             <div class="flex items-center gap-3">
               <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
@@ -401,12 +396,14 @@ onMounted(async () => {
             </div>
             <div class="flex items-center gap-2.5">
               <template v-if="coreProblemTags.length > 0">
-                <div v-for="tag in coreProblemTags" :key="tag">
-                  <span
-                    class="inline-block rounded-md border border-solid border-gray-200 px-2 py-1 text-xs text-gray-700"
-                  >
-                    {{ tag }}
-                  </span>
+                <div v-for="(tag, index) in coreProblemTags" :key="index">
+                  <Badge :count="tag.count >= 2 ? tag.count : 0">
+                    <span
+                      class="inline-block rounded-md border border-solid border-gray-200 px-2 py-1.5 text-xs text-gray-700"
+                    >
+                      {{ tag.label }}
+                    </span>
+                  </Badge>
                 </div>
               </template>
               <template v-else>
@@ -427,11 +424,12 @@ onMounted(async () => {
                 />
               </Tabs.TabPane>
               <Tabs.TabPane tab="测评历史" key="history">
-                <AssessmentListTab
-                  :student-assessment-history="studentAssessmentHistory"
-                />
+                <AssessmentListTab :student-profile-id="studentProfile?.id" />
               </Tabs.TabPane>
-              <Tabs.TabPane tab="咨询与干预记录" key="consultation">
+              <Tabs.TabPane tab="咨询记录" key="consultation">
+                <ConsultationListTab />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab="风险评估&危机干预" key="intervention">
                 <ConsultationListTab />
               </Tabs.TabPane>
               <Tabs.TabPane tab="个人信息" key="personalInfo">
@@ -524,5 +522,12 @@ onMounted(async () => {
 
 :deep(.ant-spin-container) {
   height: 100% !important;
+}
+
+:deep(.ant-badge-count) {
+  min-width: 16px !important;
+  height: 16px !important;
+  font-size: 10px !important;
+  line-height: 16px !important;
 }
 </style>

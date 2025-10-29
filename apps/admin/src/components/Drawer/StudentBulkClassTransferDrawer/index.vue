@@ -13,6 +13,7 @@ import {
   message,
 } from 'ant-design-vue';
 
+import { studentClassTransfer } from '#/api/psychology';
 import LyLabel from '#/components/LyLabel/index.vue';
 import { getDeptListCache } from '#/utils/transformDeptToTree';
 
@@ -21,6 +22,10 @@ interface DeptOption {
   label: string;
   children?: { label: string; value: number }[];
 }
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
 
 // ============= 数据 =============
 const selectedStudents = ref<PsychologyStudentProfileApi.StudentProfile[]>([]);
@@ -50,49 +55,93 @@ const columns = [
 ];
 
 const transferForm = ref({
-  gradeId: undefined,
-  classId: undefined,
+  gradeDeptId: undefined,
+  classDeptId: undefined,
   reason: '',
   remark: '',
 });
 
-const deptList = ref<DeptOption[]>([]);
+const rules = ref({
+  gradeDeptId: [{ required: true, message: '请选择目标年级' }],
+  classDeptId: [{ required: true, message: '请选择目标班级' }],
+  reason: [{ required: true, message: '请输入换班理由' }],
+});
 
+const deptList = ref<DeptOption[]>([]);
 const classList = computed(() => {
   return (
-    deptList.value.find((dept) => dept.value === transferForm.value.gradeId)
+    deptList.value.find((dept) => dept.value === transferForm.value.gradeDeptId)
       ?.children || []
   );
 });
-
-const reasonOptions = ref([
-  { label: '转学', value: '1' },
-  { label: '休学', value: '2' },
-  { label: '退学', value: '3' },
-]);
 
 // =================== 事件 ===================
 const [Drawer, drawerApi] = useVbenDrawer({
   class: 'w-[720px]',
   destroyOnClose: true,
+  closeOnClickModal: false,
   confirmText: '确认换班',
   onOpenChange: async () => {
-    const data = drawerApi.getData();
+    const data = await drawerApi.getData();
     if (data.selectedStudents.length > 0) {
       selectedStudents.value = data.selectedStudents;
     }
   },
   onConfirm: () => {
-    message.warning('即将上线');
+    formRef.value.validate().then(async () => {
+      if (selectedStudents.value.length === 0) {
+        message.error('请选择学生');
+        return;
+      }
+
+      if (!transferForm.value.classDeptId) {
+        message.error('请选择目标年级');
+        return;
+      }
+      if (!transferForm.value.gradeDeptId) {
+        message.error('请选择目标班级');
+        return;
+      }
+      if (!transferForm.value.reason) {
+        message.error('请输入换班理由');
+        return;
+      }
+
+      try {
+        drawerApi.lock();
+        const response = await studentClassTransfer({
+          classDeptId: transferForm.value.classDeptId,
+          gradeDeptId: transferForm.value.gradeDeptId,
+          reason: transferForm.value.reason,
+          studentProfileIds: selectedStudents.value.map(
+            (student) => student.id as number,
+          ),
+        });
+        emit('refresh');
+        message.success(`${response}名学生换班成功`);
+        drawerApi.close();
+      } catch (error: any) {
+        console.error('换班失败', error);
+        message.error(error.message || '换班失败，请重新操作');
+      } finally {
+        drawerApi.unlock();
+      }
+    });
   },
 });
 
+/** 移除学生 */
 function handleRemoveStudent(
   record: PsychologyStudentProfileApi.StudentProfile,
 ) {
   selectedStudents.value = selectedStudents.value.filter(
     (student) => student.studentNo !== record.studentNo,
   );
+}
+
+/** 年级选择变化 */
+function handleGradeChange() {
+  transferForm.value.classDeptId = undefined;
 }
 
 onMounted(async () => {
@@ -147,17 +196,19 @@ onMounted(async () => {
 
       <!-- 换班表单 -->
       <div class="mt-6">
-        <AForm ref="formRef">
+        <AForm ref="formRef" :model="transferForm" :rules="rules">
           <div>
             <LyLabel
               title="目标年级"
               required
               custom-title-class="font-normal"
             />
-            <AForm.Item name="grade">
+            <AForm.Item name="gradeDeptId">
               <ASelect
-                v-model:value="transferForm.gradeId"
+                v-model:value="transferForm.gradeDeptId"
+                placeholder="请选择目标年级"
                 :options="deptList"
+                @change="handleGradeChange"
               />
             </AForm.Item>
           </div>
@@ -168,9 +219,10 @@ onMounted(async () => {
               required
               custom-title-class="font-normal"
             />
-            <AForm.Item name="grade">
+            <AForm.Item name="classDeptId">
               <ASelect
-                v-model:value="transferForm.classId"
+                v-model:value="transferForm.classDeptId"
+                placeholder="请选择目标班级"
                 :options="classList"
               />
             </AForm.Item>
@@ -182,20 +234,23 @@ onMounted(async () => {
               required
               custom-title-class="font-normal"
             />
-            <AForm.Item name="grade">
-              <ASelect
+            <AForm.Item name="reason">
+              <ATextarea
                 v-model:value="transferForm.reason"
-                :options="reasonOptions"
+                placeholder="请输入换班理由"
               />
             </AForm.Item>
           </div>
 
-          <div>
+          <!-- <div>
             <LyLabel title="备注说明" custom-title-class="font-normal" />
-            <AForm.Item name="grade">
-              <ATextarea v-model:value="transferForm.remark" />
+            <AForm.Item name="remark">
+              <ATextarea
+                v-model:value="transferForm.remark"
+                placeholder="请输入备注说明"
+              />
             </AForm.Item>
-          </div>
+          </div> -->
         </AForm>
       </div>
     </div>

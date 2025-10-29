@@ -28,7 +28,8 @@ import {
   getConsultationRecord,
   getWeeklyAppointment,
   updateConsultationRecord,
-} from '#/api/psychology/consultation';
+  verifyCounselor,
+} from '#/api/psychology';
 import { getTeacherUserList } from '#/api/system/user';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -116,6 +117,7 @@ const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '�
 const timeError = ref('');
 const conflictError = ref('');
 const dateTip = ref('');
+const verifyCounselorWarning = ref('');
 // ==================== 创建咨询预约的基础状态 ====================
 const currentDate = ref('');
 const timeRange = ref<{
@@ -578,10 +580,13 @@ async function selectDateChange() {
     await onTimeRangeChange(form.value.consultTime);
   }
 }
+
 /** 选择老师时校验时间冲突 */
 async function onTeacherChange(value: any) {
   if (value) {
     form.value.consultTeacher = value;
+    await verifyCounselorByStudent();
+    if (!form.value.consultTime?.[0] || !form.value.consultTime?.[1]) return;
     const result = await checkTimeConflict({
       appointmentEndTime: form.value.consultTime?.[1]?.valueOf() as number,
       appointmentStartTime: form.value.consultTime?.[0]?.valueOf() as number,
@@ -595,9 +600,25 @@ async function onTeacherChange(value: any) {
   }
 }
 
+/** 验证老师是否是学生的心理老师 */
+async function verifyCounselorByStudent() {
+  const studentProfileId = Number(form.value.student?.value);
+  const counselorUserId = Number(form.value.consultTeacher);
+  if (!studentProfileId || !counselorUserId) return;
+  const result = await verifyCounselor({ studentProfileId, counselorUserId });
+  verifyCounselorWarning.value = result ? '' : '请选择访谈老师负责的学生';
+}
+
 // ==================== 表单提交相关 ====================
 /** 提交咨询预约 */
 async function submitConsult() {
+  if (verifyCounselorWarning.value || timeError.value || conflictError.value) {
+    message.error(
+      verifyCounselorWarning.value || timeError.value || conflictError.value,
+    );
+    return;
+  }
+
   formRef.value?.validate().then(async () => {
     if (isDetail.value) {
       await handleConfirmCreateOrUpdate();
@@ -669,8 +690,9 @@ function resetForm() {
 // ==================== 监听器 ====================
 watch(
   () => form.value.student,
-  (val) => {
+  async (val) => {
     handleStudentChange(val);
+    await verifyCounselorByStudent();
   },
 );
 
@@ -795,6 +817,19 @@ function disabledRangeTime(
                 />
               </template>
             </Select>
+            <!-- 验证老师是否是学生的心理老师 -->
+            <Transition name="fade">
+              <div
+                v-if="verifyCounselorWarning"
+                class="mt-2 flex items-center gap-2 rounded bg-[#FF9C0514] px-4 py-2 text-sm text-[#FF9C05]"
+              >
+                <IconifyIcon
+                  icon="material-symbols:error"
+                  class="size-4 text-[#FF9C05]"
+                />
+                {{ verifyCounselorWarning }}
+              </div>
+            </Transition>
           </Form.Item>
 
           <!-- 访谈老师 -->

@@ -8,6 +8,12 @@ import { IconifyIcon } from '@vben/icons';
 
 /** 搜索表单 */
 export function useSearchFormSchema(): VbenFormSchema[] {
+  const currentYear = new Date().getFullYear();
+  const generateYearOptions = (suffix: string) =>
+    Array.from({ length: currentYear - 2019 + 1 }, (_, index) => {
+      const year = String(currentYear - index);
+      return { label: `${year}${suffix}`, value: year };
+    });
   return [
     {
       fieldName: 'year',
@@ -15,9 +21,7 @@ export function useSearchFormSchema(): VbenFormSchema[] {
       componentProps: {
         options: [
           { label: '全部年份', value: '' },
-          { label: '2024年', value: '2024' },
-          { label: '2023年', value: '2023' },
-          { label: '2022年', value: '2022' },
+          ...generateYearOptions('年'),
         ],
       },
       formItemClass: 'w-[120px]',
@@ -29,9 +33,7 @@ export function useSearchFormSchema(): VbenFormSchema[] {
       componentProps: {
         options: [
           { label: '全部届别', value: '' },
-          { label: '2024届', value: '2024' },
-          { label: '2023届', value: '2023' },
-          { label: '2022届', value: '2022' },
+          ...generateYearOptions('届'),
         ],
       },
       formItemClass: 'w-[120px]',

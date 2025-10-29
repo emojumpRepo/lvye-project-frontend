@@ -3,7 +3,7 @@ import type { AssessmentComfirmInfo } from '@vben/types';
 
 import type { InterventionAssessmentReqVO } from '#/api/psychology';
 
-import { h, ref } from 'vue';
+import { ref } from 'vue';
 
 import { alert, confirm, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -11,7 +11,7 @@ import { IconifyIcon } from '@vben/icons';
 import {
   CheckboxGroup as ACheckboxGroup,
   Input as AInput,
-  Result as AResult,
+  Popover as APopover,
   Spin as ASpin,
   Switch as ASwitch,
   Textarea as ATextarea,
@@ -24,6 +24,8 @@ import LyButton from '#/components/LyButton/index.vue';
 import FileUpload from '#/components/upload/file-upload.vue';
 import { getDictLabel } from '#/utils/dict';
 import { downloadPsychologicalReportTemplate } from '#/utils/export';
+
+import EvaluationTitle from './components/EvaluationTitle.vue';
 
 const props = defineProps<{
   publish: (params: InterventionAssessmentReqVO) => Promise<boolean>;
@@ -158,6 +160,9 @@ async function handleSubmit() {
   if (!form.value.consultRecord) {
     return message.error('请输入访谈记录');
   }
+  if (form.value.hasMedicalVisit && !form.value.medicalVisitRecord) {
+    return message.error('请输入就诊用药情况');
+  }
   if (!form.value.riskLevel) {
     return message.error('请选择危机分类定级');
   }
@@ -165,42 +170,43 @@ async function handleSubmit() {
     return message.error('请输入危机观察记录');
   }
 
-  try {
-    loading.value = true;
-    createEvaluationModalApi.lock();
-    const response = await props.publish({
-      ...form.value,
-      problemTypes: problemTypesTemplate,
-    });
-
-    if (response) {
-      alert({
-        title: '',
-        content: h(AResult, {
-          status: 'success',
-          subTitle: '',
-          title: '评估已完成！',
-        }),
-      }).then(() => {
-        createEvaluationModalApi.close();
+  confirm({
+    title: '确认提交',
+    content: '提交评估后，将无法修改评估信息，请确认是否提交评估？',
+    icon: 'warning',
+  }).then(async () => {
+    try {
+      loading.value = true;
+      createEvaluationModalApi.lock();
+      const response = await props.publish({
+        ...form.value,
+        problemTypes: problemTypesTemplate,
       });
-    } else {
+
+      if (response) {
+        alert({
+          content: '您的评估已完成，可在事件处理记录中查看！',
+          title: '评估成功',
+          icon: 'success',
+        }).then(() => createEvaluationModalApi.close());
+      } else {
+        alert({
+          content: '评估失败，请重试',
+          title: '评估失败',
+          icon: 'error',
+        });
+      }
+    } catch {
       alert({
         content: '评估失败，请重试',
         title: '评估失败',
         icon: 'error',
       });
+    } finally {
+      createEvaluationModalApi.unlock();
+      loading.value = false;
     }
-  } catch {
-    alert({
-      content: '评估失败，请重试',
-      title: '评估失败',
-      icon: 'error',
-    });
-  } finally {
-    createEvaluationModalApi.unlock();
-    loading.value = false;
-  }
+  });
 }
 
 /** 保存草稿 */
@@ -232,6 +238,11 @@ function handleOpenCancelConfirmModal() {
       return true;
     });
 }
+
+/** 打开访谈提纲 */
+function openInterviewOutline() {
+  console.log('openInterviewOutline');
+}
 </script>
 
 <template>
@@ -259,6 +270,14 @@ function handleOpenCancelConfirmModal() {
 
     <ASpin :spinning="loading" class="mt-30">
       <div class="flex-center flex-col gap-10">
+        <div
+          class="flex-center fixed right-52 top-24 z-10 cursor-pointer gap-1 rounded-lg bg-[#FF083114] px-4 py-2 text-sm font-bold text-[#FF0831] hover:bg-[#FF083114]/10"
+          @click="openInterviewOutline"
+        >
+          <IconifyIcon icon="solar:document-bold" class="size-4" />
+          <span>访谈提纲</span>
+        </div>
+
         <div class="flex w-2/3 flex-col gap-10 py-3">
           <!-- 学生信息 -->
           <div
@@ -297,15 +316,7 @@ function handleOpenCancelConfirmModal() {
 
           <!-- 问题分类 -->
           <div class="space-y-6">
-            <div class="flex items-center gap-3">
-              <div
-                class="text-primary flex h-7 w-7 items-center justify-center rounded-full bg-[#04DC7014] text-xs font-medium"
-              >
-                1
-              </div>
-              <span class="font-semibold text-gray-900">问题分类</span>
-              <span class="font-medium text-red-500">*</span>
-            </div>
+            <EvaluationTitle title="问题分类" :value="1" required />
             <div
               class="mx-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
             >
@@ -341,15 +352,7 @@ function handleOpenCancelConfirmModal() {
           <!-- 访谈记录 -->
           <div class="space-y-6">
             <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="text-primary flex h-7 w-7 items-center justify-center rounded-full bg-[#04DC7014] text-xs font-medium"
-                >
-                  2
-                </div>
-                <span class="font-semibold text-gray-900"> 访谈记录 </span>
-                <span class="font-medium text-red-500">*</span>
-              </div>
+              <EvaluationTitle title="访谈记录" :value="2" required />
               <button
                 class="mr-8 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
                 @click="downloadPsychologicalReportTemplate"
@@ -374,14 +377,7 @@ function handleOpenCancelConfirmModal() {
 
           <!-- 就诊用药情况 -->
           <div class="space-y-6">
-            <div class="flex items-center gap-3">
-              <div
-                class="text-primary flex h-7 w-7 items-center justify-center rounded-full bg-[#04DC7014] text-xs font-medium"
-              >
-                3
-              </div>
-              <span class="font-semibold text-gray-900"> 就诊用药情况 </span>
-            </div>
+            <EvaluationTitle title="就诊用药情况" :value="3" />
             <div class="mx-8 space-y-4">
               <div class="flex items-center gap-3">
                 <ASwitch
@@ -415,15 +411,7 @@ function handleOpenCancelConfirmModal() {
 
           <!-- 危机分类定级 -->
           <div class="space-y-6" style="margin-top: 15px">
-            <div class="flex items-center gap-2">
-              <div
-                class="text-primary flex h-7 w-7 items-center justify-center rounded-full bg-[#04DC7014] text-xs font-medium"
-              >
-                4
-              </div>
-              <span class="font-semibold text-gray-900"> 危机分类定级 </span>
-              <span class="font-medium text-red-500">*</span>
-            </div>
+            <EvaluationTitle title="危机分类定级" :value="4" required />
             <div class="mx-8 grid grid-cols-4 gap-3">
               <div
                 v-for="opt in CRISIS_LEVEL_MAP"
@@ -441,9 +429,40 @@ function handleOpenCancelConfirmModal() {
                   class="mb-3 inline-block size-3 rounded-full"
                   :style="{ backgroundColor: opt.color }"
                 ></span>
-                <span class="text-sm font-medium text-black">
-                  {{ getDictLabel('risk_level', opt.key) }}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium text-black">
+                    {{ getDictLabel('risk_level', opt.key) }}
+                  </span>
+                  <APopover v-if="opt.tip" :overlay-style="{ width: '400px' }">
+                    <template v-if="opt.tip?.title" #title>
+                      <div>
+                        <span
+                          v-for="(text, i) in opt.tip?.title"
+                          :key="i"
+                          class="text-sm"
+                          :class="text.bold ? 'font-bold' : 'font-normal'"
+                        >
+                          {{ text.text }}
+                        </span>
+                      </div>
+                    </template>
+                    <template #content>
+                      <div class="!ml-5">
+                        <ul v-if="opt.tip?.items" class="!list-disc">
+                          <li
+                            v-for="(item, k) in opt.tip.items"
+                            :key="k"
+                            class="text-justify text-sm"
+                          >
+                            {{ item }}
+                          </li>
+                        </ul>
+                      </div>
+                    </template>
+                    <IconifyIcon icon="carbon:help" class="size-4" />
+                  </APopover>
+                </div>
+
                 <div class="mt-2 text-xs text-[#979899]">
                   {{ opt.description }}
                 </div>
@@ -457,11 +476,11 @@ function handleOpenCancelConfirmModal() {
                 <span
                   class="whitespace-nowrap text-sm font-medium text-gray-700"
                 >
-                  观察记录：
+                  后续建议：
                 </span>
                 <ATextarea
                   v-model:value="form.observationRecord"
-                  placeholder="请输入观察记录"
+                  placeholder="请填写后续的观察计划、干预措施等内容"
                   :autosize="{ minRows: 5 }"
                   class="w-full rounded-lg border border-gray-200 p-3 text-sm transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />

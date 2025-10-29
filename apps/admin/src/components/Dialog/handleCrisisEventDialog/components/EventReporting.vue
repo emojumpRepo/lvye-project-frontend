@@ -244,7 +244,7 @@ function viewRecordAssessmentReport(recordId: number) {
       <div class="flex h-full flex-col gap-3">
         <div class="flex items-center justify-between">
           <LyLabel has-indicator title="事件描述" />
-          <div class="flex items-center gap-1">
+          <div v-if="!crisisEventDetail.closed" class="flex items-center gap-1">
             <LyButton
               v-if="isEditingDescription"
               type="default"

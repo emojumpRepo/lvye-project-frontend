@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+
 import { onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
@@ -6,88 +8,188 @@ import { IconifyIcon } from '@vben/icons';
 import {
   Drawer as ADrawer,
   Form as AForm,
-  Input as AInput,
+  Popover as APopover,
   Select as ASelect,
+  Spin as ASpin,
   Table as ATable,
+  message,
 } from 'ant-design-vue';
 
+import { batchGraduateStudents, checkGraduateStudents } from '#/api/psychology';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { generateYearOptions } from '#/utils/calculateTool';
+import { getDictLabel } from '#/utils/dict';
+import { getDeptListCache } from '#/utils/transformDeptToTree';
 
 import { specialStudentColumns } from './data';
+
+interface Option {
+  label: string;
+  value: number;
+}
+
+interface SpecialStudent extends PsychologyStudentProfileApi.StudentProfile {
+  actionType?: number;
+}
+
+const emit = defineEmits<{
+  (e: 'refresh'): void;
+}>();
 
 const open = defineModel<boolean>('open', { required: true });
 const formRef = ref();
 
 const specialStudentDrawerOpen = ref<boolean>(false);
 
-const graduationForm = ref({
-  gradeId: '',
-  graduationYear: '',
-  session: '',
+const graduationForm = ref<{
+  enrollmentYear: number | undefined;
+  gradeDeptId: number | undefined;
+  graduationYear: number | undefined;
+}>({
+  gradeDeptId: undefined,
+  graduationYear: undefined,
+  enrollmentYear: undefined,
 });
 
-const gradeOptions = ref<{ label: string; value: number }[]>([]);
-
-const graduationYearOptions = ref([
-  { label: '2025年', value: '2025' },
-  { label: '2026年', value: '2026' },
-  { label: '2027年', value: '2027' },
-]);
-
-const selectedSpecialStudents = ref([
+const gradeOptions = ref<Option[]>([]);
+const graduationYearOptions = ref<Option[]>([]);
+const gradeSessionOptions = ref<Option[]>([]);
+const selectedSpecialStudents = ref<SpecialStudent[]>([]);
+const extraIds = ref<number[]>([]);
+const loading = ref(false);
+const psychologicalStatusOptions = ref<Option[]>([
   {
-    name: '张三',
-    studentId: '1234567890',
-    class: '1班',
-    status: '观察中',
+    label: '心理老师处理',
+    value: 1,
   },
   {
-    name: '王五',
-    studentId: '1234567890',
-    class: '1班',
-    status: '严重',
+    label: '毕业不再跟进',
+    value: 2,
   },
 ]);
+const tips = [
+  {
+    title: '心理老师处理',
+    text: '学生正常毕业，但标记为需要心理老师后续跟进',
+  },
+  {
+    title: '毕业不再跟进',
+    text: '学生正常毕业，不再进行心理状态跟进',
+  },
+];
 
 const rules = ref({
-  gradeId: [{ required: true, message: '请选择年级' }],
+  gradeDeptId: [{ required: true, message: '请选择年级' }],
   graduationYear: [{ required: true, message: '请选择毕业年份' }],
-  session: [{ required: true, message: '请输入届别' }],
+  enrollmentYear: [{ required: true, message: '请输入届别' }],
 });
 
-/**
- * 获取年级选项
- */
-// async function getGradeOptions() {
-//   try {
-//     const data = await getDeptSimpleList();
-//     if (data.length > 0) {
-//       const filteredData = data.filter((dept) => dept.parentId !== 110);
-//       const allIds = new Set(filteredData.map((dept) => dept.id));
-//       const parentData = filteredData.filter(
-//         (dept) => !allIds.has(dept.parentId),
-//       );
-//       gradeOptions.value =
-//         parentData.map((dept) => ({
-//           value: dept.id,
-//           label: dept.name,
-//         })) || [];
-//     }
-//   } catch (error) {
-//     console.error('获取年级选项失败', error);
-//   }
-// }
+/** 处理毕业 */
+async function handleGraduate() {
+  if (loading.value) {
+    return message.warning('请等待毕业处理完成');
+  }
+
+  formRef.value?.validate().then(async () => {
+    if (
+      !graduationForm.value.enrollmentYear ||
+      !graduationForm.value.gradeDeptId ||
+      !graduationForm.value.graduationYear
+    ) {
+      message.error('请选择届别、年级和毕业年份');
+      return;
+    }
+    await check();
+    if (selectedSpecialStudents.value.length === 0) {
+      await batchGraduate();
+    }
+  });
+}
+
+/** 批量毕业 */
+async function batchGraduate() {
+  try {
+    loading.value = true;
+    specialStudentDrawerOpen.value = false;
+    extraIds.value = selectedSpecialStudents.value
+      .filter((item) => item.actionType === 1)
+      .map((item) => item.id as number);
+
+    const response = await batchGraduateStudents({
+      enrollmentYear: graduationForm.value.enrollmentYear as number,
+      gradeDeptId: graduationForm.value.gradeDeptId as number,
+      graduationYear: graduationForm.value.graduationYear as number,
+      extraIds: extraIds.value,
+    });
+
+    emit('refresh');
+    message.success(`${response}名学生毕业处理成功`);
+    open.value = false;
+  } catch (error) {
+    console.error('毕业处理失败', error);
+    message.error('毕业处理失败，请重新操作');
+  } finally {
+    loading.value = false;
+  }
+}
+
+/** 检查毕业年级中心理状态异常的学生 */
+async function check() {
+  try {
+    const data = await checkGraduateStudents({
+      enrollmentYear: graduationForm.value.enrollmentYear as number,
+      gradeDeptId: graduationForm.value.gradeDeptId as number,
+    });
+
+    if (data && data.length > 0) {
+      specialStudentDrawerOpen.value = true;
+      selectedSpecialStudents.value = data.map((item) => ({
+        ...item,
+        actionType: 1,
+      }));
+      return data;
+    }
+  } catch (error) {
+    console.error('毕业检查失败', error);
+    message.error('毕业检查失败');
+  }
+}
+
+/** 取消毕业 */
+function cancelGraduation() {
+  if (loading.value) {
+    return message.warning('请等待毕业处理完成');
+  }
+  open.value = false;
+}
 
 onMounted(async () => {
-  // await getGradeOptions();
+  const deptList = await getDeptListCache();
+  if (deptList && deptList.length > 0) {
+    gradeOptions.value = deptList.map((item) => ({
+      label: item.label,
+      value: item.value,
+    }));
+  }
+  graduationYearOptions.value = generateYearOptions('年').map((item) => ({
+    label: item.label,
+    value: Number(item.value),
+  }));
+  graduationForm.value.graduationYear = graduationYearOptions.value[0]?.value;
+  gradeSessionOptions.value = generateYearOptions('届').map((item) => ({
+    label: item.label,
+    value: Number(item.value),
+  }));
 });
 </script>
 
 <template>
   <ADrawer
     v-model:open="open"
-    width="720"
+    width="800"
+    :mask-closable="false"
+    :destroy-on-close="true"
     :closable="false"
     @closed="formRef?.resetFields()"
   >
@@ -101,124 +203,159 @@ onMounted(async () => {
       </div>
     </template>
 
-    <div class="mx-2 mb-2">
-      <AForm ref="formRef" :model="graduationForm" :rules="rules">
-        <AForm.Item name="gradeId">
-          <LyLabel title="年级" required custom-title-class="font-normal" />
-          <ASelect
-            v-model:value="graduationForm.gradeId"
-            placeholder="请选择"
-            :options="gradeOptions"
-          />
-        </AForm.Item>
-
-        <AForm.Item name="graduationYear">
-          <LyLabel title="毕业年份" required custom-title-class="font-normal" />
-          <ASelect
-            v-model:value="graduationForm.graduationYear"
-            placeholder="请选择"
-            :options="graduationYearOptions"
-          />
-        </AForm.Item>
-
-        <AForm.Item name="session">
-          <LyLabel title="届别" required custom-title-class="font-normal" />
-          <AInput
-            v-model:value="graduationForm.session"
-            placeholder="如：2024届"
-          />
-        </AForm.Item>
-      </AForm>
-
-      <!-- 毕业提示 -->
-      <div
-        class="mt-8 space-y-3 rounded-xl border border-solid border-[#FF9C05CC] bg-[#FF9C0514] p-3"
-      >
-        <div class="flex items-center gap-2">
-          <IconifyIcon icon="mdi:alert-circle" color="#FF9C05" />
-          <span class="text-xs font-medium text-[#FF9C05]">毕业提示</span>
-        </div>
-        <ul class="list-disc space-y-2 pl-5 text-xs text-[#979899]">
-          <li>整个年级的学生将统一毕业归档</li>
-          <li>心理状态为"严重"、"重大"、"一般"、"观察中"的学生需要特殊处理</li>
-          <li>毕业后学生将转入已毕业档案管理</li>
-        </ul>
-      </div>
-
-      <ADrawer
-        v-model:open="specialStudentDrawerOpen"
-        width="600"
-        :closable="false"
-      >
-        <template #title>
-          <div class="flex items-center gap-2">
-            <img
-              src="../../../static/icons/student/special_student.png"
-              class="w-5"
+    <ASpin :spinning="loading" class="mt-30">
+      <div class="mx-2 mb-2">
+        <AForm ref="formRef" :model="graduationForm" :rules="rules">
+          <AForm.Item name="gradeDeptId">
+            <LyLabel title="年级" required custom-title-class="font-normal" />
+            <ASelect
+              v-model:value="graduationForm.gradeDeptId"
+              placeholder="请选择需要毕业的年级"
+              required
+              :options="gradeOptions"
             />
-            <span class="text-lg font-bold">特殊状态学生处理</span>
-          </div>
-        </template>
+          </AForm.Item>
 
+          <AForm.Item name="enrollmentYear">
+            <LyLabel title="届别" required custom-title-class="font-normal" />
+            <ASelect
+              v-model:value="graduationForm.enrollmentYear"
+              placeholder="请选择届别"
+              required
+              :options="gradeSessionOptions"
+            />
+          </AForm.Item>
+
+          <AForm.Item name="graduationYear">
+            <LyLabel
+              title="毕业年份"
+              required
+              custom-title-class="font-normal"
+            />
+            <ASelect
+              v-model:value="graduationForm.graduationYear"
+              placeholder="请选择毕业年份"
+              required
+              :options="graduationYearOptions"
+            />
+          </AForm.Item>
+        </AForm>
+
+        <!-- 毕业提示 -->
         <div
-          class="overflow-hidden rounded-xl border border-solid border-[#EAEBED]"
+          class="mt-8 space-y-3 rounded-xl border border-solid border-[#FF9C05CC] bg-[#FF9C0514] p-3"
         >
-          <ATable
-            :columns="specialStudentColumns"
-            :data-source="selectedSpecialStudents"
-            :pagination="false"
+          <div class="flex items-center gap-2">
+            <IconifyIcon icon="mdi:alert-circle" color="#FF9C05" />
+            <span class="text-xs font-medium text-[#FF9C05]">毕业提示</span>
+          </div>
+          <ul class="list-disc space-y-2 pl-5 text-xs text-[#979899]">
+            <li>整个年级的学生将统一毕业归档</li>
+            <li>
+              心理状态为"严重"、"重大"、"一般"、"观察中"的学生需要特殊处理
+            </li>
+            <li>毕业后学生将转入已毕业档案管理</li>
+          </ul>
+        </div>
+
+        <ADrawer
+          v-model:open="specialStudentDrawerOpen"
+          width="700"
+          :destroy-on-close="true"
+          :mask-closable="false"
+          :closable="false"
+        >
+          <template #title>
+            <div class="flex items-center gap-2">
+              <img
+                src="../../../static/icons/student/special_student.png"
+                class="w-5"
+              />
+              <span class="text-lg font-bold">特殊状态学生处理</span>
+            </div>
+          </template>
+
+          <div
+            class="overflow-hidden rounded-xl border border-solid border-[#EAEBED]"
           >
-            <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'status'">
-                <span
-                  class="rounded bg-[#1966FF14] px-2 py-1 text-xs text-[#1966FF]"
-                >
-                  {{ record.status }}
-                </span>
-              </template>
-              <template v-if="column.key === 'action'">
-                <span class="cursor-pointer text-sm text-[#1966FF]">
-                  由心理老师处理
-                </span>
-              </template>
-            </template>
-          </ATable>
-        </div>
-
-        <div
-          class="mt-6 flex items-center gap-2 rounded-xl border border-solid border-[#FF9C05CC] bg-[#FF9C0514] p-3"
-        >
-          <IconifyIcon icon="mdi:alert-circle" color="#FF9C05" />
-          <span class="text-xs font-medium text-[#FF9C05]">
-            注意: 以上学生心理状态需要特殊处理后才能毕业
-          </span>
-        </div>
-
-        <template #footer>
-          <div class="flex items-center justify-end gap-2">
-            <LyButton size="middle" @click="specialStudentDrawerOpen = false">
-              取消
-            </LyButton>
-            <LyButton
-              type="success"
-              size="middle"
-              @click="specialStudentDrawerOpen = false"
+            <ATable
+              :columns="specialStudentColumns"
+              :data-source="selectedSpecialStudents"
+              :pagination="false"
             >
-              确认处理
-            </LyButton>
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'psychologicalStatus'">
+                  <span
+                    class="rounded bg-[#1966FF14] px-2 py-1 text-xs text-[#1966FF]"
+                  >
+                    {{
+                      getDictLabel(
+                        'student_psychological_status',
+                        record.psychologicalStatus,
+                      )
+                    }}
+                  </span>
+                </template>
+                <template v-if="column.key === 'action'">
+                  <div class="flex items-center gap-2">
+                    <ASelect
+                      v-model:value="record.actionType"
+                      :options="psychologicalStatusOptions"
+                    />
+                    <APopover :overlay-style="{ width: '300px' }">
+                      <template #content>
+                        <div class="!ml-5">
+                          <ul class="flex !list-disc flex-col gap-2 text-xs">
+                            <li
+                              v-for="(tipItem, k) in tips"
+                              :key="k"
+                              class="text-justify text-sm"
+                            >
+                              <span class="font-bold">
+                                {{ tipItem.title }}：
+                              </span>
+                              <span>
+                                {{ tipItem.text }}
+                              </span>
+                            </li>
+                          </ul>
+                        </div>
+                      </template>
+                      <IconifyIcon icon="carbon:help" class="size-4" />
+                    </APopover>
+                  </div>
+                </template>
+              </template>
+            </ATable>
           </div>
-        </template>
-      </ADrawer>
-    </div>
+
+          <div
+            class="mt-6 flex items-center gap-2 rounded-xl border border-solid border-[#FF9C05CC] bg-[#FF9C0514] p-3"
+          >
+            <IconifyIcon icon="mdi:alert-circle" color="#FF9C05" />
+            <span class="text-xs font-medium text-[#FF9C05]">
+              注意: 以上学生心理状态需要特殊处理后才能毕业
+            </span>
+          </div>
+
+          <template #footer>
+            <div class="flex items-center justify-end gap-2">
+              <LyButton size="middle" @click="specialStudentDrawerOpen = false">
+                取消
+              </LyButton>
+              <LyButton type="success" size="middle" @click="batchGraduate">
+                确认处理
+              </LyButton>
+            </div>
+          </template>
+        </ADrawer>
+      </div>
+    </ASpin>
 
     <template #footer>
       <div class="flex items-center justify-end gap-2">
-        <LyButton size="middle" @click="open = false">取消</LyButton>
-        <LyButton
-          type="success"
-          size="middle"
-          @click="specialStudentDrawerOpen = true"
-        >
+        <LyButton size="middle" @click="cancelGraduation">取消</LyButton>
+        <LyButton type="success" size="middle" @click="handleGraduate">
           确认毕业
         </LyButton>
       </div>
@@ -227,9 +364,9 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
-:deep(.ant-table-cell::before) {
-  display: none !important;
-}
+// :deep(.ant-table-cell::before) {
+//   display: none !important;
+// }
 
 :deep(.ant-table-tbody > tr:last-child > td) {
   border-bottom: none !important;

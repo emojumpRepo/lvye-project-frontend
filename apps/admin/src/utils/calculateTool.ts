@@ -100,3 +100,17 @@ export function parseSearchKeyword(keyword?: string) {
     ? { studentNo: trimmedKeyword, name: undefined }
     : { studentNo: undefined, name: trimmedKeyword };
 }
+
+/** 生成年份 */
+export function generateYearOptions(suffix: string) {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: currentYear - 2019 + 1 }, (_, index) => {
+    const year = String(currentYear - index);
+    return { label: `${year}${suffix}`, value: year };
+  });
+}
+
+/** 获取今年年份 */
+export function getCurrentYear() {
+  return new Date().getFullYear();
+}
