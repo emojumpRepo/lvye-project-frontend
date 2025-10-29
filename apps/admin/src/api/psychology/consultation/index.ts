@@ -329,6 +329,15 @@ export function getConsultationAppointmentByDate(params: {
   );
 }
 
+/** 根据学生档案ID查询咨询记录列表 */
+export function getConsultationRecordByStudentProfileId(
+  studentProfileId: number,
+) {
+  return requestClient.get<PsychologyConsultationApi.ConsultationRecord[]>(
+    `/psychology/consultation/appointment/list-by-student?studentProfileId=${studentProfileId}`,
+  );
+}
+
 // ==================== 危机干预事件管理 ====================
 
 /** 查询危机干预事件分页列表 */

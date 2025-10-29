@@ -123,6 +123,7 @@ async function loadAssessmentResult() {
     const results = assessmentResult.value.questionnaireResults;
     const answersList = await Promise.all(
       results.map(async (item: AssessmentQuestionnaireResultVO) => {
+        if (!item.questionnaireId) return {};
         const merged = await getQuestionnaireQuestion(
           item.questionnaireId.toString(),
           JSON.parse(item.answers),

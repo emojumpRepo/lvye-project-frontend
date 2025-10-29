@@ -129,6 +129,7 @@ export namespace PsychologyStudentProfileApi {
   /** 学生测评历史 */
   export interface StudentAssessmentHistory {
     taskId: string;
+    taskResultId: number;
     taskNo: string;
     taskName: string;
     targetAudience: number;

@@ -1,11 +1,75 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type { RecordInfo } from '@vben/types';
 
-import { Empty } from 'ant-design-vue';
+import { onMounted, ref } from 'vue';
+
+import { Empty, message } from 'ant-design-vue';
+import dayjs from 'dayjs';
+
+import { getConsultationRecordByStudentProfileId } from '#/api/psychology';
+import { getDictObj } from '#/utils/dict';
 
 import RecordCard from './RecordCard.vue';
 
-const consultRecords = ref([]);
+const props = defineProps<{
+  studentProfileId?: number;
+}>();
+
+const consultRecords = ref<RecordInfo[]>([]);
+
+onMounted(async () => {
+  if (props.studentProfileId) {
+    try {
+      const response = await getConsultationRecordByStudentProfileId(
+        props.studentProfileId,
+      );
+      if (response && response.length > 0) {
+        consultRecords.value = response.map((item) => {
+          const dict = getDictObj('counseling_status', item.status);
+          let buttonText: string | undefined;
+          if (item.status === 2) {
+            buttonText = '待教师上传';
+          } else if (item.status === 3) {
+            buttonText = '查看报告';
+          }
+          return {
+            id: item.id,
+            title: '个体心理咨询',
+            status: dict
+              ? {
+                  label: dict.label,
+                  value: String(dict.value),
+                  colorType: dict.colorType,
+                  cssClass: dict.cssClass,
+                }
+              : undefined,
+            labelList: [
+              {
+                label: '时间',
+                value: dayjs(item.appointmentStartTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                ),
+              },
+              {
+                label: '老师',
+                value: item.counselorName,
+              },
+              {
+                label: '咨询类型',
+                value: item.consultationType,
+              },
+            ],
+            buttonText,
+            showButton: item.status === 2 || item.status === 3,
+          } as RecordInfo;
+        });
+      }
+    } catch (error) {
+      console.error('获取咨询记录失败', error);
+      message.error('获取咨询记录失败');
+    }
+  }
+});
 </script>
 
 <template>

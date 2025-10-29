@@ -77,7 +77,7 @@ const getStudentCardStyles = computed(() => {
       // 时间信息样式
       timeClass: ['text-xs', isGraduated ? 'text-gray-400' : 'text-[#979899]'],
       // 是否显示毕业标识
-      showGraduatedBadge: isGraduated,
+      showGraduatedBadge: false,
     };
   };
 });
@@ -106,13 +106,14 @@ async function handlePageChange(page: number) {
 
 /** 查看学生详情 */
 function handleStudentClick(board: StudentInterventionItem) {
-  adjustStudentRiskLevelModalApi
-    .setData({
-      studentName: board.studentName,
-      riskLevel: board.currentRiskLevel,
-      studentProfileId: board.studentProfileId,
-    })
-    .open();
+  console.log('干预计划');
+  // adjustStudentRiskLevelModalApi
+  //   .setData({
+  //     studentName: board.studentName,
+  //     riskLevel: board.currentRiskLevel,
+  //     studentProfileId: board.studentProfileId,
+  //   })
+  //   .open();
 }
 </script>
 

@@ -103,7 +103,7 @@ export const DICT_Value_COLOR_MAP: Record<number, TagType> = {
 
 /** 获取标签颜色配置 */
 export function getColorConfig({
-  dictValue = 5,
+  dictValue = 0,
   tagType = 'default',
   target = 'config',
 }: {

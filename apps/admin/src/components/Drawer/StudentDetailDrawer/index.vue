@@ -19,6 +19,7 @@ import {
   getStudentProfile,
   getStudentProfileTimeline,
 } from '#/api/psychology/student-profile/index';
+import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
 import CreateStudentEventRecordDialog from '#/components/Dialog/CreateStudentEventRecordDialog/index.vue';
 import ExportStudnetInfoDialog from '#/components/Dialog/ExportStudnetInfoDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -28,6 +29,7 @@ import { getDictObj, getDictOptions } from '#/utils/dict';
 
 import AssessmentListTab from './components/AssessmentListTab.vue';
 import ConsultationListTab from './components/ConsultationListTab.vue';
+import InterventionTab from './components/InterventionTab.vue';
 import PersonalInfoTab from './components/PersonalInfoTab.vue';
 import TimelineTab from './components/TimelineTab.vue';
 
@@ -76,10 +78,6 @@ const studentParentProfile =
 const studentProfileTimeline = ref<
   PsychologyStudentProfileApi.StudentProfileTimeline[]
 >([]);
-// 学生测评历史
-const studentAssessmentHistory = ref<
-  PsychologyStudentProfileApi.StudentAssessmentHistory[]
->([]);
 
 const psychologicalStatusTag = ref<PsychologicalStatusTag>();
 interface CoreProblemTagStat {
@@ -92,7 +90,17 @@ const loading = ref(false);
 const timelineTabs = ref<{ key: number; title: string }[]>([]);
 const activeTimelineKey = ref(0);
 const activeTabKey = ref('timeline');
-
+const interventionTabs = ref<{ key: number; title: string }[]>([
+  {
+    key: 1,
+    title: '风险评估',
+  },
+  {
+    key: 2,
+    title: '危机干预',
+  },
+]);
+const activeInterventionTabKey = ref(1);
 const baseInfo = ref([
   { label: '姓名', value: '', key: 'name' },
   { label: '性别', value: '', key: 'sex' },
@@ -112,18 +120,22 @@ const footerButtons = ref<FooterButton[]>([
     onClick: () => {
       if (!studentProfile.value?.id) return message.error('评估失败！');
       studentDetailDrawerApi.close();
-      emit('evaluate', {
-        studentInfo: {
-          studentName: studentProfile.value?.name || '',
-          className: studentProfile.value?.className || '',
-          studentNo: studentProfile.value?.studentNo || '',
-        },
-        consultInfo: {
-          consultant: studentProfile.value?.updater || '',
-          consultType: '',
-          consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        },
-      });
+      createEvaluationModalApi
+        .setData({
+          confirmInfo: {
+            studentInfo: {
+              studentName: studentProfile.value?.name || '',
+              className: studentProfile.value?.className || '',
+              studentNo: studentProfile.value?.studentNo || '',
+            },
+            consultInfo: {
+              consultant: studentProfile.value?.updater || '',
+              consultType: '',
+              consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            },
+          },
+        })
+        .open();
     },
   },
   {
@@ -200,6 +212,11 @@ const [CreateStudentEventRecordModal, createStudentEventRecordModalApi] =
 /** 导出信息弹窗 */
 const [ExportStudnetInfoModal, exportStudnetInfoModalApi] = useVbenModal({
   connectedComponent: ExportStudnetInfoDialog,
+});
+
+/** 新增测评弹窗 */
+const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
+  connectedComponent: CreateEvaluationDialog,
 });
 
 /** 学生详情抽屉 */
@@ -333,6 +350,11 @@ function handleExportInfo() {
   // exportStudnetInfoModalApi.open();
 }
 
+/** 完成评估 */
+function handleCompleteEvaluation() {
+  createEvaluationModalApi.close();
+}
+
 onMounted(async () => {
   studentSexMap.value = await getDictOptions('system_user_sex');
 });
@@ -424,13 +446,34 @@ onMounted(async () => {
                 />
               </Tabs.TabPane>
               <Tabs.TabPane tab="测评历史" key="history">
-                <AssessmentListTab :student-profile-id="studentProfile?.id" />
+                <AssessmentListTab
+                  :student-profile-id="studentProfile?.id"
+                  :student-name="studentProfile?.name"
+                />
               </Tabs.TabPane>
               <Tabs.TabPane tab="咨询记录" key="consultation">
-                <ConsultationListTab />
+                <ConsultationListTab :student-profile-id="studentProfile?.id" />
               </Tabs.TabPane>
               <Tabs.TabPane tab="风险评估&危机干预" key="intervention">
-                <ConsultationListTab />
+                <div class="mx-4 mb-4 flex items-center gap-2">
+                  <span
+                    v-for="tab in interventionTabs"
+                    :key="tab.key"
+                    class="cursor-pointer rounded-full px-3 py-1 text-xs"
+                    :class="
+                      activeInterventionTabKey === tab.key
+                        ? 'bg-[#04DC70] text-white'
+                        : 'text-[#979899]'
+                    "
+                    @click="activeInterventionTabKey = tab.key"
+                  >
+                    {{ tab.title }}
+                  </span>
+                </div>
+                <InterventionTab
+                  :student-profile-id="studentProfile?.id"
+                  :active-intervention-tab-key="activeInterventionTabKey"
+                />
               </Tabs.TabPane>
               <Tabs.TabPane tab="个人信息" key="personalInfo">
                 <PersonalInfoTab
@@ -485,6 +528,8 @@ onMounted(async () => {
 
     <CreateStudentEventRecordModal />
     <ExportStudnetInfoModal />
+    <!-- 评估弹窗 -->
+    <CreateEvaluationModal :publish="handleCompleteEvaluation" />
   </StudentDetailDrawer>
 </template>
 

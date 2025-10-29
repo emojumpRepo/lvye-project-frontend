@@ -1,64 +1,58 @@
 <script lang="ts" setup>
-import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
+import type { RecordInfo } from '@vben/types';
 
-import { Divider, message } from 'ant-design-vue';
-import dayjs from 'dayjs';
+import type { TagType } from '#/api/constants';
 
+import { Divider } from 'ant-design-vue';
+
+import { getColorConfig } from '#/api/constants';
 import LyButton from '#/components/LyButton/index.vue';
-import { getDictObj } from '#/utils/dict';
 
 defineProps<{
-  buttonText: string;
-  cardInfo: PsychologyStudentProfileApi.StudentAssessmentHistory;
+  cardInfo: RecordInfo;
 }>();
 
-function handleClick() {
-  message.warning('即将上线');
+const emits = defineEmits<{
+  (e: 'handleRecord', recordId: number): void;
+}>();
+
+function handleClick(recordId: number) {
+  emits('handleRecord', recordId);
 }
 </script>
 
 <template>
-  <div class="block rounded-xl bg-[#F7F8FA]">
+  <div class="flex h-[200px] flex-col rounded-xl bg-[#F7F8FA]">
     <div class="flex items-center justify-between p-4">
-      <span class="text-sm font-medium">{{ cardInfo.taskName }}</span>
+      <span class="text-sm font-medium">{{ cardInfo.title }}</span>
       <span
         v-if="cardInfo.status"
         class="text-xs"
-        :class="cardInfo.status === 1 ? 'text-[#04DC70]' : 'text-[#FF9C05]'"
+        :style="{
+          color: getColorConfig({
+            target: 'color',
+            tagType: cardInfo.status.colorType as TagType,
+          }) as string,
+        }"
       >
-        {{ cardInfo.status === 1 ? '已完成' : '待填写' }}
+        {{ cardInfo.status.label }}
       </span>
     </div>
+
     <Divider />
-    <div class="p-4 text-xs">
+
+    <div class="flex flex-1 flex-col justify-between p-4 text-xs">
       <div class="flex flex-col gap-2.5">
-        <div
-          v-if="
-            cardInfo.targetAudience !== undefined &&
-            cardInfo.targetAudience !== null
-          "
-        >
-          <span class="font-bold">测评对象：</span>
-          <span class="text-[#4B4B4D]">
-            {{
-              getDictObj('assessment_target_audience', cardInfo.targetAudience)
-                ?.label
-            }}
-          </span>
-        </div>
-        <div v-if="cardInfo.startline">
-          <span class="font-bold">测评时间 ： </span>
-          <span class="text-[#4B4B4D]">
-            {{ dayjs(cardInfo.startline).format('YYYY-MM-DD') }}
-          </span>
-        </div>
-        <!-- <div v-if="cardInfo.deadline">
-          <span class="font-bold">老师 ：</span>
-          <span class="text-[#4B4B4D]">
-            {{ cardInfo.deadline }}
-          </span>
-        </div> -->
-        <!-- <div v-if="cardInfo?.tags" class="flex items-center gap-2.5">
+        <template v-if="cardInfo.labelList">
+          <div v-for="label in cardInfo.labelList" :key="label.value">
+            <span class="font-bold">{{ label.label }}：</span>
+            <span class="text-[#4B4B4D]">
+              {{ label.value }}
+            </span>
+          </div>
+        </template>
+
+        <div v-if="cardInfo?.tags" class="flex items-center gap-2.5">
           <div v-for="tag in cardInfo?.tags" :key="tag">
             <span
               class="inline-block rounded-full border border-solid border-gray-200 px-2 py-1 text-xs text-gray-700"
@@ -66,11 +60,16 @@ function handleClick() {
               {{ tag }}
             </span>
           </div>
-        </div> -->
+        </div>
       </div>
-      <div class="mt-4 flex justify-end" @click="handleClick">
-        <LyButton type="success" ghost size="middle">
-          {{ buttonText }}
+
+      <div
+        v-if="cardInfo.showButton"
+        class="flex justify-end"
+        @click="handleClick(cardInfo.id)"
+      >
+        <LyButton type="success" ghost>
+          {{ cardInfo.buttonText }}
         </LyButton>
       </div>
     </div>

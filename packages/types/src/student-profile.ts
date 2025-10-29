@@ -16,3 +16,21 @@ export interface SearchStudentProfileVO {
   gradeDeptId: number;
   classDeptId: number;
 }
+
+/** 时间线记录 */
+export interface RecordInfo {
+  id: number;
+  title?: string;
+  status?: {
+    colorType?: string;
+    cssClass?: string;
+    label: string;
+    value: string;
+  };
+  labelList?: { label: string; value: number | string }[];
+  tags?: string[];
+  counselorName?: string;
+  buttonText?: string;
+  showButton?: boolean;
+  onClick?: () => void;
+}

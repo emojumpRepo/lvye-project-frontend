@@ -467,7 +467,7 @@ onMounted(async () => {
               （已逾期）
             </span>
             <span class="text-[#FF0831]" v-if="isEvaluationOverdue(row)">
-              （上传已逾期）
+              （上传逾期）
             </span>
           </div>
         </template>

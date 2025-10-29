@@ -93,13 +93,13 @@ function handleViewDetail(
             <div class="truncate text-xs text-[#979899]">
               {{ timeline.content || '暂无内容' }}
             </div>
-            <div
+            <!-- <div
               v-if="timeline.title === '测评完成' || timeline.eventType === 4"
               class="cursor-pointer text-xs text-[#1966FF]"
               @click="handleViewDetail(timeline)"
             >
               查看详情
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

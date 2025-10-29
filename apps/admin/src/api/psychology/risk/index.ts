@@ -1,3 +1,5 @@
+import type { AssessmentRecord, CrisisEvent } from '@vben/types';
+
 import { requestClient } from '#/api/request';
 
 // 上报危机事件请求参数
@@ -131,5 +133,19 @@ export function switchEventCloseStatus(id: number, closed: boolean) {
   return requestClient.put<boolean>(
     `/psychology/intervention/event/${id}/toggle-closed`,
     { closed },
+  );
+}
+
+/** 获取学生的危机干预历史 */
+export function getStudentCrisisRecords(studentProfileId: number) {
+  return requestClient.get<CrisisEvent[]>(
+    `/psychology/intervention/event/student/${studentProfileId}`,
+  );
+}
+
+/** 获取学生是风险评估记录 */
+export function getStudentRiskAssessmentRecords(studentProfileId: number) {
+  return requestClient.get<AssessmentRecord[]>(
+    `/psychology/intervention/assessments/student/${studentProfileId}`,
   );
 }
