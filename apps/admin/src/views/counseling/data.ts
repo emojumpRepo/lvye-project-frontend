@@ -56,9 +56,9 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'consultationType',
-      title: '咨询类型',
+      title: '咨询/访谈类型',
     },
-    { field: 'counselorName', title: '访谈老师', width: '13%' },
+    { field: 'counselorName', title: '对接老师', width: '13%' },
     // { field: 'location', title: '地点', width: '10%' },
     {
       field: 'stauts',

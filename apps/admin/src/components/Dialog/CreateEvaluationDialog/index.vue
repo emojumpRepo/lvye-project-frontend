@@ -68,6 +68,21 @@ const problemTypeList = ref([
   '其他',
 ]);
 
+const accept = ref([
+  'png',
+  'jpg',
+  'jpeg',
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'txt',
+  'zip',
+  'rar',
+  '7z',
+]);
+
 const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
   closable: false,
   fullscreen: true,
@@ -367,9 +382,15 @@ function openInterviewOutline() {
                 :height="280"
                 placeholder="请输入本次详细评估的过程、观察、分析与结论要点…"
               />
-              <FileUpload v-model:value="fileList" :max-number="10">
+              <FileUpload
+                v-model:value="fileList"
+                :max-number="10"
+                :accept="accept"
+              >
                 <template #upload-text-desc>
-                  <span>最多上传10个文件, 最大10MB</span>
+                  <span>
+                    最多上传10个文件，支持上传图片、文档、压缩包，最大10MB
+                  </span>
                 </template>
               </FileUpload>
             </div>

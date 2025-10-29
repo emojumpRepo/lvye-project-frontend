@@ -1,193 +1,124 @@
-<script lang="ts" setup>
-import { computed } from 'vue';
+<script setup lang="ts">
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import LyButton from '#/components/LyButton/index.vue';
+import { ref } from 'vue';
 
-type Severity = 'danger' | 'neutral' | 'warning';
+import dayjs from 'dayjs';
 
-interface RightAction {
-  text: string;
-  color: 'green' | 'orange' | 'red';
-}
+// 通过 props 接收学生信息数据
+const props = defineProps<{
+  studentInfo?: PsychologyStudentProfileApi.StudentProfile;
+}>();
 
-interface SecondaryBadge {
-  text: string;
-  // visual style token names mapped in component
-  type: 'ai' | 'system' | 'teacher';
-}
+// 定义事件
+const emit = defineEmits<{
+  click: [studentInfo: PsychologyStudentProfileApi.StudentProfile];
+}>();
 
-const props = withDefaults(
-  defineProps<{
-    className: string;
-    counselor?: null | string;
-    date?: null | string;
-    description?: null | string;
-    name: string;
-    rightAction?: null | RightAction;
-    secondaryBadge?: null | SecondaryBadge;
-    // leading background & left-border accent
-    severity?: Severity;
-    statusBadge?: null | {
-      color: 'green' | 'grey' | 'orange' | 'red';
-      text: string;
-    };
-    time?: null | string;
-  }>(),
-  {
-    severity: 'neutral',
-    statusBadge: null,
-    secondaryBadge: null,
-    description: null,
-    date: null,
-    time: null,
-    counselor: null,
-    rightAction: null,
-  },
-);
+// 格式化时间显示
+const formatTime = (timeStr: string) => {
+  const date = new Date(timeStr);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
-const containerClasses = computed(() => {
-  const base = 'rounded-lg p-3 sm:p-4 transition-all hover:shadow-sm';
-  switch (props.severity) {
-    case 'danger': {
-      return `${base} bg-[rgba(250,75,75,0.06)] border-l-4 border-[#FA4B4B]`;
-    }
-    case 'warning': {
-      return `${base} bg-[#FFF9F0] border-l-4 border-[#FF9D00]`;
-    }
-    default: {
-      return `${base} bg-[#F7F8FA]`;
-    }
-  }
-});
+// 悬停状态
+const isHovered = ref(false);
 
-// removed absolute-positioned action classes; use inline responsive layout instead
-
-const rightActionType = computed(() => {
-  if (!props.rightAction) return 'primary';
-  switch (props.rightAction.color) {
-    case 'green': {
-      return 'success';
-    }
-    case 'orange': {
-      return 'warning';
-    }
-    case 'red': {
-      return 'error';
-    }
-    default: {
-      return 'primary';
-    }
-  }
-});
-
-const statusBadgeClasses = computed(() => {
-  if (!props.statusBadge) return '';
-  const common =
-    'px-1.5 py-0.5 sm:py-1 rounded-full text-white text-[10px] sm:text-xs leading-tight whitespace-nowrap border border-transparent';
-  switch (props.statusBadge.color) {
-    case 'green': {
-      return `${common} bg-[#14E77E]`;
-    }
-    case 'grey': {
-      return `${common} !text-[#0E1E42] bg-[#DAE4F8]`;
-    }
-    case 'orange': {
-      return `${common} bg-[#FF9D00]`;
-    }
-    case 'red': {
-      return `${common} bg-[#FF4800]`;
-    }
-    default: {
-      return common;
-    }
-  }
-});
-
-const secondaryBadgeClasses = computed(() => {
-  if (!props.secondaryBadge) return '';
-  const common =
-    'px-1.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs leading-tight whitespace-nowrap border';
-  // Match figma swatches
-  if (props.secondaryBadge.type === 'ai') {
-    return `${common} text-[#01BE5F] bg-[#F2FFF6] border-[#00EC76]`;
-  }
-  if (props.secondaryBadge.type === 'teacher') {
-    return `${common} text-[#0060FF] bg-[#EBF1FA] border-[#0060FF]`;
-  }
-  // system
-  return `${common} text-[#0E1E42] bg-[#DDE8FF] border-[#98B4EE]`;
-});
+// 处理卡片点击
+const handleClick = () => {
+  emit('click', props.studentInfo);
+};
 </script>
 
 <template>
   <div
-    class="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
-    :class="[containerClasses]"
+    class="rounded-3 min-w-75 max-w-85 ease relative cursor-pointer overflow-hidden bg-white p-5 transition-all duration-300"
+    :class="[
+      isHovered
+        ? '-translate-y-0.5 border border-blue-200 shadow-xl'
+        : 'border border-gray-200 shadow-sm',
+    ]"
+    @click="handleClick"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
-    <div class="flex min-w-0 flex-1 flex-col gap-1">
-      <div class="flex flex-col gap-1.5">
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span
-            class="max-w-[120px] truncate text-xs font-semibold text-black sm:max-w-none sm:text-sm"
-          >
-            {{ name }}
-          </span>
-          <span
-            class="hidden size-0.5 shrink-0 overflow-hidden rounded-full sm:block"
-          >
-            <span class="block size-0.5 rounded-full bg-black"></span>
-          </span>
-          <span
-            class="max-w-[150px] truncate text-xs font-semibold text-black sm:max-w-none sm:text-sm"
-          >
-            {{ className }}
-          </span>
+    <!-- 顶部装饰条 -->
+    <div
+      class="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-blue-400 to-purple-500"
+    ></div>
+
+    <!-- 卡片头部 -->
+    <div class="mb-4 flex items-start justify-between">
+      <div class="flex-1">
+        <div class="text-5 mb-2 font-bold text-gray-900">
+          {{ props.studentInfo.name }}
         </div>
-        <div class="flex flex-wrap items-center gap-1.5">
-          <div v-if="statusBadge" :class="statusBadgeClasses">
-            {{ statusBadge!.text }}
-          </div>
-          <div v-if="secondaryBadge" :class="secondaryBadgeClasses">
-            {{ secondaryBadge!.text }}
-          </div>
+        <div
+          class="text-3.5 inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-medium text-blue-700"
+        >
+          {{ props.studentInfo.className }}
         </div>
       </div>
-
-      <div
-        v-if="description"
-        class="line-clamp-2 text-[10px] text-[#959599] sm:line-clamp-1 sm:text-xs"
-      >
-        {{ description }}
-      </div>
-
-      <div
-        class="flex flex-wrap items-center gap-1 text-[10px] text-[#959599] sm:gap-1.5 sm:text-xs"
-      >
-        <span v-if="date">{{ date }}</span>
-        <span v-if="date && time" class="hidden sm:inline">·</span>
-        <span v-if="time">{{ time }}</span>
-        <span v-if="(date || time) && counselor" class="hidden sm:inline">
-          ·
-        </span>
-        <span v-if="counselor">咨询师：{{ counselor }}</span>
+      <div class="flex items-center">
+        <div
+          class="ease h-3 w-3 rounded-full transition-all duration-300"
+          :class="[
+            isHovered
+              ? 'bg-green-500 shadow-lg shadow-green-500/30'
+              : 'bg-green-400 shadow-md shadow-green-500/20',
+          ]"
+        ></div>
       </div>
     </div>
 
-    <div class="mt-2 shrink-0 self-end sm:ml-3 sm:mt-0 sm:self-center">
-      <slot name="rightAction">
-        <LyButton
-          v-if="rightAction"
-          size="small"
-          font-size="small"
-          ghost
-          :type="rightActionType as any"
-          class="px-2 py-1 sm:px-3"
-        >
-          {{ rightAction!.text }}
-        </LyButton>
-      </slot>
+    <!-- 卡片内容 -->
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center">
+        <div class="flex w-full items-center gap-3">
+          <div
+            class="rounded-2 ease flex h-8 w-8 flex-shrink-0 items-center justify-center transition-colors duration-300"
+            :class="[isHovered ? 'bg-blue-50' : 'bg-gray-50']"
+          >
+            <div class="h-4 w-4 text-gray-400">👤</div>
+          </div>
+          <div class="flex-1">
+            <span
+              class="text-3 mb-1 block font-medium uppercase tracking-wider text-gray-500"
+            >
+              负责人
+            </span>
+            <span class="text-3.5 block font-semibold text-gray-800">
+              {{ props.studentInfo?.updater }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center">
+        <div class="flex w-full items-center gap-3">
+          <div
+            class="rounded-2 ease flex h-8 w-8 flex-shrink-0 items-center justify-center transition-colors duration-300"
+            :class="[isHovered ? 'bg-blue-50' : 'bg-gray-50']"
+          >
+            <div class="h-4 w-4 text-gray-400">🕒</div>
+          </div>
+          <div class="flex-1">
+            <span class="text-3.5 font-mono text-gray-500">
+              {{
+                dayjs(props.studentInfo?.createTime).format(
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              }}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped></style>

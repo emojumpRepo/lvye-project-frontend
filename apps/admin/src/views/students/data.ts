@@ -104,10 +104,10 @@ export function useStudentProfileGridSchema(): VxeTableGridOptions<PsychologyStu
       showOverflow: 'tooltip',
     },
     {
-      field: 'psychologicalStatus',
-      title: '心理状态',
+      field: 'riskLevel',
+      title: '风险等级',
       width: '10%',
-      slots: { default: 'psychologicalStatus' },
+      slots: { default: 'riskLevel' },
     },
     {
       field: 'mobile',

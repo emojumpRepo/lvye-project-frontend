@@ -199,7 +199,7 @@ export function updateConsultationRecord(
 
 /** 完成心理咨询 */
 export function completeConsultationRecord(id: number) {
-  return requestClient.put(
+  return requestClient.put<boolean>(
     `/psychology/consultation/appointment/${id}/complete`,
   );
 }
@@ -335,6 +335,18 @@ export function getConsultationRecordByStudentProfileId(
 ) {
   return requestClient.get<PsychologyConsultationApi.ConsultationRecord[]>(
     `/psychology/consultation/appointment/list-by-student?studentProfileId=${studentProfileId}`,
+  );
+}
+
+/** 上传咨询纪要 */
+export function uploadConsultationRecord(data: {
+  attachmentIds: number[];
+  id: number;
+  summary: string;
+}) {
+  return requestClient.put(
+    `/psychology/consultation/appointment/${data.id}/save-summary`,
+    data,
   );
 }
 

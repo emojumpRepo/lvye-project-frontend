@@ -23,7 +23,7 @@ import CounselingList from './list.vue';
 defineOptions({ name: 'CounselingCenter' });
 
 const viewTypeOptions = [
-  { label: '访谈记录', value: 1 },
+  { label: '访谈/咨询记录', value: 1 },
   { label: '日历视图', value: 2 },
 ];
 
@@ -173,7 +173,7 @@ onMounted(async () => {
   <Page auto-content-height :height-offset="50">
     <div class="flex h-full flex-col px-4">
       <!-- 页面标题 -->
-      <PageTitle title="访谈管理" :description="today" margin-bottom="mb-4">
+      <PageTitle title="心理咨询" :description="today" margin-bottom="mb-4">
         <template #action>
           <div class="custom-radio-group flex items-center gap-4">
             <RadioGroup v-model:value="viewType">

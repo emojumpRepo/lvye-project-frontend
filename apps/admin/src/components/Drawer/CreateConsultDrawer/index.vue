@@ -606,7 +606,7 @@ async function verifyCounselorByStudent() {
   const counselorUserId = Number(form.value.consultTeacher);
   if (!studentProfileId || !counselorUserId) return;
   const result = await verifyCounselor({ studentProfileId, counselorUserId });
-  verifyCounselorWarning.value = result ? '' : '请选择访谈老师负责的学生';
+  verifyCounselorWarning.value = result ? '' : '该生非您负责的学生';
 }
 
 // ==================== 表单提交相关 ====================
@@ -785,7 +785,7 @@ function disabledRangeTime(
               placeholder="输入学生姓名或学号进行搜索"
               style="width: 100%"
               :filter-option="false"
-              :disabled="isReadOnly"
+              :disabled="isReadOnly || isDetail"
               :not-found-content="
                 studentSearchState.fetching
                   ? undefined
@@ -834,7 +834,7 @@ function disabledRangeTime(
 
           <!-- 访谈老师 -->
           <LyLabel
-            title="访谈老师"
+            title="对接老师"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -843,7 +843,7 @@ function disabledRangeTime(
               v-model:value="form.consultTeacher"
               placeholder="请选择老师"
               class="w-full"
-              :disabled="isReadOnly"
+              :disabled="isReadOnly || isDetail"
               :options="teacherOptions"
               @change="onTeacherChange"
             />
@@ -851,7 +851,7 @@ function disabledRangeTime(
 
           <!-- 访谈时间 -->
           <LyLabel
-            title="访谈时间"
+            title="咨询/访谈时间"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -859,7 +859,7 @@ function disabledRangeTime(
             <Form.Item name="consultDate" :class="{ 'mb-0': durationText }">
               <DatePicker
                 v-model:value="form.consultDate"
-                placeholder="请选择访谈日期"
+                placeholder="请选择咨询/访谈日期"
                 show-today
                 :allow-clear="false"
                 class="w-full"
@@ -911,7 +911,7 @@ function disabledRangeTime(
 
           <!-- 访谈类型 -->
           <LyLabel
-            title="访谈类型"
+            title="咨询/访谈类型"
             :required="true"
             custom-title-class="font-semibold text-sm"
           />
@@ -920,66 +920,80 @@ function disabledRangeTime(
             :rules="showAddTypeInput ? [] : rules.consultType"
           >
             <div class="consult-type-group flex flex-wrap gap-2">
-              <LyButton
-                v-for="option in consultTypeOptions"
-                :key="option"
-                size="middle"
-                class="w-18 h-9"
-                :class="{
-                  'border border-[#04DC70] bg-[#04DC7014] text-[#04DC70]':
-                    form.consultType === option,
-                  'is-selected': form.consultType === option,
-                }"
-                :disabled="isReadOnly"
-                @click="isReadOnly ? undefined : (form.consultType = option)"
-              >
-                {{ option }}
-              </LyButton>
-              <!-- 添加按钮或输入框 -->
-              <template v-if="!showAddTypeInput">
+              <template v-if="isReadOnly">
                 <LyButton
+                  v-if="form.consultType"
+                  :key="form.consultType"
+                  size="middle"
+                  class="w-18 is-selected h-9 border border-[#04DC70] bg-[#04DC7014] text-[#04DC70]"
+                  :disabled="true"
+                >
+                  {{ form.consultType }}
+                </LyButton>
+                <span v-else>未指定</span>
+              </template>
+              <template v-else>
+                <LyButton
+                  v-for="option in consultTypeOptions"
+                  :key="option"
                   size="middle"
                   class="w-18 h-9"
+                  :class="{
+                    'border border-[#04DC70] bg-[#04DC7014] text-[#04DC70]':
+                      form.consultType === option,
+                    'is-selected': form.consultType === option,
+                  }"
                   :disabled="isReadOnly"
-                  @click="showAddCustomType"
+                  @click="isReadOnly ? undefined : (form.consultType = option)"
                 >
-                  + 添加
+                  {{ option }}
                 </LyButton>
               </template>
-
-              <!-- 自定义类型输入框 -->
-              <template v-else>
-                <div class="flex items-center gap-2">
-                  <Input
-                    v-model:value="newTypeName"
-                    placeholder="输入自定义类型名称"
-                    class="w-40"
-                    :disabled="isReadOnly"
-                    @keyup.enter="confirmAddType"
-                  />
+              <template v-if="!isReadOnly">
+                <template v-if="!showAddTypeInput">
                   <LyButton
-                    type="success"
-                    size="small"
+                    size="middle"
+                    class="w-18 h-9"
                     :disabled="isReadOnly"
-                    @click="confirmAddType"
+                    @click="showAddCustomType"
                   >
-                    确认
+                    + 添加
                   </LyButton>
-                  <LyButton
-                    size="small"
-                    :disabled="isReadOnly"
-                    @click="cancelAddType"
-                  >
-                    取消
-                  </LyButton>
-                </div>
+                </template>
+                <template v-else>
+                  <div class="flex items-center gap-2">
+                    <Input
+                      v-model:value="newTypeName"
+                      placeholder="输入自定义类型名称"
+                      class="w-40"
+                      :disabled="isReadOnly"
+                      _
+                      @keyup.enter="confirmAddType"
+                    />
+                    <LyButton
+                      type="success"
+                      size="small"
+                      :disabled="isReadOnly"
+                      @click="confirmAddType"
+                    >
+                      确认
+                    </LyButton>
+                    <LyButton
+                      size="small"
+                      :disabled="isReadOnly"
+                      @click="cancelAddType"
+                    >
+                      取消
+                    </LyButton>
+                  </div>
+                </template>
               </template>
             </div>
           </Form.Item>
 
           <!-- 访谈地点 -->
           <LyLabel
-            title="访谈地点"
+            title="咨询/访谈地点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultLocation">
@@ -993,7 +1007,7 @@ function disabledRangeTime(
 
           <!-- 访谈重点 -->
           <LyLabel
-            title="访谈重点"
+            title="咨询/访谈重点"
             custom-title-class="font-semibold text-sm"
           />
           <Form.Item name="consultFocus">

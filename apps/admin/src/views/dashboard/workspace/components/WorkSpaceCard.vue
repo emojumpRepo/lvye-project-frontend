@@ -10,19 +10,8 @@ const props = withDefaults(
     class?: string;
     count?: null | number;
     iconBg?: string;
-    // optional icon url (use Figma dev assets if passed)
     iconSrc?: string;
-    // pagination config
-    pagination?: null | {
-      current?: number;
-      pageSize?: number;
-      showSizeChanger?: boolean;
-      total: number;
-    };
-    // show top-right refresh button
-    showRefresh?: boolean;
     title: string;
-    // gradient border behind card per figma style
     withGradient?: boolean;
   }>(),
   {
@@ -37,7 +26,6 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: 'refresh'): void;
   (e: 'pageChange', page: number, pageSize: number): void;
 }>();
 
@@ -56,7 +44,6 @@ const containerClasses = computed(() => {
     ></div>
 
     <button
-      v-if="showRefresh"
       type="button"
       class="absolute right-3 top-3 inline-flex items-center gap-1 text-xs text-[#959599] transition-colors hover:text-[#6a6a6d] sm:right-4 sm:top-4 sm:gap-1.5 sm:text-sm md:right-5 md:top-5"
       @click="emit('refresh')"
@@ -92,16 +79,13 @@ const containerClasses = computed(() => {
       <slot></slot>
     </div>
 
-    <div
-      v-if="pagination"
-      class="flex justify-center px-3 pb-3 sm:px-5 sm:pb-4 md:pb-5"
-    >
+    <div class="flex justify-center px-3 pb-3 sm:px-5 sm:pb-4 md:pb-5">
       <APagination
         size="small"
-        :current="pagination.current ?? 1"
-        :page-size="pagination.pageSize ?? 10"
-        :total="pagination.total"
-        :show-size-changer="pagination.showSizeChanger ?? false"
+        :current="1"
+        :page-size="10"
+        :total="12"
+        :show-size-changer="false"
         @change="
           (page: number, pageSize: number) => emit('pageChange', page, pageSize)
         "

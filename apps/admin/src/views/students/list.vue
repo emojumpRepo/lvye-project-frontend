@@ -489,12 +489,12 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
               </span>
             </template>
 
-            <!-- 心理状态 -->
-            <template #psychologicalStatus="{ row }">
+            <!-- 风险等级 -->
+            <template #riskLevel="{ row }">
               <LyTag
-                v-if="row?.psychologicalStatus"
-                tag-category-key="student_psychological_status"
-                :dict-value="row?.psychologicalStatus"
+                v-if="row?.riskLevel"
+                tag-category-key="risk_level"
+                :dict-value="row?.riskLevel"
               />
               <LyTag v-else />
             </template>

@@ -7,17 +7,11 @@ import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
-import { h, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-import { alert, prompt, useVbenModal } from '@vben/common-ui';
+import { confirm, prompt, useVbenModal } from '@vben/common-ui';
 
-import {
-  Input as AInput,
-  RadioGroup as ARadioGroup,
-  Result as AResult,
-  Steps as ASteps,
-  message,
-} from 'ant-design-vue';
+import { Input as AInput, Steps as ASteps, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -34,6 +28,7 @@ import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
 import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
 import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import SupplementEvaluteDialog from '#/components/Dialog/SupplementEvaluteDialog/index.vue';
+import UploadEvaluationReportDialog from '#/components/Dialog/UploadEvaluationReportDialog/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
@@ -83,6 +78,12 @@ const [SupplementEvaluteModal, supplementEvaluteModalApi] = useVbenModal({
 const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
   connectedComponent: CreateEvaluationDialog,
 });
+
+/** 上传纪要弹窗 */
+const [UploadEvaluationReportModal, uploadEvaluationReportModalApi] =
+  useVbenModal({
+    connectedComponent: UploadEvaluationReportDialog,
+  });
 
 const currentCancelRow =
   ref<null | PsychologyConsultationApi.ConsultationRecord>(null);
@@ -147,44 +148,19 @@ function isEvaluationOverdue(
 
 /** 完成心理咨询预约 */
 function handleFinish(row: PsychologyConsultationApi.ConsultationRecord) {
-  prompt({
-    component: ARadioGroup,
-    componentProps: {
-      options: [
-        { label: '立即填写评估', value: 1 },
-        { label: '稍后填写评估', value: 2 },
-      ],
-    },
-    content: '是否确认完成咨询，选择后续处理方式？',
-    icon: 'success',
-    title: '确定完成咨询',
-    modelPropName: 'value',
-    beforeClose: (scope) => {
-      // 如果是确认操作但没有选择值，则阻拦关闭
-      if (scope.isConfirm && !scope.value) {
-        message.warning('请选择后续处理方式');
-        return false; // 返回false阻拦关闭
-      }
-      return true; // 返回true允许关闭
-    },
-  }).then(async (val) => {
-    if (val) {
-      await completeConsultationRecord(row.id as number);
-    }
-    gridApi.query();
-    if (val === 1) {
-      handleEvalute(row);
-    } else {
-      alert({
-        buttonAlign: 'center',
-        content: h(AResult, {
-          status: 'success',
-          subTitle: '请及时填写评估报告',
-          title: '咨询已完成',
-        }),
-      });
-    }
-  });
+  confirm({
+    title: '确认完成',
+    content: '是否确认完成本次咨询？',
+    icon: 'warning',
+  })
+    .then(async () => {
+      const result = await completeConsultationRecord(row.id as number);
+      if (!result) return message.error('完成失败');
+      uploadEvaluationReportModalApi.setData({ id: row.id }).open();
+    })
+    .catch(() => {
+      return true;
+    });
 }
 
 /** 补录咨询 */
@@ -216,40 +192,7 @@ async function confirmSupplementEvalute(
     await refresh();
     supplementEvaluteModalApi.close();
     message.success('补录成功');
-    prompt({
-      component: ARadioGroup,
-      componentProps: {
-        options: [
-          { label: '点击上传纪要', value: 1 },
-          { label: '稍后再来', value: 2 },
-        ],
-      },
-      content: '您已完成咨询，是否开始上传报告？',
-      icon: 'success',
-      title: '确认上传',
-      modelPropName: 'value',
-      beforeClose: (scope) => {
-        // 如果是确认操作但没有选择值，则阻拦关闭
-        if (scope.isConfirm && !scope.value) {
-          message.warning('请选择处理方式');
-          return false; // 返回false阻拦关闭
-        }
-        return true; // 返回true允许关闭
-      },
-    }).then(async (val) => {
-      if (val === 1) {
-        handleEvalute(row);
-      } else {
-        alert({
-          buttonAlign: 'center',
-          content: h(AResult, {
-            status: 'success',
-            subTitle: '请及时填写上传报告',
-            title: '咨询已完成',
-          }),
-        });
-      }
-    });
+    uploadEvaluationReportModalApi.setData({ id: row.id }).open();
   } catch (error) {
     console.error('补录失败', error);
     message.error('补录失败');
@@ -259,28 +202,9 @@ async function confirmSupplementEvalute(
   }
 }
 
-/** 评估 */
+/** 上传咨询纪要 */
 function handleEvalute(row: PsychologyConsultationApi.ConsultationRecord) {
-  confirmInfo.value = {
-    studentInfo: {
-      studentName: row.studentName || '',
-      className: row.className || '',
-      studentNo: row.studentNumber || '',
-    },
-    consultInfo: {
-      consultant: row.counselorName || '',
-      consultType: row.consultationType || '',
-      consultTime: dayjs(row.appointmentStartTime).format(
-        'YYYY-MM-DD HH:mm:ss',
-      ),
-    },
-  };
-  currentRowId.value = row.id;
-  createEvaluationModalApi
-    .setData({
-      confirmInfo: confirmInfo.value,
-    })
-    .open();
+  uploadEvaluationReportModalApi.setData({ id: row.id }).open();
 }
 
 /** 确认完成评估 */
@@ -553,6 +477,7 @@ onMounted(async () => {
     />
     <SupplementEvaluteModal @confirm="confirmSupplementEvalute" />
     <CreateEvaluationModal :publish="completedEvalute" />
+    <UploadEvaluationReportModal @refresh="refresh" />
   </div>
 </template>
 
