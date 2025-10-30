@@ -14,6 +14,7 @@ coverage
 *.local
 **/.vitepress/cache
 .cache
+.claude
 .turbo
 .temp
 dev-dist
