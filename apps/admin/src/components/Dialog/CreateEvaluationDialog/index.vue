@@ -89,7 +89,7 @@ const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
   footer: false,
-  appendToMain: true,
+  // appendToMain: true,
   closeOnClickModal: false,
   onOpenChange: async (isOpen: boolean) => {
     if (isOpen) {
