@@ -33,6 +33,7 @@ export namespace PsychologyStudentProfileApi {
     // 关联字段
     gradeName?: string;
     className?: string;
+    assessmentRiskLevel?: number;
   }
 
   /** 学生档案分页查询参数 */

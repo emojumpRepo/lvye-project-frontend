@@ -1,3 +1,4 @@
+import type { PageResult } from '@vben/request';
 import type { AssessmentRecord, CrisisEvent } from '@vben/types';
 
 import { requestClient } from '#/api/request';
@@ -147,5 +148,16 @@ export function getStudentCrisisRecords(studentProfileId: number) {
 export function getStudentRiskAssessmentRecords(studentProfileId: number) {
   return requestClient.get<AssessmentRecord[]>(
     `/psychology/intervention/assessments/student/${studentProfileId}`,
+  );
+}
+
+/** 获取正在进行的风险预警流程 */
+export function getOngoingRiskEvent(params: {
+  pageNo: number;
+  pageSize: number;
+}) {
+  return requestClient.get<PageResult<CrisisEvent>>(
+    '/psychology/intervention/event/ongoing',
+    { params },
   );
 }

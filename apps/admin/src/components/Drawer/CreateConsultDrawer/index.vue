@@ -129,10 +129,10 @@ const formRef = ref();
 const showConfirmDialog = ref(false);
 // ==================== 表单相关 ====================
 const consultTypeOptions = ref([
-  '初次访谈',
-  '复诊访谈',
-  '紧急访谈',
-  '家长访谈',
+  '初次咨询',
+  '复诊咨询',
+  '紧急咨询',
+  '家长咨询',
 ]);
 
 const form = ref<FormModel>({
@@ -147,10 +147,10 @@ const form = ref<FormModel>({
 
 const rules = ref({
   student: [{ required: true, message: '请选择学生' }],
-  consultDate: [{ required: true, message: '请选择访谈日期' }],
-  consultTime: [{ required: true, message: '请选择访谈时间' }],
-  consultType: [{ required: true, message: '请选择访谈类型' }],
-  consultTeacher: [{ required: true, message: '请选择访谈老师' }],
+  consultDate: [{ required: true, message: '请选择咨询日期' }],
+  consultTime: [{ required: true, message: '请选择咨询时间' }],
+  consultType: [{ required: true, message: '请选择咨询类型' }],
+  consultTeacher: [{ required: true, message: '请选择咨询老师' }],
 });
 
 // ==================== 计算属性 ====================
@@ -612,10 +612,8 @@ async function verifyCounselorByStudent() {
 // ==================== 表单提交相关 ====================
 /** 提交咨询预约 */
 async function submitConsult() {
-  if (verifyCounselorWarning.value || timeError.value || conflictError.value) {
-    message.error(
-      verifyCounselorWarning.value || timeError.value || conflictError.value,
-    );
+  if (timeError.value || conflictError.value) {
+    message.error(timeError.value || conflictError.value);
     return;
   }
 
@@ -755,7 +753,7 @@ function disabledRangeTime(
           class="w-5"
         />
         <span>{{
-          currentConsultationRecordId ? '访谈预约详情' : '新建访谈预约'
+          currentConsultationRecordId ? '咨询预约详情' : '新建咨询预约'
         }}</span>
       </div>
     </template>

@@ -4,6 +4,7 @@ import type {
   AssessmentResultVO,
   AssessmentTask,
   AssessmentTaskRiskLevelStatistics,
+  OngoingTask,
   QuestionnaireResultVO,
 } from '@vben/types';
 
@@ -280,6 +281,14 @@ export function exportAssessmentTask(
   return requestClient.download(`/psychology/assessment-task/export-excel`, {
     params,
   });
+}
+
+/** 获取正在进行的任务 */
+export function getOngoingTasks(params: { pageNo: number; pageSize: number }) {
+  return requestClient.get<PageResult<OngoingTask>>(
+    '/psychology/assessment-task/get-ongoing-tasks-page',
+    { params },
+  );
 }
 
 // ==================== 测评模板管理 ====================

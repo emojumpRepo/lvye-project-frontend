@@ -350,6 +350,24 @@ export function uploadConsultationRecord(data: {
   );
 }
 
+/** 获取今日咨询任务 */
+export function getTodayConsultationTask({
+  pageNo,
+  pageSize,
+}: {
+  pageNo: number;
+  pageSize: number;
+}) {
+  return requestClient.get<
+    PageResult<PsychologyConsultationApi.ConsultationRecord>
+  >('/psychology/consultation/appointment/today-consultation', {
+    params: {
+      pageNo,
+      pageSize,
+    },
+  });
+}
+
 // ==================== 危机干预事件管理 ====================
 
 /** 查询危机干预事件分页列表 */

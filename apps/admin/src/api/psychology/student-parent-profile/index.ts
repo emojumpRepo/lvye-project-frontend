@@ -6,22 +6,34 @@ export namespace PsychologyStudentParentProfileApi {
     studentProfileId: number;
     name: string;
     mobile: string;
-    relationship: number;
+    relation: number;
+    work: string;
+    maritalStatus: number;
     remark: string;
     deleted: number;
     createTime: Date;
     updateTime: Date;
   }
 
+  /** 创建/更新监护人档案请求参数 */
   export interface StudentParentProfilePageReq {
     studentProfileId: number;
     parentList: [
       {
-        id: number;
+        id?: number;
+        maritalStatus: number;
         mobile: string;
         name: string;
-        relationship: string;
-        remark: string;
+        remark?: string;
+        work?: string;
+      },
+      {
+        id?: number;
+        maritalStatus: number;
+        mobile: string;
+        name: string;
+        remark?: string;
+        work?: string;
       },
     ];
   }
@@ -40,10 +52,20 @@ export function getStudentParentProfile(studentProfileId: number) {
 
 /** 更新学生监护人档案 */
 export function updateStudentParentProfile(
-  data: PsychologyStudentParentProfileApi.StudentParentProfile,
+  data: PsychologyStudentParentProfileApi.StudentParentProfilePageReq,
 ) {
-  return requestClient.put<PsychologyStudentParentProfileApi.StudentParentProfilePageReq>(
+  return requestClient.put<boolean>(
     `/psychology/student-parent-profile/update`,
+    data,
+  );
+}
+
+/** 创建学生监护人档案 */
+export function createStudentParentProfile(
+  data: PsychologyStudentParentProfileApi.StudentParentProfilePageReq,
+) {
+  return requestClient.post<boolean>(
+    `/psychology/student-parent-profile/create`,
     data,
   );
 }

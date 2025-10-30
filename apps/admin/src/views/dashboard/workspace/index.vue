@@ -1,63 +1,48 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-import { useVbenDrawer } from '@vben/common-ui';
-import { ChevronRight } from '@vben/icons';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { Empty, message } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
+import dayjs from 'dayjs';
 
 import { getConfigKey } from '#/api/infra/config';
-import { getWorkspaceData } from '#/api/psychology/workspace';
+import {
+  getOngoingRiskEvent,
+  getOngoingTasks,
+  getTodayConsultationTask,
+} from '#/api/psychology';
+import HandleCrisisEventDetail from '#/components/Dialog/handleCrisisEventDialog/index.vue';
+import CreateConsultDrawer from '#/components/Drawer/CreateConsultDrawer/index.vue';
 import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import PageTitle from '#/components/PageTitle/index.vue';
+import { getDictObj } from '#/utils/dict';
 import WorkSpaceCard from '#/views/dashboard/workspace/components/WorkSpaceCard.vue';
-import WorkSpaceItem from '#/views/dashboard/workspace/components/WorkSpaceItem.vue';
+import { useLoadingState } from '#/views/dashboard/workspace/composables/useLoadingState';
 
 // 快速上报抽屉
 const [ReportFastDrawer, reportFastDrawerApi] = useVbenDrawer({
   connectedComponent: ReportQuicklyDrawer,
 });
 
-const systemWelcome = ref(''); // 系统欢迎语
-const consultationsList = ref([]); // 今日咨询任务
-const interveneList = ref([]); // 重点干预学生
-const alertsList = ref([]); // 待处理预警事件
+// 预约抽屉
+const [ConsultationDrawer, consultationDrawerApi] = useVbenDrawer({
+  connectedComponent: CreateConsultDrawer,
+});
 
+// 预警事件详情弹窗
+const [CrisisEventDetailModal, crisisEventDetailModalApi] = useVbenModal({
+  connectedComponent: HandleCrisisEventDetail,
+});
+
+const systemWelcome = ref(''); // 系统欢迎语
+const router = useRouter();
+
+/** 打开快速上报抽屉 */
 function handleQuickReport() {
   reportFastDrawerApi.open();
-}
-
-/** 获取任务看板数据 */
-async function loadWorkspaceData(
-  type: 'HIGH_RISK_STUDENTS' | 'PENDING_ALERTS' | 'TODAY_CONSULTATIONS',
-) {
-  try {
-    const response = await getWorkspaceData({
-      type,
-    });
-    if (!response) return;
-    switch (type) {
-      case 'HIGH_RISK_STUDENTS': {
-        interveneList.value = response.data;
-        break;
-      }
-      case 'PENDING_ALERTS': {
-        alertsList.value = response.data;
-        break;
-      }
-      case 'TODAY_CONSULTATIONS': {
-        consultationsList.value = response.data;
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  } catch (error) {
-    console.error('获取任务看板数据失败', error);
-    message.error('获取任务看板数据失败, 请稍后重试');
-  }
 }
 
 /** 获取系统欢迎语 */
@@ -72,11 +57,187 @@ async function loadSystemWelcome() {
   }
 }
 
+// --- 1. 心理测评相关任务 ---
+const {
+  data: assessmentTasksList,
+  total: tasksTotal,
+  loading: tasksLoading,
+  load: loadOngoingTasks,
+} = useLoadingState(
+  // 这个函数现在必须返回 PaginatedData<ViewData>
+  async ({ pageNo, pageSize }: { pageNo: number; pageSize: number }) => {
+    const response = await getOngoingTasks({ pageNo, pageSize });
+
+    if (!response || !response.list || response.list.length === 0) {
+      return { list: [], total: 0 }; // 返回空的分页结构
+    }
+
+    const mappedList = response.list.map((item) => {
+      const statusDict = getDictObj('assessment_task_status', item.status);
+      return {
+        id: item.taskNo,
+        studentName: item.taskName,
+        rightTopContent: `已完成（${item.completedCount}/${item.totalCount}）`,
+        tags: [
+          {
+            label: statusDict?.label,
+            colorType: statusDict?.colorType,
+          },
+        ],
+        content: [
+          {
+            label: '关联问卷',
+            value: item.questionnaires
+              .map((questionnaire) => questionnaire.title)
+              .join('|'),
+          },
+          {
+            label: '发布人',
+            value: item.publishUser,
+          },
+        ],
+        completionRate: item.completionRate,
+      };
+    });
+
+    // 返回 { list, total } 结构
+    return {
+      list: mappedList,
+      total: response.total || 0, // 假设 API 响应中有 'total' 字段
+    };
+  },
+  {
+    // 更新 initialData 结构
+    initialData: { list: [], total: 0 },
+    errorMessage: '获取正在进行的任务失败',
+  },
+);
+
+// --- 2. 待处理预警事件 ---
+const {
+  data: alertsList,
+  total: alertsTotal,
+  loading: alertsLoading,
+  load: loadOngoingRiskEvent,
+} = useLoadingState(
+  async ({ pageNo, pageSize }: { pageNo: number; pageSize: number }) => {
+    const response = await getOngoingRiskEvent({ pageNo, pageSize });
+    if (!response || !response.list || response.list.length === 0) {
+      return { list: [], total: 0 };
+    }
+    const mappedList = response.list.map((item) => {
+      const statusDict = getDictObj('crisis_event_status', item.status);
+      const sourceTypeDict = getDictObj(
+        'crisis_event_report_source',
+        item.sourceType,
+      );
+      return {
+        id: item.id,
+        studentName: item.studentName,
+        className: item.className,
+        tags: [
+          {
+            label: statusDict?.label,
+            colorType: statusDict?.colorType,
+          },
+          {
+            label: sourceTypeDict?.label,
+            colorType: sourceTypeDict?.colorType,
+          },
+        ],
+        content: [
+          {
+            value: item.description,
+          },
+          {
+            label: '上报人',
+            value: item.reporterName,
+          },
+          {
+            label: '上报时间',
+            value: dayjs(item.reportedAt).format('YYYY-MM-DD HH:mm:ss'),
+          },
+        ],
+      };
+    });
+    return {
+      list: mappedList,
+      total: response.total || 0, // 假设 API 响应中有 'total' 字段
+    };
+  },
+  {
+    initialData: { list: [], total: 0 },
+    errorMessage: '获取正在进行的风险预警流程失败',
+  },
+);
+
+// --- 3. 今日心理咨询任务 ---
+const {
+  data: consultationsList,
+  total: consultationsTotal,
+  loading: consultationsLoading,
+  load: loadTodayConsultationTask,
+} = useLoadingState(
+  async ({ pageNo, pageSize }: { pageNo: number; pageSize: number }) => {
+    const response = await getTodayConsultationTask({ pageNo, pageSize });
+    if (!response || !response.list || response.list.length === 0) {
+      return { list: [], total: 0 };
+    }
+    const mappedList = response.list.map((item) => {
+      const statusDict = getDictObj('counseling_status', item.status);
+      return {
+        id: item.id,
+        studentName: item.studentName,
+        className: item.className,
+        rightTopContent: dayjs(item.appointmentStartTime).format(
+          'YYYY-MM-DD HH:mm:ss',
+        ),
+        tags: [
+          {
+            label: statusDict?.label,
+            colorType: statusDict?.colorType,
+          },
+        ],
+        content: [
+          {
+            label: '咨询师',
+            value: item.counselorName,
+          },
+          {
+            label: '咨询地点',
+            value: item.location,
+          },
+        ],
+      };
+    });
+    return {
+      list: mappedList,
+      total: response.total || 0, // 假设 API 响应中有 'total' 字段
+    };
+  },
+  {
+    initialData: { list: [], total: 0 },
+    errorMessage: '获取今日咨询任务失败, 请稍后重试',
+  },
+);
+
+/** 打开心理测评任务详情页面 */
+function handleAssessmentDetail(taskNo: number | string) {
+  router.push(`/assessment/detail/${taskNo}`);
+}
+
+/** 打开危机事件详情页面 */
+function handleCrisisEventDetail(id: number | string) {
+  crisisEventDetailModalApi.setData({ id }).open();
+}
+
+/** 打开预约页面 */
+function handleConsultationDetail(id: number | string) {
+  consultationDrawerApi.setData({ id }).open();
+}
+
 onMounted(async () => {
   await loadSystemWelcome();
-  await loadWorkspaceData('TODAY_CONSULTATIONS');
-  await loadWorkspaceData('HIGH_RISK_STUDENTS');
-  await loadWorkspaceData('PENDING_ALERTS');
 });
 </script>
 
@@ -92,86 +253,52 @@ onMounted(async () => {
       </template>
     </PageTitle>
 
-    <div
-      class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6 xl:grid-cols-3"
-    >
-      <!-- 今日心理咨询任务 -->
+    <div class="grid flex-1 grid-cols-3 gap-4">
+      <!-- 正在进行的心理测评任务 -->
       <WorkSpaceCard
         :with-gradient="true"
-        :count="0"
-        icon-src="mingcute:task-2-fill"
-        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
-        title="今日心理咨询任务"
-        class="min-h-[400px] md:col-span-1"
-      >
-        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
-          <template v-if="consultationsList.length > 0">
-            <WorkSpaceItem
-              v-for="(consultation, idx) in consultationsList"
-              :key="idx"
-              :item="consultation"
-            />
-          </template>
-          <div v-else class="flex-center h-full">
-            <Empty />
-          </div>
-        </div>
-      </WorkSpaceCard>
-
-      <!-- 重点干预学生 -->
-      <WorkSpaceCard
-        :with-gradient="true"
-        :count="0"
         icon-src="ix:user-filled"
-        icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
-        title="重点干预学生"
+        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
+        title="心理测评相关任务"
         class="min-h-[400px] md:col-span-1"
-      >
-        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
-          <template v-if="interveneList.length > 0">
-            <WorkSpaceItem
-              v-for="(intervention, idx) in interveneList"
-              :key="idx"
-              :item="intervention"
-            >
-              <template #rightAction>
-                <ChevronRight
-                  class="size-4 cursor-pointer hover:opacity-70"
-                  color="#959599"
-                />
-              </template>
-            </WorkSpaceItem>
-          </template>
-          <div v-else class="flex-center h-full">
-            <Empty />
-          </div>
-        </div>
-      </WorkSpaceCard>
+        :items="assessmentTasksList"
+        :loading="tasksLoading"
+        :total="tasksTotal"
+        @load="loadOngoingTasks"
+        @detail="handleAssessmentDetail"
+      />
 
       <!-- 待处理预警事件 -->
       <WorkSpaceCard
         :with-gradient="true"
-        :count="0"
         icon-src="octicon:bell-fill-24"
         icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
         title="待处理预警事件"
         class="min-h-[400px] md:col-span-2 xl:col-span-1"
-      >
-        <div class="flex h-full max-w-full flex-col gap-3 sm:gap-4">
-          <template v-if="alertsList.length > 0">
-            <WorkSpaceItem
-              v-for="(alert, idx) in alertsList"
-              :key="idx"
-              :item="alert"
-            />
-          </template>
-          <div v-else class="flex-center h-full">
-            <Empty />
-          </div>
-        </div>
-      </WorkSpaceCard>
+        :items="alertsList"
+        :loading="alertsLoading"
+        :total="alertsTotal"
+        @load="loadOngoingRiskEvent"
+        @detail="handleCrisisEventDetail"
+      />
+
+      <!-- 今日心理咨询任务 -->
+      <WorkSpaceCard
+        :with-gradient="true"
+        icon-src="mingcute:task-2-fill"
+        icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
+        title="今日心理咨询任务"
+        class="min-h-[400px] md:col-span-1"
+        :items="consultationsList"
+        :loading="consultationsLoading"
+        :total="consultationsTotal"
+        @load="loadTodayConsultationTask"
+        @detail="handleConsultationDetail"
+      />
     </div>
 
     <ReportFastDrawer />
+    <ConsultationDrawer />
+    <CrisisEventDetailModal />
   </div>
 </template>

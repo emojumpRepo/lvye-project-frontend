@@ -144,6 +144,22 @@ export interface AssessmentTaskRiskLevelStatistics {
   gradeList: GradeRiskLevel[];
 }
 
+/** 正在进行的任务 */
+export interface OngoingTask {
+  taskNo: string;
+  taskName: string;
+  description: string;
+  startline: number;
+  deadline: number;
+  publishUserId: number;
+  publishUser: string;
+  questionnaires: { id: number; title: string }[];
+  completedCount: number;
+  totalCount: number;
+  status: number;
+  completionRate: number;
+}
+
 // 测评状态枚举
 export const ASSESSMENT_STATUS = {
   DRAFT: 0, // 草稿

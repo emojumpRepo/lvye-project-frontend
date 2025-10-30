@@ -34,3 +34,20 @@ export interface RecordInfo {
   showButton?: boolean;
   onClick?: () => void;
 }
+
+/** 学生家长信息 */
+export interface StudentParentFormData {
+  studentProfileId?: number;
+  fatherId?: number;
+  fatherName?: string;
+  fatherWork?: string;
+  fatherPhone?: string;
+  fatherRelation?: number;
+  motherId?: number;
+  motherName?: string;
+  motherWork?: string;
+  motherPhone?: string;
+  motherRelation?: number;
+  parentMaritalStatus?: number;
+  remark?: string;
+}

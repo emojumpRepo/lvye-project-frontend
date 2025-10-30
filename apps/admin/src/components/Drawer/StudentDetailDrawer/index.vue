@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { AssessmentComfirmInfo, ReportAbnormalParams } from '@vben/types';
 
-import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile/index';
 import type { DictDataType } from '#/utils/dict';
 
@@ -14,7 +13,6 @@ import { Badge, Divider, message, Spin, Tabs } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import { getStudentPsychologicalStatusTag } from '#/api/constants';
-import { getStudentParentProfile } from '#/api/psychology/student-parent-profile';
 import {
   getStudentProfile,
   getStudentProfileTimeline,
@@ -71,9 +69,6 @@ const emit = defineEmits<{
 
 // 学生档案
 const studentProfile = ref<PsychologyStudentProfileApi.StudentProfile>();
-// 学生家长档案
-const studentParentProfile =
-  ref<PsychologyStudentParentProfileApi.StudentParentProfile[]>();
 // 学生时间线
 const studentProfileTimeline = ref<
   PsychologyStudentProfileApi.StudentProfileTimeline[]
@@ -235,8 +230,6 @@ const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
     loading.value = true;
     if (data.id) {
       await loadStudentProfile(data.id);
-      const studentParentProfileData = await getStudentParentProfile(data.id);
-      studentParentProfile.value = studentParentProfileData;
       await loadStudentProfileTimeline(data.id);
     }
     loading.value = false;
@@ -400,12 +393,14 @@ onMounted(async () => {
                   :dict-value="studentProfile?.riskLevel"
                 />
               </div>
-              <div>
+              <div class="flex items-center gap-1 text-sm">
                 <span class="font-bold">最近1次测评结果：</span>
                 <LyTag
+                  v-if="studentProfile?.assessmentRiskLevel"
                   tag-category-key="questionnaire_result_risk_level"
-                  :dict-value="studentProfile?.riskLevel"
+                  :dict-value="studentProfile?.assessmentRiskLevel"
                 />
+                <div v-else>--</div>
               </div>
             </div>
           </div>
@@ -478,7 +473,6 @@ onMounted(async () => {
               <Tabs.TabPane tab="个人信息" key="personalInfo">
                 <PersonalInfoTab
                   :student-info="studentProfile"
-                  :parent-info="studentParentProfile"
                   @update-loading="updateLoading"
                 />
               </Tabs.TabPane>

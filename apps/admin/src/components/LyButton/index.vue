@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 
 import { Button as AButton } from 'ant-design-vue';
 
-type ButtonType =
+export type ButtonType =
   | 'black'
   | 'cyan'
   | 'default'

@@ -14,6 +14,8 @@ export interface ConfigOptions {
   classList: SelectOptions[];
   graduationStatusMap: SelectOptions[];
   sexMap: SelectOptions[];
+  parentMaritalStatusMap: SelectOptions[];
+  parentRelationMap: SelectOptions[];
 }
 
 /** 学籍信息字段配置 */
@@ -169,7 +171,7 @@ const familyBackgroundFields = [
     rules: 'required',
   },
   {
-    fieldName: 'fatherOccupation',
+    fieldName: 'fatherWork',
     label: '父亲职业',
     viewComponent: 'Input',
     editComponent: 'Input',
@@ -193,7 +195,7 @@ const familyBackgroundFields = [
     rules: 'required',
   },
   {
-    fieldName: 'motherOccupation',
+    fieldName: 'motherWork',
     label: '母亲职业',
     viewComponent: 'Input',
     editComponent: 'Input',
@@ -224,7 +226,7 @@ const familyBackgroundFields = [
     formItemClass: 'col-span-2',
   },
   {
-    fieldName: 'familySpecialSituation',
+    fieldName: 'remark',
     label: '备注',
     viewComponent: 'Input',
     editComponent: 'Input',

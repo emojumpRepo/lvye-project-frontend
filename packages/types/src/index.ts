@@ -6,4 +6,5 @@ export * from './scenario';
 export * from './student-profile';
 export * from './user';
 export type * from './user';
+export * from './workspace';
 export type * from '@vben-core/typings';

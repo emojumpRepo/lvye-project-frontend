@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { StudentParentFormData } from '@vben/types';
+
 import type { ConfigOptions } from '../data';
 
-import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { computed, ref, unref, watch } from 'vue';
@@ -13,7 +14,11 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 import { useVbenForm } from '#/adapter/form';
-import { updateStudentProfile } from '#/api/psychology/student-profile';
+import { updateStudentProfile } from '#/api/psychology';
+import {
+  createStudentParentProfile,
+  updateStudentParentProfile,
+} from '#/api/psychology/student-parent-profile';
 import { getDictOptions } from '#/utils/dict';
 import { getDeptListCache } from '#/utils/transformDeptToTree';
 
@@ -23,9 +28,10 @@ import {
 } from '../data';
 
 const props = defineProps<{
-  parentInfo?: PsychologyStudentParentProfileApi.StudentParentProfile[];
+  parentInfo?: StudentParentFormData;
   schemaType: 'familyBackground' | 'personalInfo';
   studentInfo?: PsychologyStudentProfileApi.StudentProfile;
+  studentProfileId?: number;
   title: string;
 }>();
 
@@ -37,15 +43,21 @@ dayjs.extend(customParseFormat);
 const _timestampRegex = /^\d{10}$|^\d{13}$/;
 
 const edit = ref(false);
-const dictLoaded = ref(false);
+
+const dictLoaded = ref({
+  personal: false,
+  family: false,
+});
+
 const configOptions = ref<ConfigOptions>({
   classList: [],
   graduationStatusMap: [],
   sexMap: [],
+  parentMaritalStatusMap: [],
+  parentRelationMap: [],
 });
-const studentFormInfo = ref({});
-const parentFormInfo =
-  ref<PsychologyStudentParentProfileApi.StudentParentProfilePageReq>();
+const studentFormInfo = ref();
+const parentFormInfo = ref();
 
 // 使用计算属性动态生成表单schema
 const formSchema = computed(() =>
@@ -64,27 +76,42 @@ const [InfoForm, InfoFormApi] = useVbenForm({
     disabled: true,
   },
   layout: 'horizontal',
-  schema: formSchema.value,
+  schema: formSchema.value, // 初始 schema
   wrapperClass: 'grid-cols-4 gap-4',
   showDefaultActions: false,
 });
 
+/** 监听学生信息 */
 watch(
   () => props.studentInfo,
   async (newStudentInfo) => {
-    if (!newStudentInfo) return;
-    console.log('newStudentInfo', newStudentInfo);
-    if (!dictLoaded.value) {
+    if (props.schemaType !== 'personalInfo' || !newStudentInfo) return;
+
+    if (!dictLoaded.value.personal) {
       await getDictTypeOptions();
+      dictLoaded.value.personal = true;
     }
-    if (props.schemaType === 'personalInfo') {
-      formatFormData(props.studentInfo);
-      InfoFormApi.setValues(studentFormInfo.value);
-    } else if (props.schemaType === 'familyBackground') {
-      parentFormInfo.value = props.parentInfo as
-        | PsychologyStudentParentProfileApi.StudentParentProfilePageReq
-        | undefined;
-      InfoFormApi.setValues(parentFormInfo.value as Record<string, any>);
+    formatFormData(props.studentInfo);
+    InfoFormApi.setValues(studentFormInfo.value);
+  },
+  {
+    immediate: true,
+  },
+);
+
+/** 监听学生家长信息 */
+watch(
+  () => props.parentInfo,
+  async (newParentInfo) => {
+    if (props.schemaType !== 'familyBackground') return;
+
+    if (!dictLoaded.value.family) {
+      await getParentMaritalStatusOptions();
+      dictLoaded.value.family = true;
+    }
+    if (newParentInfo) {
+      formatParentFormData(newParentInfo);
+      InfoFormApi.setValues(parentFormInfo.value);
     }
   },
   {
@@ -92,11 +119,11 @@ watch(
   },
 );
 
-/** 重新设置表单schema */
+/** 重新设置表单schema和禁用状态 */
 function setFormValues() {
   InfoFormApi.setState({
-    schema: formSchema.value,
-    commonConfig: { disabled: !edit.value },
+    schema: formSchema.value, // 更新 schema
+    commonConfig: { disabled: !edit.value }, // 更新禁用状态
   });
 }
 
@@ -104,36 +131,41 @@ function setFormValues() {
 function handleEdit() {
   edit.value = true;
   setFormValues();
-  if (props.studentInfo) {
+  if (props.schemaType === 'personalInfo') {
     InfoFormApi.setValues({
       ...props.studentInfo,
       birthDate: dayjs(props.studentInfo?.birthDate).format('YYYY-MM-DD'),
     });
+  }
+  if (props.schemaType === 'familyBackground') {
+    InfoFormApi.setValues({ ...props.parentInfo });
   }
 }
 
 /** 保存 */
 async function handleSave() {
   emit('updateLoading', true);
-  edit.value = false;
-  setFormValues();
+
   const { valid } = await InfoFormApi.validate();
   if (!valid) {
-    handleCancel();
-    InfoFormApi.resetValidate();
+    // 验证未通过，不切换编辑状态
+    // handleCancel(); // 不应调用 handleCancel，它会重置数据
+    // InfoFormApi.resetValidate(); // validate 内部已处理
     message.error('请检查输入内容');
     emit('updateLoading', false);
     return;
   }
 
+  edit.value = false;
+  setFormValues();
+
+  // 获取表单数据
   const values = await InfoFormApi.getValues();
 
-  values.classDeptId = Number(values.classDeptId);
-  values.graduationStatus = Number(values.graduationStatus);
-
+  // 学生信息保存
   if (props.schemaType === 'personalInfo') {
-    formatFormData(values as PsychologyStudentProfileApi.StudentProfile);
-    InfoFormApi.setValues(studentFormInfo.value);
+    values.classDeptId = Number(values.classDeptId);
+    values.graduationStatus = Number(values.graduationStatus);
 
     try {
       const formatBirthDate = validateTimeFormat(values.birthDate);
@@ -145,13 +177,85 @@ async function handleSave() {
         idCard: props.studentInfo?.idCard,
         enrollmentYear: props.studentInfo?.enrollmentYear,
       });
+      // 成功后，重新格式化显示数据
+      formatFormData(values as PsychologyStudentProfileApi.StudentProfile);
+      InfoFormApi.setValues(studentFormInfo.value);
+      message.success('学生信息保存成功');
     } catch (error) {
       console.warn('updateStudentProfile failed', error);
+      message.error('学生信息保存失败');
+      // 失败了，恢复编辑状态，让用户可以重试
+      edit.value = true;
+      setFormValues();
     }
-  } else {
-    message.warning('即将上线');
+  }
+  // 学生家长信息保存
+  else {
+    await handleSaveParentProfile(values);
   }
   emit('updateLoading', false);
+}
+
+/** 保存学生家长信息 */
+async function handleSaveParentProfile(formValues: any) {
+  if (!props.studentProfileId) {
+    message.error('学生档案ID不能为空');
+    return;
+  }
+
+  const parentList = [
+    {
+      id: props.parentInfo?.fatherId,
+      name: formValues.fatherName,
+      mobile: formValues.fatherPhone,
+      remark: formValues.remark,
+      work: formValues.fatherWork,
+      maritalStatus: formValues.parentMaritalStatus,
+    },
+    {
+      id: props.parentInfo?.motherId,
+      name: formValues.motherName,
+      mobile: formValues.motherPhone,
+      remark: formValues.remark,
+      work: formValues.motherWork,
+      maritalStatus: formValues.parentMaritalStatus,
+    },
+  ];
+
+  try {
+    if (!props.parentInfo?.fatherId || !props.parentInfo?.motherId) {
+      const response = await createStudentParentProfile({
+        studentProfileId: props.studentProfileId,
+        parentList,
+      });
+      if (response) {
+        message.success('学生家长档案创建成功');
+        formatParentFormData(formValues);
+        InfoFormApi.setValues(parentFormInfo.value);
+      } else {
+        message.error('学生家长档案创建失败');
+        throw new Error('Create failed'); // 抛出错误以便 catch 块捕获
+      }
+    } else {
+      const response = await updateStudentParentProfile({
+        studentProfileId: props.studentProfileId,
+        parentList,
+      });
+      if (response) {
+        message.success('学生家长档案更新成功');
+        formatParentFormData(formValues);
+        InfoFormApi.setValues(parentFormInfo.value);
+      } else {
+        message.error('学生家长档案更新失败');
+        throw new Error('Update failed');
+      }
+    }
+  } catch (error) {
+    console.warn('handleSaveParentProfile failed', error);
+    // 失败了，恢复编辑状态
+    edit.value = true;
+    setFormValues();
+  }
 }
 
 /** 取消 */
@@ -159,8 +263,12 @@ function handleCancel() {
   edit.value = false;
   setFormValues();
   InfoFormApi.resetValidate();
-  if (props.studentInfo) {
+  // 恢复为格式化后的只读数据
+  if (props.schemaType === 'personalInfo') {
     InfoFormApi.setValues(studentFormInfo.value);
+  }
+  if (props.schemaType === 'familyBackground') {
+    InfoFormApi.setValues(parentFormInfo.value);
   }
 }
 
@@ -177,7 +285,7 @@ function validateTimeFormat(val: any) {
   return val;
 }
 
-// 格式化表单
+// 格式化学生信息表单数据 (用于只读显示)
 function formatFormData(
   info: PsychologyStudentProfileApi.StudentProfile | undefined,
 ) {
@@ -205,7 +313,24 @@ function formatFormData(
   return studentFormInfo;
 }
 
-// 获取类型字典
+/**
+ * 格式化家长信息表单数据 (用于只读显示)
+ */
+function formatParentFormData(info: StudentParentFormData) {
+  if (!info) return {};
+
+  const parentMaritalStatus = configOptions.value.parentMaritalStatusMap.find(
+    (item) => item.value === info.parentMaritalStatus,
+  )?.label;
+
+  parentFormInfo.value = {
+    ...info,
+    parentMaritalStatus,
+  };
+  return parentFormInfo.value;
+}
+
+// 获取学生相关的类型字典
 async function getDictTypeOptions() {
   const deptList = ref<PsychologyStudentProfileApi.DeptTree[]>([]);
   deptList.value = await getDeptListCache();
@@ -218,24 +343,34 @@ async function getDictTypeOptions() {
 
   configOptions.value.classList = gradeDept.children ?? [];
 
-  // 获取性别字典
-  const sexMap = await getDictOptions('system_user_sex');
-  configOptions.value.sexMap = sexMap.map((item) => ({
-    label: item.label,
-    value: Number(item.value),
-  }));
+  try {
+    const [sexMap, studentGraduationStatus] = await Promise.all([
+      getDictOptions('system_user_sex', 'number'),
+      getDictOptions('student_graduation_status', 'number'),
+    ]);
 
-  // 获取毕业状态字典
-  const studentGraduationStatus = await getDictOptions(
-    'student_graduation_status',
-  );
-  configOptions.value.graduationStatusMap =
-    studentGraduationStatus.map((item) => ({
-      label: item.label,
-      value: Number(item.value),
-    })) ?? [];
+    configOptions.value.sexMap = sexMap ?? [];
+    configOptions.value.graduationStatusMap = studentGraduationStatus ?? [];
+  } catch (error) {
+    console.error('Failed to get personal dict options', error);
+    message.error('获取个人信息字典失败');
+  }
+}
 
-  dictLoaded.value = true;
+// 获取父母婚姻等字典
+async function getParentMaritalStatusOptions() {
+  try {
+    const [parentMaritalStatus, parentRelation] = await Promise.all([
+      getDictOptions('parent_marital_status', 'number'),
+      getDictOptions('student_parent_relation', 'number'),
+    ]);
+
+    configOptions.value.parentMaritalStatusMap = parentMaritalStatus;
+    configOptions.value.parentRelationMap = parentRelation;
+  } catch (error) {
+    console.error('Failed to get family dict options', error);
+    message.error('获取家庭信息字典失败');
+  }
 }
 </script>
 
@@ -281,7 +416,6 @@ async function getDictTypeOptions() {
         </div>
       </div>
 
-      <!-- 信息表单 -->
       <InfoForm />
     </div>
   </div>

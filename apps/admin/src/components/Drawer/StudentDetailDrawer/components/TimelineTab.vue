@@ -5,7 +5,7 @@ import { computed } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { Divider, Empty, message } from 'ant-design-vue';
+import { Divider, Empty } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
@@ -29,19 +29,6 @@ const timelineList = computed(() => {
     (item) => item.eventType === activeTimelineKey.value,
   );
 });
-
-function handleViewDetail(
-  timeline: PsychologyStudentProfileApi.StudentProfileTimeline,
-) {
-  message.warning('即将上线');
-  // questionnaireResultDialogModalApi
-  //   .setData({
-  //     id: timeline.meta.taskId,
-  //     name: timeline.meta.studentName,
-  //     taskName: timeline.meta.taskName,
-  //   })
-  //   .open();
-}
 </script>
 
 <template>
@@ -68,13 +55,13 @@ function handleViewDetail(
       </div>
       <div class="w-full flex-1 space-y-4 overflow-y-auto px-4">
         <div
-          class="relative flex h-[140px] items-start"
+          class="relative flex h-[120px] items-start"
           v-for="timeline in timelineList"
           :key="timeline.id"
         >
           <div class="absolute left-0 top-0 flex flex-col items-center gap-2">
             <span class="size-2 rounded-full bg-[#04DC70]"></span>
-            <Divider type="vertical" class="h-[130px] bg-[#EAEBED]" />
+            <Divider type="vertical" class="h-[110px] bg-[#EAEBED]" />
           </div>
           <div
             class="ml-6 box-border flex h-full w-full flex-col justify-between overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
@@ -87,19 +74,12 @@ function handleViewDetail(
                 {{ dayjs(timeline.createTime).format('YYYY-MM-DD') }}
               </span>
             </div>
-            <div class="text-sm font-bold">
-              {{ timeline.operator || '未知操作人' }}
-            </div>
-            <div class="truncate text-xs text-[#979899]">
+            <div class="line-clamp-2 text-xs text-[#979899]">
               {{ timeline.content || '暂无内容' }}
             </div>
-            <!-- <div
-              v-if="timeline.title === '测评完成' || timeline.eventType === 4"
-              class="cursor-pointer text-xs text-[#1966FF]"
-              @click="handleViewDetail(timeline)"
-            >
-              查看详情
-            </div> -->
+            <div class="text-xs">
+              {{ timeline.operator || '未知操作人' }}
+            </div>
           </div>
         </div>
       </div>
