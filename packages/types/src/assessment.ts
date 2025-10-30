@@ -28,6 +28,8 @@ export interface AssessmentTask {
   resultGenerating?: boolean; // 结果生成中标识
   // 测评场景信息
   scenarioId?: number; // 场景ID
+  scenarioCode?: string; // 场景编码
+  scenarioName?: string; // 场景名称
   scenarioDetail?: AssessmentScenarioDetailed;
   // 任务参与信息
   progress: number; // 任务参与进度
@@ -64,6 +66,7 @@ export interface AssessmentQuestionnaireResultVO {
   questionnaireId: number;
   questionnaireName: string;
   levelDescription: string;
+  completedTime: number;
   answers: string;
 }
 
@@ -110,6 +113,7 @@ export interface AssessmentResultVO {
   suggestion: string;
   questionnaireResults: AssessmentQuestionnaireResultVO[];
   combinedRiskLevel: number;
+  scenarioCode: string;
   riskFactor: RiskFactorVO[];
   interventionSuggestions: string;
   generationConfigVersion: string;

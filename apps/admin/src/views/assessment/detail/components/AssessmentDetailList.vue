@@ -207,6 +207,7 @@ function viewDetail(
         name: row?.name,
         questionnaireName: row?.questionnaireName,
         questionnaireId: activeTab.value.key,
+        taskNo: row?.taskNo,
       })
       .open();
   } else {
@@ -216,6 +217,10 @@ function viewDetail(
         name: row?.name,
         taskName: props.taskName,
         questionnairesTabs: props.questionnairesTabs,
+        taskNo: row?.taskNo,
+        finishTime: row?.finishTime,
+        studentNo: row?.studentNo,
+        userId: row?.userId,
       })
       .open();
   }

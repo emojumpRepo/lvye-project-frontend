@@ -8,6 +8,11 @@ import type {
   QuestionnaireResultDataVO,
 } from '@vben/types';
 
+import type {
+  MtuiUniversityQuestionnaireResult,
+  MtuiUniversityResultRespVO,
+} from '#/api/psychology/assessment/index';
+
 import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
@@ -19,34 +24,41 @@ import { getColorConfig } from '#/api/constants';
 import {
   getAssessmentQuestionnaireResult,
   getAssessmentResult,
+  getAssessmentTask,
+  getMtuiUniversityResults,
 } from '#/api/psychology/assessment/index';
 import { getAssessmentQuestionnaireQuestion } from '#/api/psychology/questionnaire/index';
 import LyButton from '#/components/LyButton/index.vue';
 
-import AssessmentResult from './components/AssessmentResult.vue';
-import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
-import QuestionnaireResult from './components/QuestionnaireResult.vue';
-import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
+// 小学版复用 primary 的细分组件
+import AssessmentResult from './primary/components/AssessmentResult.vue';
+import QuestionnaireAnswer from './primary/components/QuestionnaireAnswer.vue';
+import QuestionnaireResult from './primary/components/QuestionnaireResult.vue';
+import { exportQuestionnaireReportToPDF } from './primary/composables/exportToPDF';
+// 大学版占位内容
+import UniversityContent from './university/index.vue';
 
 const dimensions = ref<QuestionnaireResultDataVO[]>([]);
 const questionnaireAnswer = ref<QuestionnaireAnswerItem[]>([]);
-const assessmentResult = ref<AssessmentResultVO>();
-const queryData = ref();
+const mtuiResult = ref<MtuiUniversityResultRespVO>(); /** 大学MTUI测评结果 */
+const assessmentResult = ref<AssessmentResultVO>(); /** 小学MTPI测评结果 */
+const queryData = ref<any>();
 const completedTime = ref<number>();
 const activeKey = ref('result');
 const loading = ref(true);
 const exportLoading = ref(false);
 const questionnaireAnswerActiveKey = ref('');
+const scenarioName = ref<string>('');
 const tabs = ref<{ key: string; tab: string }[]>([
   { key: 'result', tab: '问卷报告' },
   { key: 'answer', tab: '答题记录' },
 ]);
 
-// 切换问卷答案
-const filterQuestionnaireAnswer = computed(() => {
-  return questionnaireAnswer.value.filter(
-    (item) => item.questionnaireId === questionnaireAnswerActiveKey.value,
-  );
+// 场景识别
+const scenarioCode = ref<string>('');
+const isUniversity = computed(() => {
+  const code = (scenarioCode.value || '').toUpperCase();
+  return code.includes('UNIVERSITY');
 });
 
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
@@ -54,7 +66,7 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   fullscreen: true,
   destroyOnClose: true,
   class: 'h-full overflow-hidden',
-  contentClass: '!bg-[#F7F8FB] box-border flex-center px-20',
+  contentClass: 'p-0 bg-[#F7F8FB] h-full w-full overflow-hidden',
   footer: false,
   closable: false,
   onOpenChange: async (open) => {
@@ -72,9 +84,7 @@ const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   },
 });
 
-/**
- * 加载问卷结果
- */
+// 加载问卷结果
 async function loadQuestionnaireResult() {
   try {
     const response = await getAssessmentQuestionnaireResult(queryData.value.id);
@@ -82,11 +92,8 @@ async function loadQuestionnaireResult() {
       message.error('获取问卷结果失败');
       return;
     }
-
-    // 获取问卷结果
     dimensions.value = JSON.parse(response.resultData);
 
-    // 获取问卷答案
     const newQuestionnaireAnswer = await getQuestionnaireQuestion(
       queryData.value.questionnaireId,
       JSON.parse(response.answers),
@@ -105,34 +112,65 @@ async function loadQuestionnaireResult() {
   }
 }
 
-/**
- * 加载测评结果
- */
+// 加载测评结果
 async function loadAssessmentResult() {
   try {
-    const response = await getAssessmentResult(queryData.value.id);
-    if (!response) {
-      message.error('获取测评结果失败，请重试');
-      return;
+    // 获取测评详情，判定场景
+    const task = await getAssessmentTask(queryData.value.taskNo);
+    scenarioCode.value = task?.scenarioCode || '';
+    scenarioName.value = task?.scenarioName || '';
+
+    if (isUniversity.value) {
+      // 大学MTUI专用接口
+      mtuiResult.value = await getMtuiUniversityResults(
+        queryData.value.taskNo,
+        queryData.value.userId,
+      );
+      assessmentResult.value = undefined;
+      dimensions.value = [];
+      completedTime.value = task?.updateTime as any;
+    } else {
+      // 小学MTPI测评结果
+      const response = await getAssessmentResult(queryData.value.id);
+      if (!response) {
+        message.error('获取测评结果失败，请重试');
+        return;
+      }
+      assessmentResult.value = response;
+      completedTime.value = response.updateTime;
     }
 
-    assessmentResult.value = response;
-    completedTime.value = response.updateTime;
+    // 排序问卷结果
     sortQuestionnaireResults();
 
-    const results = assessmentResult.value.questionnaireResults;
+    // 获取排序后的问卷结果
+    const sortedQuestionnaireResults: (
+      | AssessmentQuestionnaireResultVO
+      | MtuiUniversityQuestionnaireResult
+    )[] = [
+      ...(assessmentResult.value?.questionnaireResults ?? []),
+      ...(mtuiResult.value?.questionnaireResults ?? []),
+    ];
+
+    // 统一获取问卷题目（使用排序后的结果）
     const answersList = await Promise.all(
-      results.map(async (item: AssessmentQuestionnaireResultVO) => {
-        const merged = await getQuestionnaireQuestion(
-          item.questionnaireId.toString(),
-          JSON.parse(item.answers),
-        );
-        return {
-          questionnaireName: item.questionnaireName,
-          questionnaireId: item.questionnaireId,
-          answers: (merged as Question[]) ?? [],
-        };
-      }),
+      sortedQuestionnaireResults.map(
+        async (
+          item:
+            | AssessmentQuestionnaireResultVO
+            | MtuiUniversityQuestionnaireResult,
+        ) => {
+          const merged = await getQuestionnaireQuestion(
+            String(item.questionnaireId ?? ''),
+            JSON.parse(item.answers),
+          );
+          return {
+            questionnaireName: item.questionnaireName,
+            questionnaireId: item.questionnaireId,
+            answers: (merged as Question[]) ?? [],
+          };
+        },
+      ),
     );
     questionnaireAnswer.value = answersList;
   } catch (error) {
@@ -141,12 +179,7 @@ async function loadAssessmentResult() {
   }
 }
 
-/**
- * 获取问卷题目
- * @param questionnaireId 问卷ID
- * @param questionnaireAnswer 问卷答案
- * @returns 问卷答案
- */
+// 获取问卷题目
 async function getQuestionnaireQuestion(
   questionnaireId: string,
   questionnaireAnswer: QuestionnaireAnswerDataVO[],
@@ -155,13 +188,35 @@ async function getQuestionnaireQuestion(
     const response = await getAssessmentQuestionnaireQuestion(questionnaireId);
     const { success, data, message: errorMessage } = response;
     if (success) {
-      const newQuestionnaireAnswer = questionnaireAnswer.map(
-        (answer, index) => {
-          const question = data[index];
-          return question ? Object.assign(answer, question) : answer;
-        },
+      // 过滤出非 description 类型的题目
+      const nonDescriptionQuestions = data.filter(
+        (q: any) => q.type !== 'description',
       );
-      return newQuestionnaireAnswer;
+
+      // 将答案与非 description 题目合并
+      const mergedAnswers = questionnaireAnswer.map((answer, index) => {
+        const question = nonDescriptionQuestions[index];
+        return question ? Object.assign({}, answer, question) : answer;
+      });
+
+      // 将 description 类型的题目插入到正确的位置
+      const result: any[] = [];
+      let answerIndex = 0;
+
+      data.forEach((question: any) => {
+        if (question.type === 'description') {
+          // description 题目直接插入，不关联答案
+          result.push(question);
+        } else {
+          // 非 description 题目使用合并后的答案
+          if (answerIndex < mergedAnswers.length) {
+            result.push(mergedAnswers[answerIndex]);
+            answerIndex++;
+          }
+        }
+      });
+
+      return result;
     } else {
       message.error(errorMessage);
       return questionnaireAnswer;
@@ -173,59 +228,53 @@ async function getQuestionnaireQuestion(
   }
 }
 
-/**
- * 排序问卷结果
- */
+// 排序问卷结果
 function sortQuestionnaireResults() {
-  if (!queryData.value?.questionnairesTabs || !assessmentResult.value) return;
+  const allQuestionnaireResults: (
+    | AssessmentQuestionnaireResultVO
+    | MtuiUniversityQuestionnaireResult
+  )[] = [
+    ...(assessmentResult.value?.questionnaireResults ?? []),
+    ...(mtuiResult.value?.questionnaireResults ?? []),
+  ];
 
-  const tabOrderKeys = queryData.value.questionnairesTabs
-    .map((t: { key: string }) => t.key)
-    .filter((k: string) => k && k.trim() !== '');
-
-  const orderIndexMap = new Map(
-    tabOrderKeys.map((key: string, index: number) => [Number(key), index]),
-  );
-
-  // 对问卷结果进行排序
-  assessmentResult.value.questionnaireResults.sort((a, b) => {
-    const questionnaireIdA = Number(a.questionnaireId);
-    const questionnaireIdB = Number(b.questionnaireId);
-
-    const orderIndexA = orderIndexMap.get(questionnaireIdA);
-    const orderIndexB = orderIndexMap.get(questionnaireIdB);
-
-    if (orderIndexA !== undefined && orderIndexB !== undefined) {
-      return Number(orderIndexA) - Number(orderIndexB);
-    }
-
-    if (orderIndexA !== undefined && orderIndexB === undefined) {
-      return -1;
-    }
-    if (orderIndexA === undefined && orderIndexB !== undefined) {
-      return 1;
-    }
-
-    return questionnaireIdA - questionnaireIdB;
+  // 按照 completedTime 升序排序
+  allQuestionnaireResults.sort((a, b) => {
+    const timeA = a.completedTime ?? 0;
+    const timeB = b.completedTime ?? 0;
+    return timeA - timeB;
   });
+
+  // 将排序后的结果分别赋值回原对象
+  if (assessmentResult.value) {
+    assessmentResult.value.questionnaireResults =
+      allQuestionnaireResults.filter(
+        (item): item is AssessmentQuestionnaireResultVO => 'dimensions' in item,
+      );
+  }
+
+  if (mtuiResult.value) {
+    mtuiResult.value.questionnaireResults = allQuestionnaireResults.filter(
+      (item): item is MtuiUniversityQuestionnaireResult =>
+        'dimensionResults' in item,
+    );
+  }
 }
 
-// 导出问卷报告
+// 导出问卷报告（仅小学版保留）
 const handleExport = async () => {
   if (!queryData.value) {
     message.warning('暂无数据可导出');
     return;
   }
-
   exportLoading.value = true;
   try {
     await exportQuestionnaireReportToPDF({
       assessmentSummary: assessmentResult.value!.riskLevelIntervention,
       questionnaireResult: assessmentResult.value!.questionnaireResults,
       questionnaireAnswer: questionnaireAnswer.value,
-      completedTime: completedTime.value,
+      completedTime: completedTime.value as any,
       studentName: queryData.value.name,
-      scenarioName: assessmentResult.value.scenarioName,
     });
   } catch (error) {
     console.error('导出失败:', error);
@@ -239,14 +288,6 @@ function handleClose() {
   questionnaireResultModalApi.close();
 }
 
-/**
- * 获取维度颜色
- * @param config 颜色配置参数
- * @param config.isAbnormal 是否异常
- * @param config.questionnaireName 问卷名称
- * @param config.riskLevel 风险等级
- * @param config.type 颜色类型
- */
 function getDimensionColor(config: {
   isAbnormal: number;
   questionnaireName: string;
@@ -255,22 +296,14 @@ function getDimensionColor(config: {
 }): string {
   const { isAbnormal, questionnaireName, riskLevel, type } = config;
   const DEFAULT_COLOR = '#666666';
-
-  // 没有问卷名称时返回默认颜色
-  if (!questionnaireName) {
-    return DEFAULT_COLOR;
-  }
-
-  // 心理健康评估的特殊处理
+  if (!questionnaireName) return DEFAULT_COLOR;
   if (questionnaireName.includes('心理健康评估')) {
     const colorMap = {
       bg: isAbnormal === 0 ? '#14E77E14' : '#FF083114',
       color: isAbnormal === 0 ? '#14E77E' : '#FF0831',
-    };
+    } as const;
     return colorMap[type];
   }
-
-  // 其他问卷的风险等级颜色处理
   return getColorConfig({ dictValue: riskLevel, target: type }) as string;
 }
 </script>
@@ -278,10 +311,7 @@ function getDimensionColor(config: {
 <template>
   <QuestionnaireResultModal>
     <template #title>
-      <!-- 顶部返回与标题 -->
-      <div
-        class="to-[rgba(255, 255, 255, 0.8) flex w-full items-center justify-between bg-gradient-to-r from-[#FFFFFF]"
-      >
+      <div class="flex w-full items-center">
         <div class="flex items-center gap-4">
           <LyButton
             type="default"
@@ -292,137 +322,280 @@ function getDimensionColor(config: {
             返回
           </LyButton>
         </div>
+        <div class="ml-8 flex flex-1 items-center">
+          <Tabs
+            v-model:active-key="activeKey"
+            class="result-tab w-full"
+            centered
+            :tab-bar-style="{ width: '100%' }"
+          >
+            <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.tab" />
+            <template #rightExtra>
+              <LyButton
+                v-if="queryData?.taskName"
+                :loading="exportLoading"
+                :disabled="loading || exportLoading"
+                type="success"
+                size="small"
+                class="ml-8"
+                @click="handleExport"
+              >
+                {{ exportLoading ? '导出中...' : '导出' }}
+              </LyButton>
+            </template>
+          </Tabs>
+        </div>
       </div>
     </template>
 
     <div
-      class="h-full w-full overflow-hidden bg-white px-10 py-6"
-      style="margin: 0 140px"
+      class="result-modal-content h-full w-full overflow-y-auto px-[12rem] py-8"
     >
-      <Tabs v-model:active-key="activeKey">
-        <Tabs.TabPane v-for="tab in tabs" :key="tab.key" :tab="tab.tab">
-          <Spin :spinning="loading" class="flex-center h-full" />
-          <div v-if="!loading" class="h-full overflow-y-auto">
-            <!-- 问卷报告 -->
-            <div v-if="tab.key === 'result'" class="space-y-6">
-              <template v-if="assessmentResult || dimensions.length > 0">
-                <!-- 问卷信息标题 -->
-                <div class="flex items-center gap-3">
-                  <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
-                  <h2 class="text-xl font-semibold text-gray-800">
-                    {{
-                      queryData.questionnaireName || queryData.taskName
-                    }}结果分析
-                  </h2>
-                </div>
-
-                <div class="px-4">
-                  <template
-                    v-if="!queryData.questionnaireId && assessmentResult"
-                  >
+      <div class="background-layer"></div>
+      <div v-if="!loading" class="content-wrapper">
+        <Transition name="fade" mode="out-in">
+          <div v-if="activeKey === 'result'" class="space-y-6">
+            <!-- 判断是否有测评结果或问卷结果 -->
+            <template
+              v-if="assessmentResult || dimensions.length > 0 || mtuiResult"
+            >
+              <!-- 测评结果视图 -->
+              <template v-if="!queryData.questionnaireId">
+                <!-- 大学版视图 -->
+                <template v-if="isUniversity">
+                  <UniversityContent
+                    :query-data="queryData"
+                    :dimensions="dimensions"
+                    :mtui-result="mtuiResult"
+                    :scenario-name="scenarioName"
+                  />
+                </template>
+                <!-- 小学版视图 -->
+                <template v-else-if="assessmentResult">
+                  <div class="rounded-lg bg-white p-8 shadow-sm">
+                    <div class="mb-6 flex items-center gap-3">
+                      <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
+                      <h2 class="text-xl font-semibold text-gray-800">
+                        {{
+                          queryData.questionnaireName || queryData.taskName
+                        }}结果分析
+                      </h2>
+                    </div>
                     <AssessmentResult
                       :assessment-result="assessmentResult!"
                       :get-dimension-color="getDimensionColor"
                     />
-                  </template>
-
-                  <!-- 维度结果展示 -->
-                  <template v-if="queryData.questionnaireId">
-                    <div class="mt-6 space-y-6">
-                      <QuestionnaireResult
-                        v-for="(dimension, index) in dimensions"
-                        :key="index"
-                        :questionnaire-name="queryData.questionnaireName"
-                        :dimension="dimension"
-                        :get-dimension-color="getDimensionColor"
-                      />
-                    </div>
-                  </template>
-                </div>
+                  </div>
+                </template>
               </template>
+              <!-- 问卷结果视图 -->
               <template v-else>
-                <div class="flex-center mt-20">
-                  <Empty
-                    description="该问卷不提供测评报告，详情请查看答题记录"
-                  />
+                <div class="rounded-lg bg-white p-8 shadow-sm">
+                  <div class="space-y-6">
+                    <QuestionnaireResult
+                      v-for="(dimension, index) in dimensions"
+                      :key="index"
+                      :questionnaire-name="queryData.questionnaireName"
+                      :dimension="dimension"
+                      :get-dimension-color="getDimensionColor"
+                    />
+                  </div>
                 </div>
               </template>
-            </div>
+            </template>
+            <template v-else>
+              <div class="flex-center mt-20">
+                <Empty description="该问卷不提供测评报告，详情请查看答题记录" />
+              </div>
+            </template>
+          </div>
 
-            <!-- 答题记录 -->
-            <div v-if="tab.key === 'answer'">
-              <template v-if="questionnaireAnswer.length > 0">
-                <Tabs v-model:active-key="questionnaireAnswerActiveKey">
+          <div v-else class="mx-auto">
+            <template v-if="questionnaireAnswer.length > 0">
+              <!-- 答题记录卡片 - 垂直布局 -->
+              <div class="rounded-lg bg-white shadow-sm">
+                <Tabs
+                  v-model:active-key="questionnaireAnswerActiveKey"
+                  tab-position="left"
+                  class="answer-tabs"
+                >
                   <Tabs.TabPane
                     v-for="item in questionnaireAnswer"
                     :key="item.questionnaireId"
                     :tab="item.questionnaireName"
-                  />
-                  <template #rightExtra>
-                    <div
-                      class="mr-6 flex items-center justify-end gap-3 text-xs"
-                    >
-                      <span> 作答人：{{ queryData.name }} </span>
-                      <span>
-                        作答时间：{{
-                          dayjs(completedTime).format('YYYY-MM-DD HH:mm:ss')
-                        }}
-                      </span>
-                    </div>
-                  </template>
-                </Tabs>
-
-                <div class="space-y-8">
-                  <div
-                    v-for="item in filterQuestionnaireAnswer"
-                    :key="item.questionnaireId"
                   >
-                    <!-- 问卷信息标题 -->
-                    <div class="mb-6 flex items-center justify-between">
-                      <div class="flex items-center gap-3">
-                        <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
-                        <h2 class="text-xl font-semibold text-gray-800">
-                          {{ item.questionnaireName }}作答
-                        </h2>
+                    <!-- 答题内容 -->
+                    <div class="py-4 pr-6">
+                      <!-- 标题和答题信息 -->
+                      <div class="mb-6 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <div class="h-6 w-1 rounded-full bg-[#14E77E]"></div>
+                          <h2 class="text-xl font-semibold text-gray-800">
+                            {{ item.questionnaireName }}作答
+                          </h2>
+                        </div>
+                        <div
+                          class="flex items-center gap-6 text-sm text-gray-600"
+                        >
+                          <span class="flex items-center gap-2">
+                            <span class="text-gray-500">作答人：</span>
+                            <span class="font-medium text-gray-800">{{
+                              queryData.name
+                            }}</span>
+                          </span>
+                          <span class="flex items-center gap-2">
+                            <span class="text-gray-500">作答时间：</span>
+                            <span class="font-medium text-gray-800">
+                              {{
+                                dayjs(completedTime).format(
+                                  'YYYY-MM-DD HH:mm:ss',
+                                )
+                              }}
+                            </span>
+                          </span>
+                        </div>
                       </div>
+                      <QuestionnaireAnswer :answers="item.answers" />
                     </div>
-
-                    <QuestionnaireAnswer :answers="item.answers" />
-                  </div>
-                </div>
-              </template>
-              <template v-else>
-                <div class="mt-20">
-                  <Empty />
-                </div>
-              </template>
-            </div>
+                  </Tabs.TabPane>
+                </Tabs>
+              </div>
+            </template>
+            <template v-else>
+              <div class="flex-center mt-20 rounded-lg bg-white p-12 shadow-sm">
+                <Empty />
+              </div>
+            </template>
           </div>
-        </Tabs.TabPane>
+        </Transition>
+      </div>
 
-        <template #rightExtra>
-          <LyButton
-            v-if="queryData.taskName"
-            :loading="exportLoading"
-            :disabled="loading || exportLoading"
-            type="success"
-            size="small"
-            @click="handleExport"
-          >
-            {{ exportLoading ? '导出中...' : '导出' }}
-          </LyButton>
-        </template>
-      </Tabs>
+      <div v-if="loading" class="loading-overlay flex-center">
+        <Spin size="large" />
+      </div>
     </div>
   </QuestionnaireResultModal>
 </template>
 
 <style scoped lang="scss">
-:deep(.ant-tabs) {
-  height: 100% !important;
+.result-modal-content {
+  position: relative;
+  background-color: #f7f8fb;
+
+  .background-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('https://mindtrip-1305613707.cos.ap-guangzhou.myqcloud.com/static/result_bg.png');
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    background-position: center top;
+    background-size: 100% auto;
+    opacity: 0.95;
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: '';
+      background: linear-gradient(
+        to bottom,
+        rgb(247 248 251 / 0%) 0%,
+        rgb(247 248 251 / 30%) 40%,
+        rgb(247 248 251 / 70%) 70%,
+        rgb(247 248 251 / 95%) 100%
+      );
+    }
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 2;
+  }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background-color: rgb(255 255 255 / 90%);
+  }
 }
 
-:deep(.ant-tabs-content) {
-  height: 100% !important;
+.result-tab {
+  :deep(.ant-tabs) {
+    height: 100% !important;
+  }
+
+  :deep(.ant-tabs-nav) {
+    margin-bottom: 0 !important;
+
+    .ant-tabs-nav-wrap {
+      width: 100% !important;
+
+      .ant-tabs-nav-list {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+      }
+
+      .ant-tabs-tab {
+        display: flex !important;
+        justify-content: center !important;
+        width: 20% !important;
+
+        .ant-tabs-tab-btn {
+          font-size: 16px !important;
+        }
+      }
+    }
+  }
+
+  :deep(.ant-tabs-nav::before) {
+    border-bottom: 0 !important;
+  }
+
+  :deep(.ant-tabs-content) {
+    height: 100% !important;
+  }
+}
+
+.answer-tabs {
+  min-height: 600px;
+
+  :deep(.ant-tabs-nav) {
+    width: 280px;
+    padding: 16px 0;
+    margin-right: 0;
+
+    .ant-tabs-tab {
+      height: auto;
+      padding: 12px 20px;
+      margin: 4px 0;
+      text-align: left;
+      word-wrap: break-word;
+      white-space: normal;
+
+      .ant-tabs-tab-btn {
+        font-size: 14px;
+        font-weight: 500;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+    }
+
+    .ant-tabs-tab-active {
+      background-color: #f0f7ff;
+    }
+  }
+
+  :deep(.ant-tabs-content-holder) {
+    flex: 1;
+    padding-left: 24px;
+    border-left: 1px solid #f0f0f0;
+  }
+
+  :deep(.ant-tabs-tabpane) {
+    padding: 0;
+  }
 }
 </style>

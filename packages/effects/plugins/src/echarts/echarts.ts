@@ -4,12 +4,15 @@ import type {
   GaugeSeriesOption,
   LineSeriesOption,
   MapSeriesOption,
+  ScatterSeriesOption,
 } from 'echarts/charts';
 import type {
   DatasetComponentOption,
   GeoComponentOption,
+  GraphicComponentOption,
   GridComponentOption,
   // 组件类型的定义后缀都为 ComponentOption
+  PolarComponentOption,
   TitleComponentOption,
   TooltipComponentOption,
   VisualMapComponentOption,
@@ -23,13 +26,16 @@ import {
   MapChart,
   PieChart,
   RadarChart,
+  ScatterChart,
 } from 'echarts/charts';
 import {
   // 数据集组件
   DatasetComponent,
   GeoComponent,
+  GraphicComponent,
   GridComponent,
   LegendComponent,
+  PolarComponent,
   TitleComponent,
   ToolboxComponent,
   TooltipComponent,
@@ -47,9 +53,12 @@ export type ECOption = ComposeOption<
   | DatasetComponentOption
   | GaugeSeriesOption
   | GeoComponentOption
+  | GraphicComponentOption
   | GridComponentOption
   | LineSeriesOption
   | MapSeriesOption
+  | PolarComponentOption
+  | ScatterSeriesOption
   | TitleComponentOption
   | TooltipComponentOption
   | VisualMapComponentOption
@@ -75,6 +84,9 @@ echarts.use([
   VisualMapComponent,
   MapChart,
   GeoComponent,
+  GraphicComponent,
+  PolarComponent,
+  ScatterChart,
 ]);
 
 export default echarts;

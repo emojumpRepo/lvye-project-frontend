@@ -173,6 +173,7 @@ export namespace PsychologyAssessmentApi {
     status: number;
     finishTime: number;
     questionnaireName: string;
+    userId: number;
   }
 
   export interface DeptTree {
@@ -384,6 +385,58 @@ export function getAssessmentQuestionnaireResult(id: string) {
 export function getAssessmentResult(id: string) {
   return requestClient.get<AssessmentResultVO>(
     '/psychology/assessment-result/get',
-    { params: { id } },
+    {
+      params: { id },
+    },
+  );
+}
+
+// ==================== 大学MTUI测评结果 ====================
+export interface MtuiUniversityDimensionResultVO {
+  dimensionResultId: number;
+  dimensionId: number;
+  dimensionName: string;
+  dimensionCode: string;
+  dimensionDescription: string;
+  score: number;
+  isAbnormal: number;
+  riskLevel: number;
+  level: string;
+  teacherComment: string;
+  studentComment: string;
+  sortOrder: number;
+  participateModuleCalc: number;
+  participateAssessmentCalc: number;
+  participateRanking: number;
+}
+
+export interface MtuiUniversityResultRespVO {
+  assessmentResult: {
+    assessmentResultId: number;
+    combinedRiskLevel: number;
+    riskLevelDescription: string;
+    suggestion: string;
+  };
+  questionnaireResults: MtuiUniversityQuestionnaireResult[];
+}
+
+export interface MtuiUniversityQuestionnaireResult {
+  questionnaireResultId: number;
+  answers: string;
+  questionnaireId: number;
+  questionnaireName: string;
+  questionnaireDescription?: string;
+  questionnaireType?: number;
+  userId: number;
+  assessmentTaskNo: string;
+  dimensionResults: MtuiUniversityDimensionResultVO[];
+  completedTime: number;
+}
+
+/** 获取大学MTUI测评结果 */
+export function getMtuiUniversityResults(taskNo: string, userId: number) {
+  return requestClient.get<MtuiUniversityResultRespVO>(
+    '/psychology/assessment-result/mtui-university-results',
+    { params: { assessmentTaskNo: taskNo, userId } },
   );
 }

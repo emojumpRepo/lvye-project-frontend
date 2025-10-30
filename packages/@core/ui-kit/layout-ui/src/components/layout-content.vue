@@ -26,7 +26,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {});
 const bgImage =
-  'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
+  'https://mindtrip-1305613707.cos.ap-guangzhou.myqcloud.com/static/main_bg.jpg';
 
 const { contentElement, overlayStyle } = useLayoutContentStyle();
 

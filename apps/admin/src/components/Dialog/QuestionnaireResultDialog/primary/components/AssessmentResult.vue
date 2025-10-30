@@ -70,7 +70,6 @@ const questionnaireResults = computed(() => {
 
 <template>
   <div>
-    <!-- <AssessmentRadar :questionnaire-result="questionnaireResults" /> -->
     <!-- 测评总结 -->
     <div
       class="mb-8 mt-6 flex flex-col gap-4 rounded-lg border bg-gray-50 p-4 text-sm"
