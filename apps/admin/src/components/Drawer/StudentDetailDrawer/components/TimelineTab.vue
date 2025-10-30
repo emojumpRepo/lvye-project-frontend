@@ -55,13 +55,13 @@ const timelineList = computed(() => {
       </div>
       <div class="w-full flex-1 space-y-4 overflow-y-auto px-4">
         <div
-          class="relative flex h-[120px] items-start"
+          class="relative flex h-[85px] items-start"
           v-for="timeline in timelineList"
           :key="timeline.id"
         >
           <div class="absolute left-0 top-0 flex flex-col items-center gap-2">
             <span class="size-2 rounded-full bg-[#04DC70]"></span>
-            <Divider type="vertical" class="h-[110px] bg-[#EAEBED]" />
+            <Divider type="vertical" class="h-[75px] bg-[#EAEBED]" />
           </div>
           <div
             class="ml-6 box-border flex h-full w-full flex-col justify-between overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
@@ -70,15 +70,17 @@ const timelineList = computed(() => {
               <span class="rounded bg-[#14E77E1F] p-1 text-[#04DC70]">
                 {{ timeline.title }}
               </span>
-              <span class="text-[#B0B1B2]">
-                {{ dayjs(timeline.createTime).format('YYYY-MM-DD') }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="whitespace-nowrap text-[#B0B1B2]">
+                  {{ dayjs(timeline.createTime).format('YYYY-MM-DD') }}
+                </span>
+                <span class="whitespace-nowrap text-xs text-[#B0B1B2]">
+                  {{ timeline.operator || '未知操作人' }}
+                </span>
+              </div>
             </div>
             <div class="line-clamp-2 text-xs text-[#979899]">
               {{ timeline.content || '暂无内容' }}
-            </div>
-            <div class="text-xs">
-              {{ timeline.operator || '未知操作人' }}
             </div>
           </div>
         </div>

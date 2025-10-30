@@ -91,8 +91,8 @@ function downloadFile(file: InfraFileApi.File) {
         </div>
         <div class="space-y-3 rounded-lg bg-gray-50 p-4 text-sm">
           <div class="flex items-center">
-            <span>评估问题：</span>
-            <div class="flex items-center">
+            <span class="whitespace-nowrap">评估问题：</span>
+            <div class="flex flex-wrap items-center">
               <ATag
                 v-for="problem in assessmentReport?.problemTypes"
                 :key="problem"
@@ -203,7 +203,7 @@ function downloadFile(file: InfraFileApi.File) {
         <div>
           <div class="mb-3 flex items-center">
             <div class="mr-3 h-6 w-1 bg-[#009DFF]"></div>
-            <h2 class="text-lg font-semibold text-gray-800">观察记录</h2>
+            <h2 class="text-lg font-semibold text-gray-800">观察计划</h2>
           </div>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-4">

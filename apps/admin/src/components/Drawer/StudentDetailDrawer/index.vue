@@ -405,7 +405,7 @@ onMounted(async () => {
               <Divider type="vertical" class="m-0 h-3 w-0.5 bg-[#04DC70]" />
               <span class="text-sm font-bold">核心问题标签</span>
             </div>
-            <div class="flex items-center gap-2.5">
+            <div class="flex flex-wrap items-center gap-2.5">
               <template v-if="coreProblemTags.length > 0">
                 <div v-for="(tag, index) in coreProblemTags" :key="index">
                   <Badge :count="tag.count >= 2 ? tag.count : 0">

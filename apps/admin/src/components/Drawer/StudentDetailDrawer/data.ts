@@ -26,6 +26,9 @@ const personalInfoFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入姓名',
+    componentProps: {
+      maxlength: 10,
+    },
     rules: 'required',
   },
   {
@@ -102,6 +105,7 @@ const personalInfoFields = [
     formItemClass: 'col-span-4',
     componentProps: {
       rows: 3,
+      maxlength: 200,
     },
   },
 ];
@@ -168,6 +172,9 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入父亲姓名',
+    componentProps: {
+      maxlength: 10,
+    },
     rules: 'required',
   },
   {
@@ -201,6 +208,9 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入母亲姓名',
+    componentProps: {
+      maxlength: 10,
+    },
     rules: 'required',
   },
   {
@@ -252,6 +262,7 @@ const familyBackgroundFields = [
     formItemClass: 'col-span-4',
     componentProps: {
       rows: 3,
+      maxlength: 200,
     },
   },
 ];
