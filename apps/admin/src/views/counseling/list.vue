@@ -426,7 +426,7 @@ onMounted(async () => {
                 onClick: () => handleFinish(row),
               },
               {
-                label: '补录咨询',
+                label: '完成',
                 type: 'link',
                 color: 'success',
                 ifShow: () =>

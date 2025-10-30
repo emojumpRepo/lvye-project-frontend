@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'updateLoading', value: boolean): void;
+  (e: 'refresh'): void;
 }>();
 
 // 学生家长档案
@@ -26,17 +27,28 @@ const studentParentProfile = ref<StudentParentFormData>({
   fatherRelation: undefined,
   motherId: undefined,
   motherName: undefined,
+  motherWork: undefined,
+  motherPhone: undefined,
+  motherRelation: undefined,
+  parentMaritalStatus: undefined,
+  remark: undefined,
 });
 
-async function loadStudentParentProfile(id: number) {
+/** 加载学生家长档案 */
+async function loadStudentParentProfile(id: number | undefined) {
+  if (!id && !props.studentInfo?.id) return;
+
+  const studentProfileId = id ?? props.studentInfo!.id;
+
   try {
-    const studentParentProfileList = await getStudentParentProfile(id);
+    const studentParentProfileList =
+      await getStudentParentProfile(studentProfileId);
     if (studentParentProfileList.length > 0) {
       const fatherInfo = studentParentProfileList.find(
-        (item) => item.relation === 1,
+        (item) => item.relation === 1 || item.relation === 3,
       );
       const motherInfo = studentParentProfileList.find(
-        (item) => item.relation === 2,
+        (item) => item.relation === 2 || item.relation === 4,
       );
       studentParentProfile.value = {
         studentProfileId:
@@ -47,12 +59,14 @@ async function loadStudentParentProfile(id: number) {
         fatherName: fatherInfo?.name,
         fatherWork: fatherInfo?.work,
         fatherPhone: fatherInfo?.mobile,
-        fatherRelation: fatherInfo?.relation,
+        fatherRelation:
+          fatherInfo?.relation || props.studentInfo?.sex === 1 ? 1 : 2,
         motherId: motherInfo?.id,
         motherName: motherInfo?.name,
         motherWork: motherInfo?.work,
         motherPhone: motherInfo?.mobile,
-        motherRelation: motherInfo?.relation,
+        motherRelation:
+          motherInfo?.relation || props.studentInfo?.sex === 1 ? 2 : 4,
         parentMaritalStatus: fatherInfo?.maritalStatus,
         remark: fatherInfo?.remark,
       };
@@ -76,12 +90,15 @@ onMounted(async () => {
       title="学籍信息"
       schema-type="personalInfo"
       @update-loading="emit('updateLoading', $event)"
+      @refresh="emit('refresh')"
     />
     <InfoSectionForm
       :parent-info="studentParentProfile"
       title="家庭情况"
       schema-type="familyBackground"
       :student-profile-id="props.studentInfo?.id"
+      @update-loading="emit('updateLoading', $event)"
+      @refresh="loadStudentParentProfile(props.studentInfo?.id ?? 0)"
     />
   </div>
 </template>

@@ -26,6 +26,8 @@ export namespace PsychologyConsultationApi {
     consultationType: string;
     overdue?: boolean;
     location?: string;
+    summary?: string;
+    attachmentIds?: number[];
     notes?: string;
     notifyStudent: boolean;
     status: number;

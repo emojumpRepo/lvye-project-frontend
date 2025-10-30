@@ -24,6 +24,7 @@ export namespace PsychologyStudentParentProfileApi {
         maritalStatus: number;
         mobile: string;
         name: string;
+        relation: number;
         remark?: string;
         work?: string;
       },
@@ -32,6 +33,7 @@ export namespace PsychologyStudentParentProfileApi {
         maritalStatus: number;
         mobile: string;
         name: string;
+        relation: number;
         remark?: string;
         work?: string;
       },
@@ -54,7 +56,7 @@ export function getStudentParentProfile(studentProfileId: number) {
 export function updateStudentParentProfile(
   data: PsychologyStudentParentProfileApi.StudentParentProfilePageReq,
 ) {
-  return requestClient.put<boolean>(
+  return requestClient.post<boolean>(
     `/psychology/student-parent-profile/update`,
     data,
   );

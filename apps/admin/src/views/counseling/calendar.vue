@@ -240,7 +240,7 @@ async function handlePrevious() {
     }
   }
 
-  offset.value -= 1;
+  // offset.value -= 1;
   selectedDate.value = newDate;
   calendar.value.setDate(newDate.toDate());
 
@@ -280,7 +280,7 @@ async function handleNext() {
     }
   }
 
-  offset.value += 1;
+  // offset.value += 1;
   selectedDate.value = newDate;
   calendar.value.setDate(newDate.toDate());
 

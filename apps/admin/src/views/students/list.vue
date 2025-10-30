@@ -11,7 +11,7 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 
 import { ref } from 'vue';
 
-import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
 import {
@@ -27,8 +27,10 @@ import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteStudentProfile,
   getStudentProfilePage,
-} from '#/api/psychology/student-profile';
+  submitIndependentAssessment,
+} from '#/api/psychology';
 import BulkDeleteStudentDialog from '#/components/Dialog/BulkDeleteStudentDialog/index.vue';
+import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
 import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
 import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
@@ -127,10 +129,16 @@ const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
     connectedComponent: CreateSimpleAssessmentDialog,
   });
 
+// 创建风险评估弹窗
+const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
+  connectedComponent: CreateEvaluationDialog,
+});
+
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
 const studentSearchRef = ref();
+const currentStudentProfileId = ref<number | undefined>();
 
 // ============== 视图模式与选择 ==============
 const viewMode = ref<'group' | 'list'>('list');
@@ -152,7 +160,7 @@ const confirmInfo = ref<AssessmentComfirmInfo>({
 // Grid 定义
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    height: '650px',
+    height: 'auto',
     rowConfig: { keyField: 'id' },
     checkboxConfig: { reserve: true },
     pagerConfig: {
@@ -369,9 +377,10 @@ function refresh() {
 // =============== 学生详情底部按钮触发事件 ==================
 
 /** 评估 */
-function handleEvaluate(data: AssessmentComfirmInfo) {
+function handleEvaluate(data: AssessmentComfirmInfo, studentProfileId: number) {
   confirmInfo.value = data;
-  isOpenPsychologicalAssessmentDialog.value = true;
+  currentStudentProfileId.value = studentProfileId;
+  createEvaluationModalApi.setData({ confirmInfo: data }).open();
 }
 
 /** 上报异常 */
@@ -426,187 +435,210 @@ function handleStartAssessment(
 
 /** 完成评估 */
 async function publishAssessment(params: InterventionAssessmentReqVO) {
-  console.log('评估参数', params);
-  return true;
+  if (!currentStudentProfileId.value) return false;
+
+  try {
+    const response = await submitIndependentAssessment({
+      studentProfileId: currentStudentProfileId.value,
+      ...params,
+      content: params.consultRecord,
+    });
+    if (response) {
+      refresh();
+      return true;
+    } else {
+      message.error('评估失败');
+      return false;
+    }
+  } catch (error) {
+    console.error(error);
+    message.error('评估失败');
+    return false;
+  }
 }
 </script>
 
 <template>
-  <div class="flex h-full flex-col p-6">
-    <!-- 搜索组件 -->
-    <StudentSearch ref="studentSearchRef" @search="handleSearch" />
+  <Page auto-content-height>
+    <div class="flex h-full flex-col p-2">
+      <!-- 搜索组件 -->
+      <StudentSearch ref="studentSearchRef" @search="handleSearch" />
 
-    <!-- 数据表格 -->
-    <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <!-- <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button> -->
-          <Dropdown>
-            <template #overlay>
-              <Menu>
-                <MenuItem key="1" @click="handleGraduated">年级毕业</MenuItem>
-                <MenuItem key="2" @click="handleExport">导出数据</MenuItem>
-                <MenuItem key="3" @click="handleImport">批量导入</MenuItem>
-              </Menu>
-            </template>
-            <Button>
-              <div class="flex items-center">
-                <span class="mr-1">更多操作</span>
-                <IconifyIcon icon="lucide:chevron-right" />
-              </div>
+      <!-- 数据表格 -->
+      <div class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- <Button @click="handleGraduatedStudentFile">已毕业学生档案</Button> -->
+            <Dropdown>
+              <template #overlay>
+                <Menu>
+                  <MenuItem key="1" @click="handleGraduated">年级毕业</MenuItem>
+                  <MenuItem key="2" @click="handleExport">导出数据</MenuItem>
+                  <MenuItem key="3" @click="handleImport">批量导入</MenuItem>
+                </Menu>
+              </template>
+              <Button>
+                <div class="flex items-center">
+                  <span class="mr-1">更多操作</span>
+                  <IconifyIcon icon="lucide:chevron-right" />
+                </div>
+              </Button>
+            </Dropdown>
+            <Button type="primary" @click="handleAdd">创建学生</Button>
+            <Button
+              danger
+              @click="handleBulkDelete"
+              v-show="selectedRowKeys.length > 0"
+              :disabled="selectedRowKeys.length === 0"
+            >
+              批量删除
             </Button>
-          </Dropdown>
-          <Button type="primary" @click="handleAdd">创建学生</Button>
-          <Button
-            danger
-            @click="handleBulkDelete"
-            v-show="selectedRowKeys.length > 0"
-            :disabled="selectedRowKeys.length === 0"
-          >
-            批量删除
-          </Button>
-          <Button
-            v-show="selectedRowKeys.length > 0"
-            :disabled="selectedRowKeys.length === 0"
-            @click="handleBulkChangeClass"
-          >
-            批量换班
-          </Button>
+            <Button
+              v-show="selectedRowKeys.length > 0"
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBulkChangeClass"
+            >
+              批量换班
+            </Button>
+          </div>
+          <Radio.Group v-model:value="viewMode" @change="handleViewModeChange">
+            <Radio.Button value="list">列表视图</Radio.Button>
+            <Radio.Button value="group">分组视图</Radio.Button>
+          </Radio.Group>
         </div>
-        <Radio.Group v-model:value="viewMode" @change="handleViewModeChange">
-          <Radio.Button value="list">列表视图</Radio.Button>
-          <Radio.Button value="group">分组视图</Radio.Button>
-        </Radio.Group>
+
+        <div class="min-h-0 flex-1 overflow-hidden">
+          <template v-if="viewMode === 'list'">
+            <Grid>
+              <!-- 性别 -->
+              <template #sex="{ row }">
+                <span>
+                  {{
+                    row.sex ? getDictLabel('system_user_sex', row.sex) : '--'
+                  }}
+                </span>
+              </template>
+
+              <!-- 风险等级 -->
+              <template #riskLevel="{ row }">
+                <LyTag
+                  v-if="row?.riskLevel"
+                  tag-category-key="risk_level"
+                  :dict-value="row?.riskLevel"
+                />
+                <LyTag v-else />
+              </template>
+
+              <!-- 毕业状态 -->
+              <template #graduationStatus="{ row }">
+                <LyTag
+                  tag-category-key="student_graduation_status"
+                  :dict-value="String(row?.graduationStatus)"
+                />
+              </template>
+
+              <!-- 联系电话 -->
+              <template #mobile="{ row }">
+                <span>{{ row?.mobile || '--' }}</span>
+              </template>
+
+              <!-- 操作 -->
+              <template #actions="{ row }">
+                <TableAction
+                  :actions="[
+                    {
+                      label: '查看详情',
+                      type: 'link',
+                      onClick: () =>
+                        studentDetailDrawerApi.setData({ id: row.id }).open(),
+                    },
+                    // {
+                    //   label: '删除',
+                    //   type: 'link',
+                    //   danger: true,
+                    //   onClick: () =>
+                    //     openDeleteStudentModal(
+                    //       row.id as number,
+                    //       row.studentNo,
+                    //       row.name,
+                    //     ),
+                    // },
+                  ]"
+                />
+              </template>
+            </Grid>
+          </template>
+          <template v-else>
+            <Grid>
+              <template #name="{ row }">
+                <div class="my-2 flex flex-col gap-1">
+                  <span
+                    :class="
+                      row.studentNo
+                        ? 'text-sm text-[#4C4C4D]'
+                        : 'font-bold text-[#000000A6]'
+                    "
+                  >
+                    {{ row.name }}
+                  </span>
+                  <span v-if="row.studentNo" class="text-sm text-[#B0B1B2]">
+                    {{ row.studentNo }}
+                  </span>
+                </div>
+              </template>
+
+              <template #count="{ row }">
+                <span v-if="row.count && row.count > 0">
+                  共{{ row.count }}人
+                </span>
+              </template>
+            </Grid>
+          </template>
+        </div>
       </div>
 
-      <div class="min-h-0 flex-1 overflow-hidden">
-        <template v-if="viewMode === 'list'">
-          <Grid>
-            <!-- 性别 -->
-            <template #sex="{ row }">
-              <span>
-                {{ row.sex ? getDictLabel('system_user_sex', row.sex) : '--' }}
-              </span>
-            </template>
-
-            <!-- 风险等级 -->
-            <template #riskLevel="{ row }">
-              <LyTag
-                v-if="row?.riskLevel"
-                tag-category-key="risk_level"
-                :dict-value="row?.riskLevel"
-              />
-              <LyTag v-else />
-            </template>
-
-            <!-- 毕业状态 -->
-            <template #graduationStatus="{ row }">
-              <LyTag
-                tag-category-key="student_graduation_status"
-                :dict-value="String(row?.graduationStatus)"
-              />
-            </template>
-
-            <!-- 联系电话 -->
-            <template #mobile="{ row }">
-              <span>{{ row?.mobile || '--' }}</span>
-            </template>
-
-            <!-- 操作 -->
-            <template #actions="{ row }">
-              <TableAction
-                :actions="[
-                  {
-                    label: '查看详情',
-                    type: 'link',
-                    onClick: () =>
-                      studentDetailDrawerApi.setData({ id: row.id }).open(),
-                  },
-                  // {
-                  //   label: '删除',
-                  //   type: 'link',
-                  //   danger: true,
-                  //   onClick: () =>
-                  //     openDeleteStudentModal(
-                  //       row.id as number,
-                  //       row.studentNo,
-                  //       row.name,
-                  //     ),
-                  // },
-                ]"
-              />
-            </template>
-          </Grid>
-        </template>
-        <template v-else>
-          <Grid>
-            <template #name="{ row }">
-              <div class="my-2 flex flex-col gap-1">
-                <span
-                  :class="
-                    row.studentNo
-                      ? 'text-sm text-[#4C4C4D]'
-                      : 'font-bold text-[#000000A6]'
-                  "
-                >
-                  {{ row.name }}
-                </span>
-                <span v-if="row.studentNo" class="text-sm text-[#B0B1B2]">
-                  {{ row.studentNo }}
-                </span>
-              </div>
-            </template>
-
-            <template #count="{ row }">
-              <span v-if="row.count && row.count > 0">
-                共{{ row.count }}人
-              </span>
-            </template>
-          </Grid>
-        </template>
-      </div>
+      <!-- 学生档案抽屉 -->
+      <StudentProfileDrawer
+        @refresh="refresh"
+        @evaluate="handleEvaluate"
+        @report-abnormal="handleReportAbnormal"
+        @start-assessment="handleStartAssessment"
+        @interview="handleInterview"
+      />
+      <!-- 创建学生抽屉 -->
+      <CreateDrawer @refresh="refresh" />
+      <!-- 批量换班抽屉 -->
+      <BulkClassTransferDrawer @refresh="refresh" />
+      <!-- 批量导入抽屉 -->
+      <BulkImportDrawer @refresh="refresh" />
+      <!-- 删除学生确认框 -->
+      <DeleteStudentModal />
+      <!-- 批量删除学生确认框 -->
+      <BulkDeleteStudentModal @refresh="refresh" />
+      <!-- 已毕业学生档案抽屉 -->
+      <GraduatedFileDrawer />
+      <!-- 年级毕业抽屉 -->
+      <StudentGradeGraduationDrawer
+        v-model:open="graduationDrawerOpen"
+        @refresh="refresh"
+      />
+      <!-- 危机事件弹窗 -->
+      <HandleCrisisEventModal />
+      <!-- 心理咨询弹窗 -->
+      <PsychologicalConsultDialog
+        v-model:open="isOpenPsychologicalAssessmentDialog"
+        :comfirm-info="confirmInfo"
+        :publish="publishAssessment"
+      />
+      <!-- 上报异常弹窗 -->
+      <ReportAbnormalDrawer @view-detail="viewCrisisEvent" />
+      <!-- 创建测评弹窗 -->
+      <CreateSimpleAssessmentModal />
+      <!-- 预约访谈弹窗 -->
+      <AppointConsultDrawer />
+      <CreateEvaluationModal :publish="publishAssessment" />
     </div>
-
-    <!-- 学生档案抽屉 -->
-    <StudentProfileDrawer
-      @refresh="refresh"
-      @evaluate="handleEvaluate"
-      @report-abnormal="handleReportAbnormal"
-      @start-assessment="handleStartAssessment"
-      @interview="handleInterview"
-    />
-    <!-- 创建学生抽屉 -->
-    <CreateDrawer @refresh="refresh" />
-    <!-- 批量换班抽屉 -->
-    <BulkClassTransferDrawer @refresh="refresh" />
-    <!-- 批量导入抽屉 -->
-    <BulkImportDrawer @refresh="refresh" />
-    <!-- 删除学生确认框 -->
-    <DeleteStudentModal />
-    <!-- 批量删除学生确认框 -->
-    <BulkDeleteStudentModal @refresh="refresh" />
-    <!-- 已毕业学生档案抽屉 -->
-    <GraduatedFileDrawer />
-    <!-- 年级毕业抽屉 -->
-    <StudentGradeGraduationDrawer
-      v-model:open="graduationDrawerOpen"
-      @refresh="refresh"
-    />
-    <!-- 危机事件弹窗 -->
-    <HandleCrisisEventModal />
-    <!-- 心理咨询弹窗 -->
-    <PsychologicalConsultDialog
-      v-model:open="isOpenPsychologicalAssessmentDialog"
-      :comfirm-info="confirmInfo"
-      :publish="publishAssessment"
-    />
-    <!-- 上报异常弹窗 -->
-    <ReportAbnormalDrawer @view-detail="viewCrisisEvent" />
-    <!-- 创建测评弹窗 -->
-    <CreateSimpleAssessmentModal />
-    <!-- 预约访谈弹窗 -->
-    <AppointConsultDrawer />
-  </div>
+  </Page>
 </template>
 
 <!-- <style lang="scss" scoped>

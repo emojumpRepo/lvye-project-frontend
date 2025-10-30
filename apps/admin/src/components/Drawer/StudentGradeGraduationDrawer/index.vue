@@ -284,16 +284,11 @@ onMounted(async () => {
               :pagination="false"
             >
               <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'psychologicalStatus'">
+                <template v-if="column.key === 'riskLevel'">
                   <span
                     class="rounded bg-[#1966FF14] px-2 py-1 text-xs text-[#1966FF]"
                   >
-                    {{
-                      getDictLabel(
-                        'student_psychological_status',
-                        record.psychologicalStatus,
-                      )
-                    }}
+                    {{ getDictLabel('risk_level', record.riskLevel) }}
                   </span>
                 </template>
                 <template v-if="column.key === 'action'">

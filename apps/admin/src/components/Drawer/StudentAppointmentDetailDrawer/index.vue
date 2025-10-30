@@ -158,18 +158,18 @@ async function loadConsultationRecord() {
 
           <!-- 咨询信息 -->
           <div>
-            <LyLabel title="咨询信息" has-indicator />
+            <LyLabel title="咨询/访谈信息" has-indicator />
             <div class="mt-6 grid grid-cols-3 gap-4">
               <AForm.Item name="type">
                 <LyLabel
-                  title="咨询类型"
+                  title="咨询/访谈类型"
                   custom-title-class="font-normal text-sm"
                 />
                 <AInput v-model:value="form.type" placeholder="请填写" />
               </AForm.Item>
               <AForm.Item name="consultant">
                 <LyLabel
-                  title="咨询老师"
+                  title="对接老师"
                   custom-title-class="font-normal text-sm"
                 />
                 <AInput v-model:value="form.consultant" placeholder="请填写" />
@@ -183,7 +183,7 @@ async function loadConsultationRecord() {
               </AForm.Item>
               <AForm.Item name="emphasis" class="col-span-3 w-full">
                 <LyLabel
-                  title="咨询重点"
+                  title="咨询/访谈重点"
                   custom-title-class="font-normal text-sm"
                 />
                 <ATextarea

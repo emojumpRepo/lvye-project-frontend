@@ -281,19 +281,19 @@ function handleCloseEvent() {
       );
       if (!response)
         return message.error(
-          crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+          crisisEventDetail.value?.closed ? '关闭事件失败' : '开启事件失败',
         );
       await reloadCrisisEvent();
       message.success(
-        crisisEventDetail.value?.closed ? '开启事件成功' : '关闭事件成功',
+        crisisEventDetail.value?.closed ? '关闭事件成功' : '开启事件成功',
       );
     } catch (error) {
       console.error(
-        crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+        crisisEventDetail.value?.closed ? '关闭事件失败' : '开启事件失败',
         error,
       );
       message.error(
-        crisisEventDetail.value?.closed ? '开启事件失败' : '关闭事件失败',
+        crisisEventDetail.value?.closed ? '关闭事件失败' : '开启事件失败',
       );
     }
   });

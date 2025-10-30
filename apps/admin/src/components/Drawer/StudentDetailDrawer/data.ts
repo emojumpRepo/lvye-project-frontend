@@ -175,6 +175,9 @@ const familyBackgroundFields = [
     label: '父亲职业',
     viewComponent: 'Input',
     editComponent: 'Input',
+    componentProps: {
+      maxlength: 20,
+    },
     placeholder: '请输入父亲职业',
     // rules: 'required',
   },
@@ -184,7 +187,13 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入父亲联系方式',
-    rules: 'required',
+    componentProps: {
+      maxlength: 11,
+    },
+    rules: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^1[3-9]\d{9}$/.test(val), '请输入正确的手机号'),
   },
   {
     fieldName: 'motherName',
@@ -200,6 +209,9 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入母亲职业',
+    componentProps: {
+      maxlength: 20,
+    },
     // rules: 'required',
   },
   {
@@ -208,7 +220,13 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Input',
     placeholder: '请输入母亲联系方式',
-    rules: 'required',
+    componentProps: {
+      maxlength: 11,
+    },
+    rules: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^1[3-9]\d{9}$/.test(val), '请输入正确的手机号'),
   },
   {
     fieldName: 'parentMaritalStatus',
@@ -216,10 +234,10 @@ const familyBackgroundFields = [
     viewComponent: 'Input',
     editComponent: 'Select',
     options: [
-      { label: '已婚', value: 'married' },
-      { label: '离异', value: 'divorced' },
-      { label: '丧偶', value: 'widowed' },
-      { label: '其他', value: 'other' },
+      { label: '已婚', value: 1 },
+      { label: '离异', value: 2 },
+      { label: '丧偶', value: 3 },
+      { label: '其他', value: 4 },
     ],
     placeholder: '请选择婚姻情况',
     rules: 'required',

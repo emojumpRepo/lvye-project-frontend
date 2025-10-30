@@ -15,9 +15,9 @@ export const specialStudentColumns = [
     key: 'className',
   },
   {
-    title: '当前心理状态',
-    dataIndex: 'psychologicalStatus',
-    key: 'psychologicalStatus',
+    title: '当前风险等级',
+    dataIndex: 'riskLevel',
+    key: 'riskLevel',
   },
   {
     title: '操作',

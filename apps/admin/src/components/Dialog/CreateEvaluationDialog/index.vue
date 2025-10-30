@@ -89,6 +89,8 @@ const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
   footer: false,
+  appendToMain: true,
+  closeOnClickModal: false,
   onOpenChange: async (isOpen: boolean) => {
     if (isOpen) {
       loading.value = true;
@@ -349,6 +351,8 @@ function openInterviewOutline() {
                     v-model:value="customProblemTypeInput"
                     placeholder="请输入问题类型"
                     required
+                    :maxlength="20"
+                    show-count
                     class="border px-2 py-1.5 text-sm transition-colors"
                     @keyup.enter="addProblemType"
                   />
@@ -422,8 +426,10 @@ function openInterviewOutline() {
                   <ATextarea
                     v-model:value="form.medicalVisitRecord"
                     placeholder="请输入学生的就诊医院、诊断结果、用药情况等详细信息"
-                    :rows="4"
-                    class="w-full p-3 text-sm"
+                    :rows="5"
+                    :maxlength="2000"
+                    show-count
+                    class="w-full text-sm"
                   />
                 </div>
               </Transition>
@@ -502,8 +508,10 @@ function openInterviewOutline() {
                 <ATextarea
                   v-model:value="form.observationRecord"
                   placeholder="请填写后续的观察计划、干预措施等内容"
-                  :autosize="{ minRows: 5 }"
-                  class="w-full rounded-lg border border-gray-200 p-3 text-sm transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  :autosize="{ minRows: 6 }"
+                  :maxlength="2000"
+                  show-count
+                  class="w-full text-sm"
                 />
               </div>
             </Transition>

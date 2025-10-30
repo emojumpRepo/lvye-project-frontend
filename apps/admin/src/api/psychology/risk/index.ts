@@ -19,6 +19,7 @@ export interface ReportCrisisEventReqVO {
 // 创建干预评估请求参数
 export interface InterventionAssessmentReqVO {
   id?: number;
+  studentProfileId?: number;
   problemTypes?: string[];
   consultRecord?: string;
   attachmentIds?: number[];
@@ -27,6 +28,18 @@ export interface InterventionAssessmentReqVO {
   medicalVisitRecord?: string;
   observationRecord?: string;
   summary?: string;
+}
+
+// 创建干预评估请求参数
+export interface AssessmentSaveReqVO {
+  studentProfileId: number;
+  problemTypes?: string[];
+  attachmentIds?: number[];
+  content?: string;
+  riskLevel?: number;
+  hasMedicalVisit?: boolean;
+  medicalVisitRecord?: string;
+  observationRecord?: string;
 }
 
 /** 上报危机事件 */
@@ -159,5 +172,13 @@ export function getOngoingRiskEvent(params: {
   return requestClient.get<PageResult<CrisisEvent>>(
     '/psychology/intervention/event/ongoing',
     { params },
+  );
+}
+
+/** 完成学生独立评估 */
+export function submitIndependentAssessment(params: AssessmentSaveReqVO) {
+  return requestClient.post<boolean>(
+    `/psychology/intervention/assessment/submit`,
+    { ...params },
   );
 }

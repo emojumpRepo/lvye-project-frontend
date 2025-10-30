@@ -129,7 +129,7 @@ const [SupplementEvaluteModal, supplementEvaluteModalApi] = useVbenModal({
 </script>
 
 <template>
-  <SupplementEvaluteModal title="补录咨询">
+  <SupplementEvaluteModal title="补录完成">
     <div class="px-2 pt-2">
       <AForm :model="form" :rules="rules">
         <AForm.Item label="实际完成时间" name="actualTime">

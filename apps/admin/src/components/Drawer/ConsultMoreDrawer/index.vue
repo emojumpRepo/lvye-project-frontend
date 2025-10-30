@@ -133,19 +133,19 @@ defineExpose({
           <!-- 详情信息 -->
           <div class="flex flex-wrap gap-12 text-sm">
             <div class="flex items-center">
-              <span>访谈类型：</span>
+              <span>咨询/访谈类型：</span>
               <span>
                 {{ appointment.consultationType }}
               </span>
             </div>
             <div class="flex items-center">
-              <span>访谈老师：</span>
+              <span>对接老师：</span>
               <span>
                 {{ appointment.counselorName }}
               </span>
             </div>
             <div class="flex items-center">
-              <span>访谈地点：</span>
+              <span>咨询/访谈地点：</span>
               <span class="">{{ appointment.location }}</span>
             </div>
             <div class="flex items-center">

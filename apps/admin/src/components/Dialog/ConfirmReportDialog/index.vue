@@ -26,6 +26,7 @@ const [ConfirmReportModal, confirmReportModalApi] = useVbenModal({
   fullscreenButton: false,
   destroyOnClose: true,
   headerClass: 'px-5 py-3',
+  class: 'w-[700px]',
   onOpenChange: async (open) => {
     if (open) {
       const data = await confirmReportModalApi.getData<Params>();

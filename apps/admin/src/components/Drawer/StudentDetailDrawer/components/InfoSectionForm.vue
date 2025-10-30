@@ -3,6 +3,7 @@ import type { StudentParentFormData } from '@vben/types';
 
 import type { ConfigOptions } from '../data';
 
+import type { PsychologyStudentParentProfileApi } from '#/api/psychology/student-parent-profile';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { computed, ref, unref, watch } from 'vue';
@@ -37,6 +38,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'updateLoading', value: boolean): void;
+  (e: 'refresh'): void;
 }>();
 
 dayjs.extend(customParseFormat);
@@ -180,6 +182,7 @@ async function handleSave() {
       // 成功后，重新格式化显示数据
       formatFormData(values as PsychologyStudentProfileApi.StudentProfile);
       InfoFormApi.setValues(studentFormInfo.value);
+      emit('refresh');
       message.success('学生信息保存成功');
     } catch (error) {
       console.warn('updateStudentProfile failed', error);
@@ -203,24 +206,27 @@ async function handleSaveParentProfile(formValues: any) {
     return;
   }
 
-  const parentList = [
-    {
-      id: props.parentInfo?.fatherId,
-      name: formValues.fatherName,
-      mobile: formValues.fatherPhone,
-      remark: formValues.remark,
-      work: formValues.fatherWork,
-      maritalStatus: formValues.parentMaritalStatus,
-    },
-    {
-      id: props.parentInfo?.motherId,
-      name: formValues.motherName,
-      mobile: formValues.motherPhone,
-      remark: formValues.remark,
-      work: formValues.motherWork,
-      maritalStatus: formValues.parentMaritalStatus,
-    },
-  ];
+  const parentList: PsychologyStudentParentProfileApi.StudentParentProfilePageReq['parentList'] =
+    [
+      {
+        id: props.parentInfo?.fatherId,
+        name: formValues.fatherName,
+        mobile: formValues.fatherPhone,
+        remark: formValues.remark,
+        relation: props.parentInfo?.fatherRelation ?? 1,
+        work: formValues.fatherWork,
+        maritalStatus: formValues.parentMaritalStatus,
+      },
+      {
+        id: props.parentInfo?.motherId,
+        name: formValues.motherName,
+        mobile: formValues.motherPhone,
+        remark: formValues.remark,
+        relation: props.parentInfo?.motherRelation ?? 2,
+        work: formValues.motherWork,
+        maritalStatus: formValues.parentMaritalStatus,
+      },
+    ];
 
   try {
     if (!props.parentInfo?.fatherId || !props.parentInfo?.motherId) {
@@ -229,9 +235,10 @@ async function handleSaveParentProfile(formValues: any) {
         parentList,
       });
       if (response) {
-        message.success('学生家长档案创建成功');
         formatParentFormData(formValues);
         InfoFormApi.setValues(parentFormInfo.value);
+        emit('refresh');
+        message.success('学生家长档案创建成功');
       } else {
         message.error('学生家长档案创建失败');
         throw new Error('Create failed'); // 抛出错误以便 catch 块捕获
@@ -242,9 +249,10 @@ async function handleSaveParentProfile(formValues: any) {
         parentList,
       });
       if (response) {
-        message.success('学生家长档案更新成功');
         formatParentFormData(formValues);
         InfoFormApi.setValues(parentFormInfo.value);
+        emit('refresh');
+        message.success('学生家长档案更新成功');
       } else {
         message.error('学生家长档案更新失败');
         throw new Error('Update failed');
@@ -325,6 +333,8 @@ function formatParentFormData(info: StudentParentFormData) {
 
   parentFormInfo.value = {
     ...info,
+    fatherRelation: props.parentInfo?.fatherRelation ?? 1,
+    motherRelation: props.parentInfo?.motherRelation ?? 2,
     parentMaritalStatus,
   };
   return parentFormInfo.value;

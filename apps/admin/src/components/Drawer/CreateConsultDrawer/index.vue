@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 
+import type { InfraFileApi } from '#/api/infra/file';
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
 import { computed, ref, watch } from 'vue';
@@ -22,6 +23,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
 import { COUNSELING_STATUS } from '#/api/constants';
+import { getFileById } from '#/api/infra/file';
 import {
   checkTimeConflict,
   createConsultationRecord,
@@ -40,6 +42,8 @@ import { getEventStyleOptions } from '#/views/counseling/data';
 // 导入 composables
 import { useStudentSearch } from './composables/useStudentSearch';
 import { useTimeCalculation } from './composables/useTimeCalculation';
+
+type AttachmentFile = InfraFileApi.File & { downding: boolean };
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
@@ -94,6 +98,7 @@ const isEdit = ref(false); // 是否是编辑状态
 const isReadOnly = computed(
   () => !!currentConsultationRecordId.value && !isEdit.value,
 );
+const attachmentList = ref<InfraFileApi.File[]>([]);
 const teacherOptions = ref<{ label: string; value: number }[]>([]);
 // ==================== 自定义访谈类型 ====================
 const showAddTypeInput = ref(false);
@@ -208,7 +213,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
         currentConsultationRecordId.value = data.id;
         isEdit.value = false;
         await loadConsultationRecord();
+        await loadAttachmentList();
+        if (currentConsultationRecord.value?.summary) {
+          drawerApi.setState({ class: 'w-2/3' });
+        } else {
+          drawerApi.setState({ class: 'w-2/5' });
+        }
       } else {
+        drawerApi.setState({ class: 'w-2/3' });
         currentDate.value = data.currentDate || '';
         timeRange.value = data.timeRange;
         isEdit.value = true;
@@ -222,6 +234,20 @@ const [Drawer, drawerApi] = useVbenDrawer({
   },
   onConfirm: submitConsult,
 });
+
+/** 加载咨询附件 */
+async function loadAttachmentList() {
+  if (
+    currentConsultationRecord.value?.attachmentIds &&
+    currentConsultationRecord.value?.attachmentIds.length > 0
+  ) {
+    attachmentList.value = await Promise.all(
+      currentConsultationRecord.value?.attachmentIds.map((id: number) =>
+        getFileById(id),
+      ),
+    );
+  }
+}
 
 /** 加载咨询预约详情 */
 async function loadConsultationRecord() {
@@ -742,6 +768,84 @@ function disabledRangeTime(
 ) {
   return getDisabledTimeConfig(form.value.consultDate);
 }
+
+// ==================== 附件相关 ====================
+// 文件类型判断
+const getFileType = (fileName: string, mimeType: string) => {
+  const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+  if (
+    ['gif', 'jpeg', 'jpg', 'png', 'svg', 'webp'].includes(ext) ||
+    mimeType.startsWith('image/')
+  ) {
+    return 'image';
+  }
+
+  if (
+    ['7z', 'gz', 'rar', 'tar', 'zip'].includes(ext) ||
+    mimeType.includes('zip') ||
+    mimeType.includes('compressed')
+  ) {
+    return 'archive';
+  }
+
+  return 'document';
+};
+
+// 分类文件
+const categorizedFiles = computed(() => {
+  if (!attachmentList.value) return { images: [], documents: [], archives: [] };
+
+  const images: AttachmentFile[] = [];
+  const documents: AttachmentFile[] = [];
+  const archives: AttachmentFile[] = [];
+
+  attachmentList.value.forEach((file) => {
+    const type = getFileType(file.name ?? '', file.type ?? '');
+    if (type.includes('image')) images.push({ ...file, downding: false });
+    else if (type.includes('archive'))
+      archives.push({ ...file, downding: false });
+    else documents.push({ ...file, downding: false });
+  });
+
+  return { images, documents, archives };
+});
+
+// 预览图片
+const previewImage = (url: string) => {
+  window.open(url, '_blank');
+};
+
+// 下载文件
+function downloadAttachment(file: AttachmentFile) {
+  if (file.downding) {
+    return;
+  }
+
+  try {
+    file.downding = true;
+
+    // 直链下载
+    if (file.url) {
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = file.name || '新文件';
+      document.body.append(link);
+      link.click();
+      link.remove();
+
+      file.downding = false;
+      return;
+    }
+
+    message.error('无法下载：缺少文件地址');
+    file.downding = false;
+  } catch (error) {
+    console.error('下载文件失败', error);
+    message.error('下载文件失败');
+    file.downding = false;
+  }
+}
 </script>
 
 <template>
@@ -759,7 +863,13 @@ function disabledRangeTime(
     </template>
 
     <!-- 抽屉内容 -->
-    <div class="grid h-full w-full grid-cols-2 overflow-hidden">
+    <div
+      class="grid h-full w-full grid-cols-2 overflow-hidden"
+      :class="{
+        '!grid-cols-1':
+          !currentConsultationRecord?.summary && currentConsultationRecordId,
+      }"
+    >
       <!-- 左侧预约访谈部分 -->
       <div class="col-span-1 overflow-y-auto border-r border-[#F2F3F5] p-6">
         <Form
@@ -1043,105 +1153,262 @@ function disabledRangeTime(
       </div>
 
       <!-- 右侧周视图部分 -->
-      <div
-        class="col-span-1 flex flex-col gap-4 overflow-hidden overflow-y-auto py-6"
-      >
-        <div class="box-border flex items-center justify-between px-6">
-          <h3 class="text-base font-semibold">周视图预览</h3>
-          <div class="flex items-center gap-2">
-            <div
-              class="flex h-8 w-8 cursor-pointer items-center justify-center"
-              @click="handlePreviousWeek"
-            >
-              <IconifyIcon
-                icon="tabler:caret-left-filled"
-                class="size-4 text-[#979899]"
-              />
-            </div>
-            <span class="text-base">
-              {{ formatWeekViewDate(weekViewDate)[0] }}
-              <span class="mx-1">-</span>
-              {{ formatWeekViewDate(weekViewDate)[1] }}
-            </span>
-            <div
-              class="flex h-8 w-8 cursor-pointer items-center justify-center"
-              @click="handleNextWeek"
-            >
-              <IconifyIcon
-                icon="tabler:caret-right-filled"
-                class="size-4 text-[#979899]"
-              />
+      <template v-if="currentConsultationRecord?.summary">
+        <div class="flex flex-col gap-6 p-6">
+          <div class="flex flex-col gap-4">
+            <span class="font-bold"> 咨询纪要 </span>
+            <div class="rounded-lg border border-solid border-gray-200 p-4">
+              <div v-dompurify-html="currentConsultationRecord?.summary"></div>
             </div>
           </div>
-        </div>
 
-        <!-- 周视图内容 -->
-        <div class="box-border flex-1 overflow-y-auto px-6">
-          <Spin :spinning="loadingWeekDays">
-            <div class="space-y-4">
-              <div
-                v-for="dayInfo in weekDays"
-                :key="dayInfo.fullDate.format('YYYY-MM-DD')"
-                class="box-border flex max-h-[152px] flex-col overflow-hidden rounded-lg border border-gray-200 p-4"
-              >
-                <div class="mb-2 flex shrink-0 items-center justify-between">
-                  <span class="font-medium">{{ dayInfo.dayName }}</span>
-                  <span class="text-sm text-gray-500">{{ dayInfo.date }}</span>
-                </div>
-
-                <!-- 显示事件列表 -->
-                <div
-                  v-if="dayInfo.appointments.length > 0"
-                  class="scroll-area flex-1 space-y-2 overflow-y-auto text-xs text-[#4C4C4D]"
-                >
+          <div class="flex flex-col gap-6">
+            <span class="font-bold">
+              咨询附件（{{
+                currentConsultationRecord?.attachmentIds?.length ?? 0
+              }}
+              个文件）
+            </span>
+            <template v-if="attachmentList && attachmentList.length > 0">
+              <div class="flex flex-col gap-6">
+                <!-- 图片区域 -->
+                <div v-if="categorizedFiles.images.length > 0">
+                  <div class="mb-4 flex items-center">
+                    <IconifyIcon
+                      icon="mdi:image"
+                      class="mr-2 text-lg text-green-500"
+                    />
+                    <h4 class="font-medium text-gray-700">
+                      图片 ({{ categorizedFiles.images.length }})
+                    </h4>
+                  </div>
                   <div
-                    v-for="(appointment, index) in dayInfo.appointments"
-                    :key="appointment.id"
+                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
                   >
                     <div
-                      class="flex items-center gap-2 rounded p-1.5"
-                      :style="{
-                        backgroundColor:
-                          getEventStyleOptions(index)?.backgroundColor ||
-                          '#f5f5f5',
-                      }"
+                      v-for="image in categorizedFiles.images"
+                      :key="image.id"
+                      class="group relative cursor-pointer overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-colors hover:border-blue-300"
+                      @click="previewImage(image?.url ?? '')"
                     >
-                      <span
-                        class="h-2 w-2 rounded-full"
-                        :style="{
-                          backgroundColor:
-                            getEventStyleOptions(index)?.dotColor || '#ccc',
-                        }"
-                      ></span>
-                      <div class="flex gap-1">
-                        <span>
-                          {{
-                            dayjs(appointment.appointmentStartTime).format(
-                              'HH:mm',
-                            )
-                          }}-{{
-                            dayjs(appointment.appointmentEndTime).format(
-                              'HH:mm',
-                            )
-                          }}
-                        </span>
-                        <span>
-                          {{ appointment.studentName }} - （{{
-                            appointment.counselorName
-                          }}）
-                        </span>
+                      <div class="aspect-square">
+                        <img
+                          :src="image.url"
+                          :alt="image.name"
+                          class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                      </div>
+                      <div
+                        class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-all duration-200 group-hover:bg-opacity-20"
+                      >
+                        <IconifyIcon
+                          icon="mdi:eye"
+                          class="text-2xl text-white opacity-0 transition-opacity group-hover:opacity-70"
+                        />
+                      </div>
+                      <div class="bg-white p-2">
+                        <div
+                          class="truncate text-xs text-gray-600"
+                          :title="image.name"
+                        >
+                          {{ image.name }}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- 其他天显示暂无预约 -->
-                <div v-else class="text-sm text-gray-400">暂无预约</div>
+                <!-- 文档区域 -->
+                <div v-if="categorizedFiles.documents.length > 0">
+                  <div class="mb-4 flex items-center">
+                    <IconifyIcon
+                      icon="mdi:file-document"
+                      class="mr-2 text-lg text-blue-500"
+                    />
+                    <h4 class="font-medium text-gray-700">
+                      文档 ({{ categorizedFiles.documents.length }})
+                    </h4>
+                  </div>
+                  <div class="space-y-3">
+                    <div
+                      v-for="doc in categorizedFiles.documents"
+                      :key="doc.id"
+                      class="group flex cursor-pointer items-center rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300 hover:bg-blue-50"
+                      @click="downloadAttachment(doc)"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <div
+                          class="truncate font-medium text-gray-800"
+                          :title="doc.name"
+                        >
+                          {{ doc.name }}
+                        </div>
+                      </div>
+                      <Spin v-if="doc.downding" size="small" />
+                      <IconifyIcon
+                        v-else
+                        icon="mdi:download"
+                        class="text-gray-400 transition-colors group-hover:text-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 压缩包区域 -->
+                <div v-if="categorizedFiles.archives.length > 0">
+                  <div class="mb-4 flex items-center">
+                    <IconifyIcon
+                      icon="mdi:archive"
+                      class="mr-2 text-lg text-orange-500"
+                    />
+                    <h4 class="font-medium text-gray-700">
+                      压缩包 ({{ categorizedFiles.archives.length }})
+                    </h4>
+                  </div>
+                  <div class="space-y-3">
+                    <div
+                      v-for="archive in categorizedFiles.archives"
+                      :key="archive.id"
+                      class="group flex cursor-pointer items-center rounded-lg border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-orange-300 hover:bg-orange-50"
+                      @click="downloadAttachment(archive)"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <div
+                          class="truncate font-medium text-gray-800"
+                          :title="archive.name"
+                        >
+                          {{ archive.name }}
+                        </div>
+                      </div>
+                      <Spin v-if="archive.downding" size="small" />
+                      <IconifyIcon
+                        v-else
+                        icon="mdi:download"
+                        class="cursor-pointer text-gray-400 transition-colors group-hover:text-orange-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 空状态 -->
+              <div
+                v-if="!attachmentList || attachmentList.length === 0"
+                class="flex-center flex-col py-12 text-center"
+              >
+                <IconifyIcon
+                  icon="mdi:attachment-off"
+                  class="mb-4 text-6xl text-gray-300"
+                />
+                <div class="text-gray-500">暂无附件</div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+      <template v-if="!currentConsultationRecordId">
+        <div
+          class="col-span-1 flex flex-col gap-4 overflow-hidden overflow-y-auto py-6"
+        >
+          <div class="box-border flex items-center justify-between px-6">
+            <h3 class="text-base font-semibold">周视图预览</h3>
+            <div class="flex items-center gap-2">
+              <div
+                class="flex h-8 w-8 cursor-pointer items-center justify-center"
+                @click="handlePreviousWeek"
+              >
+                <IconifyIcon
+                  icon="tabler:caret-left-filled"
+                  class="size-4 text-[#979899]"
+                />
+              </div>
+              <span class="text-base">
+                {{ formatWeekViewDate(weekViewDate)[0] }}
+                <span class="mx-1">-</span>
+                {{ formatWeekViewDate(weekViewDate)[1] }}
+              </span>
+              <div
+                class="flex h-8 w-8 cursor-pointer items-center justify-center"
+                @click="handleNextWeek"
+              >
+                <IconifyIcon
+                  icon="tabler:caret-right-filled"
+                  class="size-4 text-[#979899]"
+                />
               </div>
             </div>
-          </Spin>
+          </div>
+
+          <!-- 周视图内容 -->
+          <div class="box-border flex-1 overflow-y-auto px-6">
+            <Spin :spinning="loadingWeekDays">
+              <div class="space-y-4">
+                <div
+                  v-for="dayInfo in weekDays"
+                  :key="dayInfo.fullDate.format('YYYY-MM-DD')"
+                  class="box-border flex max-h-[152px] flex-col overflow-hidden rounded-lg border border-gray-200 p-4"
+                >
+                  <div class="mb-2 flex shrink-0 items-center justify-between">
+                    <span class="font-medium">{{ dayInfo.dayName }}</span>
+                    <span class="text-sm text-gray-500">{{
+                      dayInfo.date
+                    }}</span>
+                  </div>
+
+                  <!-- 显示事件列表 -->
+                  <div
+                    v-if="dayInfo.appointments.length > 0"
+                    class="scroll-area flex-1 space-y-2 overflow-y-auto text-xs text-[#4C4C4D]"
+                  >
+                    <div
+                      v-for="(appointment, index) in dayInfo.appointments"
+                      :key="appointment.id"
+                    >
+                      <div
+                        class="flex items-center gap-2 rounded p-1.5"
+                        :style="{
+                          backgroundColor:
+                            getEventStyleOptions(index)?.backgroundColor ||
+                            '#f5f5f5',
+                        }"
+                      >
+                        <span
+                          class="h-2 w-2 rounded-full"
+                          :style="{
+                            backgroundColor:
+                              getEventStyleOptions(index)?.dotColor || '#ccc',
+                          }"
+                        ></span>
+                        <div class="flex gap-1">
+                          <span>
+                            {{
+                              dayjs(appointment.appointmentStartTime).format(
+                                'HH:mm',
+                              )
+                            }}-{{
+                              dayjs(appointment.appointmentEndTime).format(
+                                'HH:mm',
+                              )
+                            }}
+                          </span>
+                          <span>
+                            {{ appointment.studentName }} - （{{
+                              appointment.counselorName
+                            }}）
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 其他天显示暂无预约 -->
+                  <div v-else class="text-sm text-gray-400">暂无预约</div>
+                </div>
+              </div>
+            </Spin>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
     <!-- 自定义 Drawer footer：只读显示 关闭/编辑；可编辑显示 取消/确认创建 -->
     <template #footer>

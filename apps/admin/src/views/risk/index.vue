@@ -242,7 +242,9 @@ function refresh() {
 
       <!-- 当前状态 -->
       <template #status="{ row }">
+        <LyTag v-if="row.closed" color-type="default" tag-label="已关闭" />
         <LyTag
+          v-else
           tag-category-key="crisis_event_status"
           :dict-value="String(row.status)"
         />

@@ -13,6 +13,7 @@ import { useDebounceFn } from '@vueuse/core';
 import {
   DatePicker as ADatePicker,
   Form as AForm,
+  Input as AInput,
   Select as ASelect,
   Spin as ASpin,
   Textarea as ATextarea,
@@ -397,6 +398,8 @@ onMounted(() => {
           <AInput
             v-model:value="eventForm.title"
             placeholder="请填写事件标题"
+            :maxlength="200"
+            show-count
           />
         </AForm.Item>
 
@@ -426,6 +429,8 @@ onMounted(() => {
           <AInput
             v-model:value="eventForm.location"
             placeholder="请填写事件发生地点"
+            :maxlength="200"
+            show-count
           />
         </AForm.Item>
 
@@ -440,8 +445,9 @@ onMounted(() => {
             <ATextarea
               v-model:value="eventForm.description"
               placeholder="请详细描述学生的异常行为、发生时间、具体表现等..."
-              :maxlength="500"
+              :maxlength="2000"
               show-count
+              :rows="5"
             />
           </div>
         </AForm.Item>

@@ -55,7 +55,7 @@ interface PsychologicalStatusTag {
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
-  (e: 'evaluate', data: AssessmentComfirmInfo): void;
+  (e: 'evaluate', data: AssessmentComfirmInfo, studentProfileId: number): void;
   (e: 'reportAbnormal', data: ReportAbnormalParams): void;
   (
     e: 'interview',
@@ -106,31 +106,28 @@ const baseInfo = ref([
 
 const footerButtons = ref<FooterButton[]>([
   {
-    label: '评估',
+    label: '风险评估',
     value: 'evaluate',
-    icon: 'solar:health-bold',
+    icon: 'solar:chat-round-line-bold',
     type: 'dashed',
     color: '#578FFF',
     class: 'border-[#578FFF] text-[#578FFF] hover:bg-[#578FFF]/10',
-    onClick: () => {
+    onClick: async () => {
       if (!studentProfile.value?.id) return message.error('评估失败！');
       studentDetailDrawerApi.close();
-      createEvaluationModalApi
-        .setData({
-          confirmInfo: {
-            studentInfo: {
-              studentName: studentProfile.value?.name || '',
-              className: studentProfile.value?.className || '',
-              studentNo: studentProfile.value?.studentNo || '',
-            },
-            consultInfo: {
-              consultant: studentProfile.value?.updater || '',
-              consultType: '',
-              consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            },
-          },
-        })
-        .open();
+      const confirmInfo = {
+        studentInfo: {
+          studentName: studentProfile.value?.name || '',
+          className: studentProfile.value?.className || '',
+          studentNo: studentProfile.value?.studentNo || '',
+        },
+        consultInfo: {
+          consultant: studentProfile.value?.updater || '',
+          consultType: '',
+          consultTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        },
+      };
+      emit('evaluate', confirmInfo, studentProfile.value?.id);
     },
   },
   {
@@ -152,8 +149,8 @@ const footerButtons = ref<FooterButton[]>([
     },
   },
   {
-    icon: 'solar:chat-round-line-bold',
-    label: '预约访谈',
+    icon: 'solar:health-bold',
+    label: '预约咨询',
     value: 'interview',
     type: 'primary',
     color: '#578FFF',
@@ -240,7 +237,9 @@ const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
  * 加载学生档案数据
  * @param id 学生id
  */
-async function loadStudentProfile(id: number) {
+async function loadStudentProfile(id: number | undefined) {
+  if (!id) return;
+
   try {
     const studentProfileData = await getStudentProfile(id);
     if (!studentProfileData) return;
@@ -341,11 +340,6 @@ function handleCreateStudentEventRecord() {
 function handleExportInfo() {
   message.warning('即将上线');
   // exportStudnetInfoModalApi.open();
-}
-
-/** 完成评估 */
-function handleCompleteEvaluation() {
-  createEvaluationModalApi.close();
 }
 
 onMounted(async () => {
@@ -474,6 +468,7 @@ onMounted(async () => {
                 <PersonalInfoTab
                   :student-info="studentProfile"
                   @update-loading="updateLoading"
+                  @refresh="loadStudentProfile(studentProfile?.id ?? 0)"
                 />
               </Tabs.TabPane>
             </Tabs>
@@ -522,8 +517,6 @@ onMounted(async () => {
 
     <CreateStudentEventRecordModal />
     <ExportStudnetInfoModal />
-    <!-- 评估弹窗 -->
-    <CreateEvaluationModal :publish="handleCompleteEvaluation" />
   </StudentDetailDrawer>
 </template>
 
