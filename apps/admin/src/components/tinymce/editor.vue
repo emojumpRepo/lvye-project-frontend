@@ -70,7 +70,10 @@ const emit = defineEmits(['change']);
 const modelValue = defineModel('modelValue', { default: '', type: String });
 
 /** TinyMCE 自托管：https://www.jianshu.com/p/59a9c3802443 */
-const tinymceScriptSrc = `${import.meta.env.VITE_BASE}tinymce/tinymce.min.js`;
+const baseUrl = import.meta.env.DEV
+  ? import.meta.env.VITE_BASE
+  : import.meta.env.VITE_CDN_URL;
+const tinymceScriptSrc = `${baseUrl}tinymce/tinymce.min.js`;
 
 const attrs = useAttrs();
 const editorRef = ref<EditorType>();
