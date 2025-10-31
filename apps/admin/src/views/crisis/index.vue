@@ -5,6 +5,8 @@ import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { onMounted, ref } from 'vue';
 
+import { Page } from '@vben/common-ui';
+
 import { Spin as ASpin } from 'ant-design-vue';
 
 import { getCrisisBoardData } from '#/api/psychology/crisis';
@@ -63,30 +65,32 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 p-6">
-    <!-- 搜索表单 -->
-    <CrisisSearch
-      ref="crisisSearchRef"
-      @search="loadCrisisBoardData"
-      :loading="loading"
-    />
+  <Page>
+    <div class="flex flex-col gap-4 p-2">
+      <!-- 搜索表单 -->
+      <CrisisSearch
+        ref="crisisSearchRef"
+        @search="loadCrisisBoardData"
+        :loading="loading"
+      />
 
-    <!-- 列表 -->
-    <ASpin :spinning="loading" class="flex-center">
-      <div class="grid grid-cols-5 gap-5" :class="{ 'h-[300px]': loading }">
-        <template v-for="item in interventionList" :key="item.type">
-          <InterventionCard
-            :intervention-item="item"
-            :search-params="crisisSearchRef?.crisisEventListReq"
-            @update-student-page="
-              (studentPage) =>
-                handleUpdateStudentPage(item.dictValue, studentPage)
-            "
-          />
-        </template>
-      </div>
-    </ASpin>
-  </div>
+      <!-- 列表 -->
+      <ASpin :spinning="loading" class="flex-center">
+        <div class="grid grid-cols-5 gap-5" :class="{ 'h-[300px]': loading }">
+          <template v-for="item in interventionList" :key="item.type">
+            <InterventionCard
+              :intervention-item="item"
+              :search-params="crisisSearchRef?.crisisEventListReq"
+              @update-student-page="
+                (studentPage) =>
+                  handleUpdateStudentPage(item.dictValue, studentPage)
+              "
+            />
+          </template>
+        </div>
+      </ASpin>
+    </div>
+  </Page>
 </template>
 
 <style lang="scss" scoped>

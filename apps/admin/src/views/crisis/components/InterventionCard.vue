@@ -6,7 +6,7 @@ import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import {
   Badge as ABadge,
@@ -19,7 +19,8 @@ import dayjs from 'dayjs';
 
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
-import AdjustStudentRiskLevelDialog from '#/components/Dialog/AdjustStudentRiskLevelDialog/index.vue';
+import CrisisInterventionDialog from '#/components/Dialog/CrisisInterventionDialog/index.vue';
+import StudentDetailDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
@@ -36,15 +37,14 @@ const currentPage = ref(1);
 const pageSize = ref(5);
 const loading = ref(false);
 
-// const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
-//   class: 'w-[800px]',
-//   connectedComponent: StudentDrawer,
-// });
+const [StudentProfileDrawer, studentProfileDrawerApi] = useVbenDrawer({
+  class: 'w-[800px]',
+  connectedComponent: StudentDetailDrawer,
+});
 
-const [AdjustStudentRiskLevelModal, adjustStudentRiskLevelModalApi] =
-  useVbenModal({
-    connectedComponent: AdjustStudentRiskLevelDialog,
-  });
+const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
+  connectedComponent: CrisisInterventionDialog,
+});
 
 // 当前干预卡片类型
 const interventionType = computed((): InterventionType | undefined => {
@@ -106,14 +106,20 @@ async function handlePageChange(page: number) {
 
 /** 查看学生详情 */
 function handleStudentClick(board: StudentInterventionItem) {
-  console.log('干预计划');
-  // adjustStudentRiskLevelModalApi
-  //   .setData({
-  //     studentName: board.studentName,
-  //     riskLevel: board.currentRiskLevel,
-  //     studentProfileId: board.studentProfileId,
-  //   })
-  //   .open();
+  crisisInterventionModalApi
+    .setData({
+      studentProfileId: board.studentProfileId,
+    })
+    .open();
+}
+
+/** 打开学生详情抽屉 */
+function handleOpenStudentProfileDrawer(studentProfileId: number) {
+  studentProfileDrawerApi
+    .setData({
+      id: studentProfileId,
+    })
+    .open();
 }
 </script>
 
@@ -200,8 +206,10 @@ function handleStudentClick(board: StudentInterventionItem) {
       </div>
     </ASpin>
 
-    <!-- <StudentDetailDrawer /> -->
-    <AdjustStudentRiskLevelModal />
+    <CrisisInterventionModal
+      @open-student-profile-drawer="handleOpenStudentProfileDrawer"
+    />
+    <StudentProfileDrawer />
   </div>
 </template>
 
