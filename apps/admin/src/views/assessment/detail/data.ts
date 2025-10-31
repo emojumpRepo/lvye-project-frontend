@@ -91,6 +91,7 @@ export function useGridColumns(
       field: 'name',
       title: '学生名称',
       minWidth: 120,
+      slots: { default: 'name' },
     },
     {
       type: 'seq',

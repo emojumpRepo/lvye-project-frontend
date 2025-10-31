@@ -2,10 +2,10 @@
 import type {
   AssessmentQuestionnaireResultVO,
   AssessmentResultVO,
+  Dimension,
   Question,
   QuestionnaireAnswerDataVO,
   QuestionnaireAnswerItem,
-  QuestionnaireResultDataVO,
 } from '@vben/types';
 
 import { computed, ref } from 'vue';
@@ -28,7 +28,7 @@ import QuestionnaireAnswer from './components/QuestionnaireAnswer.vue';
 import QuestionnaireResult from './components/QuestionnaireResult.vue';
 import { exportQuestionnaireReportToPDF } from './composables/exportToPDF';
 
-const dimensions = ref<QuestionnaireResultDataVO[]>([]);
+const dimensions = ref<Dimension[]>([]);
 const questionnaireAnswer = ref<QuestionnaireAnswerItem[]>([]);
 const assessmentResult = ref<AssessmentResultVO>();
 const queryData = ref();
@@ -84,7 +84,8 @@ async function loadQuestionnaireResult() {
     }
 
     // 获取问卷结果
-    dimensions.value = JSON.parse(response.resultData);
+    dimensions.value =
+      response.dimensions.length > 0 ? response.dimensions : [];
 
     // 获取问卷答案
     const newQuestionnaireAnswer = await getQuestionnaireQuestion(
@@ -249,7 +250,7 @@ const handleExport = async () => {
       questionnaireAnswer: questionnaireAnswer.value,
       completedTime: completedTime.value,
       studentName: queryData.value.name,
-      scenarioName: assessmentResult.value?.scenarioName,
+      scenarioName: assessmentResult.value?.scenarioName ?? '',
     });
   } catch (error) {
     console.error('导出失败:', error);

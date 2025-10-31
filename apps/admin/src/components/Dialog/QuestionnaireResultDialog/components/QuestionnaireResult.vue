@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { QuestionnaireResultDataVO } from '@vben/types';
+import type { Dimension } from '@vben/types';
 
 import { computed } from 'vue';
 
 const props = defineProps<{
-  dimension: QuestionnaireResultDataVO;
+  dimension: Dimension;
   getDimensionColor: (config: {
     isAbnormal: number;
     questionnaireName: string;
@@ -37,7 +37,7 @@ const questionnaireDimension = computed(() => {
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-medium text-gray-900">
-            {{ questionnaireDimension?.dimensionName }}
+            {{ questionnaireDimension?.name }}
           </h3>
           <div
             v-if="dimension?.level"

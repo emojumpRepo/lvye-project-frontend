@@ -31,6 +31,7 @@ watch(
     if (newTaskNo) {
       loading.value = true;
       await loadAssessmentStatistics(newTaskNo);
+      activeKey.value = assessmentStatistics.value?.deptTree?.[0]?.deptId;
       loading.value = false;
     }
   },
@@ -48,7 +49,6 @@ async function loadAssessmentStatistics(taskNo: string) {
       includeDeptTree: 1,
     }).then((response) => {
       assessmentStatistics.value = response;
-      activeKey.value = response.deptTree?.[0]?.deptId;
     });
   } catch (error) {
     console.error('加载测评统计失败', error);
@@ -115,7 +115,9 @@ defineExpose({
               </div>
             </div>
 
-            <div class="scroll-area h-[200px] overflow-y-scroll">
+            <div
+              class="scroll-area h-[200px] overflow-y-scroll [scrollbar-gutter:stable]"
+            >
               <ACollapse
                 v-model:active-key="activeKey"
                 accordion
@@ -191,6 +193,10 @@ defineExpose({
 
 :deep(.ant-progress-bg) {
   background-color: #04dc70 !important;
+}
+
+:deep(.ant-collapse-expand-icon) {
+  padding-inline-end: 15.5px !important;
 }
 
 .scroll-area::-webkit-scrollbar {

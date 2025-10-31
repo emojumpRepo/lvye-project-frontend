@@ -4,9 +4,9 @@ import type { TabItem } from '../types';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { PsychologyAssessmentApi } from '#/api/psychology/assessment/index';
 
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { alert, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { Tabs as ATabs, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -14,18 +14,22 @@ import dayjs from 'dayjs';
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+import ExportExcelProgressDialog from '#/components/Dialog/ExportExcelProgressDialog/index.vue';
+import ExportStudentAssessmentResultDialog from '#/components/Dialog/ExportStudentAssessmentResultDialog/index.vue';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
+import SelectExportAssessmentTypeDialog from '#/components/Dialog/SelectExportAssessmentTypeDialog/index.vue';
+import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
-import { exportAssessmentParticipantsToExcel } from '#/utils/export';
 
+import { useExportAssessment } from '../composables/useExportAssessment';
 import { useGridColumns } from '../data';
 import AssessmentDetailSearch from './AssessmentDetailSearch.vue';
 
 interface Props {
   taskNo?: string;
   taskName?: string;
-  questionnairesTabs?: { key: string; label: string }[];
+  questionnairesTabs?: TabItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,38 +42,11 @@ const emit = defineEmits<{
   (e: 'tabChange', key: any): void;
 }>();
 
-// 问卷Tab
-const activeTab = defineModel<TabItem>('activeTab', {
-  default: () => ({
-    key: '',
-    label: '',
-  }),
-});
-
-const actionButtons = ref([
-  {
-    label: '批量发送提醒',
-    value: 'batchSendReminder',
-    onClick: handleBatchSendReminder,
-    show: false,
-  },
-  {
-    label: '批量转入评估',
-    value: 'batchTransferToIntervention',
-    onClick: handleBatchTransferToIntervention,
-    show: true,
-  },
-  {
-    label: '批量导出',
-    value: 'batchExport',
-    onClick: handleExport,
-    show: true,
-  },
-]);
-
 const selectedRowKeys = ref<number[]>([]);
 const loading = ref(false);
 const searchRef = ref<InstanceType<typeof AssessmentDetailSearch>>();
+const exportXLSXType = ref<'answer' | 'completed'>('completed');
+const loadTotal = ref(0); // 学生总数
 const queryParams =
   ref<PsychologyAssessmentApi.AssessmentTaskParticipantsQuestionnairePageReq>({
     pageNo: 1,
@@ -78,9 +55,71 @@ const queryParams =
     questionnaireId: 0,
   });
 
+// 问卷Tab
+const activeTab = defineModel<TabItem>('activeTab', {
+  default: () => ({
+    key: '',
+    label: '',
+  }),
+});
+
+// 测评结果详情
 const [QuestionnaireResultModal, questionnaireResultModalApi] = useVbenModal({
   connectedComponent: QuestionnaireResultDialog,
 });
+
+// 导出类型选择弹窗
+const [SelectExportAssessmentTypeModal, selectExportAssessmentTypeModalApi] =
+  useVbenModal({
+    connectedComponent: SelectExportAssessmentTypeDialog,
+  });
+
+// 导出Excel进度弹窗
+const [ExportExcelProgressModal, exportExcelProgressModalApi] = useVbenModal({
+  connectedComponent: ExportExcelProgressDialog,
+});
+
+// 导出学生测评报告PDF弹窗
+const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
+  useVbenModal({
+    connectedComponent: ExportStudentAssessmentResultDialog,
+  });
+
+// 学生信息详情抽屉
+const [Drawer, drawerApi] = useVbenDrawer({
+  connectedComponent: StudentDrawer,
+});
+
+// 加载学生数据的函数
+async function loadStudentData(
+  page: { currentPage: number; pageSize: number },
+  formValues?: any,
+) {
+  if (
+    !queryParams.value.taskNo ||
+    (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
+  ) {
+    return { list: [], total: 0 };
+  }
+
+  try {
+    const requestParams = {
+      ...queryParams.value,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+      ...(formValues ? { ...formValues } : {}),
+      ...searchRef.value?.assessmentDetailSearchParams,
+    };
+
+    const response =
+      await getAssessmentTaskParticipantsQuestionnairePage(requestParams);
+
+    return response;
+  } catch (error) {
+    console.error('Failed to load assessment participants:', error);
+    return { list: [], total: 0 };
+  }
+}
 
 /** 处理行选中 */
 function handleRowCheckboxChange({ records }: { records: any[] }) {
@@ -97,37 +136,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     pagerConfig: {
       enabled: true,
       pageSize: 10,
-      layouts: ['Total', 'PrevPage', 'Number', 'NextPage', 'FullJump', 'Sizes'],
-      pageSizes: [10, 20, 30, 40, 50, 60],
+      pageSizes: [10, 30, 50, 80, 100],
     },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          if (
-            !queryParams.value.taskNo ||
-            (!queryParams.value.questionnaireId && !queryParams.value.taskNo)
-          ) {
-            return { list: [], total: 0 };
-          }
-
-          try {
-            const requestParams = {
-              ...queryParams.value,
-              pageNo: page.currentPage,
-              pageSize: page.pageSize,
-              ...formValues,
-              ...searchRef.value?.assessmentDetailSearchParams,
-            };
-
-            const response =
-              await getAssessmentTaskParticipantsQuestionnairePage(
-                requestParams,
-              );
-            return response;
-          } catch (error) {
-            console.error('Failed to load assessment participants:', error);
-            return { list: [], total: 0 };
-          }
+          selectedRowKeys.value = [];
+          const data = await loadStudentData(page, formValues);
+          loadTotal.value = data.total;
+          return data;
         },
       },
     },
@@ -138,6 +155,53 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
+});
+
+// 使用导出组合式函数
+const {
+  cancelExport,
+  exportCompletionStatus,
+  exportAssessmentReports,
+  exportAnswers,
+  progress,
+} = useExportAssessment({
+  gridApi,
+  loadTotal,
+  selectedRowKeys,
+  loadStudentData,
+});
+
+/** 操作按钮 */
+const actionButtons = computed(() => {
+  // 先计算出通用的状态，让代码更清晰
+  const isSelectionEmpty = selectedRowKeys.value.length === 0;
+
+  return [
+    {
+      label: '批量发送提醒',
+      value: 'batchSendReminder',
+      onClick: handleBatchSendReminder,
+      disabled: isSelectionEmpty,
+      show: false,
+    },
+    {
+      label: '批量转入评估',
+      value: 'batchTransferToIntervention',
+      onClick: handleBatchTransferToIntervention,
+      disabled: isSelectionEmpty,
+      show: true,
+    },
+    {
+      label:
+        selectedRowKeys.value.length > 0
+          ? `导出（共${selectedRowKeys.value.length}名）`
+          : '导出',
+      value: 'export',
+      onClick: openSelectExportAssessmentTypeModal,
+      disabled: false,
+      show: true,
+    },
+  ];
 });
 
 watch(
@@ -215,32 +279,105 @@ function viewDetail(
   }
 }
 
-// 导出数据
-async function handleExport() {
-  try {
-    loading.value = true;
+// ============== 导出功能 =================
+/** 打开选择导出类型弹窗 */
+function openSelectExportAssessmentTypeModal() {
+  selectExportAssessmentTypeModalApi
+    .setData({
+      selectedRowKeys: selectedRowKeys.value,
+      totalCount: loadTotal.value,
+    })
+    .open();
+}
 
-    if (selectedRowKeys.value.length === 0) {
-      message.warning('请先选择要导出的学生数据');
-      return;
-    }
-
-    const completedStudents = gridApi.grid
-      .getCheckboxRecords()
-      .filter((item) => item.status === 1);
-
-    if (completedStudents.length === 0) {
-      message.warning('学生未完成测评，无法导出');
-      return;
-    }
-
-    exportAssessmentParticipantsToExcel(completedStudents, activeTab.value);
-  } catch (error) {
-    console.error(error);
-    message.error('导出失败，请重试');
-  } finally {
-    loading.value = false;
+/**
+ * 导出
+ * @param type 导出类型
+ */
+async function handleExport(
+  type:
+    | 'exportAllCompletedStatus'
+    | 'exportAnalysisReport'
+    | 'exportAnalysisReportAndAnswerResults'
+    | 'exportAnswerResults',
+) {
+  if (loadTotal.value === 0) {
+    message.warning('暂无学生数据可导出');
+    return;
   }
+  switch (type) {
+    case 'exportAllCompletedStatus': {
+      // 导出所有学生完成情况(Excel)
+      exportXLSXType.value = 'completed';
+      exportExcelProgressModalApi.open();
+      const result = await exportCompletionStatus({
+        activeTab: activeTab.value,
+        questionnaireTabs: props.questionnairesTabs,
+      });
+      if (!result) {
+        exportExcelProgressModalApi.close();
+        alert({
+          content: progress.errorMessage,
+          icon: 'warning',
+          centered: true,
+        });
+        break;
+      }
+      exportExcelProgressModalApi.setState({
+        confirmDisabled: false,
+      });
+      break;
+    }
+    case 'exportAnalysisReport': {
+      if (activeTab.value.key) {
+        message.error('请选择整体测评的数据导出！');
+        break;
+      }
+      // 导出个体分析报告（仅测评结果，不含答题记录）(PDF)
+      exportStudentCompleteModalApi.open();
+      await exportAssessmentReports(props.questionnairesTabs, false);
+      break;
+    }
+    case 'exportAnalysisReportAndAnswerResults': {
+      if (activeTab.value.key) {
+        message.error('请选择整体测评的数据导出！');
+        break;
+      }
+      // 导出个体分析报告 + 答题记录(PDF)
+      exportStudentCompleteModalApi.open();
+      await exportAssessmentReports(props.questionnairesTabs, true);
+      break;
+    }
+    case 'exportAnswerResults': {
+      // 导出答题记录(Excel)
+      exportXLSXType.value = 'answer';
+      exportExcelProgressModalApi.open();
+      const result = await exportAnswers({
+        questionnaireTabs: props.questionnairesTabs,
+        activeTab: activeTab.value,
+      });
+
+      if (!result) {
+        exportExcelProgressModalApi.close();
+        alert({
+          content: progress.errorMessage,
+          icon: 'warning',
+          centered: true,
+        });
+        break;
+      }
+
+      exportExcelProgressModalApi.setState({
+        confirmDisabled: false,
+      });
+      break;
+    }
+  }
+}
+
+/** 查看详情 */
+function viewStudentInfo(id: number) {
+  drawerApi.setData({ id }).open();
 }
 </script>
 
@@ -267,32 +404,50 @@ async function handleExport() {
       </ATabs.TabPane>
     </ATabs>
 
+    <!-- 搜索栏 -->
     <AssessmentDetailSearch
       ref="searchRef"
+      v-model:selected-row-keys="selectedRowKeys"
       @search="handleSearch"
       @loading="handleLoading"
     />
 
+    <!-- 操作按钮 -->
     <div class="my-6 flex gap-2">
       <template v-for="button in actionButtons" :key="button.value">
         <LyButton
           v-if="button.show"
           size="middle"
           type="default"
-          :disabled="selectedRowKeys.length === 0"
+          :disabled="button.disabled"
           @click="button.onClick && button.onClick()"
         >
           {{ button.label }}
         </LyButton>
       </template>
     </div>
+
+    <!-- 表格 -->
     <Grid>
+      <!-- 学生名称 -->
+      <template #name="{ row }">
+        <span
+          class="cursor-pointer"
+          @click="viewStudentInfo(row.studentProfileId)"
+        >
+          {{ row.name }}
+        </span>
+      </template>
+
+      <!-- 完成状态  -->
       <template #status="{ row }">
         <LyTag
           :color-type="row.status === 1 ? 'success' : 'error'"
           :tag-label="row.status === 1 ? '已完成' : '未完成'"
         />
       </template>
+
+      <!-- 完成时间 -->
       <template #finishTime="{ row }">
         <span v-if="!row.finishTime">--</span>
         <span v-else>
@@ -337,7 +492,20 @@ async function handleExport() {
         />
       </template>
     </Grid>
+
     <QuestionnaireResultModal />
+    <ExportStudentCompleteModal :progress="progress" @cancel="cancelExport" />
+    <SelectExportAssessmentTypeModal @export="handleExport" />
+    <ExportExcelProgressModal
+      :download-url="progress.downloadUrl"
+      :file-name="progress.exportFileName"
+      :success-count="progress.fetchedCount"
+      :total-count="progress.totalCount"
+      :student-info-fetched="progress.studentInfoFetched"
+      :student-info-total="progress.studentInfoTotal"
+      :type="exportXLSXType"
+    />
+    <Drawer />
   </div>
 </template>
 
@@ -348,26 +516,26 @@ async function handleExport() {
   width: 100px;
 }
 
-:deep(.vxe-cell--col-resizable) {
-  display: none !important;
-}
+// :deep(.vxe-cell--col-resizable) {
+//   display: none !important;
+// }
 
-:deep(.vxe-grid) {
-  // padding-top: 0 !important;
-  // padding-right: 0 !important;
-  // padding-left: 0 !important;
-}
+// :deep(.vxe-grid) {
+//   padding-top: 0 !important;
+//   padding-right: 0 !important;
+//   padding-left: 0 !important;
+// }
 
-:deep(.vxe-pager) {
-  background: transparent !important;
-}
+// :deep(.vxe-pager) {
+//   background: transparent !important;
+// }
 
-:deep(.vxe-pager--wrapper) {
-  align-items: center !important;
-}
+// :deep(.vxe-pager--wrapper) {
+//   align-items: center !important;
+// }
 
-:deep(.vxe-pager--sizes) {
-  width: 8em !important;
-  margin-right: 0 !important;
-}
+// :deep(.vxe-pager--sizes) {
+//   width: 8em !important;
+//   margin-right: 0 !important;
+// }
 </style>

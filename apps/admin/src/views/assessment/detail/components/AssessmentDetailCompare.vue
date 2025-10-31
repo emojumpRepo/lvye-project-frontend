@@ -104,17 +104,6 @@ const riskLevelDeptList = computed(() => {
   return deptList;
 });
 
-// 监听数据变化，设置默认激活项
-watch(
-  () => riskLevelDeptList.value,
-  (newList) => {
-    if (newList.length > 0 && newList[0]) {
-      activeKey.value = newList[0].id;
-    }
-  },
-  { immediate: true },
-);
-
 /**
  * 获取风险等级进度
  * @param grade 班级风险等级列表
@@ -149,9 +138,24 @@ watch(
       loading.value = true;
       await loadAssessmentTaskRiskLevelStatistics(newTaskNo);
       loading.value = false;
+      // 数据加载完成后，设置默认激活项
+      if (riskLevelDeptList.value.length > 0 && riskLevelDeptList.value[0]) {
+        activeKey.value = riskLevelDeptList.value[0].id;
+      }
     }
   },
   { immediate: true },
+);
+
+// 监听类型切换，设置默认激活项
+watch(
+  () => props.activeType,
+  () => {
+    // 切换类型时，设置默认激活项
+    if (riskLevelDeptList.value.length > 0 && riskLevelDeptList.value[0]) {
+      activeKey.value = riskLevelDeptList.value[0].id;
+    }
+  },
 );
 
 /**
@@ -227,7 +231,9 @@ defineExpose({
               </div>
             </div>
 
-            <div class="scroll-area h-[200px] overflow-y-auto">
+            <div
+              class="scroll-area h-[200px] overflow-y-auto [scrollbar-gutter:stable]"
+            >
               <ACollapse
                 v-model:active-key="activeKey"
                 accordion
@@ -312,6 +318,10 @@ defineExpose({
 
 :deep(.ant-spin-container) {
   height: 100% !important;
+}
+
+:deep(.ant-collapse-expand-icon) {
+  padding-inline-end: 15.5px !important;
 }
 
 .scroll-area::-webkit-scrollbar {

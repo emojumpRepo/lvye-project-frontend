@@ -108,6 +108,9 @@ catalogs:
     '@types/jsonwebtoken':
       specifier: ^9.0.10
       version: 9.0.10
+    '@types/jszip':
+      specifier: ^3.4.1
+      version: 3.4.1
     '@types/lodash.clonedeep':
       specifier: ^4.5.9
       version: 4.5.9
@@ -336,6 +339,9 @@ catalogs:
     jsonwebtoken:
       specifier: ^9.0.2
       version: 9.0.2
+    jszip:
+      specifier: ^3.10.1
+      version: 3.10.1
     lefthook:
       specifier: ^1.11.14
       version: 1.11.16
@@ -772,6 +778,9 @@ importers:
       highlight.js:
         specifier: 'catalog:'
         version: 11.11.1
+      jszip:
+        specifier: 'catalog:'
+        version: 3.10.1
       pdfmake:
         specifier: 'catalog:'
         version: 0.2.20
@@ -800,6 +809,9 @@ importers:
       '@types/crypto-js':
         specifier: 'catalog:'
         version: 4.2.2
+      '@types/jszip':
+        specifier: 'catalog:'
+        version: 3.4.1
 
   apps/backend-mock:
     dependencies:
@@ -4657,6 +4669,10 @@ packages:
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
+
+  '@types/jszip@3.4.1':
+    resolution: {integrity: sha512-TezXjmf3lj+zQ651r6hPqvSScqBLvyPI9FxdXBqpEwBijNGQ2NXpaFW/7joGzveYkKQUil7iiDHLo6LV71Pc0A==}
+    deprecated: This is a stub types definition. jszip provides its own type definitions, so you do not need this installed.
 
   '@types/linkify-it@5.0.0':
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
@@ -15047,6 +15063,10 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 24.0.10
+
+  '@types/jszip@3.4.1':
+    dependencies:
+      jszip: 3.10.1
 
   '@types/linkify-it@5.0.0': {}
 

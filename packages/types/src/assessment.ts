@@ -57,6 +57,7 @@ export interface AssessmentQuestionnaireResultVO {
   riskLevel: number;
   suggestions: string;
   reportContent: string;
+  completedTime: number;
   dimensions: Dimension[];
   standardScore: number;
   percentileRank: number;
@@ -142,6 +143,44 @@ export interface ClassRiskLevel {
 export interface AssessmentTaskRiskLevelStatistics {
   totalList: RiskLevel[];
   gradeList: GradeRiskLevel[];
+}
+
+/** 导出失败项 */
+export interface ExportFailureItem {
+  studentName: string; // 学生姓名
+  studentNo: string; // 学号
+  className: string; // 班级名称
+  failedStep: 'fetching' | 'generating' | 'packaging'; // 失败步骤
+  errorMessage: string; // 错误信息
+}
+
+/** 导出进度 */
+export interface ExportProgress {
+  currentStep:
+    | 'cancelled'
+    | 'completed'
+    | 'error'
+    | 'fetching'
+    | 'generating'
+    | 'packaging';
+  fileType: 'pdf' | 'xlsx';
+  exportFileName: string;
+  // 准备工作（获取学生信息数据）
+  studentInfoTotal: number; // 学生总数
+  studentInfoFetched: number; // 已获取数据的学生数
+  // 第一步（获取学生测评结果数据）
+  totalCount: number; // 学生测评数据总数
+  fetchedCount: number; // 已获取数据的学生测评数据数
+  // 第二步：文件生成
+  currentGenerateCount: number; // 当前正在生成的数据数量
+  totalGenerateCount: number; // 总生成数据数量
+  // 第三步：打包压缩
+  packagingProgress: number; // 打包进度（0-100）
+  // 完成统计信息
+  failureList: ExportFailureItem[]; // 失败列表
+  startTime: number; // 开始时间戳
+  errorMessage: string; // 错误信息
+  downloadUrl: string; // 下载链接
 }
 
 /** 正在进行的任务 */

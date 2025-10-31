@@ -1,9 +1,6 @@
 <script lang="ts" setup>
 import type { EchartsUIType } from '@vben/plugins/echarts';
-import type {
-  AssessmentQuestionnaireResultVO,
-  QuestionnaireResultDataVO,
-} from '@vben/types';
+import type { AssessmentQuestionnaireResultVO, Dimension } from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
@@ -19,13 +16,10 @@ const { renderEcharts } = useEcharts(chartRef);
 const dimensions = computed(() => {
   return props.questionnaireResult.flatMap(
     (result: AssessmentQuestionnaireResultVO) => {
-      const reportContent = JSON.parse(
-        result.reportContent,
-      ) as QuestionnaireResultDataVO[];
-      return reportContent
-        .filter((item) => Boolean(item.dimensionName))
-        .map((item: QuestionnaireResultDataVO) => ({
-          name: (item.dimensionName ?? '').replaceAll('自我评价', '').trim(),
+      return result.dimensions
+        .filter((item) => Boolean(item.name))
+        .map((item: Dimension) => ({
+          name: (item.name ?? '').replaceAll('自我评价', '').trim(),
           score: Number(item.score ?? 0),
         }));
     },

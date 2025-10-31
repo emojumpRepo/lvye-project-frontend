@@ -79,7 +79,7 @@ const loading = ref(false);
 const currentTaskInfo = ref<TaskInfo>();
 const activeTab = ref<TabItem>({
   key: '',
-  label: '',
+  label: '整体测评',
 });
 
 /** 任务状态标签 */
@@ -176,15 +176,6 @@ async function loadTaskData() {
           ...questionnairesTabs,
         ],
       };
-
-      // if (
-      //   !activeTab.value.key &&
-      //   currentTaskInfo.value?.questionnairesTabs?.length
-      // ) {
-      //   activeTab.value = currentTaskInfo.value?.questionnairesTabs[0]
-      //     ? { ...currentTaskInfo.value.questionnairesTabs[0] }
-      //     : { key: '', label: '' };
-      // }
     }
   } catch (error) {
     console.error('加载测评任务数据失败:', error);
@@ -342,7 +333,7 @@ onMounted(async () => {
             返回
           </LyButton>
           <LyButton size="small" type="success" @click="handleManualRefresh">
-            <IconifyIcon icon="material-symbols:refresh" class="size-5" />
+            刷新
           </LyButton>
           <div class="w-28 whitespace-nowrap text-xs text-gray-500">
             {{ lastUpdatedMessage }}

@@ -393,6 +393,6 @@ export function getAssessmentQuestionnaireResult(id: string) {
 export function getAssessmentResult(id: string) {
   return requestClient.get<AssessmentResultVO>(
     '/psychology/assessment-result/get',
-    { params: { id } },
+    { params: { id }, timeout: 15_000 },
   );
 }

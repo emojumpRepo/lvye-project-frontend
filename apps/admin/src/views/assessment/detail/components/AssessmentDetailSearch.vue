@@ -18,6 +18,10 @@ const emit = defineEmits<{
   search: [params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq];
 }>();
 
+const selectedRowKeys = defineModel<number[]>('selectedRowKeys', {
+  default: () => [],
+});
+
 const deptOptions = ref<DeptGradeClassOption[]>([]);
 const assessmentDetailSearchParams =
   ref<PsychologyAssessmentApi.ParticipantsQuestionnairePageReq>();
@@ -27,38 +31,45 @@ const [Form, formApi] = useVbenForm({
   layout: 'horizontal',
   wrapperClass: 'gap-2 grid-cols-8',
   commonConfig: { componentProps: { class: 'w-full' } },
-  submitButtonOptions: { content: '查询', class: 'bg-[#04DC70]' },
-  handleSubmit: async (values) => {
-    await handleSearch(values);
-  },
-});
-
-// 搜索
-async function handleSearch(values: any) {
-  try {
-    emit('loading', true);
+  submitButtonOptions: { show: false },
+  handleReset,
+  handleValuesChange: async (values) => {
+    selectedRowKeys.value = [];
 
     // 判断搜索关键词是学号还是姓名
+    let name, studentNo;
     if (values.searchKeyword) {
-      const isStudentNo = /^\d+$/.test(values.searchKeyword.trim());
+      const trimmedKeyword = values.searchKeyword.trim();
+      const isStudentNo = /^\d+$/.test(trimmedKeyword);
       if (isStudentNo) {
-        values.studentNo = values.searchKeyword;
+        studentNo = trimmedKeyword;
       } else {
-        values.name = values.searchKeyword;
+        name = trimmedKeyword;
       }
     }
 
-    // 构建搜索参数
+    // 构建并返回搜索参数对象，空值将被处理为 undefined
     const params: PsychologyAssessmentApi.ParticipantsQuestionnairePageReq = {
-      studentNo: values.studentNo || undefined,
-      name: values.name || undefined,
+      studentNo: studentNo || undefined,
+      name: name || undefined,
       status: values.status === '' ? undefined : values.status,
       riskLevel: values.riskLevel === '' ? undefined : values.riskLevel,
       classId: values.classId || undefined,
     };
 
     assessmentDetailSearchParams.value = params;
-    emit('search', assessmentDetailSearchParams.value);
+
+    await handleSearch();
+  },
+});
+
+// 搜索
+async function handleSearch() {
+  try {
+    emit('loading', true);
+    if (assessmentDetailSearchParams.value) {
+      emit('search', assessmentDetailSearchParams.value);
+    }
   } catch (error) {
     console.error('搜索失败:', error);
     message.error('搜索失败，请重试');
