@@ -18,7 +18,7 @@ import ExportExcelProgressDialog from '#/components/Dialog/ExportExcelProgressDi
 import ExportStudentAssessmentResultDialog from '#/components/Dialog/ExportStudentAssessmentResultDialog/index.vue';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import SelectExportAssessmentTypeDialog from '#/components/Dialog/SelectExportAssessmentTypeDialog/index.vue';
-import StudentDrawer from '#/components/Drawer/StudentDrawer/index.vue';
+import StudentDetailDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
 
@@ -86,8 +86,8 @@ const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
   });
 
 // 学生信息详情抽屉
-const [Drawer, drawerApi] = useVbenDrawer({
-  connectedComponent: StudentDrawer,
+const [StudentProfileDrawer, studentProfileDrawerApi] = useVbenDrawer({
+  connectedComponent: StudentDetailDrawer,
 });
 
 // 加载学生数据的函数
@@ -377,7 +377,7 @@ async function handleExport(
 
 /** 查看详情 */
 function viewStudentInfo(id: number) {
-  drawerApi.setData({ id }).open();
+  // studentProfileDrawerApi.setData({ id }).open();
 }
 </script>
 
@@ -505,7 +505,7 @@ function viewStudentInfo(id: number) {
       :student-info-total="progress.studentInfoTotal"
       :type="exportXLSXType"
     />
-    <Drawer />
+    <StudentProfileDrawer />
   </div>
 </template>
 
