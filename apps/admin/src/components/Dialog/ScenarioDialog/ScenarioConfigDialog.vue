@@ -12,6 +12,7 @@ import { computed, h, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { CirclePlus } from '@vben/icons';
+import { riskLevelOptions } from '@vben/types';
 
 import {
   Alert,
@@ -623,13 +624,6 @@ const configColumns = [
   },
 ];
 
-const riskLevelOptions = [
-  { label: '无/低风险', value: 1 },
-  { label: '轻度风险', value: 2 },
-  { label: '中度风险', value: 3 },
-  { label: '重度风险', value: 4 },
-];
-
 const formRef = ref();
 </script>
 
@@ -924,12 +918,7 @@ const formRef = ref();
                               <div class="col-span-4">
                                 <Select
                                   v-model:value="c.value"
-                                  :options="[
-                                    { label: '无/低风险(1)', value: 1 },
-                                    { label: '轻度风险(2)', value: 2 },
-                                    { label: '中度风险(3)', value: 3 },
-                                    { label: '重度风险(4)', value: 4 },
-                                  ]"
+                                  :options="riskLevelOptions"
                                 />
                               </div>
                             </template>
@@ -937,12 +926,7 @@ const formRef = ref();
                               <div class="col-span-2">
                                 <Select
                                   v-model:value="c.riskLevel"
-                                  :options="[
-                                    { label: '无/低风险数量', value: 1 },
-                                    { label: '轻度风险数量', value: 2 },
-                                    { label: '中度风险数量', value: 3 },
-                                    { label: '重度风险数量', value: 4 },
-                                  ]"
+                                  :options="riskLevelOptions"
                                   placeholder="统计哪个风险等级的数量"
                                 />
                               </div>

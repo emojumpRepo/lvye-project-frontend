@@ -58,6 +58,7 @@ export interface QuestionnaireDimensionVO {
   participateModuleCalc: boolean | number; // 是否参与模块计算（boolean或0/1）
   participateAssessmentCalc: boolean | number; // 是否参与测评计算（boolean或0/1）
   participateRanking: boolean | number; // 是否参与心理问题排行（boolean或0/1）
+  showScore: boolean | number; // 是否展示测评得分（boolean或0/1）
   sortOrder?: number; // 排序
   status: number; // 状态（0：禁用，1：启用）
   createTime?: string; // 创建时间

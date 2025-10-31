@@ -22,10 +22,4 @@ interface AuthPermissionInfo {
   isParent: boolean;
 }
 
-/** 性别枚举 */
-export enum GenderEnum {
-  FEMALE = 2,
-  MALE = 1,
-}
-
 export type { AuthPermissionInfo, UserInfo };

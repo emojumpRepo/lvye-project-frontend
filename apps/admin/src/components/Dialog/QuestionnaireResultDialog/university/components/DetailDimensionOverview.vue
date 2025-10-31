@@ -7,6 +7,7 @@ import type { MtuiUniversityResultRespVO } from '#/api/psychology/assessment/ind
 import { computed, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
+import { RiskLevelEnum } from '@vben/types';
 
 import { Popover, Tabs } from 'ant-design-vue';
 
@@ -184,6 +185,9 @@ const columns = computed<VxeGridPropTypes.Columns>(() => [
     field: 'score',
     width: 100,
     align: 'center',
+    slots: {
+      default: 'score',
+    },
     resizable: false,
   },
   {
@@ -330,16 +334,24 @@ watch(activeKey, async () => {
             v-if="!row.isCategory"
             class="risk-level-tag"
             :style="{
-              color: row.dimensionCode.includes('NSSI_reason')
-                ? 'black'
-                : (getColorConfig({
-                    dictValue: row.riskLevel,
-                    target: 'color',
-                  }) as string),
+              color:
+                row.dimensionCode.includes('NSSI_reason') ||
+                row.riskLevel === RiskLevelEnum.NONE
+                  ? 'black'
+                  : (getColorConfig({
+                      dictValue: row.riskLevel,
+                      target: 'color',
+                    }) as string),
             }"
           >
             {{ row.level }}
           </span>
+        </template>
+
+        <!-- 测评得分列：自定义样式 -->
+        <template #score="{ row }">
+          <span v-if="!row.isCategory && row?.showScore">{{ row.score }}</span>
+          <span v-else>--</span>
         </template>
 
         <!-- 测评结果表头：带帮助图标 -->

@@ -11,6 +11,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 import { CirclePlus } from '@vben/icons';
+import { riskLevelOptions } from '@vben/types';
 
 import {
   Alert,
@@ -1360,14 +1361,6 @@ const sexOptions = [
   { label: '女', value: 2 },
 ];
 
-// 风险等级选项
-const riskLevelOptions = [
-  { label: '无/低风险', value: 1 },
-  { label: '轻度风险', value: 2 },
-  { label: '中度风险', value: 3 },
-  { label: '重度风险', value: 4 },
-];
-
 // 生成符合后端要求的JSON表达式
 function generateBackendExpression() {
   switch (currentRuleType.value) {
@@ -2666,12 +2659,7 @@ defineExpose({
                           <Form.Item label="风险等级">
                             <Select
                               v-model:value="r.riskLevel"
-                              :options="[
-                                { label: '无/低风险(1)', value: 1 },
-                                { label: '轻度风险(2)', value: 2 },
-                                { label: '中度风险(3)', value: 3 },
-                                { label: '重度风险(4)', value: 4 },
-                              ]"
+                              :options="riskLevelOptions"
                               allow-clear
                             />
                           </Form.Item>
@@ -2813,12 +2801,7 @@ defineExpose({
                         <Form.Item label="风险等级">
                           <Select
                             v-model:value="b.riskLevel"
-                            :options="[
-                              { label: '无/低风险(1)', value: 1 },
-                              { label: '轻度风险(2)', value: 2 },
-                              { label: '中度风险(3)', value: 3 },
-                              { label: '重度风险(4)', value: 4 },
-                            ]"
+                            :options="riskLevelOptions"
                             allow-clear
                           />
                         </Form.Item>

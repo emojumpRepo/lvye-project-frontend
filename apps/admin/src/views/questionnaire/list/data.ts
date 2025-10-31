@@ -279,6 +279,12 @@ export function useDimensionGridColumns() {
       slots: { default: 'participateRanking' },
     },
     {
+      title: '展示测评得分',
+      field: 'showScore',
+      width: 100,
+      slots: { default: 'showScore' },
+    },
+    {
       title: '排序',
       field: 'sortOrder',
       width: 80,
@@ -472,6 +478,20 @@ export function useDimensionFormSchema(): VbenFormSchema[] {
     {
       fieldName: 'participateRanking',
       label: '参与心理问题排行',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '是', value: 1 },
+          { label: '否', value: 0 },
+        ],
+        buttonStyle: 'solid',
+      },
+      defaultValue: 1,
+      rules: 'required',
+    },
+    {
+      fieldName: 'showScore',
+      label: '展示测评得分',
       component: 'RadioGroup',
       componentProps: {
         options: [

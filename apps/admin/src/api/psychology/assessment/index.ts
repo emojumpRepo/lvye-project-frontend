@@ -408,6 +408,7 @@ export interface MtuiUniversityDimensionResultVO {
   participateModuleCalc: number;
   participateAssessmentCalc: number;
   participateRanking: number;
+  showScore: number;
 }
 
 export interface MtuiUniversityResultRespVO {

@@ -109,22 +109,20 @@ const [Modal, modalApi] = useVbenModal({
         // 确保布尔值转换为数字
         participateModuleCalc:
           typeof dimension.participateModuleCalc === 'boolean'
-            ? dimension.participateModuleCalc
-              ? 1
-              : 0
+            ? (dimension.participateModuleCalc ? 1 : 0)
             : dimension.participateModuleCalc,
         participateAssessmentCalc:
           typeof dimension.participateAssessmentCalc === 'boolean'
-            ? dimension.participateAssessmentCalc
-              ? 1
-              : 0
+            ? (dimension.participateAssessmentCalc ? 1 : 0)
             : dimension.participateAssessmentCalc,
         participateRanking:
           typeof dimension.participateRanking === 'boolean'
-            ? dimension.participateRanking
-              ? 1
-              : 0
+            ? (dimension.participateRanking ? 1 : 0)
             : dimension.participateRanking,
+        showScore:
+          typeof dimension.showScore === 'boolean'
+            ? (dimension.showScore ? 1 : 0)
+            : dimension.showScore,
       });
     } else {
       // 设置默认值
@@ -133,6 +131,7 @@ const [Modal, modalApi] = useVbenModal({
         participateModuleCalc: 1,
         participateAssessmentCalc: 1,
         participateRanking: 1,
+        showScore: 1,
         sortOrder: 1,
         status: 1,
       });

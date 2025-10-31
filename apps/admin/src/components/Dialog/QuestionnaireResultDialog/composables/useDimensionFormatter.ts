@@ -15,6 +15,7 @@ interface DimensionResult {
   teacherComment: string;
   dimensionDescription: string;
   categoryName: string;
+  showScore: number;
 }
 
 /**
@@ -192,6 +193,7 @@ export function useDimensionFormatter(
           teacherComment: d.teacherComment ?? '',
           dimensionDescription: d.dimensionDescription ?? '',
           dimensionCode: d.dimensionCode ?? '',
+          showScore: d.showScore ?? 0,
           categoryName: '',
         };
 
@@ -254,6 +256,7 @@ export function useDimensionFormatter(
           dimensionDescription: d.dimensionDescription ?? '',
           dimensionCode: d.dimensionCode ?? '',
           categoryName: '',
+          showScore: d.showScore ?? 0,
         };
 
         // 分类逻辑

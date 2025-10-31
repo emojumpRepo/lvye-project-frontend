@@ -11,8 +11,6 @@
  * - config: 系统配置（年级班级、教师、字典等）
  */
 
-import { GenderEnum } from '@vben/types';
-
 // ==================== 测评管理 ====================
 export * from './assessment';
 
@@ -34,14 +32,6 @@ export enum PsychologicalStatusEnum {
 export enum GraduationStatusEnum {
   GRADUATED = 1,
   NOT_GRADUATED = 0,
-}
-
-/** 风险等级枚举 */
-export enum RiskLevelEnum {
-  CRITICAL = 4,
-  HIGH = 3,
-  LOW = 1,
-  MEDIUM = 2,
 }
 
 /** 测评任务状态枚举 */
@@ -135,87 +125,4 @@ export enum ImportanceLevelEnum {
   HIGH = 3,
   LOW = 1,
   MEDIUM = 2,
-}
-
-// ==================== 常用工具函数 ====================
-
-/** 获取性别文本 */
-export function getGenderText(gender?: number): string {
-  switch (gender) {
-    case GenderEnum.FEMALE: {
-      return '女';
-    }
-    case GenderEnum.MALE: {
-      return '男';
-    }
-    default: {
-      return '未知';
-    }
-  }
-}
-
-/** 获取心理状态文本 */
-export function getPsychologicalStatusText(status?: number): string {
-  switch (status) {
-    case PsychologicalStatusEnum.GOOD: {
-      return '良好';
-    }
-    case PsychologicalStatusEnum.NORMAL: {
-      return '一般';
-    }
-    case PsychologicalStatusEnum.POOR: {
-      return '较差';
-    }
-    default: {
-      return '未知';
-    }
-  }
-}
-
-/** 获取风险等级文本和颜色 */
-export function getRiskLevelInfo(level?: number): {
-  color: string;
-  text: string;
-} {
-  switch (level) {
-    case RiskLevelEnum.CRITICAL: {
-      return { text: '极高风险', color: 'purple' };
-    }
-    case RiskLevelEnum.HIGH: {
-      return { text: '高风险', color: 'red' };
-    }
-    case RiskLevelEnum.LOW: {
-      return { text: '低风险', color: 'green' };
-    }
-    case RiskLevelEnum.MEDIUM: {
-      return { text: '中风险', color: 'orange' };
-    }
-    default: {
-      return { text: '未知', color: 'gray' };
-    }
-  }
-}
-
-/** 获取严重程度文本和颜色 */
-export function getSeverityLevelInfo(level?: number): {
-  color: string;
-  text: string;
-} {
-  switch (level) {
-    case SeverityLevelEnum.CRITICAL: {
-      return { text: '紧急', color: 'purple' };
-    }
-    case SeverityLevelEnum.HIGH: {
-      return { text: '严重', color: 'red' };
-    }
-    case SeverityLevelEnum.LOW: {
-      return { text: '轻微', color: 'green' };
-    }
-    case SeverityLevelEnum.MEDIUM: {
-      return { text: '一般', color: 'orange' };
-    }
-    default: {
-      return { text: '未知', color: 'gray' };
-    }
-  }
 }

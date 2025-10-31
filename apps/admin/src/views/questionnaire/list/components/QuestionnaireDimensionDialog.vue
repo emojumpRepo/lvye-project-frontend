@@ -224,6 +224,13 @@ function handleRefresh() {
           </Tag>
         </template>
 
+        <!-- 参与排行 -->
+        <template #showScore="{ row }">
+          <Tag :color="row.showScore ? 'blue' : 'default'">
+            {{ row.showScore ? '是' : '否' }}
+          </Tag>
+        </template>
+
         <template #action="{ row }">
           <Button type="link" size="small" @click="handleManageConfig(row)">
             结果配置

@@ -6,6 +6,7 @@ import type { ModuleResultConfigVO } from '#/api/psychology/module-result-config
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { riskLevelOptions } from '@vben/types';
 
 import {
   Button,
@@ -877,12 +878,7 @@ function handleCancel() {
                             <div class="col-span-3">
                               <Select
                                 v-model:value="c.value"
-                                :options="[
-                                  { label: '无/低风险', value: 1 },
-                                  { label: '轻度风险', value: 2 },
-                                  { label: '中度风险', value: 3 },
-                                  { label: '重度风险', value: 4 },
-                                ]"
+                                :options="riskLevelOptions"
                               />
                             </div>
                             <div class="col-span-1 text-right">
@@ -1034,12 +1030,7 @@ function handleCancel() {
                               <div class="col-span-4">
                                 <Select
                                   v-model:value="c.value"
-                                  :options="[
-                                    { label: '无/低风险(1)', value: 1 },
-                                    { label: '轻度风险(2)', value: 2 },
-                                    { label: '中度风险(3)', value: 3 },
-                                    { label: '重度风险(4)', value: 4 },
-                                  ]"
+                                  :options="riskLevelOptions"
                                 />
                               </div>
                             </template>
@@ -1047,12 +1038,7 @@ function handleCancel() {
                               <div class="col-span-2">
                                 <Select
                                   v-model:value="c.riskLevel"
-                                  :options="[
-                                    { label: '无/低风险数量', value: 1 },
-                                    { label: '轻度风险数量', value: 2 },
-                                    { label: '中度风险数量', value: 3 },
-                                    { label: '重度风险数量', value: 4 },
-                                  ]"
+                                  :options="riskLevelOptions"
                                   placeholder="统计哪个风险等级的数量"
                                 />
                               </div>
@@ -1161,12 +1147,7 @@ function handleCancel() {
               <Form.Item label="风险等级">
                 <Select
                   v-model:value="formModel.riskLevel"
-                  :options="[
-                    { label: '无/低风险(1)', value: 1 },
-                    { label: '轻度风险(2)', value: 2 },
-                    { label: '中度风险(3)', value: 3 },
-                    { label: '重度风险(4)', value: 4 },
-                  ]"
+                  :options="riskLevelOptions"
                   allow-clear
                 />
               </Form.Item>
