@@ -1,5 +1,5 @@
 import type { CustomRequestOptions } from '@/http/types'
-import { useTokenStore } from '@/store'
+import { useTenantStore, useTokenStore } from '@/store'
 import { getEnvBaseUrl } from '@/utils'
 import { stringifyQuery } from './tools/queryString'
 
@@ -48,7 +48,16 @@ const httpInterceptor = {
     options.header = {
       ...options.header,
     }
-    // 3. 添加 token 请求头标识
+
+    // 3. 添加租户ID请求头
+    const tenantStore = useTenantStore()
+    const tenantId = tenantStore.getTenantId
+
+    if (tenantId) {
+      options.header['tenant-id'] = tenantId
+    }
+
+    // 4. 添加 token 请求头标识
     const tokenStore = useTokenStore()
     const token = tokenStore.validToken
 

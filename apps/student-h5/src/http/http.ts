@@ -27,6 +27,9 @@ export function http<T>(options: CustomRequestOptions) {
         // 检查是否是401错误（包括HTTP状态码401或业务码401）
         const isTokenExpired = res.statusCode === 401 || code === 401
 
+        // 检查服务器处理请求是否成功
+        const isSuccess = code === 400
+
         if (isTokenExpired) {
           const tokenStore = useTokenStore()
           if (!isDoubleTokenMode) {
@@ -90,6 +93,15 @@ export function http<T>(options: CustomRequestOptions) {
           }
 
           return reject(res)
+        }
+
+        if (isSuccess) {
+          console.log('请求错误:', responseData)
+          uni.showToast({
+            icon: 'none',
+            title: responseData.msg || responseData.message || '请求错误',
+          })
+          return reject(responseData)
         }
 
         // 处理其他成功状态（HTTP状态码200-299）

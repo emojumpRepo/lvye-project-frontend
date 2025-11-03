@@ -1,63 +1,50 @@
-import type {
-  ILoginForm,
-} from '@/api/login'
-import type { IAuthLoginRes } from '@/api/types/login'
+import type { ISmsLoginForm } from '@/api/login'
+import type { IWebAuthLoginRes } from '@/api/types/login'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue' // 修复：导入 computed
+import { computed, ref } from 'vue'
 import {
-  login as _login,
   logout as _logout,
   refreshToken as _refreshToken,
-  wxLogin as _wxLogin,
-  getWxCode,
+  smsLogin as _smsLogin,
 } from '@/api/login'
-import { isDoubleTokenRes, isSingleTokenRes } from '@/api/types/login'
-import { isDoubleTokenMode } from '@/utils'
+import { isWebAuthLoginRes } from '@/api/types/login'
 import { useUserStore } from './user'
 
 // 初始化状态
-const tokenInfoState = isDoubleTokenMode
-  ? {
-      accessToken: '',
-      accessExpiresIn: 0,
-      refreshToken: '',
-      refreshExpiresIn: 0,
-    }
-  : {
-      token: '',
-      expiresIn: 0,
-    }
+const tokenInfoState: IWebAuthLoginRes = {
+  userId: 0,
+  accessToken: '',
+  refreshToken: '',
+  expiresTime: '',
+  isParent: 0,
+}
 
 export const useTokenStore = defineStore(
   'token',
   () => {
-    // 定义用户信息
-    const tokenInfo = ref<IAuthLoginRes>({ ...tokenInfoState })
-    // 设置用户信息
-    const setTokenInfo = (val: IAuthLoginRes) => {
+    // 定义token信息
+    const tokenInfo = ref<IWebAuthLoginRes>({ ...tokenInfoState })
+
+    // 设置token信息
+    const setTokenInfo = (val: IWebAuthLoginRes) => {
       tokenInfo.value = val
 
-      // 计算并存储过期时间
-      const now = Date.now()
-      if (isSingleTokenRes(val)) {
-        // 单token模式
-        const expireTime = now + val.expiresIn * 1000
+      // 将 ISO 8601 格式的过期时间转换为时间戳
+      if (val.expiresTime) {
+        const expireTime = new Date(val.expiresTime).getTime()
         uni.setStorageSync('accessTokenExpireTime', expireTime)
       }
-      else if (isDoubleTokenRes(val)) {
-        // 双token模式
-        const accessExpireTime = now + val.accessExpiresIn * 1000
-        const refreshExpireTime = now + val.refreshExpiresIn * 1000
-        uni.setStorageSync('accessTokenExpireTime', accessExpireTime)
-        uni.setStorageSync('refreshTokenExpireTime', refreshExpireTime)
-      }
+
+      // 保存 userId 和 isParent
+      uni.setStorageSync('userId', val.userId)
+      uni.setStorageSync('isParent', val.isParent)
     }
 
     /**
      * 判断token是否过期
      */
     const isTokenExpired = computed(() => {
-      if (!tokenInfo.value) {
+      if (!tokenInfo.value || !tokenInfo.value.accessToken) {
         return true
       }
 
@@ -66,111 +53,70 @@ export const useTokenStore = defineStore(
 
       if (!expireTime)
         return true
-      return now >= expireTime
+
+      // 提前5分钟判定为过期，避免临界情况
+      return now >= expireTime - 5 * 60 * 1000
     })
 
     /**
      * 判断refreshToken是否过期
+     * Web登录没有单独的refreshToken过期时间，使用accessToken过期时间判断
      */
     const isRefreshTokenExpired = computed(() => {
-      if (!isDoubleTokenMode)
+      if (!tokenInfo.value || !tokenInfo.value.refreshToken) {
         return true
-
-      const now = Date.now()
-      const refreshExpireTime = uni.getStorageSync('refreshTokenExpireTime')
-
-      if (!refreshExpireTime)
-        return true
-      return now >= refreshExpireTime
+      }
+      // 简单判断：如果 accessToken 都过期了，refreshToken 也认为过期
+      return isTokenExpired.value
     })
 
     /**
      * 登录成功后处理逻辑
-     * @param tokenInfo 登录返回的token信息
+     * @param loginRes 登录返回的信息
      */
-    async function _postLogin(tokenInfo: IAuthLoginRes) {
-      setTokenInfo(tokenInfo)
+    async function _postLogin(loginRes: IWebAuthLoginRes) {
+      setTokenInfo(loginRes)
       const userStore = useUserStore()
-      await userStore.fetchUserInfo()
+      // 如果需要获取用户详细信息，可以在这里调用
+      // await userStore.fetchUserInfo()
     }
 
     /**
-     * 用户登录
-     * 有的时候后端会用一个接口返回token和用户信息，有的时候会分开2个接口，一个获取token，一个获取用户信息
-     * （各有利弊，看业务场景和系统复杂度），这里使用2个接口返回的来模拟
-     * @param loginForm 登录参数
+     * 手机验证码登录
+     * @param loginForm 登录表单 { mobile, code }
      * @returns 登录结果
      */
-    const login = async (loginForm: ILoginForm) => {
+    const login = async (loginForm: ISmsLoginForm) => {
       try {
-        const res = await _login(loginForm)
-        console.log('普通登录-res: ', res)
+        const res = await _smsLogin(loginForm)
+        console.log('验证码登录成功:', res)
         await _postLogin(res)
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success',
-        })
         return res
       }
       catch (error) {
         console.error('登录失败:', error)
-        uni.showToast({
-          title: '登录失败，请重试',
-          icon: 'error',
-        })
         throw error
       }
     }
 
     /**
-     * 微信登录
-     * 有的时候后端会用一个接口返回token和用户信息，有的时候会分开2个接口，一个获取token，一个获取用户信息
-     * （各有利弊，看业务场景和系统复杂度），这里使用2个接口返回的来模拟
-     * @returns 登录结果
-     */
-    const wxLogin = async () => {
-      try {
-        // 获取微信小程序登录的code
-        const code = await getWxCode()
-        console.log('微信登录-code: ', code)
-        const res = await _wxLogin(code)
-        console.log('微信登录-res: ', res)
-        await _postLogin(res)
-        uni.showToast({
-          title: '登录成功',
-          icon: 'success',
-        })
-        return res
-      }
-      catch (error) {
-        console.error('微信登录失败:', error)
-        uni.showToast({
-          title: '微信登录失败，请重试',
-          icon: 'error',
-        })
-        throw error
-      }
-    }
-
-    /**
-     * 退出登录 并 删除用户信息
+     * 退出登录并删除用户信息
      */
     const logout = async () => {
       try {
-        // TODO 实现自己的退出登录逻辑
         await _logout()
       }
       catch (error) {
         console.error('退出登录失败:', error)
       }
       finally {
-        // 无论成功失败，都需要清除本地token信息
-        // 清除存储的过期时间
+        // 无论成功失败，都需要清除本地信息
         uni.removeStorageSync('accessTokenExpireTime')
-        uni.removeStorageSync('refreshTokenExpireTime')
+        uni.removeStorageSync('userId')
+        uni.removeStorageSync('isParent')
         console.log('退出登录-清除用户信息')
         tokenInfo.value = { ...tokenInfoState }
-        uni.removeStorageSync('token')
+
         const userStore = useUserStore()
         userStore.clearUserInfo()
       }
@@ -181,21 +127,19 @@ export const useTokenStore = defineStore(
      * @returns 刷新结果
      */
     const refreshToken = async () => {
-      if (!isDoubleTokenMode) {
-        console.error('单token模式不支持刷新token')
-        throw new Error('单token模式不支持刷新token')
-      }
-
       try {
-        // 安全检查，确保refreshToken存在
-        if (!isDoubleTokenRes(tokenInfo.value) || !tokenInfo.value.refreshToken) {
+        // 检查refreshToken是否存在
+        if (!tokenInfo.value.refreshToken) {
           throw new Error('无效的refreshToken')
         }
 
-        const refreshToken = tokenInfo.value.refreshToken
-        const res = await _refreshToken(refreshToken)
-        console.log('刷新token-res: ', res)
-        setTokenInfo(res)
+        const res = await _refreshToken(tokenInfo.value.refreshToken)
+        console.log('刷新token成功:', res)
+
+        // refreshToken 返回的也是完整的登录响应
+        if (isWebAuthLoginRes(res)) {
+          setTokenInfo(res)
+        }
         return res
       }
       catch (error) {
@@ -206,43 +150,26 @@ export const useTokenStore = defineStore(
 
     /**
      * 获取有效的token
-     * 注意：在computed中不直接调用异步函数，只做状态判断
-     * 实际的刷新操作应由调用方处理
      */
     const getValidToken = computed(() => {
       // token已过期，返回空
       if (isTokenExpired.value) {
         return ''
       }
-
-      if (!isDoubleTokenMode) {
-        return isSingleTokenRes(tokenInfo.value) ? tokenInfo.value.token : ''
-      }
-      else {
-        return isDoubleTokenRes(tokenInfo.value) ? tokenInfo.value.accessToken : ''
-      }
+      return tokenInfo.value.accessToken || ''
     })
 
     /**
      * 检查是否有登录信息（不考虑token是否过期）
      */
     const hasLoginInfo = computed(() => {
-      if (!tokenInfo.value) {
-        return false
-      }
-      if (isDoubleTokenMode) {
-        return isDoubleTokenRes(tokenInfo.value) && !!tokenInfo.value.accessToken
-      }
-      else {
-        return isSingleTokenRes(tokenInfo.value) && !!tokenInfo.value.token
-      }
+      return !!tokenInfo.value.accessToken && !!tokenInfo.value.userId
     })
 
     /**
      * 检查是否已登录且token有效
      */
     const hasValidLogin = computed(() => {
-      console.log('hasValidLogin', hasLoginInfo.value, !isTokenExpired.value)
       return hasLoginInfo.value && !isTokenExpired.value
     })
 
@@ -251,7 +178,7 @@ export const useTokenStore = defineStore(
      * @returns 有效的token或空字符串
      */
     const tryGetValidToken = async (): Promise<string> => {
-      if (!getValidToken.value && isDoubleTokenMode && !isRefreshTokenExpired.value) {
+      if (!getValidToken.value && !isRefreshTokenExpired.value) {
         try {
           await refreshToken()
           return getValidToken.value
@@ -264,14 +191,27 @@ export const useTokenStore = defineStore(
       return getValidToken.value
     }
 
+    /**
+     * 获取用户ID
+     */
+    const getUserId = computed(() => tokenInfo.value.userId)
+
+    /**
+     * 判断是否为家长登录
+     */
+    const isParentLogin = computed(() => tokenInfo.value.isParent === 1)
+
     return {
       // 核心API方法
       login,
-      wxLogin,
       logout,
 
       // 认证状态判断（最常用的）
       hasLogin: hasValidLogin,
+
+      // 用户信息
+      userId: getUserId,
+      isParent: isParentLogin,
 
       // 内部系统使用的方法
       refreshToken,

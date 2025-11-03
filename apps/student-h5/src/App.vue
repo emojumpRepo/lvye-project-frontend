@@ -1,12 +1,32 @@
 <script setup lang="ts">
 import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
 import { navigateToInterceptor } from '@/router/interceptor'
+import { useTenantStore } from '@/store'
+
+const tenantStore = useTenantStore()
 
 onLaunch((options) => {
   console.log('App Launch', options)
+
+  // 初始化租户ID
+  tenantStore.initTenantId()
 })
+
 onShow((options) => {
   console.log('App Show', options)
+
+  // 检查租户ID是否有效
+  if (!tenantStore.hasValidTenantId) {
+    // 如果当前不在无权限页面，则跳转到无权限页面
+    const currentPath = getCurrentPages().at(-1)?.route || ''
+    if (!currentPath.includes('no-access')) {
+      uni.reLaunch({
+        url: '/pages/auth/no-access',
+      })
+      return
+    }
+  }
+
   // 处理直接进入页面路由的情况：如h5直接输入路由、微信小程序分享后进入等
   // https://github.com/unibest-tech/unibest/issues/192
   if (options?.path) {
@@ -16,6 +36,7 @@ onShow((options) => {
     navigateToInterceptor.invoke({ url: '/' })
   }
 })
+
 onHide(() => {
   console.log('App Hide')
 })

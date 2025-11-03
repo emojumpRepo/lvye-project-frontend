@@ -21,7 +21,7 @@ export const TABBAR_STRATEGY_MAP = {
 // 如果是使用 NO_TABBAR(0)，nativeTabbarList 和 customTabbarList 都不生效(里面的配置不用管)
 // 如果是使用 NATIVE_TABBAR(1)，只需要配置 nativeTabbarList，customTabbarList 不生效
 // 如果是使用 CUSTOM_TABBAR(2,3)，只需要配置 customTabbarList，nativeTabbarList 不生效
-export const selectedTabbarStrategy = TABBAR_STRATEGY_MAP.CUSTOM_TABBAR_WITH_CACHE
+export const selectedTabbarStrategy = TABBAR_STRATEGY_MAP.NO_TABBAR
 
 // TODO: 2/3. 使用 NATIVE_TABBAR 时，更新下面的 tabbar 配置
 export const nativeTabbarList: NativeTabBarItem[] = [
@@ -34,7 +34,7 @@ export const nativeTabbarList: NativeTabBarItem[] = [
   {
     iconPath: 'static/tabbar/personal.png',
     selectedIconPath: 'static/tabbar/personalHL.png',
-    pagePath: 'pages/me/me',
+    pagePath: 'pages/user/index',
     text: '个人',
   },
 ]
@@ -53,7 +53,7 @@ export const customTabbarList: CustomTabBarItem[] = [
     // badge: 'dot',
   },
   {
-    pagePath: 'pages/me/me',
+    pagePath: 'pages/user/index',
     text: '我的',
     // 1）在fg-tabbar.vue页面上引入一下并注释掉（见tabbar/index.vue代码第2行）
     // 2）配置到 unocss.config.ts 的 safelist 中

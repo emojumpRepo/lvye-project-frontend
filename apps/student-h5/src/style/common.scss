@@ -1,0 +1,32 @@
+// 定义 CSS 变量在 :root 中
+:root,
+page {
+  --title-text-color: #2D3E50FF;
+  --desc-text-color: #2D3E5066;
+  --primary-color: #45C886FF;
+  --primary-color-light: #45C88666;
+  --primary-gradient: linear-gradient(to right, #45C887, #3EB87A);
+  --bg-color: #F4F9F9FF;
+}
+
+// 定义可复用的类
+.title-text {
+  color: var(--title-text-color);
+}
+
+.desc-text {
+  color: var(--desc-text-color);
+}
+
+.primary-text {
+  color: var(--primary-color);
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.default-bg-color {
+  background-color: var(--bg-color);
+}

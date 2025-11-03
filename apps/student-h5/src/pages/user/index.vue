@@ -17,61 +17,6 @@ const tokenStore = useTokenStore()
 // 使用storeToRefs解构userInfo
 const { userInfo } = storeToRefs(userStore)
 
-// #ifndef MP-WEIXIN
-// 上传头像
-const { run: uploadAvatar } = useUpload<IUploadSuccessInfo>(
-  '/upload',
-  {},
-  {
-    onSuccess: (res) => {
-      console.log('h5头像上传成功', res)
-      useUserStore().setUserAvatar(res.url)
-    },
-  },
-)
-// #endif
-
-// 微信小程序下登录
-async function handleLogin() {
-  // #ifdef MP-WEIXIN
-  // 微信登录
-  await tokenStore.wxLogin()
-
-  // #endif
-  // #ifndef MP-WEIXIN
-  uni.navigateTo({
-    url: `${LOGIN_PAGE}?redirect=${encodeURIComponent('/pages/me/me')}`,
-  })
-  // #endif
-}
-
-// #ifdef MP-WEIXIN
-
-// 微信小程序下选择头像事件
-function onChooseAvatar(e: any) {
-  console.log('选择头像', e.detail)
-  const { avatarUrl } = e.detail
-  const { run } = useUpload<IUploadSuccessInfo>(
-    '/upload',
-    {},
-    {
-      onSuccess: (res) => {
-        console.log('wx头像上传成功', res)
-        useUserStore().setUserAvatar(res.url)
-      },
-    },
-    avatarUrl,
-  )
-  run()
-}
-// #endif
-// #ifdef MP-WEIXIN
-// 微信小程序下设置用户名
-function getUserInfo(e: any) {
-  console.log(e.detail)
-}
-// #endif
-
 // 退出登录
 function handleLogout() {
   uni.showModal({
@@ -104,16 +49,6 @@ function handleLogout() {
   <view class="profile-container">
     <!-- 用户信息区域 -->
     <view class="user-info-section">
-      <!-- #ifdef MP-WEIXIN -->
-      <button class="avatar-button" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
-        <image :src="userInfo.avatar" mode="scaleToFill" class="h-full w-full" />
-      </button>
-      <!-- #endif -->
-      <!-- #ifndef MP-WEIXIN -->
-      <view class="avatar-wrapper" @click="uploadAvatar">
-        <image :src="userInfo.avatar" mode="scaleToFill" class="h-full w-full" />
-      </view>
-      <!-- #endif -->
       <view class="user-details">
         <!-- #ifdef MP-WEIXIN -->
         <input
@@ -158,6 +93,7 @@ function handleLogout() {
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   // background-color: #f7f8fa;
 }
+
 /* 用户信息区域 */
 .user-info-section {
   display: flex;
@@ -166,7 +102,7 @@ function handleLogout() {
   margin: 30rpx 30rpx 20rpx;
   background-color: #fff;
   border-radius: 24rpx;
-  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6rpx 20rpx rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
 }
 
@@ -177,18 +113,20 @@ function handleLogout() {
   overflow: hidden;
   border: 4rpx solid #f5f5f5;
   border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 12rpx rgb(0 0 0 / 8%);
 }
+
 .avatar-button {
-  height: 160rpx;
   width: 160rpx;
+  height: 160rpx;
   padding: 0;
   margin-right: 40rpx;
   overflow: hidden;
   border: 4rpx solid #f5f5f5;
   border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 12rpx rgb(0 0 0 / 8%);
 }
+
 .user-details {
   flex: 1;
 }

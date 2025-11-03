@@ -142,28 +142,27 @@ function getImageByIndex(index: number, item: CustomTabBarItem) {
 <style scoped lang="scss">
 .border-and-fixed {
   position: fixed;
+  right: 0;
   bottom: 0;
   left: 0;
-  right: 0;
-
-  border-top: 1px solid #eee;
   box-sizing: border-box;
+  border-top: 1px solid #eee;
 }
 // 中间鼓包的样式
 .bulge {
   position: absolute;
   top: -20px;
   left: 50%;
-  transform-origin: top center;
-  transform: translateX(-50%) scale(0.5) translateY(-33%);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   width: 250rpx;
   height: 250rpx;
-  border-radius: 50%;
   background-color: #fff;
+  border-radius: 50%;
   box-shadow: inset 0 0 0 1px #fefefe;
+  transform: translateX(-50%) scale(0.5) translateY(-33%);
+  transform-origin: top center;
 
   &:active {
     // opacity: 0.8;

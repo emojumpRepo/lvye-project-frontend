@@ -16,9 +16,20 @@ export interface IDoubleTokenRes {
 }
 
 /**
+ * Web 端登录响应类型（学生家长端）
+ */
+export interface IWebAuthLoginRes {
+  userId: number // 用户编号
+  accessToken: string // 访问令牌
+  refreshToken: string // 刷新令牌
+  expiresTime: string // 过期时间（ISO 8601 格式）
+  isParent: number // 是否家长登录 (0-学生 1-家长)
+}
+
+/**
  * 登录返回的信息，其实就是 token 信息
  */
-export type IAuthLoginRes = ISingleTokenRes | IDoubleTokenRes
+export type IAuthLoginRes = ISingleTokenRes | IDoubleTokenRes | IWebAuthLoginRes
 
 /**
  * 用户信息
@@ -28,6 +39,7 @@ export interface IUserInfoRes {
   username: string
   nickname: string
   avatar?: string
+  isParent?: number // 是否家长
   [key: string]: any // 允许其他扩展字段
 }
 
@@ -93,5 +105,14 @@ export function isSingleTokenRes(tokenRes: IAuthLoginRes): tokenRes is ISingleTo
  * @returns 是否为双Token响应
  */
 export function isDoubleTokenRes(tokenRes: IAuthLoginRes): tokenRes is IDoubleTokenRes {
-  return 'accessToken' in tokenRes && 'refreshToken' in tokenRes
+  return 'accessToken' in tokenRes && 'refreshToken' in tokenRes && 'accessExpiresIn' in tokenRes
+}
+
+/**
+ * 判断是否为 Web 端登录响应
+ * @param tokenRes 登录响应数据
+ * @returns 是否为 Web 端登录响应
+ */
+export function isWebAuthLoginRes(tokenRes: IAuthLoginRes): tokenRes is IWebAuthLoginRes {
+  return 'accessToken' in tokenRes && 'refreshToken' in tokenRes && 'expiresTime' in tokenRes && 'userId' in tokenRes
 }

@@ -6,5 +6,7 @@ defineExpose({
 </script>
 
 <template>
-  <slot />
+  <div class="default-bg-color min-h-screen">
+    <slot />
+  </div>
 </template>
