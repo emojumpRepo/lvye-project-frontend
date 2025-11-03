@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { Dayjs } from 'dayjs';
 
-import type { AssessmentComfirmInfo } from '@vben/types';
-
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import type { PsychologyConsultationApi } from '#/api/psychology/consultation';
 
 import { onMounted, ref } from 'vue';
@@ -20,13 +17,10 @@ import { getConfigPage } from '#/api/infra/config';
 import {
   cancelConsultationRecord,
   completeConsultationRecord,
-  saveAssessment,
   supplementEvalute,
 } from '#/api/psychology/consultation';
 import AdjustAppointmentTimeDialog from '#/components/Dialog/AdjustAppointmentTimeDialog/index.vue';
 import ConfirmDialog from '#/components/Dialog/ConfirmDialog/index.vue';
-import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
-import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
 import SupplementEvaluteDialog from '#/components/Dialog/SupplementEvaluteDialog/index.vue';
 import UploadEvaluationReportDialog from '#/components/Dialog/UploadEvaluationReportDialog/index.vue';
 import LyTag from '#/components/LyTag/index.vue';
@@ -43,21 +37,7 @@ const emit = defineEmits<{
 }>();
 
 const loading = ref(false);
-const isOpenPsychologicalConsultDialogModal = ref(false);
 const uploadExpireTime = ref<number>(24);
-const currentRowId = ref<number | undefined>();
-const confirmInfo = ref<AssessmentComfirmInfo>({
-  studentInfo: {
-    studentName: '',
-    className: '',
-    studentNo: '',
-  },
-  consultInfo: {
-    consultant: '',
-    consultType: '',
-    consultTime: '',
-  },
-});
 
 /** 调整预约时间弹窗 */
 const [AdjustAppointmentTimeModal, appointmentDetailModalApi] = useVbenModal({
@@ -72,11 +52,6 @@ const [ConfirmCancelModal, confirmCancelModalApi] = useVbenModal({
 /** 补评估弹窗 */
 const [SupplementEvaluteModal, supplementEvaluteModalApi] = useVbenModal({
   connectedComponent: SupplementEvaluteDialog,
-});
-
-/** 创建评估弹窗 */
-const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
-  connectedComponent: CreateEvaluationDialog,
 });
 
 /** 上传纪要弹窗 */
@@ -205,26 +180,6 @@ async function confirmSupplementEvalute(
 /** 上传咨询纪要 */
 function handleEvalute(row: PsychologyConsultationApi.ConsultationRecord) {
   uploadEvaluationReportModalApi.setData({ id: row.id }).open();
-}
-
-/** 确认完成评估 */
-async function completedEvalute(params: InterventionAssessmentReqVO) {
-  if (!currentRowId.value) return message.error('请先选择咨询记录');
-
-  try {
-    const response = await saveAssessment({
-      ...params,
-      appointmentId: currentRowId.value,
-      content: params.consultRecord,
-      draft: false,
-    });
-    if (!response) return false;
-    await refresh();
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
 }
 
 /** 调整时间 */
@@ -466,17 +421,11 @@ onMounted(async () => {
     </div>
 
     <AdjustAppointmentTimeModal @refresh="refresh" />
-    <PsychologicalConsultDialog
-      v-model:open="isOpenPsychologicalConsultDialogModal"
-      :comfirm-info="confirmInfo"
-      :publish="completedEvalute"
-    />
     <ConfirmCancelModal
       @confirm="handleConfirmCancelModal"
       @cancel="handleCancelCancelModal"
     />
     <SupplementEvaluteModal @confirm="confirmSupplementEvalute" />
-    <CreateEvaluationModal :publish="completedEvalute" />
     <UploadEvaluationReportModal @refresh="refresh" />
   </div>
 </template>

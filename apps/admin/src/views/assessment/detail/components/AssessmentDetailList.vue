@@ -377,7 +377,7 @@ async function handleExport(
 
 /** 查看详情 */
 function viewStudentInfo(id: number) {
-  // studentProfileDrawerApi.setData({ id }).open();
+  studentProfileDrawerApi.setData({ id }).open();
 }
 </script>
 

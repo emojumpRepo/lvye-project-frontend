@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Rule } from 'ant-design-vue/es/form';
 
-import type { CrisisEventOpParams, SearchStudentProfileVO } from '@vben/types';
+import type { SearchStudentProfileVO } from '@vben/types';
 
 import type { ReportCrisisEventReqVO } from '#/api/psychology';
 
@@ -27,6 +27,7 @@ import {
 } from '#/api/psychology/index';
 import { searchStudentProfile } from '#/api/psychology/student-profile';
 import ConfirmReportDialog from '#/components/Dialog/ConfirmReportDialog/index.vue';
+import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyCategoryCard from '#/components/LyCategoryCard/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
@@ -41,7 +42,6 @@ interface State {
 
 const emit = defineEmits<{
   (e: 'refresh'): void;
-  (e: 'viewDetail', data: CrisisEventOpParams): void;
 }>();
 
 const riskLevelOptions = ref<{ label: string; value: number }[]>([]);
@@ -120,6 +120,12 @@ const riskPriority = ref([
   },
 ]);
 
+/** 查看预警流程弹窗 */
+const [ViewCrisisEventModal, viewCrisisEventModalApi] = useVbenModal({
+  connectedComponent: HandleCrisisEventDialog,
+  onClosed: () => selectedHandleMethodDrawerApi.close(),
+});
+
 // 确认上报弹窗
 const [ConfirmReportModal, confirmReportModalApi] = useVbenModal({
   connectedComponent: ConfirmReportDialog,
@@ -138,8 +144,7 @@ const [ConfirmReportModal, confirmReportModalApi] = useVbenModal({
           icon: 'success',
         })
           .then(() => {
-            selectedHandleMethodDrawerApi.close();
-            data && emit('viewDetail', data);
+            viewCrisisEventModalApi.setData(data).open();
           })
           .catch(() => {
             reset();
@@ -504,6 +509,7 @@ onMounted(() => {
       </AForm>
     </div>
     <ConfirmReportModal />
+    <ViewCrisisEventModal />
   </SelectHandleMethodDrawer>
 </template>
 

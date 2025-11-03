@@ -16,6 +16,7 @@ const emits = defineEmits<{
   (e: 'handleRecord', recordId: number): void;
 }>();
 
+/** 处理记录 */
 function handleClick(recordId: number) {
   emits('handleRecord', recordId);
 }

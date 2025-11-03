@@ -95,7 +95,7 @@ function viewEvaluationReport(recordId: number) {
 </script>
 
 <template>
-  <div class="box-border h-full w-full overflow-y-auto px-4 pb-4">
+  <div class="scroll-area box-border h-full w-full overflow-y-auto px-4 pb-4">
     <template v-if="records.length > 0">
       <div class="grid grid-cols-2 gap-4">
         <template v-for="record in records" :key="record.title">
@@ -108,9 +108,26 @@ function viewEvaluationReport(recordId: number) {
       </div>
     </template>
     <template v-else>
-      <Empty description="暂无数据" />
+      <div class="flex-center h-full">
+        <Empty description="暂无数据" />
+      </div>
     </template>
 
     <AssessmentReportModal />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+</style>

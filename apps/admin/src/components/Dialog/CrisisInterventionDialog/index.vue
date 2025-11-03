@@ -3,11 +3,12 @@ import type { ButtonType } from '#/components/LyButton/index.vue';
 
 import { ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
 
-import { Divider as ADivider } from 'ant-design-vue';
+import { Divider as ADivider, Tree as ATree } from 'ant-design-vue';
 
+import CreateInterventionStepDrawer from '#/components/Drawer/CreateInterventionStepDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
 
@@ -18,15 +19,19 @@ interface ActionButton {
   icon?: string;
 }
 
-const emit = defineEmits<{
-  (e: 'openStudentProfileDrawer', studentProfileId: number): void;
-}>();
-
 const studentProfileId = ref<number>();
 
 const bgImage =
   'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
 
+// 步骤详情抽屉
+const [SetInterventionStepDrawer, setInterventionStepDrawerApi] = useVbenDrawer(
+  {
+    connectedComponent: CreateInterventionStepDrawer,
+  },
+);
+
+// 危机干预弹窗
 const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
   fullscreen: true,
   fullscreenButton: false,
@@ -39,10 +44,8 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
   onOpenChange: async (open) => {
     if (open) {
       const data = await crisisInterventionModalApi.getData();
+      console.log('data', data);
       studentProfileId.value = data.studentProfileId;
-      // if (data.studentProfileId) {
-      //   emit('openStudentProfileDrawer', data.studentProfileId);
-      // }
     }
   },
 });
@@ -88,6 +91,42 @@ const relatedEvents = ref([
   },
 ]);
 
+const eventColorMap = {
+  1: {
+    color: '#000',
+    bgColor: '#f6f8fa',
+  },
+  2: {
+    color: '#04DC70',
+    bgColor: '#14E77E14',
+  },
+  3: {
+    color: '#1966FF',
+    bgColor: '#1966FF14',
+  },
+};
+
+const treeData = ref([
+  {
+    key: 1,
+    name: '步骤一：心理评估小组评估',
+    selectable: false,
+    status: 1,
+  },
+  {
+    key: 2,
+    name: '步骤二：上报学生管理处报备',
+    selectable: false,
+    status: 2,
+  },
+  {
+    key: 3,
+    name: '步骤三：即使联系家长到校',
+    selectable: false,
+    status: 3,
+  },
+]);
+
 /** 打开返回确认弹窗 */
 function handleOpenCancelConfirmModal() {
   crisisInterventionModalApi.close();
@@ -95,12 +134,22 @@ function handleOpenCancelConfirmModal() {
 
 /** 打开学生详情抽屉 */
 function handleOpenStudentProfileDrawer() {
-  studentProfileId.value &&
-    emit('openStudentProfileDrawer', studentProfileId.value);
+  // studentProfileId.value &&
+  //   emit('openStudentProfileDrawer', studentProfileId.value);
 }
 
 /** 移除标签 */
 function handleRemoveTag() {}
+
+/** 打开设置步骤抽屉 */
+function handleOpenSetInterventionStepDrawer() {
+  if (!studentProfileId.value) return;
+  setInterventionStepDrawerApi
+    .setData({
+      studentProfileId: studentProfileId.value,
+    })
+    .open();
+}
 </script>
 
 <template>
@@ -159,7 +208,7 @@ function handleRemoveTag() {}
           <ADivider />
 
           <!-- 主体内容 -->
-          <div>
+          <div class="space-y-4">
             <LyLabel title="关联的事件" has-indicator />
 
             <!-- 关联事件 -->
@@ -191,9 +240,58 @@ function handleRemoveTag() {}
                 <span class="text-[#979899]"> 关联事件 </span>
               </div>
             </div>
+
+            <!-- 拖拽事件 -->
+            <div class="space-y-4 pt-3">
+              <div class="text-sm text-xs text-[#979899]">
+                您可以拖拽事件进行排序
+              </div>
+
+              <!-- 树形事件 -->
+              <ATree draggable :tree-data="treeData" class="">
+                <template #title="{ name }">
+                  <div
+                    class="flex items-center gap-2 rounded-xl bg-[#f6f8fa] p-3 text-xs hover:!bg-[#f6f8fa]/70"
+                    @click="handleOpenSetInterventionStepDrawer()"
+                  >
+                    <span
+                      class="rounded-full border border-solid border-[#d9d9d9] px-3 py-1"
+                    >
+                      待处理
+                    </span>
+                    <span class="font-bold">
+                      {{ name }}
+                    </span>
+                  </div>
+                </template>
+              </ATree>
+
+              <!-- 添加新步骤 -->
+              <div
+                class="flex cursor-pointer items-center gap-2 text-xs text-[#1966FF] hover:!text-[#1966FF]/80"
+              >
+                <IconifyIcon icon="material-symbols:add-rounded" />
+                <span>添加新步骤</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      <SetInterventionStepDrawer />
     </div>
   </CrisisInterventionModal>
 </template>
+
+<style lang="scss" scoped>
+:deep(.ant-tree-switcher) {
+  display: none !important;
+}
+
+:deep(.ant-tree-list-holder-inner) {
+  gap: 6px !important;
+}
+
+:deep(.ant-tree-node-content-wrapper) {
+  padding: 0 !important;
+}
+</style>

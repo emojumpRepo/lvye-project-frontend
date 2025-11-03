@@ -3,23 +3,15 @@ import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profi
 
 import { computed } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
-
 import { Divider, Empty } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
 import { getDictLabel } from '#/utils/dict';
 
 const props = defineProps<{
   studentProfileTimeline: PsychologyStudentProfileApi.StudentProfileTimeline[];
   timelineTabs: { key: number; title: string }[];
 }>();
-
-const [QuestionnaireResultDialogModal, questionnaireResultDialogModalApi] =
-  useVbenModal({
-    connectedComponent: QuestionnaireResultDialog,
-  });
 
 const activeTimelineKey = defineModel<number>('activeTimelineKey');
 
@@ -34,7 +26,7 @@ const timelineList = computed(() => {
 <template>
   <div class="flex h-full w-full flex-col gap-4">
     <template v-if="timelineList.length > 0">
-      <div class="flex items-center gap-2 px-4">
+      <div class="flex items-center gap-2">
         <span
           v-for="tab in timelineTabs"
           :key="tab.key"
@@ -53,9 +45,9 @@ const timelineList = computed(() => {
           }}
         </span>
       </div>
-      <div class="w-full flex-1 space-y-4 overflow-y-auto px-4">
+      <div class="scroll-area w-full flex-1 space-y-4 overflow-y-auto">
         <div
-          class="relative flex h-[85px] items-start"
+          class="relative flex items-start"
           v-for="timeline in timelineList"
           :key="timeline.id"
         >
@@ -64,7 +56,7 @@ const timelineList = computed(() => {
             <Divider type="vertical" class="h-[75px] bg-[#EAEBED]" />
           </div>
           <div
-            class="ml-6 box-border flex h-full w-full flex-col justify-between overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
+            class="ml-6 box-border flex h-full w-full flex-col justify-between gap-3 overflow-hidden rounded-xl bg-[#F7F8FA] p-4"
           >
             <div class="flex items-center justify-between text-xs">
               <span class="rounded bg-[#14E77E1F] p-1 text-[#04DC70]">
@@ -87,9 +79,24 @@ const timelineList = computed(() => {
       </div>
     </template>
     <template v-else>
-      <Empty description="暂无数据" />
+      <div class="flex-center h-full">
+        <Empty description="暂无数据" />
+      </div>
     </template>
-
-    <QuestionnaireResultDialogModal />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+</style>

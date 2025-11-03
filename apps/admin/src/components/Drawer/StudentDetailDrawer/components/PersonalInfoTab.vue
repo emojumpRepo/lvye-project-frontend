@@ -84,7 +84,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-6 overflow-y-auto px-4">
+  <div class="scroll-area flex h-full flex-col gap-6 overflow-y-auto px-4">
     <InfoSectionForm
       :student-info="props.studentInfo"
       title="学籍信息"
@@ -102,3 +102,18 @@ onMounted(async () => {
     />
   </div>
 </template>
+
+<style lang="scss" scoped>
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+</style>

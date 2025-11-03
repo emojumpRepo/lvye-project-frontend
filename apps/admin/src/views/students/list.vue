@@ -1,12 +1,5 @@
 <script lang="ts" setup>
-import type {
-  AssessmentComfirmInfo,
-  CrisisEventOpParams,
-  ReportAbnormalParams,
-} from '@vben/types';
-
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { InterventionAssessmentReqVO } from '#/api/psychology';
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { ref } from 'vue';
@@ -24,21 +17,11 @@ import {
 } from 'ant-design-vue';
 
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteStudentProfile,
-  getStudentProfilePage,
-  submitIndependentAssessment,
-} from '#/api/psychology';
+import { deleteStudentProfile, getStudentProfilePage } from '#/api/psychology';
 import BulkDeleteStudentDialog from '#/components/Dialog/BulkDeleteStudentDialog/index.vue';
-import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
-import CreateSimpleAssessmentDialog from '#/components/Dialog/CreateSimpleAssessmentDialog/index.vue';
 import DeleteStudentDialog from '#/components/Dialog/DeleteStudentDialog/index.vue';
-import HandleCrisisEventDialog from '#/components/Dialog/handleCrisisEventDialog/index.vue';
-import PsychologicalConsultDialog from '#/components/Dialog/PsychologicalConsultDialog/index.vue';
-import CreateConsultDrawer from '#/components/Drawer/CreateConsultDrawer/index.vue';
 import CreateStudentDrawer from '#/components/Drawer/CreateStudentDrawer/index.vue';
 import GraduatedStudentProfileDrawer from '#/components/Drawer/GraduatedStudentProfileDrawer/index.vue';
-import ReportQuicklyDrawer from '#/components/Drawer/ReportQuicklyDrawer/index.vue';
 import StudentBulkClassTransferDrawer from '#/components/Drawer/StudentBulkClassTransferDrawer/index.vue';
 import StudentBulkImportDrawer from '#/components/Drawer/StudentBulkImportDrawer/index.vue';
 import StudentDetailDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
@@ -96,16 +79,6 @@ const [DeleteStudentModal, deleteStudentModalApi] = useVbenModal({
   },
 });
 
-// 上报异常弹窗
-const [ReportAbnormalDrawer, reportAbnormalDrawerApi] = useVbenDrawer({
-  connectedComponent: ReportQuicklyDrawer,
-});
-
-// 预约访谈弹窗
-const [AppointConsultDrawer, appointConsultDrawerApi] = useVbenDrawer({
-  connectedComponent: CreateConsultDrawer,
-});
-
 // 已毕业学生档案抽屉
 const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
   connectedComponent: GraduatedStudentProfileDrawer,
@@ -113,49 +86,19 @@ const [GraduatedFileDrawer, graduatedFileDrawerApi] = useVbenDrawer({
 
 // ========================== 弹窗 =============================
 
-/** 危机事件弹窗 */
-const [HandleCrisisEventModal, handleCrisisEventModalApi] = useVbenModal({
-  connectedComponent: HandleCrisisEventDialog,
-});
-
 // 批量删除学生确认框
 const [BulkDeleteStudentModal, bulkDeleteStudentModalApi] = useVbenModal({
   connectedComponent: BulkDeleteStudentDialog,
-});
-
-// 创建测评
-const [CreateSimpleAssessmentModal, createSimpleAssessmentModalApi] =
-  useVbenModal({
-    connectedComponent: CreateSimpleAssessmentDialog,
-  });
-
-// 创建风险评估弹窗
-const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
-  connectedComponent: CreateEvaluationDialog,
 });
 
 // ============== 数据状态 ==============
 const loading = ref(false);
 const graduationDrawerOpen = ref<boolean>(false);
 const studentSearchRef = ref();
-const currentStudentProfileId = ref<number | undefined>();
 
 // ============== 视图模式与选择 ==============
 const viewMode = ref<'group' | 'list'>('list');
 const selectedRowKeys = ref<number[]>([]);
-const isOpenPsychologicalAssessmentDialog = ref(false);
-const confirmInfo = ref<AssessmentComfirmInfo>({
-  studentInfo: {
-    studentName: '',
-    className: '',
-    studentNo: '',
-  },
-  consultInfo: {
-    consultant: '',
-    consultType: '',
-    consultTime: '',
-  },
-});
 
 // Grid 定义
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -329,8 +272,8 @@ function handleBulkChangeClass() {
 
 // 已毕业学生档案
 function handleGraduatedStudentFile() {
-  // message.warning('即将上线');
-  graduatedFileDrawerApi.open();
+  message.warning('即将上线');
+  // graduatedFileDrawerApi.open();
 }
 
 // 年级毕业
@@ -372,89 +315,6 @@ async function handleExport() {
 /** 刷新表格 */
 function refresh() {
   gridApi.query();
-}
-
-// =============== 学生详情底部按钮触发事件 ==================
-
-/** 评估 */
-function handleEvaluate(data: AssessmentComfirmInfo, studentProfileId: number) {
-  confirmInfo.value = data;
-  currentStudentProfileId.value = studentProfileId;
-  createEvaluationModalApi.setData({ confirmInfo: data }).open();
-}
-
-/** 上报异常 */
-function handleReportAbnormal(data: ReportAbnormalParams) {
-  reportAbnormalDrawerApi
-    .setData({
-      selectedStudent: {
-        key: data?.id,
-        value: data?.id,
-        label: `${data?.name}（${data?.className}）学号：${data?.studentNo}`,
-        originLabel: `${data?.name}（${data?.className}）学号：${data?.studentNo}`,
-      },
-    })
-    .open();
-}
-
-/** 查看危机事件 */
-function viewCrisisEvent(data: CrisisEventOpParams) {
-  handleCrisisEventModalApi.setData(data).open();
-}
-
-/** 预约访谈 */
-function handleInterview(
-  studentProfile: PsychologyStudentProfileApi.StudentProfile,
-) {
-  appointConsultDrawerApi
-    .setData({
-      studentProfile: {
-        studentName: studentProfile.name,
-        className: studentProfile.className,
-        studentNumber: studentProfile.studentNo,
-        studentProfileId: studentProfile.id,
-      },
-    })
-    .open();
-}
-
-/** 发起测评 */
-function handleStartAssessment(
-  studentProfile: PsychologyStudentProfileApi.StudentProfile,
-) {
-  createSimpleAssessmentModalApi
-    .setData({
-      id: studentProfile?.id,
-      className: studentProfile?.className,
-      studentName: studentProfile?.name,
-      studentNo: studentProfile?.studentNo,
-      studentUserId: studentProfile?.userId,
-    })
-    .open();
-}
-
-/** 完成评估 */
-async function publishAssessment(params: InterventionAssessmentReqVO) {
-  if (!currentStudentProfileId.value) return false;
-
-  try {
-    const response = await submitIndependentAssessment({
-      studentProfileId: currentStudentProfileId.value,
-      ...params,
-      content: params.consultRecord,
-    });
-    if (response) {
-      refresh();
-      return true;
-    } else {
-      message.error('评估失败');
-      return false;
-    }
-  } catch (error) {
-    console.error(error);
-    message.error('评估失败');
-    return false;
-  }
 }
 </script>
 
@@ -598,13 +458,7 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
       </div>
 
       <!-- 学生档案抽屉 -->
-      <StudentProfileDrawer
-        @refresh="refresh"
-        @evaluate="handleEvaluate"
-        @report-abnormal="handleReportAbnormal"
-        @start-assessment="handleStartAssessment"
-        @interview="handleInterview"
-      />
+      <StudentProfileDrawer @refresh="refresh" />
       <!-- 创建学生抽屉 -->
       <CreateDrawer @refresh="refresh" />
       <!-- 批量换班抽屉 -->
@@ -622,21 +476,6 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
         v-model:open="graduationDrawerOpen"
         @refresh="refresh"
       />
-      <!-- 危机事件弹窗 -->
-      <HandleCrisisEventModal />
-      <!-- 心理咨询弹窗 -->
-      <PsychologicalConsultDialog
-        v-model:open="isOpenPsychologicalAssessmentDialog"
-        :comfirm-info="confirmInfo"
-        :publish="publishAssessment"
-      />
-      <!-- 上报异常弹窗 -->
-      <ReportAbnormalDrawer @view-detail="viewCrisisEvent" />
-      <!-- 创建测评弹窗 -->
-      <CreateSimpleAssessmentModal />
-      <!-- 预约访谈弹窗 -->
-      <AppointConsultDrawer />
-      <CreateEvaluationModal :publish="publishAssessment" />
     </div>
   </Page>
 </template>

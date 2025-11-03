@@ -183,10 +183,10 @@ async function handleSave() {
       formatFormData(values as PsychologyStudentProfileApi.StudentProfile);
       InfoFormApi.setValues(studentFormInfo.value);
       emit('refresh');
-      message.success('学生信息保存成功');
+      message.success('学生信息更新成功');
     } catch (error) {
       console.warn('updateStudentProfile failed', error);
-      message.error('学生信息保存失败');
+      message.error('学生信息更新失败');
       // 失败了，恢复编辑状态，让用户可以重试
       edit.value = true;
       setFormValues();

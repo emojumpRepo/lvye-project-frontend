@@ -6,7 +6,7 @@ import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { computed, ref } from 'vue';
 
-import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
 
 import {
   Badge as ABadge,
@@ -20,7 +20,6 @@ import dayjs from 'dayjs';
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
 import CrisisInterventionDialog from '#/components/Dialog/CrisisInterventionDialog/index.vue';
-import StudentDetailDrawer from '#/components/Drawer/StudentDetailDrawer/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
@@ -36,11 +35,6 @@ const emit = defineEmits<{
 const currentPage = ref(1);
 const pageSize = ref(5);
 const loading = ref(false);
-
-const [StudentProfileDrawer, studentProfileDrawerApi] = useVbenDrawer({
-  class: 'w-[800px]',
-  connectedComponent: StudentDetailDrawer,
-});
 
 const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
   connectedComponent: CrisisInterventionDialog,
@@ -109,15 +103,6 @@ function handleStudentClick(board: StudentInterventionItem) {
   crisisInterventionModalApi
     .setData({
       studentProfileId: board.studentProfileId,
-    })
-    .open();
-}
-
-/** 打开学生详情抽屉 */
-function handleOpenStudentProfileDrawer(studentProfileId: number) {
-  studentProfileDrawerApi
-    .setData({
-      id: studentProfileId,
     })
     .open();
 }
@@ -206,10 +191,7 @@ function handleOpenStudentProfileDrawer(studentProfileId: number) {
       </div>
     </ASpin>
 
-    <CrisisInterventionModal
-      @open-student-profile-drawer="handleOpenStudentProfileDrawer"
-    />
-    <StudentProfileDrawer />
+    <CrisisInterventionModal />
   </div>
 </template>
 
