@@ -22,6 +22,9 @@ export * from './consultation';
 // ==================== 危机干预管理 ====================
 export * from './crisis';
 
+// ==================== 干预模板管理 ====================
+export * from './intervention-template';
+
 // ==================== 风险评估管理 ====================
 export * from './risk';
 

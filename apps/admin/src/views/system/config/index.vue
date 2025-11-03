@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, markRaw, ref } from 'vue';
+import { computed, markRaw, onMounted, ref } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
 
@@ -9,6 +9,7 @@ import {
   SubMenu as ASubMenu,
 } from 'ant-design-vue';
 
+import { getInterventionTemplateList } from '#/api/psychology';
 import LyButton from '#/components/LyButton/index.vue';
 
 import InterventionManage from './components/InterventionManage.vue';
@@ -18,6 +19,7 @@ import SchoolPersonal from './components/SchoolPersonal.vue';
 import StudentPassword from './components/StudentPassword.vue';
 
 interface MenuItem {
+  id?: number;
   type?: 'group' | 'item';
   key: string;
   label: string;
@@ -56,26 +58,12 @@ const menuList = ref<MenuItem[]>([
     key: 'interventionTemplate',
     label: '干预模板',
     component: markRaw(InterventionTemplate),
-    children: [
-      {
-        key: '1',
-        label: '干预模板1',
-      },
-      {
-        key: '2',
-        label: '干预模板2',
-      },
-      {
-        key: '3',
-        label: '干预模板3',
-      },
-    ],
+    children: [],
   },
 ]);
 
 // 响应式数据
 const selectedKeys = ref(['school']);
-const openKeys = ref(['interventionTemplate']);
 const contentRef = ref<InstanceType<typeof SchoolPersonal>>();
 
 /** 内容标题 */
@@ -131,6 +119,18 @@ const getSelectedComponent = computed(() => {
   return null;
 });
 
+/** 获取选中的干预模板ID */
+const templateId = computed(() => {
+  if (!isInterventionTemplateChild.value) return null;
+
+  const interventionTemplateItem = menuList.value.find(
+    (item) => item.key === 'interventionTemplate',
+  );
+  return interventionTemplateItem?.children?.find(
+    (child) => child.key === selectedKeys.value[0],
+  )?.id;
+});
+
 /** 恢复默认 */
 function handleReset() {
   if (contentRef.value) {
@@ -150,24 +150,42 @@ function handleAddInterventionTemplate() {
   const interventionTemplateItem = menuList.value.find(
     (item) => item.key === 'interventionTemplate',
   );
-  const newKey = String(
-    Number(
-      interventionTemplateItem?.children?.[
-        interventionTemplateItem.children.length - 1
-      ]?.key ?? 0,
-    ) + 1,
-  );
+  const newKey = `new-${Date.now()}`;
   if (interventionTemplateItem) {
     interventionTemplateItem.children?.push({
+      id: undefined,
       key: newKey,
       label: '新的干预模板',
     });
   }
 
   selectedKeys.value = [newKey];
-  console.log('selectedKeys', selectedKeys.value);
-  console.log('openKeys', openKeys.value);
 }
+
+/** 获取模板列表 */
+async function loadTemplateList() {
+  try {
+    const response = await getInterventionTemplateList();
+    if (response) {
+      const interventionTemplateItem = menuList.value.find(
+        (item) => item.key === 'interventionTemplate',
+      );
+      if (interventionTemplateItem) {
+        interventionTemplateItem.children = response.map((item) => ({
+          id: item.id,
+          key: String(item.id),
+          label: item.title,
+        }));
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+onMounted(async () => {
+  await loadTemplateList();
+});
 </script>
 
 <template>
@@ -190,12 +208,7 @@ function handleAddInterventionTemplate() {
               <span>{{ item.label }}</span>
             </div>
           </AMenuItem>
-          <ASubMenu
-            v-else
-            :key="index"
-            :title="item.label"
-            v-model:open-keys="openKeys"
-          >
+          <ASubMenu v-else :key="index" :title="item.label">
             <AMenuItem v-for="child in item.children" :key="child.key">
               <div class="relative flex items-center justify-between">
                 <span>{{ child.label }}</span>
@@ -230,7 +243,13 @@ function handleAddInterventionTemplate() {
       <div class="min-w-0 flex-1 overflow-x-auto overflow-y-hidden">
         <KeepAlive>
           <Transition name="fade" mode="out-in">
-            <component :is="getSelectedComponent" ref="contentRef" />
+            <component
+              ref="contentRef"
+              :is="getSelectedComponent"
+              v-model:selected-keys="selectedKeys"
+              :template-id="templateId"
+              @refresh="loadTemplateList"
+            />
           </Transition>
         </KeepAlive>
       </div>
