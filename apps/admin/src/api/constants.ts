@@ -61,6 +61,10 @@ export const TAG_TYPE = {
     backgroundColor: '#8D00F114',
     color: '#8D00F1',
   },
+  black: {
+    backgroundColor: '#f6f7f8',
+    color: '#16181a',
+  },
 } as const;
 
 /** 学生心理状态颜色配置 */

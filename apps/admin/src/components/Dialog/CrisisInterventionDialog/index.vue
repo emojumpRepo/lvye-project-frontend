@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { InterventionPlan, StudentInterventionItem } from '@vben/types';
 
+import type { InterventionPlanStepSortUpdateReqVO } from '#/api/psychology';
 import type { ButtonType } from '#/components/LyButton/index.vue';
 
 import { ref } from 'vue';
@@ -11,7 +12,10 @@ import { IconifyIcon } from '@vben/icons';
 import { Divider as ADivider, Tree as ATree } from 'ant-design-vue';
 
 import { TAG_TYPE } from '#/api/constants';
-import { getInterventionPlan } from '#/api/psychology';
+import {
+  getInterventionPlan,
+  updateInterventionPlanSteps,
+} from '#/api/psychology';
 import InterventionOperationLogDialog from '#/components/Dialog/InterventionOperationLogDialog/index.vue';
 import CreateInterventionStepDrawer from '#/components/Drawer/CreateInterventionStepDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
@@ -45,6 +49,31 @@ const treeData = ref<TreeData[]>([]);
 const bgImage =
   'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
 
+const actionButtons = ref<ActionButton[]>([
+  {
+    label: '操作日志',
+    value: 'operationLog',
+    type: 'default',
+    onClick: () => viewOperationLog(),
+  },
+  {
+    label: '获取报告模板',
+    value: 'getReportTemplate',
+    type: 'default',
+  },
+  {
+    label: '导出ZIP',
+    value: 'export',
+    type: 'default',
+  },
+  {
+    label: '结束干预',
+    value: 'endIntervention',
+    icon: 'mdi:check-circle',
+    type: 'success',
+  },
+]);
+
 // 步骤详情抽屉
 const [SetInterventionStepDrawer, setInterventionStepDrawerApi] = useVbenDrawer(
   {
@@ -73,82 +102,65 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
       const data = await crisisInterventionModalApi.getData();
       studentInfo.value = data.studentInfo;
       interventionPlanId.value = data.interventionPlanId;
-      try {
-        if (interventionPlanId.value) {
-          const response = await getInterventionPlan(interventionPlanId.value);
-          if (response) {
-            interventionPlan.value = {
-              ...response,
-              relativeEvents: (response.relativeEvents || []).map((event) => {
-                const sourceDict = getDictObj(
-                  'crisis_event_report_source',
-                  event.sourceType,
-                );
-                const sourceType =
-                  TAG_TYPE[sourceDict?.colorType as keyof typeof TAG_TYPE];
-
-                return {
-                  ...event,
-                  label: sourceDict?.label,
-                  color: sourceType.color,
-                  bgColor: sourceType.backgroundColor,
-                };
-              }),
-            };
-
-            if (interventionPlan.value?.steps.length) {
-              treeData.value = interventionPlan.value?.steps.map((step) => {
-                const stepStatus = getDictObj(
-                  'intervention_step_status',
-                  step.status,
-                );
-                const stepStatusType =
-                  TAG_TYPE[stepStatus?.colorType as keyof typeof TAG_TYPE];
-                return {
-                  key: step.id,
-                  name: step.title,
-                  status: step.status,
-                  sort: step.sort,
-                  statusLabel: stepStatus?.label || '未知',
-                  color: stepStatusType.color,
-                  bgColor: stepStatusType.backgroundColor,
-                  selectable: false,
-                };
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      }
+      await loadInterventionPlan();
     }
   },
 });
 
-const actionButtons = ref<ActionButton[]>([
-  {
-    label: '操作日志',
-    value: 'operationLog',
-    type: 'default',
-    onClick: () => viewOperationLog(),
-  },
-  {
-    label: '获取报告模板',
-    value: 'getReportTemplate',
-    type: 'default',
-  },
-  {
-    label: '导出ZIP',
-    value: 'export',
-    type: 'default',
-  },
-  {
-    label: '结束干预',
-    value: 'endIntervention',
-    icon: 'mdi:check-circle',
-    type: 'success',
-  },
-]);
+/** 加载干预计划 */
+async function loadInterventionPlan() {
+  try {
+    crisisInterventionModalApi.lock();
+    if (interventionPlanId.value) {
+      const response = await getInterventionPlan(interventionPlanId.value);
+      if (response) {
+        interventionPlan.value = {
+          ...response,
+          relativeEvents: (response.relativeEvents || []).map((event) => {
+            const sourceDict = getDictObj(
+              'crisis_event_report_source',
+              event.sourceType,
+            );
+            const sourceType =
+              TAG_TYPE[sourceDict?.colorType as keyof typeof TAG_TYPE];
+
+            return {
+              ...event,
+              label: sourceDict?.label,
+              color: sourceType?.color || '#979899',
+              bgColor: sourceType?.backgroundColor || '#f6f8fa',
+            };
+          }),
+        };
+
+        if (interventionPlan.value?.steps.length) {
+          treeData.value = interventionPlan.value?.steps.map((step) => {
+            const stepStatus = getDictObj(
+              'intervention_step_status',
+              step.status,
+            );
+            const stepStatusType =
+              TAG_TYPE[stepStatus?.colorType as keyof typeof TAG_TYPE];
+            return {
+              key: step.id,
+              name: step.title,
+              status: step.status,
+              sort: step.sort,
+              statusLabel: stepStatus?.label || '未知',
+              color: stepStatusType?.color,
+              bgColor: stepStatusType?.backgroundColor,
+              selectable: false,
+            };
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    crisisInterventionModalApi.unlock();
+  }
+}
 
 /** 打开返回确认弹窗 */
 function handleOpenCancelConfirmModal() {
@@ -165,11 +177,30 @@ function handleOpenStudentProfileDrawer() {
 function handleRemoveTag() {}
 
 /** 打开设置步骤抽屉 */
-function handleOpenSetInterventionStepDrawer() {
+function handleOpenSetInterventionStepDrawer(key: number) {
   if (!studentInfo.value?.studentProfileId) return;
+  if (!key) return;
+  const step = interventionPlan.value?.steps.find((step) => step.id === key);
+  if (!step) return;
+
   setInterventionStepDrawerApi
     .setData({
       studentProfileId: studentInfo.value.studentProfileId,
+      interventionId: interventionPlan.value?.id,
+      step,
+    })
+    .open();
+}
+
+/** 打开添加新步骤抽屉 */
+function handleOpenAddStepDrawer() {
+  if (!studentInfo.value?.studentProfileId) return;
+  if (!interventionPlan.value?.id) return;
+
+  setInterventionStepDrawerApi
+    .setData({
+      studentProfileId: studentInfo.value.studentProfileId,
+      interventionId: interventionPlan.value.id,
     })
     .open();
 }
@@ -181,6 +212,56 @@ function viewOperationLog() {
       interventionPlanId: interventionPlanId.value,
     })
     .open();
+}
+
+/** 处理拖拽排序 */
+async function handleDrop(info: any) {
+  const dropKey = info.node.key;
+  const dragKey = info.dragNode.key;
+  const dropPos = info.node.pos.split('-');
+  const dropPosition = info.dropPosition - Number(dropPos[dropPos.length - 1]);
+
+  // 从treeData中移除拖拽的节点
+  const dragIndex = treeData.value.findIndex((item) => item.key === dragKey);
+  if (dragIndex === -1) return;
+
+  const dragItem = treeData.value[dragIndex];
+  treeData.value.splice(dragIndex, 1);
+
+  // 计算新的插入位置
+  let dropIndex = treeData.value.findIndex((item) => item.key === dropKey);
+  if (dropPosition === 1) {
+    // 放在目标节点后面
+    dropIndex++;
+  }
+
+  // 插入到新位置
+  treeData.value.splice(dropIndex, 0, dragItem as TreeData);
+
+  // 更新所有节点的sort值
+  treeData.value.forEach((item, index) => {
+    item.sort = index + 1;
+  });
+
+  // 调用API更新后端排序
+  if (interventionPlan.value?.id) {
+    try {
+      const params: InterventionPlanStepSortUpdateReqVO = {
+        interventionId: interventionPlan.value.id,
+        steps: treeData.value.map((item) => ({
+          id: item.key,
+          sort: item.sort,
+        })),
+      };
+      await updateInterventionPlanSteps(params);
+      // 更新成功后重新加载数据
+      await loadInterventionPlan();
+    } catch (error) {
+      console.error('更新排序失败:', error);
+      // 如果失败,重新加载原始数据
+      await loadInterventionPlan();
+    }
+  }
 }
 </script>
 
@@ -281,16 +362,25 @@ function viewOperationLog() {
               <div class="text-xs text-[#979899]">您可以拖拽事件进行排序</div>
 
               <!-- 树形事件 -->
-              <ATree draggable block-node :tree-data="treeData" class="">
-                <template #title="{ name, statusLabel, bgColor, color }">
+              <ATree
+                draggable
+                block-node
+                :tree-data="treeData"
+                class=""
+                @drop="handleDrop"
+              >
+                <template #title="{ name, statusLabel, bgColor, color, key }">
                   <div
                     class="flex items-center gap-2 rounded-xl p-3 text-xs hover:!bg-[#f6f8fa]/70"
-                    :style="{ backgroundColor: bgColor }"
-                    @click="handleOpenSetInterventionStepDrawer()"
+                    :style="{ backgroundColor: bgColor || '#f6f8fa' }"
+                    @click="handleOpenSetInterventionStepDrawer(key)"
                   >
                     <span
-                      class="rounded-full px-3 py-1"
-                      :style="{ color, border: `1px solid ${color}` }"
+                      class="rounded-full bg-white px-3 py-1"
+                      :style="{
+                        color,
+                        border: `1px solid ${color || '#d9d9d9'}`,
+                      }"
                     >
                       {{ statusLabel || '--' }}
                     </span>
@@ -304,6 +394,7 @@ function viewOperationLog() {
               <!-- 添加新步骤 -->
               <div
                 class="flex cursor-pointer items-center gap-2 text-xs text-[#1966FF] hover:!text-[#1966FF]/80"
+                @click="handleOpenAddStepDrawer"
               >
                 <IconifyIcon icon="material-symbols:add-rounded" />
                 <span>添加新步骤</span>
@@ -312,7 +403,8 @@ function viewOperationLog() {
           </div>
         </div>
       </div>
-      <SetInterventionStepDrawer />
+
+      <SetInterventionStepDrawer @refresh="loadInterventionPlan" />
       <InterventionOperationLogModal />
     </div>
   </CrisisInterventionModal>

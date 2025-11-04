@@ -161,6 +161,7 @@ const colorOptions = [
   { value: 'cyan', label: 'cyan' },
   { value: 'blue', label: 'blue' },
   { value: 'purple', label: 'purple' },
+  { value: 'black', label: 'black' },
 ];
 
 /** 数据新增/修改的表单 */

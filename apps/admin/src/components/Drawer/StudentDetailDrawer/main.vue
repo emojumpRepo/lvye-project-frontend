@@ -492,9 +492,9 @@ onMounted(async () => {
           </div>
         </div>
 
-        <Divider class="h-[12px] !border-none bg-gray-50" />
+        <Divider class="h-[8px] !border-none bg-gray-50" />
 
-        <div class="flex-1 overflow-x-hidden bg-white pb-5 pt-2">
+        <div class="flex-1 overflow-x-hidden bg-white pb-5">
           <div class="relative h-full w-full">
             <Tabs :tab-bar-gutter="24" v-model:active-key="activeTabKey">
               <Tabs.TabPane tab="综合时间线" key="timeline">
@@ -571,7 +571,7 @@ onMounted(async () => {
 
       <!-- 底部按钮 -->
       <div
-        class="flex items-center justify-end gap-2 bg-white p-4"
+        class="flex items-center justify-end gap-2 bg-white pl-4 pt-4"
         style="border-top: 1px solid #f0f0f0"
       >
         <button
@@ -645,5 +645,9 @@ onMounted(async () => {
   height: 16px !important;
   font-size: 10px !important;
   line-height: 16px !important;
+}
+
+:deep(.ant-divider-horizontal) {
+  margin: 8px 0 !important;
 }
 </style>
