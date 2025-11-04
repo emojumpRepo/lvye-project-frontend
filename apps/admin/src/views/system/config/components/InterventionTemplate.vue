@@ -34,7 +34,6 @@ const emit = defineEmits<{
 
 const selectedKeys = defineModel<string[]>('selectedKeys');
 
-const draggable = ref(false);
 const loading = ref(false);
 
 const templateConfig = ref<{

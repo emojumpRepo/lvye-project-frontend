@@ -81,7 +81,7 @@ onMounted(() => {
 
     <button
       type="button"
-      class="absolute right-3 top-3 inline-flex items-center gap-1 text-xs text-[#959599] transition-colors hover:text-[#6a6a6d] sm:right-4 sm:top-4 sm:gap-1.5 sm:text-sm md:right-5 md:top-5"
+      class="absolute right-2 top-2 inline-flex items-center gap-1 text-xs text-[#959599] transition-colors hover:text-[#6a6a6d]"
       @click="emit('load', { pageNo: 1, pageSize })"
     >
       <RefreshCw class="size-3 sm:size-3.5" />
@@ -129,7 +129,7 @@ onMounted(() => {
       </ASpin>
     </div>
 
-    <div class="flex justify-center px-3 pb-3 sm:px-5 sm:pb-4 md:pb-5">
+    <div class="flex justify-center px-2 pb-4 pt-3">
       <APagination
         size="small"
         :current="currentPage"

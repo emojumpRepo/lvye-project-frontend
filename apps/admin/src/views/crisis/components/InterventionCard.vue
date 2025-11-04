@@ -6,8 +6,6 @@ import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { computed, ref } from 'vue';
 
-import { useVbenModal } from '@vben/common-ui';
-
 import {
   Badge as ABadge,
   Divider as ADivider,
@@ -19,7 +17,6 @@ import dayjs from 'dayjs';
 
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
-import CrisisInterventionDialog from '#/components/Dialog/CrisisInterventionDialog/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
@@ -29,16 +26,16 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+  openSelectedInterventionTemplateModal: [
+    board: StudentInterventionItem,
+    title: string,
+  ];
   updateStudentPage: [page: CrisisBoardData['studentPage']];
 }>();
 
 const currentPage = ref(1);
 const pageSize = ref(5);
 const loading = ref(false);
-
-const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
-  connectedComponent: CrisisInterventionDialog,
-});
 
 // 当前干预卡片类型
 const interventionType = computed((): InterventionType | undefined => {
@@ -98,13 +95,13 @@ async function handlePageChange(page: number) {
   }
 }
 
-/** 查看学生详情 */
-function handleStudentClick(board: StudentInterventionItem) {
-  crisisInterventionModalApi
-    .setData({
-      studentProfileId: board.studentProfileId,
-    })
-    .open();
+/** 打开选择干预模板弹窗 */
+async function handleOpenSelectedInterventionTemplateModal(
+  board: StudentInterventionItem,
+  dictValue: number,
+) {
+  const title = getDictLabel('crisis_level', dictValue);
+  emit('openSelectedInterventionTemplateModal', board, title);
 }
 </script>
 
@@ -145,7 +142,12 @@ function handleStudentClick(board: StudentInterventionItem) {
               v-for="board in interventionItem.studentPage.list"
               :key="board.studentProfileId"
               :class="getStudentCardStyles(board).cardClass"
-              @click="handleStudentClick(board)"
+              @click="
+                handleOpenSelectedInterventionTemplateModal(
+                  board,
+                  interventionItem.dictValue,
+                )
+              "
             >
               <div :class="getStudentCardStyles(board).nameClass">
                 <span>{{ truncateText(board.studentName, 6) }}</span>
@@ -190,8 +192,6 @@ function handleStudentClick(board: StudentInterventionItem) {
         </div>
       </div>
     </ASpin>
-
-    <CrisisInterventionModal />
   </div>
 </template>
 

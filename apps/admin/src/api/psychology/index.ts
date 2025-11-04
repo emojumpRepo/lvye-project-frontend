@@ -22,6 +22,9 @@ export * from './consultation';
 // ==================== 危机干预管理 ====================
 export * from './crisis';
 
+// ==================== 干预计划管理 ====================
+export * from './intervention-plan';
+
 // ==================== 干预模板管理 ====================
 export * from './intervention-template';
 
@@ -144,6 +147,14 @@ export enum ImportanceLevelEnum {
   HIGH = 3,
   LOW = 1,
   MEDIUM = 2,
+}
+
+/** 干预操作日志类型枚举 */
+export enum InterventionOperationLogTypeEnum {
+  CREATE = 1, // 创建干预
+  UPDATE = 4, // 更新干预状态
+  UPLOAD = 2, // 上传文件
+  WRITE = 3, // 写入笔记
 }
 
 // ==================== 常用工具函数 ====================

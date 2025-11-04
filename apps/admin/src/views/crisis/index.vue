@@ -1,15 +1,18 @@
 <script lang="ts" setup>
-import type { CrisisBoardData } from '@vben/types';
+import type { CrisisBoardData, StudentInterventionItem } from '@vben/types';
 
 import type { CrisisBoardDataPageReq } from '#/api/psychology/crisis';
 
 import { onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenModal } from '@vben/common-ui';
 
-import { Spin as ASpin } from 'ant-design-vue';
+import { Spin as ASpin, message } from 'ant-design-vue';
 
+import { createInterventionPlan } from '#/api/psychology';
 import { getCrisisBoardData } from '#/api/psychology/crisis';
+import CrisisInterventionDialog from '#/components/Dialog/CrisisInterventionDialog/index.vue';
+import SelectedInterventionTemplateDialog from '#/components/Dialog/SelectedInterventionTemplateDialog/index.vue';
 
 import CrisisSearch from './components/CrisisSearch.vue';
 import InterventionCard from './components/InterventionCard.vue';
@@ -19,6 +22,40 @@ defineOptions({ name: 'CrisisIntervention' });
 const loading = ref(true);
 const interventionList = ref<CrisisBoardData[]>([]);
 const crisisSearchRef = ref<InstanceType<typeof CrisisSearch>>();
+const currentStudentInfo = ref<StudentInterventionItem>();
+const interventionPlanTitle = ref<string>();
+
+// 危机干预弹窗
+const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
+  connectedComponent: CrisisInterventionDialog,
+});
+
+// 选择干预模板弹窗
+const [
+  SelectedInterventionTemplateModal,
+  selectedInterventionTemplateModalApi,
+] = useVbenModal({
+  connectedComponent: SelectedInterventionTemplateDialog,
+  onConfirm: async () => {
+    selectedInterventionTemplateModalApi.lock();
+    const data = await selectedInterventionTemplateModalApi.getData();
+    await handleCreateInterventionPlan({
+      templateId: data.templateId,
+    });
+    selectedInterventionTemplateModalApi.unlock();
+    selectedInterventionTemplateModalApi.close();
+  },
+});
+
+/** 打开选择干预模板弹窗 */
+async function handleOpenSelectedInterventionTemplateModal(
+  board: StudentInterventionItem,
+  title: string,
+) {
+  currentStudentInfo.value = board;
+  interventionPlanTitle.value = title;
+  selectedInterventionTemplateModalApi.open();
+}
 
 /**
  * 加载五级看板数据
@@ -59,6 +96,40 @@ function handleUpdateStudentPage(
   }
 }
 
+/** 创建干预计划 */
+async function handleCreateInterventionPlan({
+  templateId,
+}: {
+  templateId: number;
+}) {
+  if (!currentStudentInfo.value?.studentProfileId) {
+    return message.error('请选择学生');
+  }
+  if (!templateId) {
+    return message.error('请选择模板');
+  }
+
+  try {
+    const response = await createInterventionPlan({
+      studentProfileId: currentStudentInfo.value?.studentProfileId || 0,
+      templateId,
+      title: interventionPlanTitle.value || '',
+    });
+    if (!response) {
+      return message.error('创建干预计划失败');
+    }
+    message.success('创建干预计划成功');
+    crisisInterventionModalApi
+      .setData({
+        studentInfo: currentStudentInfo.value,
+        interventionPlanId: response,
+      })
+      .open();
+  } catch (error) {
+    console.error('创建干预计划失败', error);
+    message.error('创建干预计划失败');
+  }
+}
 onMounted(async () => {
   await loadCrisisBoardData();
 });
@@ -85,10 +156,16 @@ onMounted(async () => {
                 (studentPage) =>
                   handleUpdateStudentPage(item.dictValue, studentPage)
               "
+              @open-selected-intervention-template-modal="
+                handleOpenSelectedInterventionTemplateModal
+              "
             />
           </template>
         </div>
       </ASpin>
+
+      <CrisisInterventionModal />
+      <SelectedInterventionTemplateModal />
     </div>
   </Page>
 </template>

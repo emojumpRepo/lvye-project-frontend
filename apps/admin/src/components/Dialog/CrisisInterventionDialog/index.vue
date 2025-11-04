@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import type { StudentInterventionItem } from '@vben/types';
+
+import type { InterventionTemplateCreateReqVO } from '#/api/psychology';
 import type { ButtonType } from '#/components/LyButton/index.vue';
 
 import { ref } from 'vue';
@@ -8,6 +11,7 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Divider as ADivider, Tree as ATree } from 'ant-design-vue';
 
+import InterventionOperationLogDialog from '#/components/Dialog/InterventionOperationLogDialog/index.vue';
 import CreateInterventionStepDrawer from '#/components/Drawer/CreateInterventionStepDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
@@ -17,9 +21,12 @@ interface ActionButton {
   value: string;
   type: ButtonType;
   icon?: string;
+  onClick?: () => void;
 }
 
-const studentProfileId = ref<number>();
+const studentInfo = ref<StudentInterventionItem>();
+const interventionPlanId = ref<number>();
+const interventionTemplate = ref<InterventionTemplateCreateReqVO>();
 
 const bgImage =
   'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
@@ -30,6 +37,12 @@ const [SetInterventionStepDrawer, setInterventionStepDrawerApi] = useVbenDrawer(
     connectedComponent: CreateInterventionStepDrawer,
   },
 );
+
+// 操作日志弹窗
+const [InterventionOperationLogModal, interventionOperationLogModalApi] =
+  useVbenModal({
+    connectedComponent: InterventionOperationLogDialog,
+  });
 
 // 危机干预弹窗
 const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
@@ -44,8 +57,18 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
   onOpenChange: async (open) => {
     if (open) {
       const data = await crisisInterventionModalApi.getData();
-      console.log('data', data);
-      studentProfileId.value = data.studentProfileId;
+      studentInfo.value = data.studentInfo;
+      interventionPlanId.value = data.interventionPlanId;
+      try {
+        if (interventionPlanId.value) {
+          // const response = await getInterventionTemplate(interventionPlanId.value);
+          // if (response) {
+          //   interventionTemplate.value = response;
+          // }
+        }
+      } catch (error) {
+        console.error(error);
+      }
     }
   },
 });
@@ -55,6 +78,7 @@ const actionButtons = ref<ActionButton[]>([
     label: '操作日志',
     value: 'operationLog',
     type: 'default',
+    onClick: () => viewOperationLog(),
   },
   {
     label: '获取报告模板',
@@ -143,10 +167,19 @@ function handleRemoveTag() {}
 
 /** 打开设置步骤抽屉 */
 function handleOpenSetInterventionStepDrawer() {
-  if (!studentProfileId.value) return;
+  if (!studentInfo.value?.studentProfileId) return;
   setInterventionStepDrawerApi
     .setData({
-      studentProfileId: studentProfileId.value,
+      studentProfileId: studentInfo.value.studentProfileId,
+    })
+    .open();
+}
+
+/** 打开操作日志弹窗 */
+function viewOperationLog() {
+  interventionOperationLogModalApi
+    .setData({
+      interventionPlanId: interventionPlanId.value,
     })
     .open();
 }
@@ -187,7 +220,10 @@ function handleOpenSetInterventionStepDrawer() {
           <!-- 干预信息 -->
           <div class="space-y-3">
             <div class="flex items-center gap-2">
-              <div class="text-lg font-bold">严重危机干预（ID: 2025-004）</div>
+              <div class="text-lg font-bold">
+                {{ interventionTemplate?.title }}（ID:
+                {{ interventionTemplate?.id || '--' }}）
+              </div>
               <IconifyIcon
                 icon="mynaui:edit"
                 color="#979899"
@@ -200,7 +236,7 @@ function handleOpenSetInterventionStepDrawer() {
                 class="cursor-pointer text-[#1966FF] hover:!text-[#1966FF]/80"
                 @click="handleOpenStudentProfileDrawer()"
               >
-                李明（高一3班）
+                {{ studentInfo?.studentName }}（{{ studentInfo?.className }}）
               </span>
             </div>
           </div>
@@ -248,7 +284,7 @@ function handleOpenSetInterventionStepDrawer() {
               </div>
 
               <!-- 树形事件 -->
-              <ATree draggable :tree-data="treeData" class="">
+              <ATree draggable block-node :tree-data="treeData" class="">
                 <template #title="{ name }">
                   <div
                     class="flex items-center gap-2 rounded-xl bg-[#f6f8fa] p-3 text-xs hover:!bg-[#f6f8fa]/70"
@@ -278,6 +314,7 @@ function handleOpenSetInterventionStepDrawer() {
         </div>
       </div>
       <SetInterventionStepDrawer />
+      <InterventionOperationLogModal />
     </div>
   </CrisisInterventionModal>
 </template>

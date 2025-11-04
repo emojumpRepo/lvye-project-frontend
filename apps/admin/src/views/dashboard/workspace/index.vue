@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { message } from 'ant-design-vue';
 import dayjs from 'dayjs';
@@ -242,63 +242,78 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="flex h-full flex-col px-4 pb-6 pt-4 sm:px-6 md:px-8 md:pb-8 md:pt-5 lg:pb-10"
-  >
-    <PageTitle :title="systemWelcome">
-      <template #action>
-        <LyButton size="middle" type="success" @click="handleQuickReport">
-          快速上报
-        </LyButton>
-      </template>
-    </PageTitle>
+  <Page auto-content-height>
+    <div class="flex h-full flex-col px-2">
+      <PageTitle :title="systemWelcome">
+        <template #action>
+          <LyButton size="middle" type="success" @click="handleQuickReport">
+            快速上报
+          </LyButton>
+        </template>
+      </PageTitle>
 
-    <div class="grid flex-1 grid-cols-3 gap-4">
-      <!-- 正在进行的心理测评任务 -->
-      <WorkSpaceCard
-        :with-gradient="true"
-        icon-src="ix:user-filled"
-        icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
-        title="心理测评相关任务"
-        class="min-h-[400px] md:col-span-1"
-        :items="assessmentTasksList"
-        :loading="tasksLoading"
-        :total="tasksTotal"
-        @load="loadOngoingTasks"
-        @detail="handleAssessmentDetail"
-      />
+      <div class="scroll-area grid flex-1 grid-cols-3 gap-4 overflow-y-auto">
+        <!-- 正在进行的心理测评任务 -->
+        <WorkSpaceCard
+          :with-gradient="true"
+          icon-src="ix:user-filled"
+          icon-bg="linear-gradient(143.39deg, #24fcc9 11.39%, #3dbbfa 89.3%)"
+          title="心理测评相关任务"
+          class="min-h-[400px] md:col-span-1"
+          :items="assessmentTasksList"
+          :loading="tasksLoading"
+          :total="tasksTotal"
+          @load="loadOngoingTasks"
+          @detail="handleAssessmentDetail"
+        />
 
-      <!-- 待处理预警事件 -->
-      <WorkSpaceCard
-        :with-gradient="true"
-        icon-src="octicon:bell-fill-24"
-        icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
-        title="待处理预警事件"
-        class="min-h-[400px] md:col-span-2 xl:col-span-1"
-        :items="alertsList"
-        :loading="alertsLoading"
-        :total="alertsTotal"
-        @load="loadOngoingRiskEvent"
-        @detail="handleCrisisEventDetail"
-      />
+        <!-- 待处理预警事件 -->
+        <WorkSpaceCard
+          :with-gradient="true"
+          icon-src="octicon:bell-fill-24"
+          icon-bg="linear-gradient(143.39deg, #FFB65D 11.39%, #FC6F24 89.3%)"
+          title="待处理预警事件"
+          class="min-h-[400px] md:col-span-2 xl:col-span-1"
+          :items="alertsList"
+          :loading="alertsLoading"
+          :total="alertsTotal"
+          @load="loadOngoingRiskEvent"
+          @detail="handleCrisisEventDetail"
+        />
 
-      <!-- 今日心理咨询任务 -->
-      <WorkSpaceCard
-        :with-gradient="true"
-        icon-src="mingcute:task-2-fill"
-        icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
-        title="今日心理咨询任务"
-        class="min-h-[400px] md:col-span-1"
-        :items="consultationsList"
-        :loading="consultationsLoading"
-        :total="consultationsTotal"
-        @load="loadTodayConsultationTask"
-        @detail="handleConsultationDetail"
-      />
+        <!-- 今日心理咨询任务 -->
+        <WorkSpaceCard
+          :with-gradient="true"
+          icon-src="mingcute:task-2-fill"
+          icon-bg="linear-gradient(143.39deg, #FFB6D9 11.39%, #FF1271 89.3%)"
+          title="今日心理咨询任务"
+          class="min-h-[400px] md:col-span-1"
+          :items="consultationsList"
+          :loading="consultationsLoading"
+          :total="consultationsTotal"
+          @load="loadTodayConsultationTask"
+          @detail="handleConsultationDetail"
+        />
+      </div>
+
+      <ReportFastDrawer />
+      <ConsultationDrawer />
+      <CrisisEventDetailModal />
     </div>
-
-    <ReportFastDrawer />
-    <ConsultationDrawer />
-    <CrisisEventDetailModal />
-  </div>
+  </Page>
 </template>
+
+<style lang="scss" scoped>
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 35%);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+</style>
