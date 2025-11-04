@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import type { StudentInterventionItem } from '@vben/types';
+import type { InterventionPlan, StudentInterventionItem } from '@vben/types';
 
-import type { InterventionTemplateCreateReqVO } from '#/api/psychology';
 import type { ButtonType } from '#/components/LyButton/index.vue';
 
 import { ref } from 'vue';
@@ -11,10 +10,13 @@ import { IconifyIcon } from '@vben/icons';
 
 import { Divider as ADivider, Tree as ATree } from 'ant-design-vue';
 
+import { TAG_TYPE } from '#/api/constants';
+import { getInterventionPlan } from '#/api/psychology';
 import InterventionOperationLogDialog from '#/components/Dialog/InterventionOperationLogDialog/index.vue';
 import CreateInterventionStepDrawer from '#/components/Drawer/CreateInterventionStepDrawer/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { getDictObj } from '#/utils/dict';
 
 interface ActionButton {
   label: string;
@@ -24,9 +26,21 @@ interface ActionButton {
   onClick?: () => void;
 }
 
+interface TreeData {
+  key: number;
+  name: string;
+  status?: number;
+  statusLabel?: string;
+  sort: number;
+  color?: string;
+  bgColor?: string;
+  selectable: boolean;
+}
+
 const studentInfo = ref<StudentInterventionItem>();
 const interventionPlanId = ref<number>();
-const interventionTemplate = ref<InterventionTemplateCreateReqVO>();
+const interventionPlan = ref<InterventionPlan>();
+const treeData = ref<TreeData[]>([]);
 
 const bgImage =
   'https://6d65-mentor-3gyob3y3bdbc2bdb-1305613707.tcb.qcloud.la/lvye/bg.jpg';
@@ -61,10 +75,48 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
       interventionPlanId.value = data.interventionPlanId;
       try {
         if (interventionPlanId.value) {
-          // const response = await getInterventionTemplate(interventionPlanId.value);
-          // if (response) {
-          //   interventionTemplate.value = response;
-          // }
+          const response = await getInterventionPlan(interventionPlanId.value);
+          if (response) {
+            interventionPlan.value = {
+              ...response,
+              relativeEvents: (response.relativeEvents || []).map((event) => {
+                const sourceDict = getDictObj(
+                  'crisis_event_report_source',
+                  event.sourceType,
+                );
+                const sourceType =
+                  TAG_TYPE[sourceDict?.colorType as keyof typeof TAG_TYPE];
+
+                return {
+                  ...event,
+                  label: sourceDict?.label,
+                  color: sourceType.color,
+                  bgColor: sourceType.backgroundColor,
+                };
+              }),
+            };
+
+            if (interventionPlan.value?.steps.length) {
+              treeData.value = interventionPlan.value?.steps.map((step) => {
+                const stepStatus = getDictObj(
+                  'intervention_step_status',
+                  step.status,
+                );
+                const stepStatusType =
+                  TAG_TYPE[stepStatus?.colorType as keyof typeof TAG_TYPE];
+                return {
+                  key: step.id,
+                  name: step.title,
+                  status: step.status,
+                  sort: step.sort,
+                  statusLabel: stepStatus?.label || '未知',
+                  color: stepStatusType.color,
+                  bgColor: stepStatusType.backgroundColor,
+                  selectable: false,
+                };
+              });
+            }
+          }
         }
       } catch (error) {
         console.error(error);
@@ -95,59 +147,6 @@ const actionButtons = ref<ActionButton[]>([
     value: 'endIntervention',
     icon: 'mdi:check-circle',
     type: 'success',
-  },
-]);
-
-const relatedEvents = ref([
-  {
-    id: 1,
-    title: '心理测评',
-    taskNo: '2025001',
-    bgColor: '#e7f2fe',
-    color: '#1966FF',
-  },
-  {
-    id: 2,
-    title: '事件上报',
-    taskNo: '2025001',
-    bgColor: '#f5e8ff',
-    color: '#8D00F1',
-  },
-]);
-
-const eventColorMap = {
-  1: {
-    color: '#000',
-    bgColor: '#f6f8fa',
-  },
-  2: {
-    color: '#04DC70',
-    bgColor: '#14E77E14',
-  },
-  3: {
-    color: '#1966FF',
-    bgColor: '#1966FF14',
-  },
-};
-
-const treeData = ref([
-  {
-    key: 1,
-    name: '步骤一：心理评估小组评估',
-    selectable: false,
-    status: 1,
-  },
-  {
-    key: 2,
-    name: '步骤二：上报学生管理处报备',
-    selectable: false,
-    status: 2,
-  },
-  {
-    key: 3,
-    name: '步骤三：即使联系家长到校',
-    selectable: false,
-    status: 3,
   },
 ]);
 
@@ -221,8 +220,8 @@ function viewOperationLog() {
           <div class="space-y-3">
             <div class="flex items-center gap-2">
               <div class="text-lg font-bold">
-                {{ interventionTemplate?.title }}（ID:
-                {{ interventionTemplate?.id || '--' }}）
+                {{ interventionPlan?.title }}（ID:
+                {{ interventionPlan?.interventionId || '--' }}）
               </div>
               <IconifyIcon
                 icon="mynaui:edit"
@@ -250,13 +249,13 @@ function viewOperationLog() {
             <!-- 关联事件 -->
             <div class="flex flex-wrap items-center gap-2">
               <div
-                v-for="event in relatedEvents"
+                v-for="event in interventionPlan?.relativeEvents"
                 :key="event.id"
                 class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs"
                 :style="{ backgroundColor: event.bgColor }"
               >
                 <span :style="{ color: event.color }">
-                  {{ event.title }}（任务编号：{{ event.taskNo }}）
+                  {{ event.label }}（任务编号：{{ event.eventId }}）
                 </span>
                 <div class="cursor-pointer" @click="handleRemoveTag()">
                   <IconifyIcon
@@ -279,23 +278,23 @@ function viewOperationLog() {
 
             <!-- 拖拽事件 -->
             <div class="space-y-4 pt-3">
-              <div class="text-sm text-xs text-[#979899]">
-                您可以拖拽事件进行排序
-              </div>
+              <div class="text-xs text-[#979899]">您可以拖拽事件进行排序</div>
 
               <!-- 树形事件 -->
               <ATree draggable block-node :tree-data="treeData" class="">
-                <template #title="{ name }">
+                <template #title="{ name, statusLabel, bgColor, color }">
                   <div
-                    class="flex items-center gap-2 rounded-xl bg-[#f6f8fa] p-3 text-xs hover:!bg-[#f6f8fa]/70"
+                    class="flex items-center gap-2 rounded-xl p-3 text-xs hover:!bg-[#f6f8fa]/70"
+                    :style="{ backgroundColor: bgColor }"
                     @click="handleOpenSetInterventionStepDrawer()"
                   >
                     <span
-                      class="rounded-full border border-solid border-[#d9d9d9] px-3 py-1"
+                      class="rounded-full px-3 py-1"
+                      :style="{ color, border: `1px solid ${color}` }"
                     >
-                      待处理
+                      {{ statusLabel || '--' }}
                     </span>
-                    <span class="font-bold">
+                    <span class="font-bold" :style="{ color }">
                       {{ name }}
                     </span>
                   </div>

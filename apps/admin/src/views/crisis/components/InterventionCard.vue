@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 
 import { getInterventionTypeByDictValue } from '#/api/constants';
 import { getRiskLevelBoardData } from '#/api/psychology/crisis';
+import LyButton from '#/components/LyButton/index.vue';
 import { truncateText } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
@@ -99,7 +100,9 @@ async function handlePageChange(page: number) {
 async function handleOpenSelectedInterventionTemplateModal(
   board: StudentInterventionItem,
   dictValue: number,
+  isStartInterventionPlan: boolean = false,
 ) {
+  if (!isStartInterventionPlan && dictValue !== 1 && dictValue !== 2) return;
   const title = getDictLabel('crisis_level', dictValue);
   emit('openSelectedInterventionTemplateModal', board, title);
 }
@@ -107,12 +110,12 @@ async function handleOpenSelectedInterventionTemplateModal(
 
 <template>
   <div
-    class="relative flex h-[740px] flex-col gap-5 rounded-xl bg-white px-5 py-6"
+    class="relative flex flex-1 flex-col gap-5 overflow-hidden rounded-xl bg-white px-5 py-6"
     :style="{
       background: `linear-gradient(180.05deg, ${interventionType?.bgColor} -1.81%, #fff 13.82%, #fff 99.96%)`,
     }"
   >
-    <ASpin :spinning="loading">
+    <ASpin :spinning="loading" class="flex-1">
       <div class="flex h-full flex-col justify-between gap-5">
         <div class="absolute right-3 top-3 z-10">
           <img :src="interventionType?.icon" class="w-20" />
@@ -168,6 +171,22 @@ async function handleOpenSelectedInterventionTemplateModal(
               <div :class="getStudentCardStyles(board).timeClass">
                 {{ dayjs(board.lastUpdateTime).format('YYYY-MM-DD HH:mm:ss') }}
               </div>
+
+              <LyButton
+                v-if="!board.interventionPlanId"
+                type="error"
+                ghost
+                size="mini"
+                @click="
+                  handleOpenSelectedInterventionTemplateModal(
+                    board,
+                    interventionItem.dictValue,
+                    true,
+                  )
+                "
+              >
+                开始制定干预计划
+              </LyButton>
             </div>
           </template>
 
@@ -182,7 +201,7 @@ async function handleOpenSelectedInterventionTemplateModal(
         <div class="flex justify-end">
           <APagination
             v-model:current="currentPage"
-            :total="interventionItem.studentPage.total || 0"
+            :total="interventionItem.count || 0"
             :default-page-size="pageSize"
             :show-size-changer="false"
             :show-total="(total) => `共 ${total} 个学生`"
@@ -202,6 +221,7 @@ async function handleOpenSelectedInterventionTemplateModal(
 
 :deep(.ant-spin-nested-loading) {
   height: 100% !important;
+  overflow: hidden !important;
 }
 
 :deep(.ant-spin-container) {

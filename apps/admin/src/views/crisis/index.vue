@@ -53,6 +53,14 @@ async function handleOpenSelectedInterventionTemplateModal(
   title: string,
 ) {
   currentStudentInfo.value = board;
+  if (board.interventionPlanId) {
+    return crisisInterventionModalApi
+      .setData({
+        studentInfo: currentStudentInfo.value,
+        interventionPlanId: board.interventionPlanId,
+      })
+      .open();
+  }
   interventionPlanTitle.value = title;
   selectedInterventionTemplateModalApi.open();
 }
@@ -136,8 +144,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page>
-    <div class="flex flex-col gap-4 p-2">
+  <Page auto-content-height>
+    <div class="flex h-full flex-col gap-4 p-2">
       <!-- 搜索表单 -->
       <CrisisSearch
         ref="crisisSearchRef"
@@ -146,8 +154,8 @@ onMounted(async () => {
       />
 
       <!-- 列表 -->
-      <ASpin :spinning="loading" class="flex-center">
-        <div class="grid grid-cols-5 gap-5" :class="{ 'h-[300px]': loading }">
+      <ASpin :spinning="loading" class="flex-center flex-1">
+        <div class="grid h-full grid-cols-5 gap-5 overflow-hidden">
           <template v-for="item in interventionList" :key="item.type">
             <InterventionCard
               :intervention-item="item"
@@ -185,5 +193,14 @@ onMounted(async () => {
 
 :deep(.ant-pagination-simple-pager) {
   margin-inline-end: 0 !important;
+}
+
+:deep(.ant-spin-nested-loading) {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+:deep(.ant-spin-container) {
+  height: 100% !important;
 }
 </style>

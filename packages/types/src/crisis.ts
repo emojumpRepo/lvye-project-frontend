@@ -11,6 +11,7 @@ export interface CategoryCard {
 /** 学生页面数据 */
 export interface StudentInterventionItem {
   studentProfileId: number;
+  interventionPlanId: number;
   studentName: string;
   studentNumber: string;
   className: string;
@@ -45,7 +46,6 @@ export interface CrisisBoardData {
   label: string;
   dictValue: number;
   count: number;
-  percentage: number;
   studentPage: StudentPageItem;
 }
 

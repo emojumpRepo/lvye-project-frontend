@@ -1,6 +1,7 @@
 export * from './assessment';
 export * from './consuling';
 export * from './crisis';
+export * from './intervention-plan';
 export * from './questionnaire';
 export * from './scenario';
 export * from './student-profile';
