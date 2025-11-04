@@ -38,6 +38,7 @@ export interface IUserInfoRes {
   userId: number
   username: string
   nickname: string
+  studentNo?: string // 学号
   avatar?: string
   isParent?: number // 是否家长
   [key: string]: any // 允许其他扩展字段

@@ -17,6 +17,6 @@ export default store
 
 // 模块统一导出
 export * from './theme'
-export * from './token'
+export * from './auth'
 export * from './user'
 export * from './tenant'

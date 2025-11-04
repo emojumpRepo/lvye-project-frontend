@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-import { getBucketFileUrl } from '@vben/utils'
-import { safeAreaInsets } from '@/utils/systemInfo'
-
 defineOptions({
   name: 'NoAccess',
 })
@@ -19,16 +16,16 @@ function handleRefresh() {
   window.location.reload()
   // #endif
   // #ifndef H5
-  uni.reLaunch({ url: '/pages/index/index' })
+  uni.reLaunch({ url: '/pages/home/index' })
   // #endif
 }
 </script>
 
 <template>
-  <view class="default-bg-color h-screen flex flex-col items-center justify-center px-60rpx" :style="{ paddingTop: `${safeAreaInsets?.top}px` }">
+  <view class="default-bg-color h-screen flex flex-col items-center justify-center px-60rpx">
     <!-- 提示图标 -->
     <view class="mb-60rpx flex flex-col items-center">
-      <view class="mb-40rpx h-240rpx w-240rpx center rounded-full bg-gradient-to-br from-orange-50 to-red-50">
+      <view class="mb-40rpx h-240rpx w-240rpx center rounded-full from-orange-50 to-red-50 bg-gradient-to-br">
         <wd-icon name="warning" size="120rpx" color="#FF6B6B" />
       </view>
       <text class="title-text mb-24rpx text-48rpx font-bold">暂无权限访问</text>

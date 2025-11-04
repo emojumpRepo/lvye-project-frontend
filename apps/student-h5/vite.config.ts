@@ -18,7 +18,7 @@ import UniPlatform from '@uni-helper/vite-plugin-uni-platform'
  */
 import Optimization from '@uni-ku/bundle-optimizer'
 // https://github.com/uni-ku/root
-import UniKuRoot from '@uni-ku/root'
+// import UniKuRoot from '@uni-ku/root' // 临时注释
 import dayjs from 'dayjs'
 import { visualizer } from 'rollup-plugin-visualizer'
 import UnoCSS from 'unocss/vite'
@@ -70,7 +70,7 @@ export default defineConfig(({ command, mode }) => {
         // pages 目录为 src/pages，分包目录不能配置在pages目录下！！
         // 是个数组，可以配置多个，但是不能为pages里面的目录！！
         subPackages: [
-          'src/pages-fg', // 这个是相对必要的路由，尽量留着（登录页、注册页、404页等）
+          // 'src/pages-fg', // 已删除，目录不存在
           'src/pages-sub', // 这个多为示例代码，参考用的，开发完后注释掉即可（或者直接删除）
         ],
         dts: 'src/types/uni-pages.d.ts',
@@ -146,7 +146,7 @@ export default defineConfig(({ command, mode }) => {
         dts: 'src/types/components.d.ts', // 自动生成的组件类型声明文件路径（用于 TypeScript 支持）
       }),
       // 若存在改变 pages.json 的插件，请将 UniKuRoot 放置其后
-      UniKuRoot(),
+      // UniKuRoot(), // 临时注释，测试是否是此插件导致 App.ku.vue 错误
       Uni(),
       // 自动打开开发者工具插件 (必须修改 .env 文件中的 VITE_WX_APPID)
       openDevTools(),

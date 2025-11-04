@@ -28,7 +28,7 @@ export const nativeTabbarList: NativeTabBarItem[] = [
   {
     iconPath: 'static/tabbar/home.png',
     selectedIconPath: 'static/tabbar/homeHL.png',
-    pagePath: 'pages/index/index',
+    pagePath: 'pages/home/index',
     text: '首页',
   },
   {
@@ -44,7 +44,7 @@ export const nativeTabbarList: NativeTabBarItem[] = [
 export const customTabbarList: CustomTabBarItem[] = [
   {
     text: '首页',
-    pagePath: 'pages/index/index',
+    pagePath: 'pages/home/index',
     // 注意 unocss 图标需要如下处理：（二选一）
     // 1）在fg-tabbar.vue页面上引入一下并注释掉（见tabbar/index.vue代码第2行）
     // 2）配置到 unocss.config.ts 的 safelist 中
@@ -64,14 +64,14 @@ export const customTabbarList: CustomTabBarItem[] = [
   // 其他类型演示
   // 1、uiLib
   // {
-  //   pagePath: 'pages/index/index',
+  //   pagePath: 'pages/home/index',
   //   text: '首页',
   //   iconType: 'uiLib',
   //   icon: 'home',
   // },
   // 2、iconfont
   // {
-  //   pagePath: 'pages/index/index',
+  //   pagePath: 'pages/home/index',
   //   text: '首页',
   //   // 注意 iconfont 图标需要额外加上 'iconfont'，如下
   //   iconType: 'iconfont',
@@ -79,7 +79,7 @@ export const customTabbarList: CustomTabBarItem[] = [
   // },
   // 3、image
   // {
-  //   pagePath: 'pages/index/index',
+  //   pagePath: 'pages/home/index',
   //   text: '首页',
   //   // 使用 ‘image’时，需要配置 icon + iconActive 2张图片
   //   iconType: 'image',

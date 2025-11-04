@@ -37,7 +37,7 @@ export function smsLogin(loginForm: ISmsLoginForm) {
  * @param refreshToken 刷新token
  */
 export function refreshToken(refreshToken: string) {
-  return http.post<IWebAuthLoginRes>('/psychology/auth/refresh-token', { refreshToken })
+  return http.post<IWebAuthLoginRes>(`/psychology/auth/refresh-token?refreshToken=${refreshToken}`)
 }
 
 /**

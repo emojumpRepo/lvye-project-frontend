@@ -7,6 +7,9 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    LogoutDialog: typeof import('./../components/Dialog/LogoutDialog/index.vue')['default']
+    LyButton: typeof import('./../components/LyButton/index.vue')['default']
+    Navbar: typeof import('./../components/Navbar/index.vue')['default']
     WdConfigProvider: typeof import('wot-design-uni/components/wd-config-provider/wd-config-provider.vue')['default']
     WdIcon: typeof import('wot-design-uni/components/wd-icon/wd-icon.vue')['default']
     WdMessageBox: typeof import('wot-design-uni/components/wd-message-box/wd-message-box.vue')['default']

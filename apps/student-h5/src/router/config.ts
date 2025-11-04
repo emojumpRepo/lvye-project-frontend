@@ -9,10 +9,8 @@ export const LOGIN_STRATEGY = LOGIN_STRATEGY_MAP.DEFAULT_NEED_LOGIN
 export const isNeedLoginMode = LOGIN_STRATEGY === LOGIN_STRATEGY_MAP.DEFAULT_NEED_LOGIN
 
 export const LOGIN_PAGE = '/pages/auth/login'
-export const REGISTER_PAGE = '/pages-fg/login/register'
-export const NOT_FOUND_PAGE = '/pages-fg/404/index'
 
-export const LOGIN_PAGE_LIST = [LOGIN_PAGE, REGISTER_PAGE]
+export const LOGIN_PAGE_LIST = [LOGIN_PAGE]
 
 // 在 definePage 里面配置了 excludeLoginPath 的页面，功能与 EXCLUDE_LOGIN_PATH_LIST 相同
 export const excludeLoginPathList = getAllPages('excludeLoginPath').map(page => page.path)
@@ -21,8 +19,8 @@ export const excludeLoginPathList = getAllPages('excludeLoginPath').map(page => 
 // 白名单策略：这些页面不需要登录就能访问
 export const EXCLUDE_LOGIN_PATH_LIST = [
   LOGIN_PAGE, // 登录页
-  REGISTER_PAGE, // 注册页
-  NOT_FOUND_PAGE, // 404页
+  '/pages/auth/no-access', // 无权限访问页
+  '/pages/user/confirm', // 用户信息确认页
   ...excludeLoginPathList, // 都是以 / 开头的 path
 ]
 

@@ -1,5 +1,5 @@
 import type { CustomRequestOptions } from '@/http/types'
-import { useTenantStore, useTokenStore } from '@/store'
+import { useAuthStore, useTenantStore } from '@/store'
 import { getEnvBaseUrl } from '@/utils'
 import { stringifyQuery } from './tools/queryString'
 
@@ -58,7 +58,7 @@ const httpInterceptor = {
     }
 
     // 4. 添加 token 请求头标识
-    const tokenStore = useTokenStore()
+    const tokenStore = useAuthStore()
     const token = tokenStore.validToken
 
     if (token) {

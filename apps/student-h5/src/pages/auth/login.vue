@@ -1,14 +1,16 @@
 <script lang="ts" setup>
+import { onHide, onShow } from '@dcloudio/uni-app'
 import { getBucketFileUrl } from '@vben/utils'
+import { onUnmounted, reactive, ref, watch } from 'vue'
 import { sendSmsCode } from '@/api/login'
-import { useTokenStore } from '@/store/token'
-import { safeAreaInsets } from '@/utils/systemInfo'
+import { useAuthStore } from '@/store/auth'
+import { useUserStore } from '@/store/user'
 
 defineOptions({
   name: 'Login',
 })
 
-const tokenStore = useTokenStore()
+const authStore = useAuthStore()
 
 definePage({
   style: {
@@ -20,15 +22,67 @@ definePage({
 // 颜色常量
 const descTextColor = '#2D3E5066'
 
-// 表单数据
+// 表单数据 - 从本地存储恢复（如果有的话）
+const savedFormData = uni.getStorageSync('login_form_data')
 const formData = reactive({
-  phone: '',
-  code: '',
+  phone: savedFormData?.phone || '',
+  code: savedFormData?.code || '',
 })
 
 // 倒计时
 const countdown = ref(0)
 const countdownTimer = ref<ReturnType<typeof setInterval> | null>(null)
+
+// 登录成功标志，用于停止自动保存表单
+const loginSuccess = ref(false)
+
+// 监听表单数据变化，自动保存到本地存储
+watch(formData, () => {
+  // 登录成功后不再保存表单数据
+  if (loginSuccess.value)
+    return
+
+  uni.setStorageSync('login_form_data', {
+    phone: formData.phone,
+    code: formData.code,
+  })
+}, { deep: true })
+
+// 页面隐藏时保存表单数据
+onHide(() => {
+  // 登录成功后不再保存表单数据
+  if (loginSuccess.value)
+    return
+
+  uni.setStorageSync('login_form_data', {
+    phone: formData.phone,
+    code: formData.code,
+  })
+})
+
+// 页面显示时恢复表单数据
+onShow(() => {
+  // 重置登录成功标志
+  loginSuccess.value = false
+
+  const data = uni.getStorageSync('login_form_data')
+  if (data) {
+    formData.phone = data.phone || ''
+    formData.code = data.code || ''
+  }
+})
+
+// 获取重定向URL
+function getRedirectUrl() {
+  // #ifdef H5
+  const urlParams = new URLSearchParams(window.location.search)
+  const redirect = urlParams.get('redirect')
+  if (redirect) {
+    return decodeURIComponent(redirect)
+  }
+  // #endif
+  return '/pages/home/index'
+}
 
 // 获取验证码
 async function handleGetCode() {
@@ -95,11 +149,23 @@ async function handleLogin() {
   try {
     uni.showLoading({ title: '登录中...' })
 
-    // 调用登录接口
-    await tokenStore.login({
+    // 调用登录接口，token会自动保存到store
+    const tokenRes = await authStore.login({
       mobile: formData.phone,
       code: formData.code,
     })
+
+    console.log('登录成功，token已保存:', tokenRes)
+
+    // 设置登录成功标志，停止自动保存
+    loginSuccess.value = true
+
+    // 清空表单数据
+    formData.phone = ''
+    formData.code = ''
+
+    // 清除本地存储的表单数据
+    uni.removeStorageSync('login_form_data')
 
     uni.hideLoading()
     uni.showToast({
@@ -107,13 +173,30 @@ async function handleLogin() {
       icon: 'success',
     })
 
-    // 跳转到首页
+    // 获取用户store，检查是否已确认信息
+    const userStore = useUserStore()
+    const isConfirmed = userStore.isInfoConfirmed
+
+    // 跳转到重定向页面或首页
     setTimeout(() => {
-      uni.reLaunch({ url: '/pages/index/index' })
+      if (!isConfirmed) {
+        // 未确认信息，跳转到确认页面
+        uni.reLaunch({ url: '/pages/user/confirm' })
+      }
+      else {
+        // 已确认信息，跳转到重定向页面或首页
+        const redirectUrl = getRedirectUrl()
+        uni.reLaunch({ url: redirectUrl })
+      }
     }, 1000)
   }
   catch (error) {
+    uni.hideLoading()
     console.error('登录失败:', error)
+    uni.showToast({
+      title: '登录失败，请检查验证码',
+      icon: 'none',
+    })
   }
 }
 
@@ -134,13 +217,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <view class="h-screen flex flex-col items-center px-30rpx space-y-4" :style="{ paddingTop: `${safeAreaInsets?.top}px` }">
+  <view class="h-screen flex flex-col items-center px-30rpx space-y-4">
     <!-- Logo -->
-    <view class="mt-30 flex flex-col items-center">
-      <view class="mb-5 h-176rpx w-176rpx rounded-full shadow-[#D1F4F2] shadow-lg">
-        <image :src="getBucketFileUrl('student_h5/logo/login_logo.png')" class="h-full w-full" mode="aspectFit" />
+    <view class="mt-30 w-full flex flex-col items-center">
+      <view class="mb-3 h-64rpx w-full">
+        <image :src="getBucketFileUrl('student_h5/logo/logo_long_black.png')" class="h-full w-full" mode="aspectFit" />
       </view>
-      <text class="title-text mb-16rpx text-xl font-semibold">心之旅AI</text>
       <text class="desc-text text-sm font-medium">探索内心，开启成长之旅</text>
     </view>
 
@@ -190,11 +272,14 @@ onUnmounted(() => {
       </view>
 
       <!-- 登录按钮 -->
-      <view
-        class="primary-btn mb-32rpx h-96rpx center rounded-2xl"
-        @click="handleLogin"
-      >
-        <text class="text-sm text-white">登录</text>
+      <view class="w-full">
+        <LyButton
+          type="primary"
+          block
+          @click="handleLogin"
+        >
+          登录
+        </LyButton>
       </view>
 
       <!-- 服务条款 -->

@@ -4,12 +4,17 @@ import { isMp } from '@uni-helper/uni-env'
  * 路由拦截，通常也是登录拦截
  * 黑、白名单的配置，请看 config.ts 文件， EXCLUDE_LOGIN_PATH_LIST
  */
-import { useTokenStore } from '@/store/token'
+import { useAuthStore } from '@/store/auth'
+import { useUserStore } from '@/store/user'
 import { isPageTabbar, tabbarStore } from '@/tabbar/store'
 import { getAllPages, getLastPage, HOME_PAGE, parseUrlToObj } from '@/utils/index'
-import { EXCLUDE_LOGIN_PATH_LIST, isNeedLoginMode, LOGIN_PAGE, LOGIN_PAGE_ENABLE_IN_MP, NOT_FOUND_PAGE } from './config'
+import { EXCLUDE_LOGIN_PATH_LIST, isNeedLoginMode, LOGIN_PAGE, LOGIN_PAGE_ENABLE_IN_MP } from './config'
 
 export const FG_LOG_ENABLE = false
+
+// 用户信息确认页面
+const CONFIRM_PAGE = '/pages/user/confirm'
+
 export function judgeIsExcludePath(path: string) {
   const isDev = import.meta.env.DEV
   if (!isDev) {
@@ -20,7 +25,7 @@ export function judgeIsExcludePath(path: string) {
 }
 
 export const navigateToInterceptor = {
-  // 注意，这里的url是 '/' 开头的，如 '/pages/index/index'，跟 'pages.json' 里面的 path 不同
+  // 注意，这里的url是 '/' 开头的，如 '/pages/home/index'，跟 'pages.json' 里面的 path 不同
   // 增加对相对路径的处理，BY 网友 @ideal
   invoke({ url, query }: { url: string, query?: Record<string, string> }) {
     if (url === undefined) {
@@ -46,7 +51,7 @@ export const navigateToInterceptor = {
     // 处理路由不存在的情况
     if (getAllPages().every(page => page.path !== path) && path !== '/') {
       console.warn('路由不存在:', path)
-      uni.navigateTo({ url: NOT_FOUND_PAGE })
+      // uni.navigateTo({ url: NOT_FOUND_PAGE })
       return false // 明确表示阻止原路由继续执行
     }
 
@@ -58,11 +63,27 @@ export const navigateToInterceptor = {
       return true // 明确表示允许路由继续执行
     }
 
-    const tokenStore = useTokenStore()
-    FG_LOG_ENABLE && console.log('tokenStore.hasLogin:', tokenStore.hasLogin)
+    const tokenStore = useAuthStore()
+    const userStore = useUserStore()
+
+    // 调试日志：查看登录状态
+    console.log('=== 路由拦截器调试 ===')
+    console.log('path:', path)
+    console.log('tokenInfo:', tokenStore.tokenInfo)
+    console.log('hasLogin:', tokenStore.hasLogin)
+    console.log('userId:', tokenStore.userId)
+    console.log('isInfoConfirmed:', userStore.isInfoConfirmed)
+    console.log('====================')
 
     // 不管黑白名单，登录了就直接去吧（但是当前不能是登录页）
     if (tokenStore.hasLogin) {
+      // 如果用户已登录但未确认信息，且不是前往确认页面或登录页面，则跳转到确认页面
+      if (!userStore.isInfoConfirmed && path !== CONFIRM_PAGE && path !== LOGIN_PAGE) {
+        console.log('用户未确认信息，跳转到确认页面')
+        uni.reLaunch({ url: CONFIRM_PAGE })
+        return false // 阻止原路由继续执行
+      }
+
       if (path !== LOGIN_PAGE) {
         return true // 明确表示允许路由继续执行
       }
@@ -89,14 +110,16 @@ export const navigateToInterceptor = {
     if (isNeedLoginMode) {
       // 需要登录里面的 EXCLUDE_LOGIN_PATH_LIST 表示白名单，可以直接通过
       if (judgeIsExcludePath(path)) {
+        console.log('[路由拦截器] 白名单页面，允许访问:', path)
         return true // 明确表示允许路由继续执行
       }
       // 否则需要重定向到登录页
       else {
         if (path === LOGIN_PAGE) {
+          console.log('[路由拦截器] 访问登录页，允许访问')
           return true // 明确表示允许路由继续执行
         }
-        FG_LOG_ENABLE && console.log('1 isNeedLogin(白名单策略) redirectUrl:', redirectUrl)
+        console.log('[路由拦截器] 未登录，重定向到登录页:', redirectUrl)
         uni.navigateTo({ url: redirectUrl })
         return false // 明确表示阻止原路由继续执行
       }

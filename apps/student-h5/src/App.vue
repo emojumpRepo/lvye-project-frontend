@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
 import { navigateToInterceptor } from '@/router/interceptor'
-import { useTenantStore } from '@/store'
+import { useAuthStore, useTenantStore, useUserStore } from '@/store'
 
 const tenantStore = useTenantStore()
+const authStore = useAuthStore()
+const userStore = useUserStore()
 
 onLaunch((options) => {
   console.log('App Launch', options)
 
   // 初始化租户ID
   tenantStore.initTenantId()
+
+  // 检查是否已登录
+  if (authStore.hasLogin) {
+    // 获取用户信息
+    userStore.fetchUserInfo()
+  }
 })
 
 onShow((options) => {

@@ -13,11 +13,20 @@
 
 :root,
 page {
-  // 修改按主题色
-  // --wot-color-theme: #37c2bc;
+  // 修改 Wot Design Uni 主题色为项目主题色
+  --wot-color-theme: var(--primary-color);
 
-  // 修改按钮背景色
-  // --wot-button-primary-bg-color: green;
+  // 修改按钮相关颜色
+  --wot-button-primary-bg-color: var(--primary-color);
+  --wot-button-primary-color: #fff;
+
+  // 修改浅色主题色
+  --wot-color-theme-light: var(--primary-color-light);
+
+  // 其他组件主题色（如果需要可以添加更多）
+  // --wot-tabs-line-color: var(--primary-color);
+  // --wot-radio-checked-color: var(--primary-color);
+  // --wot-checkbox-checked-color: var(--primary-color);
 }
 
 /*

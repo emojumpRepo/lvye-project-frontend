@@ -21,7 +21,7 @@ const features = [
     bgColor: 'linear-gradient( 180deg, #EEFFF5 0%, #FFFFFF 100%)',
     icon: 'student_h5/icon/home/evaluation_icon.svg ',
     handleClick: () => {
-      uni.navigateTo({ url: '/pages/assessment/list' })
+      uni.navigateTo({ url: '/pages-sub/assessment/list' })
     },
   },
   {
@@ -45,7 +45,10 @@ const features = [
     descriptionClass: 'text-[#346BA666]',
     bgColor: 'linear-gradient( 180deg, #E9F7FF 0%, #FFFFFF 100%)',
     handleClick: () => {
-      uni.navigateTo({ url: '/pages/ai-chat/index' })
+      uni.showToast({
+        title: '即将上线',
+        icon: 'none',
+      })
     },
   },
   {
@@ -75,7 +78,7 @@ const features = [
           'col-span-2 !flex-row gap-4 items-center': feature.id === 'service-hotline',
         }"
         :style="{ background: feature.bgColor }"
-        @click="!feature.hasButton ? feature.handleClick() : null"
+        @click.stop="!feature.hasButton ? feature.handleClick() : null"
       >
         <view v-if="feature.id === 'service-hotline'">
           <image :src="getBucketFileUrl(feature.icon)" class="h-110rpx w-110rpx" mode="aspectFit" />
@@ -86,9 +89,9 @@ const features = [
           <text class="text-xs font-medium" :class="feature.descriptionClass">{{ feature.description }}</text>
         </view>
 
-        <view v-if="feature.hasButton" class="h-fit w-fit flex-shrink-0 rounded-full bg-[#45C887FF] px-3.5 py-1.5" @click="feature.handleClick()">
-          <text class="text-sm text-white">去查看</text>
-        </view>
+        <LyButton v-if="feature.hasButton" type="primary" size="small" class="h-fit w-fit flex-shrink-0" @click.stop="feature.handleClick()">
+          去查看
+        </LyButton>
 
         <view v-if="feature.id === 'evaluation'">
           <image :src="getBucketFileUrl(feature.icon)" class="absolute bottom-0 right-0 h-164rpx w-164rpx" mode="aspectFit" />

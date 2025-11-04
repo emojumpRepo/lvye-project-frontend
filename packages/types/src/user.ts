@@ -11,6 +11,11 @@ interface UserInfo extends BasicUserInfo {
    * 家长学生端 标识
    */
   isParent?: boolean;
+
+  /**
+   * 所属租户名称
+   */
+  tenantName?: string;
 }
 
 /** 权限信息 */
@@ -20,6 +25,7 @@ interface AuthPermissionInfo {
   permissions: string[];
   menus: AppRouteRecordRaw[];
   isParent: boolean;
+  tenantName?: string;
 }
 
 export type { AuthPermissionInfo, UserInfo };

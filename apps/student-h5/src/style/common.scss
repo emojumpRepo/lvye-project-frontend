@@ -2,7 +2,9 @@
 :root,
 page {
   --title-text-color: #2D3E50FF;
+  --desc-text-color-light: #2D3E500D;
   --desc-text-color: #2D3E5066;
+  --desc-text-color-heavy: #2D3E5099;
   --primary-color: #45C886FF;
   --primary-color-light: #45C88666;
   --primary-gradient: linear-gradient(to right, #45C887, #3EB87A);
@@ -16,6 +18,10 @@ page {
 
 .desc-text {
   color: var(--desc-text-color);
+}
+
+.desc-text-heavy {
+  color: var(--desc-text-color-heavy);
 }
 
 .primary-text {

@@ -1,9 +1,8 @@
-import type { IDoubleTokenRes } from '@/api/types/login'
+import type { IWebAuthLoginRes } from '@/api/types/login'
 import type { CustomRequestOptions, IResponse } from '@/http/types'
 import { nextTick } from 'vue'
 import { LOGIN_PAGE } from '@/router/config'
-import { useTokenStore } from '@/store/token'
-import { isDoubleTokenMode } from '@/utils'
+import { useAuthStore } from '@/store/auth'
 import { ResultEnum } from './tools/enum'
 
 // 刷新 token 状态管理
@@ -27,49 +26,45 @@ export function http<T>(options: CustomRequestOptions) {
         // 检查是否是401错误（包括HTTP状态码401或业务码401）
         const isTokenExpired = res.statusCode === 401 || code === 401
 
-        // 检查服务器处理请求是否成功
+        // 检查服务器处理业务逻辑是否成功
         const isSuccess = code === 400
 
         if (isTokenExpired) {
-          const tokenStore = useTokenStore()
-          if (!isDoubleTokenMode) {
-            // 未启用双token策略，清理用户信息，跳转到登录页
-            tokenStore.logout()
+          const authStore = useAuthStore()
+
+          // 检查是否有 refreshToken
+          const { refreshToken } = authStore.tokenInfo as IWebAuthLoginRes || {}
+
+          // 如果没有 refreshToken，直接清理用户信息，跳转到登录页
+          if (!refreshToken) {
+            await authStore.logout()
             uni.navigateTo({ url: LOGIN_PAGE })
             return reject(res)
           }
 
           /* -------- 无感刷新 token ----------- */
-          const { refreshToken } = tokenStore.tokenInfo as IDoubleTokenRes || {}
           // token 失效的，且有刷新 token 的，才放到请求队列里
-          if (refreshToken) {
-            taskQueue.push(() => {
-              resolve(http<T>(options))
-            })
-          }
+          taskQueue.push(() => {
+            resolve(http<T>(options))
+          })
 
           // 如果有 refreshToken 且未在刷新中，发起刷新 token 请求
-          if (refreshToken && !refreshing) {
+          if (!refreshing) {
             refreshing = true
             try {
               // 发起刷新 token 请求（使用 store 的 refreshToken 方法）
-              await tokenStore.refreshToken()
+              await authStore.refreshToken()
               // 刷新 token 成功
               refreshing = false
-              nextTick(() => {
-                // 关闭其他弹窗
-                uni.hideToast()
-                uni.showToast({
-                  title: 'token 刷新成功',
-                  icon: 'none',
-                })
-              })
+              console.log('Token 刷新成功')
               // 将任务队列的所有任务重新请求
               taskQueue.forEach(task => task())
+              taskQueue = []
             }
             catch (refreshErr) {
               console.error('刷新 token 失败:', refreshErr)
               refreshing = false
+              taskQueue = []
               // 刷新 token 失败，跳转到登录页
               nextTick(() => {
                 // 关闭其他弹窗
@@ -80,15 +75,11 @@ export function http<T>(options: CustomRequestOptions) {
                 })
               })
               // 清除用户信息
-              await tokenStore.logout()
+              await authStore.logout()
               // 跳转到登录页
               setTimeout(() => {
                 uni.navigateTo({ url: LOGIN_PAGE })
               }, 2000)
-            }
-            finally {
-              // 不管刷新 token 成功与否，都清空任务队列
-              taskQueue = []
             }
           }
 
