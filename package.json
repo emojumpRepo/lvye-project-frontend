@@ -46,6 +46,7 @@
     "dev": "turbo-run dev",
     "dev:web": "pnpm -F @mindtrip/web run dev",
     "dev:admin": "pnpm -F @mindtrip/admin run dev",
+    "dev:h5": "pnpm -F @mindtrip/student-h5 run dev:h5",
     "dev:docs": "pnpm -F @mindtrip/docs run dev",
     "dev:play": "pnpm -F @mindtrip/playground run dev",
     "format": "vsh lint --format",
