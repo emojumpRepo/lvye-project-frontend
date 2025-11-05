@@ -11,10 +11,11 @@ const emit = defineEmits<{
 
 // 学生档案
 const studentProfileId = ref<number>(0);
+const activeTimelineTab = ref<string>('');
 
 /** 学生详情抽屉 */
 const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
-  class: 'w-[800px]',
+  class: 'w-2/5',
   footer: false,
   showCancelButton: false,
   showConfirmButton: false,
@@ -23,6 +24,8 @@ const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
     if (!open) return;
     const data = studentDetailDrawerApi.getData();
     data.id && (studentProfileId.value = data.id);
+    data.activeTimelineTab &&
+      (activeTimelineTab.value = data.activeTimelineTab);
   },
 });
 </script>
@@ -42,6 +45,7 @@ const [StudentDetailDrawer, studentDetailDrawerApi] = useVbenDrawer({
       <Main
         :student-detail-drawer-api="studentDetailDrawerApi"
         :student-profile-id="studentProfileId"
+        :active-timeline-tab="activeTimelineTab"
         @refresh="emit('refresh')"
       />
     </div>

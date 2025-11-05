@@ -1,5 +1,11 @@
 <script lang="ts" setup>
-import type { AssessmentRecord, RecordInfo } from '@vben/types';
+import type {
+  AssessmentRecord,
+  InterventionPlan,
+  RecordInfo,
+} from '@vben/types';
+
+import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
 import { ref, watch } from 'vue';
 
@@ -8,24 +14,37 @@ import { useVbenModal } from '@vben/common-ui';
 import { Empty, message } from 'ant-design-vue';
 import dayjs from 'dayjs';
 
-import { getStudentRiskAssessmentRecords } from '#/api/psychology';
+import {
+  getInterventionPlanList,
+  getStudentRiskAssessmentRecords,
+} from '#/api/psychology';
 import AssessmentReportDialog from '#/components/Dialog/AssessmentReportDialog/index.vue';
-import { getDictLabel } from '#/utils/dict';
+import CrisisInterventionDialog from '#/components/Dialog/CrisisInterventionDialog/index.vue';
+import { getDictLabel, getDictObj } from '#/utils/dict';
 
 import RecordCard from './RecordCard.vue';
 
 const props = defineProps<{
   activeInterventionTabKey: number;
+  studentProfile?: PsychologyStudentProfileApi.StudentProfile;
   studentProfileId?: number;
 }>();
 
+/** 风险评估弹窗 */
 const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
   connectedComponent: AssessmentReportDialog,
 });
 
+/** 危机干预弹窗 */
+const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
+  connectedComponent: CrisisInterventionDialog,
+});
+
 const records = ref<RecordInfo[]>([]);
 const evaluationRecords = ref<AssessmentRecord[]>([]);
+const interventionPlanList = ref<InterventionPlan[]>([]);
 
+/** 加载风险评估记录 */
 async function loadAssessmentRecords(id: number) {
   try {
     const response = await getStudentRiskAssessmentRecords(id);
@@ -68,14 +87,62 @@ async function loadAssessmentRecords(id: number) {
   }
 }
 
+/** 加载干预计划列表 */
+async function loadInterventionPlanList(id: number) {
+  if (!id) return;
+  try {
+    const response = await getInterventionPlanList(id);
+    if (response && response.length > 0) {
+      interventionPlanList.value = response;
+      records.value = response.map((item) => {
+        const interventionPlanStatus = getDictObj(
+          'intervention_plan_status',
+          item.status,
+        );
+
+        return {
+          id: item.id,
+          title: item.title,
+          status: {
+            label: interventionPlanStatus?.label,
+            value: interventionPlanStatus?.value,
+            colorType: interventionPlanStatus?.colorType,
+            cssClass: interventionPlanStatus?.colorType,
+          },
+          labelList: [
+            {
+              label: '干预计划负责人',
+              value: item.creatorName,
+            },
+            {
+              label: '开启干预时间',
+              value: item.createTime
+                ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss')
+                : '',
+            },
+            {
+              label: '结束干预时间',
+              value: item.updateTime
+                ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss')
+                : '',
+            },
+          ],
+          buttonText: '查看详情',
+          showButton: true,
+        } as RecordInfo;
+      });
+    }
+  } catch (error) {
+    console.error('获取干预计划列表失败', error);
+  }
+}
+
 watch(
   () => props.activeInterventionTabKey,
   async (newVal) => {
-    if (props.studentProfileId && newVal === 1) {
-      await loadAssessmentRecords(props.studentProfileId);
-    } else {
-      records.value = [];
-    }
+    await (props.studentProfileId && newVal === 1
+      ? loadAssessmentRecords(props.studentProfileId)
+      : loadInterventionPlanList(props.studentProfileId ?? 0));
   },
   { immediate: true },
 );
@@ -83,13 +150,33 @@ watch(
 /** 查看报告 */
 function viewEvaluationReport(recordId: number) {
   if (!recordId) return;
-  const record = evaluationRecords.value.find((item) => item.id === recordId);
-  if (record) {
-    assessmentReportModalApi
-      .setData({
-        assessmentReport: record,
-      })
-      .open();
+
+  if (props.activeInterventionTabKey === 1) {
+    const record = evaluationRecords.value.find((item) => item.id === recordId);
+    if (record) {
+      assessmentReportModalApi
+        .setData({
+          assessmentReport: record,
+        })
+        .open();
+    }
+  } else if (props.activeInterventionTabKey === 2) {
+    const record = interventionPlanList.value.find(
+      (item) => item.id === recordId,
+    );
+    if (record) {
+      crisisInterventionModalApi
+        .setData({
+          studentInfo: {
+            studentProfileId: props.studentProfileId,
+            studentName: props.studentProfile?.name,
+            className: props.studentProfile?.className,
+          },
+          interventionPlanId: record.id,
+          fullScreen: true,
+        })
+        .open();
+    }
   }
 }
 </script>
@@ -114,6 +201,7 @@ function viewEvaluationReport(recordId: number) {
     </template>
 
     <AssessmentReportModal />
+    <CrisisInterventionModal />
   </div>
 </template>
 

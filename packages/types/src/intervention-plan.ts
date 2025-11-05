@@ -14,7 +14,7 @@ export interface InterventionPlan {
   interventionId: string;
   studentProfileId: number;
   title: string;
-  relatedEventIds: number[];
+  relativeEventIds: number[];
   relativeEvents: {
     bgColor?: string;
     color?: string;
@@ -23,7 +23,10 @@ export interface InterventionPlan {
     label?: string;
     sourceType: number;
   }[];
+  status: number;
   templateId: number;
   createTime: number;
+  updateTime: number;
+  creatorName: string;
   steps: InterventionPlanStep[];
 }

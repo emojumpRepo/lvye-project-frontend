@@ -113,6 +113,8 @@ export namespace PsychologyStudentProfileApi {
     createTime: number;
     updateTime: number;
     meta: {
+      action: string;
+      description: string;
       isParent: number;
       questionnaireCount: number;
       questionnaireIds: number[];
@@ -340,4 +342,13 @@ export function studentClassTransfer(params: {
     '/psychology/student-profile/batch-transfer-class',
     params,
   );
+}
+
+/** 获取学生档案操作日志 */
+export function getStudentProfileOperationLog(bizId: number) {
+  return requestClient.get<
+    PsychologyStudentProfileApi.StudentProfileTimeline[]
+  >('/psychology/student-profile/timeline-by-bizid', {
+    params: { bizId: `intervention_plan_${bizId}` },
+  });
 }

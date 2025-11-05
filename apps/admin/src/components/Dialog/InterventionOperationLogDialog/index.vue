@@ -6,15 +6,29 @@ import { IconifyIcon } from '@vben/icons';
 
 import dayjs from 'dayjs';
 
-import { InterventionOperationLogTypeEnum } from '#/api/psychology';
+import { getStudentProfileOperationLog } from '#/api/psychology';
+
+interface InterventionOperationLog {
+  meta: {
+    action: string;
+    description: string;
+  };
+  operator: string;
+  createTime: number;
+}
 
 const interventionPlanId = ref<number>();
+const interventionOperationLogList = ref<InterventionOperationLog[]>([]);
 
 const interventionTimelineIconMap = {
-  [InterventionOperationLogTypeEnum.CREATE]: 'mingcute:new-folder-line',
-  [InterventionOperationLogTypeEnum.UPDATE]: 'mdi:clock',
-  [InterventionOperationLogTypeEnum.UPLOAD]: 'icon-park-outline:link',
-  [InterventionOperationLogTypeEnum.WRITE]: 'solar:document-add-outline',
+  create: 'mingcute:new-folder-line',
+  update: 'material-symbols:update',
+  upload: 'icon-park-outline:link',
+  write: 'solar:document-add-outline',
+  updateRelativeEvents: 'mingcute:link-2-line',
+  addStep: 'solar:document-add-outline',
+  updateSort: 'bx:sort',
+  complete: 'material-symbols:check-box-outline',
 };
 
 const [InterventionOperationLogModal, interventionOperationLogModalApi] =
@@ -23,83 +37,68 @@ const [InterventionOperationLogModal, interventionOperationLogModalApi] =
     destroyOnClose: true,
     confirmText: '关闭',
     showCancelButton: false,
-    class: '!w-[700px]',
+    class: '!w-[750px]',
     onOpenChange: async (open) => {
       if (open) {
         const data = await interventionOperationLogModalApi.getData();
         interventionPlanId.value = data.interventionPlanId;
+
+        try {
+          const response = await getStudentProfileOperationLog(
+            interventionPlanId.value!,
+          );
+
+          interventionOperationLogList.value = response
+            .filter((item) => item?.meta?.action)
+            .map((item) => ({
+              meta: {
+                action: item.meta.action,
+                description: item.meta.description,
+              },
+              operator: item.operator,
+              createTime: item.createTime,
+            }));
+        } catch (error) {
+          console.error(error);
+        } finally {
+          interventionOperationLogModalApi.setState({ loading: false });
+        }
       }
     },
     onConfirm: () => {
       interventionOperationLogModalApi.close();
     },
   });
-
-const interventionOperationLogList = [
-  {
-    meta: {
-      action: 1,
-      description: '创建了干预事件',
-    },
-    operator: '王心理师',
-    createTime: 1_762_185_361_000,
-  },
-  {
-    meta: {
-      action: 2,
-      description: '将 [步骤二：上报学生管理处报案] 的状态从[待处理]更改为',
-      text: '[处理中]',
-    },
-    operator: '王心理师',
-    createTime: 1_762_185_522_000,
-  },
-  {
-    meta: {
-      action: 3,
-      description: '在 [步骤一：心理评估] 中添加了教师笔记',
-    },
-    operator: '王心理师',
-    createTime: 1_762_185_646_000,
-  },
-  {
-    meta: {
-      action: 4,
-      description: '将 [步骤二：上报学生管理处报案] 中上传了文件',
-      subDescription: '评估报告初稿.pdf',
-    },
-    operator: '王心理师',
-    createTime: 1_762_185_716_000,
-  },
-];
 </script>
 
 <template>
   <InterventionOperationLogModal title="操作日志">
-    <div class="flex flex-col p-2">
+    <div class="flex flex-col px-2">
       <template
         v-for="(log, index) in interventionOperationLogList"
         :key="index"
       >
-        <div class="flex items-center justify-between py-2">
-          <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center gap-4">
             <IconifyIcon
               :icon="
                 interventionTimelineIconMap[
                   log.meta.action as keyof typeof interventionTimelineIconMap
                 ]
               "
-              color="#cbcdcf"
+              color="#979899"
             />
-            <div class="text-sm">
-              <span class="font-bold">{{ log.operator }}</span>
-              <span class="text-gray-500">{{ log.meta.description }}</span>
-              <span v-if="log.meta.text" class="text-[#1966FF]">
-                {{ log.meta.text }}
+            <div class="flex gap-1 text-sm">
+              <span class="whitespace-nowrap font-bold">{{
+                log.operator
+              }}</span>
+              <span class="font-normal text-[#979899]">
+                {{ log.meta.description }}
               </span>
             </div>
           </div>
 
-          <div class="text-xs text-gray-400">
+          <div class="ml-4 whitespace-nowrap text-xs text-gray-400">
             {{ dayjs(log.createTime).format('YYYY-MM-DD HH:mm:ss') }}
           </div>
         </div>
