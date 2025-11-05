@@ -150,3 +150,11 @@ export interface ReportAbnormalParams {
   name: string;
   studentNo: string;
 }
+
+/** 按来源类型分组获取学生已结案的危机事件 */
+export interface StudentCrisisEventsBySourceType {
+  sourceType: number;
+  sourceTypeName: string;
+  count: number;
+  events: CrisisEvent[];
+}

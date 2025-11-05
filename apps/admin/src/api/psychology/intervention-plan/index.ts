@@ -82,7 +82,7 @@ export function updateInterventionPlanSteps(
 
 /** 更新干预计划的关联事件列表 */
 export function updateInterventionPlanRelativeEvents(
-  params: InterventionPlanRelativeEventsUpdateReqVO[],
+  params: InterventionPlanRelativeEventsUpdateReqVO,
 ) {
   return requestClient.put<boolean>(
     '/psychology/intervention-plan/update-relative-events',
@@ -115,5 +115,12 @@ export function addInterventionPlanStep(
   return requestClient.post<boolean>(
     '/psychology/intervention-plan/create-step',
     params,
+  );
+}
+
+/** 根据学生ID获取干预计划列表 */
+export function getInterventionPlanList(studentProfileId: number) {
+  return requestClient.get<InterventionPlan[]>(
+    `/psychology/intervention-plan/list-by-student?studentProfileId=${studentProfileId}`,
   );
 }

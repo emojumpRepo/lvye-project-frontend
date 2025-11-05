@@ -24,7 +24,7 @@ function handleClick(recordId: number) {
 
 <template>
   <div class="flex h-[200px] flex-col rounded-xl bg-[#F7F8FA]">
-    <div class="flex items-center justify-between p-4">
+    <div class="flex items-center justify-between px-4 py-3">
       <span class="text-sm font-medium">{{ cardInfo.title }}</span>
       <span
         v-if="cardInfo.status"
@@ -40,9 +40,9 @@ function handleClick(recordId: number) {
       </span>
     </div>
 
-    <Divider />
+    <Divider class="!my-1" />
 
-    <div class="flex flex-1 flex-col justify-between p-4 text-xs">
+    <div class="flex flex-1 flex-col justify-between px-4 py-3 text-xs">
       <div class="flex flex-col gap-2.5">
         <template v-if="cardInfo.labelList">
           <div v-for="label in cardInfo.labelList" :key="label.value">

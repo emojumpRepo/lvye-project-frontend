@@ -64,6 +64,7 @@ interface CoreProblemTagStat {
 }
 
 const props = defineProps<{
+  activeTimelineTab: string;
   studentDetailDrawerApi: ExtendedDrawerApi;
   studentProfileId: number;
 }>();
@@ -417,6 +418,9 @@ onMounted(async () => {
     props.studentDetailDrawerApi?.setState({ loading: true });
     await loadStudentProfile(props.studentProfileId);
     await loadStudentProfileTimeline(props.studentProfileId);
+    if (props.activeTimelineTab) {
+      activeTabKey.value = props.activeTimelineTab;
+    }
     props.studentDetailDrawerApi?.setState({ loading: false });
   }
 });
@@ -495,7 +499,7 @@ onMounted(async () => {
         <Divider class="h-[8px] !border-none bg-gray-50" />
 
         <div class="flex-1 overflow-x-hidden bg-white pb-5">
-          <div class="relative h-full w-full">
+          <div class="h-full w-full">
             <Tabs :tab-bar-gutter="24" v-model:active-key="activeTabKey">
               <Tabs.TabPane tab="综合时间线" key="timeline">
                 <TimelineTab
@@ -536,6 +540,7 @@ onMounted(async () => {
                   <InterventionTab
                     :student-profile-id="studentProfile?.id"
                     :active-intervention-tab-key="activeInterventionTabKey"
+                    :student-profile="studentProfile"
                   />
                 </div>
               </Tabs.TabPane>
@@ -546,25 +551,28 @@ onMounted(async () => {
                   @refresh="loadStudentProfile(studentProfile?.id ?? 0)"
                 />
               </Tabs.TabPane>
+
+              <template #rightExtra>
+                <div class="flex items-center gap-2">
+                  <LyButton
+                    type="default"
+                    size="small"
+                    @click="handleExportInfo"
+                    :disabled="loading"
+                  >
+                    导出信息
+                  </LyButton>
+                  <LyButton
+                    type="success"
+                    size="small"
+                    :disabled="loading"
+                    @click="handleCreateStudentEventRecord"
+                  >
+                    新增记录
+                  </LyButton>
+                </div>
+              </template>
             </Tabs>
-            <div class="absolute right-7 top-1.5 flex items-center gap-2">
-              <LyButton
-                type="default"
-                size="middle"
-                @click="handleExportInfo"
-                :disabled="loading"
-              >
-                导出信息
-              </LyButton>
-              <LyButton
-                type="success"
-                size="middle"
-                :disabled="loading"
-                @click="handleCreateStudentEventRecord"
-              >
-                新增记录
-              </LyButton>
-            </div>
           </div>
         </div>
       </div>

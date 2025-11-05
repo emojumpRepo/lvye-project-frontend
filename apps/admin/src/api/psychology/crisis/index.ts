@@ -3,6 +3,7 @@ import type {
   CrisisBoardData,
   CrisisEvent,
   CrisisEventRecord,
+  StudentCrisisEventsBySourceType,
   StudentPageItem,
 } from '@vben/types';
 
@@ -112,5 +113,13 @@ export function updateCrisisEventDescription(id: number, description: string) {
       id,
       description,
     },
+  );
+}
+
+/** 按来源类型分组获取学生已结案的危机事件 */
+export function getStudentCrisisEventsBySourceType(studentProfileId: number) {
+  return requestClient.get<StudentCrisisEventsBySourceType[]>(
+    `/psychology/intervention/events/closed/group-by-source-type`,
+    { params: { studentProfileId } },
   );
 }
