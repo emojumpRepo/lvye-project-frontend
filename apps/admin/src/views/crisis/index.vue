@@ -42,6 +42,7 @@ const [
     await handleCreateInterventionPlan({
       templateId: data.templateId,
     });
+    await loadCrisisBoardData();
     selectedInterventionTemplateModalApi.unlock();
     selectedInterventionTemplateModalApi.close();
   },

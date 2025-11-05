@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
 import { DICT_Value_COLOR_MAP } from '#/api/constants';
 import { getAssessmentTaskParticipantsQuestionnairePage } from '#/api/psychology/assessment/index';
+import ConfrimBatchTransformEvaluationDialog from '#/components/Dialog/ConfrimBatchTransformEvaluationDialog/index.vue';
+import CreateEvaluationDialog from '#/components/Dialog/CreateEvaluationDialog/index.vue';
 import ExportExcelProgressDialog from '#/components/Dialog/ExportExcelProgressDialog/index.vue';
 import ExportStudentAssessmentResultDialog from '#/components/Dialog/ExportStudentAssessmentResultDialog/index.vue';
 import QuestionnaireResultDialog from '#/components/Dialog/QuestionnaireResultDialog/index.vue';
@@ -88,6 +90,19 @@ const [ExportStudentCompleteModal, exportStudentCompleteModalApi] =
 // 学生信息详情抽屉
 const [StudentProfileDrawer, studentProfileDrawerApi] = useVbenDrawer({
   connectedComponent: StudentDetailDrawer,
+});
+
+// 确认学生转入评估弹窗(确认信息弹窗)
+const [
+  ConfrimBatchTransformEvaluationModal,
+  confrimBatchTransformEvaluationModalApi,
+] = useVbenModal({
+  connectedComponent: ConfrimBatchTransformEvaluationDialog,
+});
+
+// 评估弹窗
+const [CreateEvaluationModal, createEvaluationModalApi] = useVbenModal({
+  connectedComponent: CreateEvaluationDialog,
 });
 
 // 加载学生数据的函数
@@ -245,8 +260,30 @@ function handleBatchSendReminder() {
 }
 
 /** 批量转入干预 */
-function handleBatchTransferToIntervention() {
-  message.warning('即将上线');
+async function handleBatchTransferToIntervention() {
+  if (selectedRowKeys.value.length === 0) {
+    message.warning('请先选择学生');
+    return;
+  }
+  const selectedStudents = await gridApi.grid.getCheckboxRecords();
+  const filteredStudents = selectedStudents.filter(
+    (student: PsychologyAssessmentApi.ParticipantsQuestionnairePageRes) =>
+      student.status === 1,
+  );
+  if (filteredStudents.length === 0) {
+    message.warning('请选择已完成的学生');
+  }
+
+  confrimBatchTransformEvaluationModalApi
+    .setData({
+      studentData: filteredStudents.map((student) => ({
+        studentProfileId: student.studentProfileId,
+        studentName: student.name,
+        studentNo: student.studentNo,
+        className: student.className,
+      })),
+    })
+    .open();
 }
 
 /** 切换tab */
@@ -506,6 +543,8 @@ function viewStudentInfo(id: number) {
       :type="exportXLSXType"
     />
     <StudentProfileDrawer />
+    <ConfrimBatchTransformEvaluationModal />
+    <CreateEvaluationModal :publish="publishAssessment" />
   </div>
 </template>
 

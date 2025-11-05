@@ -31,6 +31,8 @@ const props = defineProps<{
   publish: (params: InterventionAssessmentReqVO) => Promise<boolean>;
 }>();
 
+const emits = defineEmits(['close']);
+
 interface FormState {
   problemTypes: string[];
   consultRecord?: string;
@@ -204,12 +206,18 @@ async function handleSubmit() {
           content: '您的评估已完成，可在事件处理记录中查看！',
           title: '评估成功',
           icon: 'success',
-        }).then(() => createEvaluationModalApi.close());
+        }).then(() => {
+          createEvaluationModalApi.close();
+          emits('close');
+        });
       } else {
         alert({
           content: '评估失败，请重试',
           title: '评估失败',
           icon: 'error',
+        }).then(() => {
+          createEvaluationModalApi.close();
+          emits('close');
         });
       }
     } catch {
@@ -217,6 +225,9 @@ async function handleSubmit() {
         content: '评估失败，请重试',
         title: '评估失败',
         icon: 'error',
+      }).then(() => {
+        createEvaluationModalApi.close();
+        emits('close');
       });
     } finally {
       createEvaluationModalApi.unlock();
@@ -257,7 +268,7 @@ function handleOpenCancelConfirmModal() {
 
 /** 打开访谈提纲 */
 function openInterviewOutline() {
-  console.log('openInterviewOutline');
+  message.info('暂未开放');
 }
 </script>
 
@@ -305,27 +316,33 @@ function openInterviewOutline() {
                 学生信息
               </span>
             </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div class="flex flex-col space-y-1">
-                <span
-                  class="text-sm font-medium uppercase tracking-wide text-gray-500"
-                >
-                  学生：{{ params?.studentInfo?.studentName || '--' }}
-                </span>
-              </div>
-              <div class="flex flex-col space-y-1">
-                <span
-                  class="text-sm font-medium uppercase tracking-wide text-gray-500"
-                >
-                  班级：{{ params?.studentInfo?.className || '--' }}
-                </span>
-              </div>
-              <div class="flex flex-col space-y-1">
-                <span
-                  class="text-sm font-medium uppercase tracking-wide text-gray-500"
-                >
-                  学号：{{ params?.studentInfo?.studentNo || '--' }}
-                </span>
+            <div class="flex flex-col gap-3">
+              <div
+                v-for="student in params?.studentInfo"
+                :key="student.studentNo"
+                class="grid grid-cols-3 gap-4"
+              >
+                <div class="flex flex-col space-y-1">
+                  <span
+                    class="text-sm font-medium uppercase tracking-wide text-gray-500"
+                  >
+                    学生：{{ student.studentName || '--' }}
+                  </span>
+                </div>
+                <div class="flex flex-col space-y-1">
+                  <span
+                    class="text-sm font-medium uppercase tracking-wide text-gray-500"
+                  >
+                    班级：{{ student.className || '--' }}
+                  </span>
+                </div>
+                <div class="flex flex-col space-y-1">
+                  <span
+                    class="text-sm font-medium uppercase tracking-wide text-gray-500"
+                  >
+                    学号：{{ student.studentNo || '--' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

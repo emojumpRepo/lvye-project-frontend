@@ -35,11 +35,7 @@ const crisisEventTitle = ref('');
 const currentStep = ref(1); // 当前步骤
 // 评估确认信息
 const confirmInfo = ref<AssessmentComfirmInfo>({
-  studentInfo: {
-    studentName: '',
-    className: '',
-    studentNo: '',
-  },
+  studentInfo: [],
   consultInfo: {
     consultant: '',
     consultType: '',
@@ -146,11 +142,13 @@ async function loadCrisisEventDetail(id: number) {
     crisisEventDetail.value.processHistory =
       response.processHistory.reverse() ?? [];
     confirmInfo.value = {
-      studentInfo: {
-        studentName: response.studentName,
-        className: response.className,
-        studentNo: response.studentNumber,
-      },
+      studentInfo: [
+        {
+          studentName: response.studentName,
+          className: response.className,
+          studentNo: response.studentNumber,
+        },
+      ],
       consultInfo: {
         consultant: response.handlerName,
         consultType: '',

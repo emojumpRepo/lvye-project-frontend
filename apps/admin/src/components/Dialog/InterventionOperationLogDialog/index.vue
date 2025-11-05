@@ -37,7 +37,7 @@ const [InterventionOperationLogModal, interventionOperationLogModalApi] =
     destroyOnClose: true,
     confirmText: '关闭',
     showCancelButton: false,
-    class: '!w-[750px]',
+    class: '!w-[800px]',
     onOpenChange: async (open) => {
       if (open) {
         const data = await interventionOperationLogModalApi.getData();

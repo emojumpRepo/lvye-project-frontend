@@ -65,7 +65,7 @@ interface CoreProblemTagStat {
 
 const props = defineProps<{
   activeTimelineTab: string;
-  studentDetailDrawerApi: ExtendedDrawerApi;
+  studentDetailDrawerApi?: ExtendedDrawerApi;
   studentProfileId: number;
 }>();
 
@@ -238,11 +238,14 @@ function handleEvaluate() {
     return message.error('暂无学生信息，无法进行风险评估！');
 
   const confirmInfo = {
-    studentInfo: {
-      studentName: studentProfile.value?.name || '',
-      className: studentProfile.value?.className || '',
-      studentNo: studentProfile.value?.studentNo || '',
-    },
+    studentInfo: [
+      {
+        studentName: studentProfile.value?.name || '',
+        className: studentProfile.value?.className || '',
+        studentNo: studentProfile.value?.studentNo || '',
+        studentProfileId: studentProfile.value?.id || 0,
+      },
+    ],
     consultInfo: {
       consultant: studentProfile.value?.updater || '',
       consultType: '',
@@ -261,9 +264,11 @@ async function publishAssessment(params: InterventionAssessmentReqVO) {
       studentProfileId: studentProfile.value.id,
       ...params,
       content: params.consultRecord,
+      sourceType: 5,
     });
     if (response) {
       emit('refresh');
+      await loadStudentProfileTimeline(studentProfile.value.id);
       return true;
     } else {
       message.error('评估失败');
@@ -579,7 +584,7 @@ onMounted(async () => {
 
       <!-- 底部按钮 -->
       <div
-        class="flex items-center justify-end gap-2 bg-white pl-4 pt-4"
+        class="flex items-center justify-end gap-2 bg-white py-4 pl-4"
         style="border-top: 1px solid #f0f0f0"
       >
         <button

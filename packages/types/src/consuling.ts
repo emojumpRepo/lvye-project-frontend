@@ -4,6 +4,7 @@ export interface StudentInfo {
   className: string;
   studentName: string;
   studentNo: string;
+  studentProfileId?: number;
 }
 
 export interface ConsultInfo {
@@ -14,8 +15,8 @@ export interface ConsultInfo {
 
 /** 评估确认信息 */
 export interface AssessmentComfirmInfo {
-  studentInfo: StudentInfo;
-  consultInfo: ConsultInfo;
+  studentInfo: StudentInfo[];
+  consultInfo?: ConsultInfo;
 }
 
 /** 评估核心数据 */

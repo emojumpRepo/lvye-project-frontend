@@ -65,15 +65,20 @@ const [RelatedInterventionEventModal, relatedInterventionEventModalApi] =
               });
             });
 
-            eventTabs.value = eventList.value.map((item) => {
-              return {
-                key: item.sourceType,
-                title: getDictLabel(
-                  'crisis_event_report_source',
+            eventTabs.value = [
+              ...new Map(
+                eventList.value.map((item) => [
                   item.sourceType,
-                ),
-              };
-            });
+                  {
+                    key: item.sourceType,
+                    title: getDictLabel(
+                      'crisis_event_report_source',
+                      item.sourceType,
+                    ),
+                  },
+                ]),
+              ).values(),
+            ];
 
             if (eventTabs.value && eventTabs.value.length > 0) {
               activeTab.value = eventTabs.value[0]?.key;

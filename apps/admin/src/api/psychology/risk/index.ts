@@ -40,6 +40,7 @@ export interface AssessmentSaveReqVO {
   hasMedicalVisit?: boolean;
   medicalVisitRecord?: string;
   observationRecord?: string;
+  sourceType: number;
 }
 
 /** 上报危机事件 */
