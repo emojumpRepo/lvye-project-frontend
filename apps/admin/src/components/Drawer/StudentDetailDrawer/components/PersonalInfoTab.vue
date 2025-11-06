@@ -21,17 +21,17 @@ const emit = defineEmits<{
 // 学生家长档案
 const studentParentProfile = ref<StudentParentFormData>({
   fatherId: undefined,
-  fatherName: undefined,
-  fatherWork: undefined,
-  fatherPhone: undefined,
-  fatherRelation: undefined,
+  fatherName: '',
+  fatherWork: '',
+  fatherPhone: '',
+  fatherRelation: 1,
   motherId: undefined,
-  motherName: undefined,
-  motherWork: undefined,
-  motherPhone: undefined,
-  motherRelation: undefined,
-  parentMaritalStatus: undefined,
-  remark: undefined,
+  motherName: '',
+  motherWork: '',
+  motherPhone: '',
+  motherRelation: 2,
+  parentMaritalStatus: '',
+  remark: '',
 });
 
 /** 加载学生家长档案 */
@@ -60,7 +60,7 @@ async function loadStudentParentProfile(id: number | undefined) {
         fatherWork: fatherInfo?.work,
         fatherPhone: fatherInfo?.mobile,
         fatherRelation:
-          fatherInfo?.relation || props.studentInfo?.sex === 1 ? 1 : 2,
+          fatherInfo?.relation || props.studentInfo?.sex === 1 ? 1 : 3,
         motherId: motherInfo?.id,
         motherName: motherInfo?.name,
         motherWork: motherInfo?.work,
@@ -84,7 +84,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="scroll-area flex h-full flex-col gap-6 overflow-y-auto px-4">
+  <div class="scroll-area flex h-full flex-col gap-6 overflow-y-auto">
     <InfoSectionForm
       :student-info="props.studentInfo"
       title="学籍信息"

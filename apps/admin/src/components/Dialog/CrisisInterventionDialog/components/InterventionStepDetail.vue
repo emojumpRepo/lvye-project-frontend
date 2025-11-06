@@ -3,7 +3,6 @@ import type { FormInstance } from 'ant-design-vue';
 
 import type { InterventionPlanStep } from '@vben/types';
 
-// 导入 reactive
 import { ref, watch } from 'vue';
 
 import { cloneDeep } from '@vben/utils';
@@ -99,6 +98,7 @@ watch(
   () => props.step,
   async (newStep) => {
     isEditMode.value = !!newStep?.id;
+    activeKey.value = 'step';
     if (newStep) {
       await loadDrawerData(newStep);
     } else {
@@ -350,7 +350,15 @@ function handleSubmit() {
                     :max-number="5"
                     :accept="accept"
                     :max-size="10"
-                  />
+                    :dragger="false"
+                    :disabled="props.status === 2"
+                  >
+                    <template #upload-text-desc>
+                      <span class="text-xs text-[#969997]">
+                        （支持图片、文档、压缩包类型文件，最大10MB，最多上传5个文件）
+                      </span>
+                    </template>
+                  </FileUpload>
                 </AForm.Item>
                 <AForm.Item name="notes">
                   <LyLabel
@@ -367,7 +375,7 @@ function handleSubmit() {
             </div>
 
             <div
-              class="flex justify-end gap-3 pt-4"
+              class="flex justify-end gap-3 py-3"
               style="border-top: 1px solid #e5e5e5"
             >
               <LyButton type="success" size="small" @click="handleSubmit">

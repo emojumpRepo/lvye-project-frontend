@@ -3,6 +3,7 @@ import type { InterventionPlan } from '@vben/types';
 import dayjs from 'dayjs';
 import pdfMake from 'pdfmake/build/pdfmake';
 
+import { toChineseNumber } from '#/utils/calculateTool';
 import { getDictLabel } from '#/utils/dict';
 
 const fonts = {
@@ -54,9 +55,9 @@ function loadVfsFonts(): Promise<void> {
           reject(new Error(`字体初始化失败：${error.message}`));
         }
       });
-      script.onerror = () => {
+      script.addEventListener('error', () => {
         reject(new Error('字体文件加载失败：网络错误'));
-      };
+      });
 
       // 添加到head中开始加载
       document.head.append(script);
@@ -66,26 +67,6 @@ function loadVfsFonts(): Promise<void> {
   });
 
   return fontLoadingPromise;
-}
-
-/**
- * 将数字转换为中文序号（1 -> 一，2 -> 二，...）
- */
-function toChineseNumber(num: number): string {
-  const cnNums = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-  if (typeof num !== 'number' || num <= 0) return '';
-  if (num < 10) return cnNums[num] || '';
-  if (num === 10) return '十';
-  if (num > 10 && num < 20) {
-    const ones = num % 10;
-    return `十${ones === 0 ? '' : cnNums[ones] || ''}`;
-  }
-  if (num >= 20 && num < 100) {
-    const tens = Math.floor(num / 10);
-    const ones = num % 10;
-    return `${cnNums[tens] || ''}十${ones === 0 ? '' : cnNums[ones] || ''}`;
-  }
-  return String(num);
 }
 
 /**
@@ -223,7 +204,7 @@ export async function exportInterventionPlanToPDF(
 
               return [
                 {
-                  text: `（${chineseNumber}）、${step.title || '未命名步骤'}（${stepStatusText}）`,
+                  text: `步骤${chineseNumber}：${step.title || '未命名步骤'}（${stepStatusText}）`,
                   style: 'stepTitle',
                   margin: [0, index === 0 ? 0 : 15, 0, 8],
                 },
@@ -236,12 +217,15 @@ export async function exportInterventionPlanToPDF(
                         style: 'fieldValue',
                       },
                     ],
+                    { text: '', margin: [0, 15, 0, 0] },
                     [
                       { text: '附件列表：', style: 'fieldLabel' },
                       {
                         text:
                           attachmentNames.length > 0
-                            ? attachmentNames.join('、')
+                            ? attachmentNames
+                                .map((name, i) => `(${i + 1}) ${name}`)
+                                .join('\n')
                             : '暂无附件',
                         style: 'fieldValue',
                       },

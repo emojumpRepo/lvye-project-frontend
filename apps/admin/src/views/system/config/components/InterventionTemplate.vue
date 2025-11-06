@@ -71,6 +71,10 @@ function handleDeleteStep(step: Step) {
 
 /** 添加步骤 */
 function handleAddStep() {
+  if (templateConfig.value.steps.length >= 20) {
+    return message.info('最多只能添加20个步骤');
+  }
+
   const lastStep =
     templateConfig.value.steps[templateConfig.value.steps.length - 1]!;
   templateConfig.value.steps.push({

@@ -103,7 +103,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="scroll-area box-border h-full w-full overflow-y-auto px-4 pb-4">
+  <div class="scroll-area box-border h-full w-full overflow-y-auto pb-4">
     <template v-if="consultRecords.length > 0">
       <div class="grid grid-cols-2 gap-4">
         <template v-for="record in consultRecords" :key="record.name">

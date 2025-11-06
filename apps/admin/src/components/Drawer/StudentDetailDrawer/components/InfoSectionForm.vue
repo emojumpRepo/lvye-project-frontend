@@ -112,7 +112,7 @@ watch(
       dictLoaded.value.family = true;
     }
     if (newParentInfo) {
-      formatParentFormData(newParentInfo);
+      formatParentFormData(newParentInfo ?? {});
       InfoFormApi.setValues(parentFormInfo.value);
     }
   },
@@ -132,7 +132,6 @@ function setFormValues() {
 /** 开始编辑 */
 function handleEdit() {
   edit.value = true;
-  setFormValues();
   if (props.schemaType === 'personalInfo') {
     InfoFormApi.setValues({
       ...props.studentInfo,
@@ -142,6 +141,7 @@ function handleEdit() {
   if (props.schemaType === 'familyBackground') {
     InfoFormApi.setValues({ ...props.parentInfo });
   }
+  setFormValues();
 }
 
 /** 保存 */
@@ -150,16 +150,11 @@ async function handleSave() {
 
   const { valid } = await InfoFormApi.validate();
   if (!valid) {
-    // 验证未通过，不切换编辑状态
-    // handleCancel(); // 不应调用 handleCancel，它会重置数据
-    // InfoFormApi.resetValidate(); // validate 内部已处理
+    handleCancel();
     message.error('请检查输入内容');
     emit('updateLoading', false);
     return;
   }
-
-  edit.value = false;
-  setFormValues();
 
   // 获取表单数据
   const values = await InfoFormApi.getValues();
@@ -196,6 +191,8 @@ async function handleSave() {
   else {
     await handleSaveParentProfile(values);
   }
+  edit.value = false;
+  setFormValues();
   emit('updateLoading', false);
 }
 
@@ -276,7 +273,8 @@ function handleCancel() {
     InfoFormApi.setValues(studentFormInfo.value);
   }
   if (props.schemaType === 'familyBackground') {
-    InfoFormApi.setValues(parentFormInfo.value);
+    const formatParentInfo = formatParentFormData(props.parentInfo ?? {});
+    InfoFormApi.setValues(formatParentInfo);
   }
 }
 
@@ -327,9 +325,10 @@ function formatFormData(
 function formatParentFormData(info: StudentParentFormData) {
   if (!info) return {};
 
-  const parentMaritalStatus = configOptions.value.parentMaritalStatusMap.find(
-    (item) => item.value === info.parentMaritalStatus,
-  )?.label;
+  const parentMaritalStatus =
+    configOptions.value.parentMaritalStatusMap.find(
+      (item) => item.value === info.parentMaritalStatus,
+    )?.label || '';
 
   parentFormInfo.value = {
     ...info,

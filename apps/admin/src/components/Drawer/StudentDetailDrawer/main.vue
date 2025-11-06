@@ -417,6 +417,11 @@ async function loadStudentProfileTimeline(id: number) {
   }
 }
 
+/** 切换干预Tab */
+function toggleInterventionTab(key: number) {
+  activeInterventionTabKey.value = key;
+}
+
 onMounted(async () => {
   studentSexMap.value = await getDictOptions('system_user_sex');
   if (props.studentProfileId) {
@@ -527,7 +532,7 @@ onMounted(async () => {
               </Tabs.TabPane>
               <Tabs.TabPane tab="风险评估&危机干预" key="intervention">
                 <div class="flex h-full flex-col overflow-hidden">
-                  <div class="mx-4 mb-4 flex items-center gap-2">
+                  <div class="mb-4 flex items-center gap-2">
                     <span
                       v-for="tab in interventionTabs"
                       :key="tab.key"
@@ -537,7 +542,7 @@ onMounted(async () => {
                           ? 'bg-[#04DC70] text-white'
                           : 'text-[#979899]'
                       "
-                      @click="activeInterventionTabKey = tab.key"
+                      @click="toggleInterventionTab(tab.key)"
                     >
                       {{ tab.title }}
                     </span>
@@ -584,7 +589,7 @@ onMounted(async () => {
 
       <!-- 底部按钮 -->
       <div
-        class="flex items-center justify-end gap-2 bg-white py-4 pl-4"
+        class="flex items-center justify-end gap-2 bg-white py-3 pl-4"
         style="border-top: 1px solid #f0f0f0"
       >
         <button

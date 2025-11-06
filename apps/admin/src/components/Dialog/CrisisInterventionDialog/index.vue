@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import type { StudentInterventionItem } from '@vben/types';
 
-import { ref } from 'vue';
+import { provide, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+
+import { Empty as AEmpty } from 'ant-design-vue';
 
 import InterventionStepDetail from './components/InterventionStepDetail.vue';
 import ViewInterventionPlan from './components/ViewInterventionPlan.vue';
@@ -36,9 +38,26 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
       const data = await crisisInterventionModalApi.getData();
       studentInfo.value = data.studentInfo;
       interventionPlanId.value = data.interventionPlanId;
+      if (data.fullScreen) {
+        crisisInterventionModalApi.setState({
+          appendToMain: false,
+        });
+      }
     }
   },
 });
+
+/** 查看干预计划 */
+function viewInterventionPlan(
+  student: StudentInterventionItem,
+  interventionId: number,
+) {
+  studentInfo.value = student;
+  interventionPlanId.value = interventionId;
+}
+
+// 注入函数到后代组件
+provide('viewEvent', viewInterventionPlan);
 </script>
 
 <template>
@@ -69,7 +88,11 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
           />
         </template>
 
-        <template v-else> </template>
+        <template v-else>
+          <div class="flex-center h-full">
+            <AEmpty description="暂无干预计划" />
+          </div>
+        </template>
       </div>
     </div>
   </CrisisInterventionModal>

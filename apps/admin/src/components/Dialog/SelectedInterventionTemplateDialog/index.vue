@@ -42,8 +42,7 @@ async function loadInterventionTemplateList() {
 
 /** 新建模板 */
 function handleCreateTemplate() {
-  const baseUrl = import.meta.env.VITE_BASE;
-  window.open(`${baseUrl}/system/config`, '_blank');
+  window.open(`${window.location.origin}/system/config`, '_blank');
 }
 
 /** 选择模板 */

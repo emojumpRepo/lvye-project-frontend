@@ -21,6 +21,8 @@ export interface FileUploadProps {
   // 上传的目录
   directory?: string;
   disabled?: boolean;
+  // 是否使用拖拽上传模式
+  dragger?: boolean;
   helpText?: string;
   listType?: UploadListType;
   // 最大数量的文件，Infinity不限制

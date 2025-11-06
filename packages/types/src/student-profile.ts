@@ -48,6 +48,6 @@ export interface StudentParentFormData {
   motherWork?: string;
   motherPhone?: string;
   motherRelation?: number;
-  parentMaritalStatus?: number;
+  parentMaritalStatus?: number | string | undefined;
   remark?: string;
 }

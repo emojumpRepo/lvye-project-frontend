@@ -497,12 +497,12 @@ onMounted(() => {
           <FileUpload
             v-model:value="fileList"
             :accept="accept"
-            :max-size="5"
+            :max-size="10"
             :max-number="3"
             @scroll="() => scrollToBottom()"
           >
             <template #upload-text-desc>
-              支持图片、文档、压缩包类型文件，最大5MB，最多3个文件
+              支持图片、文档、压缩包类型文件，最大10MB，最多上传3个文件
             </template>
           </FileUpload>
         </div>

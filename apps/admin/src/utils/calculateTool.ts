@@ -114,3 +114,25 @@ export function generateYearOptions(suffix: string) {
 export function getCurrentYear() {
   return new Date().getFullYear();
 }
+
+/**
+ * 将数字转换为中文序号（1 -> 一，2 -> 二，...）
+ * @param num 数字
+ * @returns 中文序号
+ */
+export function toChineseNumber(num: number): string {
+  const cnNums = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  if (typeof num !== 'number' || num <= 0) return '';
+  if (num < 10) return cnNums[num] || '';
+  if (num === 10) return '十';
+  if (num > 10 && num < 20) {
+    const ones = num % 10;
+    return `十${ones === 0 ? '' : cnNums[ones] || ''}`;
+  }
+  if (num >= 20 && num < 100) {
+    const tens = Math.floor(num / 10);
+    const ones = num % 10;
+    return `${cnNums[tens] || ''}十${ones === 0 ? '' : cnNums[ones] || ''}`;
+  }
+  return String(num);
+}

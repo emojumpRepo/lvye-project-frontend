@@ -6,13 +6,15 @@ import type { FileUploadProps } from './typing';
 
 import type { AxiosProgressEvent } from '#/api/infra/file';
 
-import { ref, toRefs, watch } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 
+import { IconifyIcon } from '@vben/icons';
 import { $t } from '@vben/locales';
 import { isFunction, isObject, isString } from '@vben/utils';
 
 import { message, Modal, Upload } from 'ant-design-vue';
 
+import LyButton from '#/components/LyButton/index.vue';
 import uploadIcon from '#/static/icons/consulting/upload.svg';
 
 import { checkFileType } from './helper';
@@ -25,6 +27,7 @@ const props = withDefaults(defineProps<FileUploadProps>(), {
   value: () => [], // 文件列表
   directory: 'admin', // 上传目录
   disabled: false, // 是否禁用
+  dragger: true, // 是否使用拖拽模式
   helpText: '', // 帮助文本
   maxSize: 10, // 最大大小
   maxNumber: 1, // 最大数量
@@ -43,6 +46,11 @@ const emit = defineEmits([
 ]);
 const { accept, helpText, maxNumber, maxSize } = toRefs(props);
 const isInnerOperate = ref<boolean>(false);
+
+// 动态计算使用的上传组件
+const UploadComponent = computed(() => {
+  return props.dragger ? Upload.Dragger : Upload;
+});
 const { getStringAccept } = useUploadType({
   acceptRef: accept,
   helpTextRef: helpText,
@@ -212,13 +220,60 @@ function getBase64(file: File) {
   });
 }
 
+/** 常见的图片文件后缀 */
+const IMAGE_EXTENSIONS = new Set([
+  'bmp',
+  'gif',
+  'ico',
+  'jpeg',
+  'jpg',
+  'png',
+  'svg',
+  'webp',
+]);
+
+/** 触发文件下载的辅助函数 */
+const triggerDownload = (url: string, filename: string) => {
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.append(link);
+  link.click();
+  link.remove();
+};
+
 /** 预览文件列表 */
 const handlePreview = async (file: any) => {
+  // 1. 获取文件名并提取后缀
+  const fileName = file.name || file.response?.name || '';
+  const fileUrl = file.response?.url || file.url; // 获取文件的实际URL
+
+  // 1. 获取文件名并提取后缀
+  const lastDotIndex = fileName.lastIndexOf('.');
+  const fileExtension =
+    lastDotIndex === -1
+      ? ''
+      : fileName.slice(Math.max(0, lastDotIndex + 1)).toLowerCase();
+
+  // 2. 判断文件是否是图片类型
+  if (!IMAGE_EXTENSIONS.has(fileExtension)) {
+    if (fileUrl) {
+      triggerDownload(fileUrl, fileName);
+    } else {
+      console.warn(`文件 ${fileName} 无法下载：缺少文件URL。`);
+    }
+
+    return;
+  }
+
   if (!file.url && !file.preview) {
     file.preview = (await getBase64(file.originFileObj)) as string;
   }
+
   previewImage.value = file.response?.url || file.preview;
   previewVisible.value = true;
+
+  // 4. 更新预览标题
   previewTitle.value =
     file.name ||
     file.response?.url.slice(
@@ -234,7 +289,8 @@ function handleCancel() {
 
 <template>
   <div>
-    <Upload.Dragger
+    <component
+      :is="UploadComponent"
       v-bind="$attrs"
       v-model:file-list="fileList"
       :accept="getStringAccept"
@@ -244,29 +300,53 @@ function handleCancel() {
       :max-count="maxNumber"
       :multiple="multiple"
       list-type="picture"
+      :show-upload-list="{ showDownloadIcon: true }"
       :progress="{ showInfo: true }"
       @remove="handleRemove"
       @preview="handlePreview"
     >
-      <div class="flex flex-col items-center justify-center">
-        <img :src="uploadIcon" alt="上传" class="mb-1 h-[54px] w-[54px]" />
-        <div class="mb-2 text-sm font-medium">
-          <slot name="upload-text">
-            <div>
-              <span class="font-bold">将文件拖拽到此处或，</span>
-              <span class="text-[#04DC70]">点击上传</span>
+      <template v-if="fileList && fileList.length < maxNumber && !disabled">
+        <div v-if="dragger" class="flex flex-col items-center justify-center">
+          <img :src="uploadIcon" alt="上传" class="mb-1 h-[54px] w-[54px]" />
+          <div class="mb-2 text-sm font-medium">
+            <slot name="upload-text">
+              <div>
+                <span class="font-bold">将文件拖拽到此处或，</span>
+                <span class="text-[#04DC70]">点击上传</span>
+              </div>
+            </slot>
+          </div>
+          <div class="mb-2 text-xs text-[#969997]">
+            <slot name="upload-text-desc">
+              支持{{
+                accept.join('，').replaceAll('.', '').toLocaleUpperCase()
+              }}格式, 最大{{ maxSize }}MB
+            </slot>
+          </div>
+        </div>
+
+        <div v-else class="mb-2 mt-3 flex items-center gap-1">
+          <LyButton type="default" size="small">
+            <div class="flex items-center gap-2">
+              <IconifyIcon icon="icons8:upload-2" class="size-5" />
+              <span>上传文件</span>
             </div>
-          </slot>
-        </div>
-        <div class="mb-2 text-xs text-[#969997]">
+          </LyButton>
+
           <slot name="upload-text-desc">
-            支持{{
-              accept.join('，').replaceAll('.', '').toLocaleUpperCase()
-            }}格式, 最大{{ maxSize }}MB
+            <span class="text-xs text-[#969997]">
+              （支持{{
+                accept.join('，').replaceAll('.', '').toLocaleUpperCase()
+              }}格式, 最大{{ maxSize }}MB）
+            </span>
           </slot>
         </div>
-      </div>
-    </Upload.Dragger>
+      </template>
+
+      <template #downloadIcon>
+        <IconifyIcon icon="mdi:download" color="#969997" />
+      </template>
+    </component>
     <Modal
       :open="previewVisible"
       :title="previewTitle"

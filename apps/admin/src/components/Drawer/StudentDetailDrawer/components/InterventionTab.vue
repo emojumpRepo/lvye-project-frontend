@@ -7,7 +7,8 @@ import type {
 
 import type { PsychologyStudentProfileApi } from '#/api/psychology/student-profile';
 
-import { ref, watch } from 'vue';
+import { inject, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 import { useVbenModal } from '@vben/common-ui';
 
@@ -30,6 +31,10 @@ const props = defineProps<{
   studentProfileId?: number;
 }>();
 
+const viewEvent = inject<
+  ((student: any, interventionId: number) => void) | undefined
+>('viewEvent', undefined);
+
 /** 风险评估弹窗 */
 const [AssessmentReportModal, assessmentReportModalApi] = useVbenModal({
   connectedComponent: AssessmentReportDialog,
@@ -40,6 +45,7 @@ const [CrisisInterventionModal, crisisInterventionModalApi] = useVbenModal({
   connectedComponent: CrisisInterventionDialog,
 });
 
+const route = useRoute();
 const records = ref<RecordInfo[]>([]);
 const evaluationRecords = ref<AssessmentRecord[]>([]);
 const interventionPlanList = ref<InterventionPlan[]>([]);
@@ -147,7 +153,7 @@ watch(
   { immediate: true },
 );
 
-/** 查看报告 */
+/** 查看报告/详情 */
 function viewEvaluationReport(recordId: number) {
   if (!recordId) return;
 
@@ -165,27 +171,38 @@ function viewEvaluationReport(recordId: number) {
       (item) => item.id === recordId,
     );
     if (record) {
-      crisisInterventionModalApi
-        .setData({
-          studentInfo: {
+      if (route.path === '/crisis') {
+        viewEvent?.(
+          {
             studentProfileId: props.studentProfileId,
             studentName: props.studentProfile?.name,
             className: props.studentProfile?.className,
           },
-          interventionPlanId: record.id,
-          fullScreen: true,
-        })
-        .open();
+          record.id,
+        );
+      } else {
+        crisisInterventionModalApi
+          .setData({
+            studentInfo: {
+              studentProfileId: props.studentProfileId,
+              studentName: props.studentProfile?.name,
+              className: props.studentProfile?.className,
+            },
+            interventionPlanId: record.id,
+            fullScreen: true,
+          })
+          .open();
+      }
     }
   }
 }
 </script>
 
 <template>
-  <div class="scroll-area box-border h-full w-full overflow-y-auto px-4 pb-4">
+  <div class="scroll-area box-border h-full w-full overflow-y-auto pb-4">
     <template v-if="records.length > 0">
       <div class="grid grid-cols-2 gap-4">
-        <template v-for="record in records" :key="record.title">
+        <template v-for="record in records" :key="record.id">
           <RecordCard
             :card-info="record"
             button-text="查看报告"

@@ -9,7 +9,7 @@ import type {
 import type { InterventionPlanStepSortUpdateReqVO } from '#/api/psychology';
 import type { ButtonType } from '#/components/LyButton/index.vue';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { confirm, useVbenModal } from '@vben/common-ui';
 import { IconifyIcon } from '@vben/icons';
@@ -33,6 +33,7 @@ import InterventionOperationLogDialog from '#/components/Dialog/InterventionOper
 import RelatedInterventionEventDialog from '#/components/Dialog/RelatedInterventionEventDialog/index.vue';
 import LyButton from '#/components/LyButton/index.vue';
 import LyLabel from '#/components/LyLabel/index.vue';
+import { toChineseNumber } from '#/utils/calculateTool';
 import { getDictObj } from '#/utils/dict';
 
 import { useExportInterventionPlan } from '../composables/useExportInterventionPlan';
@@ -104,6 +105,7 @@ const actionButtons = computed<ActionButton[]>(() => [
     value: 'getReportTemplate',
     type: 'default',
     hide: false,
+    onClick: () => message.warning('暂无报告模板'),
   },
   {
     label: '导出ZIP',
@@ -209,6 +211,16 @@ async function loadInterventionPlan() {
   }
 }
 
+watch(
+  () => props.interventionPlanId,
+  async (newInterventionPlanId) => {
+    if (newInterventionPlanId) {
+      await loadInterventionPlan();
+    }
+  },
+  { immediate: true },
+);
+
 // --------------------------------------------------------------------------------
 // 事件处理 (Event Handlers)
 // --------------------------------------------------------------------------------
@@ -231,7 +243,7 @@ function handleOpenRelatedInterventionEventDialog() {
 }
 
 /** 移除标签 */
-async function handleRemoveTag(relativeEventId: number) {
+async function handleRemoveEvent(relativeEventId: number) {
   if (!interventionPlan.value?.id) return;
   if (!relativeEventId) return message.error('事件ID不存在');
 
@@ -254,13 +266,13 @@ async function handleRemoveTag(relativeEventId: number) {
             (id) => id !== relativeEventId,
           );
       }
-      message.success('移除标签成功');
+      message.success('移除事件成功');
     } else {
-      message.error('移除标签失败');
+      message.error('移除事件失败');
     }
   } catch (error) {
-    console.error('移除标签失败:', error);
-    message.error('移除标签失败');
+    console.error('移除事件失败:', error);
+    message.error('移除事件失败');
   }
 }
 
@@ -303,6 +315,12 @@ async function handleSaveTitle() {
 
 /** 打开设置步骤抽屉 (新增或编辑) */
 function handleOpenSetInterventionStepDrawer(key?: number) {
+  if (
+    interventionPlan.value?.steps?.length &&
+    interventionPlan.value?.steps?.length > 20
+  ) {
+    return message.info('最多只能添加20个步骤');
+  }
   currentAction.value = key ? 'edit' : 'add';
   if (!props.studentInfo?.studentProfileId || !interventionPlan.value?.id) {
     return;
@@ -393,52 +411,6 @@ function handleExportZip() {
   );
 }
 
-/**
- * 将数字 (0-99) 转换为中文文字
- * @param {number | string} sort - 排序号
- * @returns {string}
- */
-function convertToSortText(sort: number) {
-  const num = Number.parseInt(String(sort), 10);
-
-  // 处理无效输入
-  if (Number.isNaN(num)) {
-    return String(sort);
-  }
-
-  // 定义基础字符
-  const chars = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-
-  // 1. 处理 0-9
-  if (num >= 0 && num < 10) {
-    return chars[num];
-  }
-
-  // 2. 处理 10-19
-  if (num >= 10 && num < 20) {
-    if (num === 10) {
-      return '十';
-    }
-    return `十${chars[num % 10]}`;
-  }
-
-  // 3. 处理 20-99
-  if (num >= 20 && num <= 99) {
-    const tens = Math.floor(num / 10); // 十位数
-    const ones = num % 10; // 个位数
-
-    return ones === 0 ? `${chars[tens]}十` : `${chars[tens]}十${chars[ones]}`;
-  }
-
-  // 4. 处理 100 (可选)
-  if (num === 100) {
-    return '一百';
-  }
-
-  // 超出范围 (0-100) 的数字，返回原数字
-  return String(num);
-}
-
 /** 结束干预计划 */
 async function handleEndInterventionPlan() {
   /** 检查所有步骤是否都已经完成 */
@@ -478,12 +450,6 @@ async function handleEndInterventionPlan() {
       // 用户点击取消
     });
 }
-
-onMounted(async () => {
-  if (props.studentInfo && props.interventionPlanId) {
-    await loadInterventionPlan();
-  }
-});
 
 defineExpose({
   interventionPlan,
@@ -596,7 +562,7 @@ defineExpose({
             <div
               v-if="interventionPlan?.status !== 2"
               class="cursor-pointer"
-              @click="handleRemoveTag(event.id)"
+              @click="handleRemoveEvent(event.id)"
             >
               <IconifyIcon
                 icon="material-symbols:close-rounded"
@@ -662,7 +628,7 @@ defineExpose({
                         {{ statusLabel || '--' }}
                       </span>
                       <div class="flex font-bold">
-                        <span> 步骤{{ convertToSortText(sort) }}： </span>
+                        <span> 步骤{{ toChineseNumber(sort) }}： </span>
                         <span>
                           {{ name }}
                         </span>

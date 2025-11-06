@@ -93,8 +93,6 @@ const [RelatedInterventionEventModal, relatedInterventionEventModalApi] =
     },
     onConfirm: async () => {
       if (!interventionPlanId.value) return message.error('干预计划ID不存在');
-      if (selectedEvents.value.length === 0)
-        return message.error('请至少关联一个事件');
 
       try {
         relatedInterventionEventModalApi.lock();
