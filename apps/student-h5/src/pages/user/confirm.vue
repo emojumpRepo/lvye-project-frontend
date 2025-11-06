@@ -67,7 +67,7 @@ function handleConfirm() {
 
 <template>
   <view
-    class="mt-210rpx h-screen flex flex-col px-30rpx space-y-4"
+    class="h-screen flex flex-col px-30rpx pt-210rpx space-y-4"
   >
     <view class="title-text text-xl font-semibold">
       请确认您的账户信息

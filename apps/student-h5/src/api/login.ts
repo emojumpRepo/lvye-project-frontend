@@ -14,6 +14,7 @@ enum SmsSceneEnum {
 export interface ISmsLoginForm {
   mobile: string
   code: string
+  isParent: number
 }
 
 /**
@@ -29,7 +30,10 @@ export function sendSmsCode(mobile: string) {
  * @param loginForm 登录表单
  */
 export function smsLogin(loginForm: ISmsLoginForm) {
-  return http.post<IWebAuthLoginRes>('/psychology/auth/sms-login', loginForm)
+  return http.post<IWebAuthLoginRes>('/psychology/auth/sms-login', {
+    ...loginForm,
+    isParent: loginForm.isParent || 0,
+  })
 }
 
 /**

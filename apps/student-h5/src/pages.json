@@ -61,6 +61,34 @@
             "navigationStyle": "custom",
             "navigationBarTitleText": "心理测评"
           }
+        },
+        {
+          "path": "assessment/questionnaire",
+          "type": "page",
+          "layout": "empty",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "问卷答题",
+            "disableScroll": true
+          }
+        },
+        {
+          "path": "assessment/result",
+          "type": "page",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "测评结果"
+          }
+        },
+        {
+          "path": "assessment/scene",
+          "type": "page",
+          "layout": "empty",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "测评场景",
+            "disableScroll": true
+          }
         }
       ]
     }

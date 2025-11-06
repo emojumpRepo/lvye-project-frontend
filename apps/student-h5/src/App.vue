@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
 import { navigateToInterceptor } from '@/router/interceptor'
-import { useAuthStore, useTenantStore, useUserStore } from '@/store'
+import { useAuthStore, useTenantStore, useThemeStore, useUserStore } from '@/store'
 
 const tenantStore = useTenantStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 
 onLaunch((options) => {
   console.log('App Launch', options)
@@ -51,7 +52,6 @@ onHide(() => {
 </script>
 
 <style lang="scss">
-swiper,
 scroll-view {
   flex: 1;
   height: 100%;

@@ -14,10 +14,11 @@ export const useUserStore = defineStore(
     const isInfoConfirmed = ref(false)
 
     // 设置用户信息
-    const setUserInfo = (val: UserInfo, tenantName?: string) => {
+    const setUserInfo = (val: UserInfo, tenantName?: string, isParent?: number) => {
       userInfo.value = {
         ...val,
         tenantName: tenantName || '',
+        isParent: isParent || 0,
       }
     }
 
@@ -40,7 +41,7 @@ export const useUserStore = defineStore(
     const fetchUserInfo = async () => {
       const res = await getAuthPermissionInfo()
       console.log('获取用户信息', res)
-      setUserInfo(res.user, res.tenantName)
+      setUserInfo(res.user, res.tenantName, res.isParent)
       return res
     }
 

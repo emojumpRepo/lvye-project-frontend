@@ -4,7 +4,9 @@ import { isMp } from '@uni-helper/uni-env'
  * 路由拦截，通常也是登录拦截
  * 黑、白名单的配置，请看 config.ts 文件， EXCLUDE_LOGIN_PATH_LIST
  */
+import { getSimpleDictDataList } from '@/api/dict'
 import { useAuthStore } from '@/store/auth'
+import { useDictStore } from '@/store/dict'
 import { useUserStore } from '@/store/user'
 import { isPageTabbar, tabbarStore } from '@/tabbar/store'
 import { getAllPages, getLastPage, HOME_PAGE, parseUrlToObj } from '@/utils/index'
@@ -65,6 +67,7 @@ export const navigateToInterceptor = {
 
     const tokenStore = useAuthStore()
     const userStore = useUserStore()
+    const dictStore = useDictStore()
 
     // 调试日志：查看登录状态
     console.log('=== 路由拦截器调试 ===')
@@ -77,6 +80,9 @@ export const navigateToInterceptor = {
 
     // 不管黑白名单，登录了就直接去吧（但是当前不能是登录页）
     if (tokenStore.hasLogin) {
+      // 加载字典数据（不阻塞路由跳转）
+      dictStore.setDictCacheByApi(getSimpleDictDataList)
+
       // 如果用户已登录但未确认信息，且不是前往确认页面或登录页面，则跳转到确认页面
       if (!userStore.isInfoConfirmed && path !== CONFIRM_PAGE && path !== LOGIN_PAGE) {
         console.log('用户未确认信息，跳转到确认页面')

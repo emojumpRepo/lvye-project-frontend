@@ -8,7 +8,10 @@ type _LocationUrl =
   "/pages/auth/login" |
   "/pages/auth/no-access" |
   "/pages/user/confirm" |
-  "/pages-sub/assessment/list";
+  "/pages-sub/assessment/list" |
+  "/pages-sub/assessment/questionnaire" |
+  "/pages-sub/assessment/result" |
+  "/pages-sub/assessment/scene";
 
 interface NavigateToOptions {
   url: _LocationUrl;

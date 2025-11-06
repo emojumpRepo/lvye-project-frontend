@@ -10,9 +10,11 @@ export const useThemeStore = defineStore(
 
     /** 主题变量 */
     const themeVars = ref<ConfigProviderThemeVars>({
-      // colorTheme: 'red',
-      // buttonPrimaryBgColor: '#07c160',
-      // buttonPrimaryColor: '#07c160',
+      // 配置主题色为项目绿色主题
+      colorTheme: '#10B981', // 项目的主题绿色
+      // 可以根据需要添加更多主题变量
+      // buttonPrimaryBgColor: '#10B981',
+      // buttonPrimaryColor: '#ffffff',
     })
 
     /** 设置主题变量 */

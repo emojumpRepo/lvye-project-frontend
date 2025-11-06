@@ -40,19 +40,24 @@ export interface AssessmentScenarioSlotVO extends AssessmentScenarioSlot {
 // 测评场景 扩展配置对象
 export interface ScenarioMetadata {
   sceneImageUrl: string;
+  sceneImageUrl_h5: string;
+}
+
+export interface Position {
+  bottom?: number | string;
+  left?: number | string;
+  right?: number | string;
+  top?: number | string;
 }
 
 // 测评场景 插槽 扩展配置对象
 export interface SlotMetadata {
   icon: string;
-  position: {
-    bottom?: number | string;
-    left?: number | string;
-    right?: number | string;
-    top?: number | string;
-  };
+  position: Position;
+  position_h5: Position;
   introConfig: {
     backgroundImageUrl: string;
+    backgroundImageUrl_h5: string;
     characterConfig: {
       description: string;
       imageUrl: string;

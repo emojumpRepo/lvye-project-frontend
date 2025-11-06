@@ -7,8 +7,13 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    ConfirmDialog: typeof import('./../components/Dialog/ConfirmDialog/index.vue')['default']
+    Divider: typeof import('./../components/Divider/index.vue')['default']
+    GuideAnimation: typeof import('./../components/GuideAnimation/index.vue')['default']
     LogoutDialog: typeof import('./../components/Dialog/LogoutDialog/index.vue')['default']
     LyButton: typeof import('./../components/LyButton/index.vue')['default']
+    LyLoading: typeof import('./../components/LyLoading/index.vue')['default']
+    LyTag: typeof import('./../components/LyTag/index.vue')['default']
     Navbar: typeof import('./../components/Navbar/index.vue')['default']
     WdConfigProvider: typeof import('wot-design-uni/components/wd-config-provider/wd-config-provider.vue')['default']
     WdIcon: typeof import('wot-design-uni/components/wd-icon/wd-icon.vue')['default']

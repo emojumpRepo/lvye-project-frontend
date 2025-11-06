@@ -44,8 +44,14 @@ export function http<T>(options: CustomRequestOptions) {
 
           /* -------- 无感刷新 token ----------- */
           // token 失效的，且有刷新 token 的，才放到请求队列里
-          taskQueue.push(() => {
-            resolve(http<T>(options))
+          taskQueue.push(async () => {
+            try {
+              const result = await http<T>(options)
+              resolve(result)
+            }
+            catch (err) {
+              reject(err)
+            }
           })
 
           // 如果有 refreshToken 且未在刷新中，发起刷新 token 请求
