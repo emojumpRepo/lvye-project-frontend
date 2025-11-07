@@ -150,6 +150,7 @@ const guideStage = computed<'intro' | 'tips'>(() => {
 
 // 更新浏览器 URL（不刷新页面）
 function updateBrowserUrl() {
+  // #ifdef H5
   const params = new URLSearchParams()
   if (questionnaireId.value)
     params.set('questionnaireId', questionnaireId.value)
@@ -171,15 +172,18 @@ function updateBrowserUrl() {
   // 使用 replaceState 更新 URL，不会触发页面重新加载
   window.history.replaceState(null, '', newUrl)
   console.log('URL 已更新:', window.location.href)
+  // #endif
 }
 
 // 页面刷新/离开前拦截
 function handleBeforeUnload(e: BeforeUnloadEvent) {
+  // #ifdef H5
   // 如果问卷未完成，拦截离开
   if (!isIframeCompleted.value) {
     e.preventDefault()
     return '测评尚未完成，确定要离开吗？'
   }
+  // #endif
 }
 
 // 返回
@@ -380,6 +384,7 @@ function handleComplete() {
 
 // 接收 iframe 的 postMessage 消息
 function handleMessage(e: MessageEvent) {
+  // #ifdef H5
   // 验证消息来源
   const surveyBaseUrl = import.meta.env.VITE_SURVEY_URL || ''
   if (surveyBaseUrl) {
@@ -421,6 +426,7 @@ function handleMessage(e: MessageEvent) {
     default:
       break
   }
+  // #endif
 }
 
 // 是否有剩余问卷
@@ -447,18 +453,22 @@ onLoad(async (options) => {
 
   await initializePage()
 
+  // #ifdef H5
   // 监听 iframe 的 postMessage 消息
   window.addEventListener('message', handleMessage)
 
   // 监听页面刷新/离开事件
   window.addEventListener('beforeunload', handleBeforeUnload)
+  // #endif
 })
 
 onUnload(() => {
+  // #ifdef H5
   // 移除消息监听器
   window.removeEventListener('message', handleMessage)
   // 移除页面刷新/离开监听器
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  // #endif
   // 清理已处理的消息ID集合
   processedMessageIds.clear()
 })

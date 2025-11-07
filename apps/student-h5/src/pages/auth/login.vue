@@ -153,6 +153,7 @@ async function handleLogin() {
     const tokenRes = await authStore.login({
       mobile: formData.phone,
       code: formData.code,
+      isParent: 0,
     })
 
     console.log('登录成功，token已保存:', tokenRes)
@@ -219,8 +220,8 @@ onUnmounted(() => {
 <template>
   <view class="h-screen flex flex-col items-center px-30rpx space-y-4">
     <!-- Logo -->
-    <view class="mt-30 w-full flex flex-col items-center">
-      <view class="mb-3 h-64rpx w-full">
+    <view class="mt-50 w-full flex flex-col items-center">
+      <view class="mb-3 h-68rpx w-full">
         <image :src="getBucketFileUrl('student_h5/logo/logo_long_black.png')" class="h-full w-full" mode="aspectFit" />
       </view>
       <text class="desc-text text-sm font-medium">探索内心，开启成长之旅</text>
