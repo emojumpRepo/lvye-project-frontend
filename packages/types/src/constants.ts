@@ -21,3 +21,10 @@ export const riskLevelOptions = [
   { label: '中度风险', value: RiskLevelEnum.MEDIUM },
   { label: '重度风险', value: RiskLevelEnum.SEVERE },
 ];
+
+/** 特殊等级 */
+export const specialLevel = [
+  '存在抑郁核心症状',
+  '存在自伤意念',
+  '抑郁核心症状相关选项得分异常',
+];

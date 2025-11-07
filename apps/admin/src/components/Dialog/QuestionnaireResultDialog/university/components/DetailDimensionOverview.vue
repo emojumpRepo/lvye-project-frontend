@@ -7,7 +7,7 @@ import type { MtuiUniversityResultRespVO } from '#/api/psychology/assessment/ind
 import { computed, ref, watch } from 'vue';
 
 import { IconifyIcon } from '@vben/icons';
-import { RiskLevelEnum } from '@vben/types';
+import { RiskLevelEnum, specialLevel } from '@vben/types';
 
 import { Popover, Tabs } from 'ant-design-vue';
 
@@ -207,6 +207,9 @@ const columns = computed<VxeGridPropTypes.Columns>(() => [
     minWidth: 300,
     align: 'left',
     resizable: false,
+    slots: {
+      default: 'teacherComment',
+    },
   },
 ]);
 
@@ -271,6 +274,22 @@ watch(activeKey, async () => {
   await new Promise((resolve) => setTimeout(resolve, 100));
   gridApi.grid?.recalculate(true);
 });
+
+function getResultColor(row: TableRow) {
+  if (specialLevel.includes(row.level.split('，')[1])) {
+    return '#ff0831';
+  }
+  if (
+    row.dimensionCode.includes('NSSI_reason') ||
+    row.riskLevel < RiskLevelEnum.MEDIUM
+  ) {
+    return 'black';
+  }
+  return getColorConfig({
+    dictValue: row.riskLevel,
+    target: 'color',
+  }) as string;
+}
 </script>
 
 <template>
@@ -334,18 +353,20 @@ watch(activeKey, async () => {
             v-if="!row.isCategory"
             class="risk-level-tag"
             :style="{
-              color:
-                row.dimensionCode.includes('NSSI_reason') ||
-                row.riskLevel === RiskLevelEnum.NONE
-                  ? 'black'
-                  : (getColorConfig({
-                      dictValue: row.riskLevel,
-                      target: 'color',
-                    }) as string),
+              color: getResultColor(row),
             }"
           >
-            {{ row.level }}
+            {{
+              row.dimensionCode.includes('NSSI_reason')
+                ? `${row.teacherComment}有${row.level}`
+                : row.level
+            }}
           </span>
+        </template>
+
+        <template #teacherComment="{ row }">
+          <span v-if="row.dimensionCode.includes('NSSI_reason')"> -- </span>
+          <span v-else>{{ row.teacherComment }}</span>
         </template>
 
         <!-- 测评得分列：自定义样式 -->
