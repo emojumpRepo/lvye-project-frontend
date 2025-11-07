@@ -4,6 +4,8 @@ import type { MtuiUniversityQuestionnaireResult } from '#/api/psychology/assessm
 
 import { computed } from 'vue';
 
+import { specialLevel } from '@vben/types';
+
 interface DimensionResult {
   dimensionCode: string;
   dimensionName: string;
@@ -173,8 +175,11 @@ export function useDimensionFormatter(
         // 排除"极端行为风险"维度
         if (d.dimensionName.includes('极端行为风险')) return;
 
-        // 只筛选 riskLevel >= 3 的维度
-        if (d.riskLevel < 3) return;
+        // 筛选条件：riskLevel >= 3 或 level 包含 specialLevel 中的任一值
+        const hasSpecialLevel = specialLevel.some((sl) =>
+          d.level?.includes(sl),
+        );
+        if (!hasSpecialLevel && d.riskLevel < 3) return;
 
         // 直接计算 formattedName，避免调用可能触发循环的函数
         const count = countMap.get(questionnaire.questionnaireName);

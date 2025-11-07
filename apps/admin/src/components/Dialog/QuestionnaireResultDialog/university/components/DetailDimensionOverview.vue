@@ -214,7 +214,7 @@ const columns = computed<VxeGridPropTypes.Columns>(() => [
 ]);
 
 // 合并单元格方法
-function spanMethod({ row, column }: any) {
+function spanMethod({ row, column, $rowIndex }: any) {
   // 如果是分类标题行
   if (row.isCategory) {
     // 序号列（第一列）
@@ -228,7 +228,49 @@ function spanMethod({ row, column }: any) {
     // 其他列不显示（因为被合并了）
     return { rowspan: 0, colspan: 0 };
   }
-  // 数据行正常显示
+
+  // 数据行：对大维度列（questionnaireName）进行合并
+  if (column.field === 'questionnaireName') {
+    const currentQuestionnaireName = row.questionnaireName;
+    let isFirstRow = true;
+
+    // 向上查找前一个非分类行，检查是否有相同的 questionnaireName
+    if ($rowIndex > 0) {
+      const prevRow = tableData.value[$rowIndex - 1];
+      // 如果前一行不是分类行，且有相同的 questionnaireName，说明当前行不是第一行
+      if (
+        prevRow &&
+        !prevRow.isCategory &&
+        prevRow.questionnaireName === currentQuestionnaireName
+      ) {
+        isFirstRow = false;
+      }
+    }
+
+    // 如果当前行是第一行，向下查找有多少个连续相同的 questionnaireName
+    if (isFirstRow) {
+      let rowspan = 1;
+      for (let i = $rowIndex + 1; i < tableData.value.length; i++) {
+        const nextRow = tableData.value[i];
+        // 遇到分类标题行，停止查找
+        if (nextRow?.isCategory) break;
+        // 如果相同，增加 rowspan
+        if (nextRow?.questionnaireName === currentQuestionnaireName) {
+          rowspan++;
+        } else {
+          // 如果不同，停止查找
+          break;
+        }
+      }
+      // 返回合并的行数
+      return { rowspan, colspan: 1 };
+    } else {
+      // 不是第一行，隐藏此单元格
+      return { rowspan: 0, colspan: 0 };
+    }
+  }
+
+  // 其他列正常显示
   return { rowspan: 1, colspan: 1 };
 }
 
@@ -236,10 +278,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: columns.value,
     data: tableData.value,
-    border: false,
+    border: true,
     showOverflow: false, // 不显示省略号，完全展示文本
     stripe: false, // 移除斑马条纹
-    highlightHoverRow: true,
+    highlightHoverRow: false, // 禁用默认hover效果，使用自定义样式
     spanMethod, // 添加合并单元格方法
     // 禁用分页器
     pagerConfig: {
@@ -441,7 +483,7 @@ function getResultColor(row: TableRow) {
     }
   }
 
-  // 确保表格文本完全显示，不省略
+  // 确保表格文本完全显示，不省略，并添加边框
   :deep(.vxe-body--column) {
     word-break: break-all !important;
     word-wrap: break-word !important;
@@ -455,8 +497,9 @@ function getResultColor(row: TableRow) {
     white-space: normal !important;
   }
 
-  // 分类标题行样式
+  // 数据行和分类标题行样式
   :deep(.vxe-body--row) {
+    // 分类标题行样式
     &:has(.category-title) {
       font-size: 14px;
       font-weight: bold;
@@ -464,7 +507,7 @@ function getResultColor(row: TableRow) {
       background-color: #e6e9eeff !important;
 
       .vxe-body--column {
-        border-bottom: 1px solid #0000000f !important;
+        border-bottom: 1px solid #d0d3d6 !important;
       }
     }
   }

@@ -181,16 +181,7 @@ const summaryList = computed(() => {
                 v-if="lightRiskDimensions.length > 0"
                 class="other-dimension-line"
               >
-                <span
-                  :style="{
-                    color: getColorConfig({
-                      dictValue: 2,
-                      target: 'color',
-                    }) as string,
-                  }"
-                >
-                  轻度（{{ lightRiskDimensions.length }}）：
-                </span>
+                <span> 轻度（{{ lightRiskDimensions.length }}）： </span>
                 <span class="dimension-name">
                   {{ lightRiskDimensions.join('、') }}
                 </span>
