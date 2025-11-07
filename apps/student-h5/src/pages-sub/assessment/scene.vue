@@ -79,34 +79,34 @@ async function handleStartEvaluation() {
 
 function handleSlotClick(slot: any) {
   // 检查场景是否可点击
-  // if (!isSlotClickable(slot.id)) {
-  //   const status = getSlotStatus(slot.id)
-  //   if (status === 'locked') {
-  //     const previousSlot = scenarioData.value?.slots?.find(
-  //       s => s.slotOrder === slot.slotOrder - 1,
-  //     )
-  //     uni.showToast({
-  //       title: `${slot.slotName}未解锁，请先前往${previousSlot?.slotName || '前一个场景'}吧~`,
-  //       icon: 'none',
-  //       duration: 2000,
-  //     })
-  //     return
-  //   }
-  //   else if (status === 'completed') {
-  //     const nextSlot = scenarioData.value?.slots?.find(
-  //       s => s.slotOrder === slot.slotOrder + 1,
-  //     )
-  //     const tipText = nextSlot
-  //       ? `${slot.slotName}已完成，前往${nextSlot.slotName}吧~`
-  //       : '本次测试已结束，请前往汇总报告查看结果'
-  //     uni.showToast({
-  //       title: tipText,
-  //       icon: 'success',
-  //       duration: 2000,
-  //     })
-  //     return
-  //   }
-  // }
+  if (!isSlotClickable(slot.id)) {
+    const status = getSlotStatus(slot.id)
+    if (status === 'locked') {
+      const previousSlot = scenarioData.value?.slots?.find(
+        s => s.slotOrder === slot.slotOrder - 1,
+      )
+      uni.showToast({
+        title: `${slot.slotName}未解锁，请先前往${previousSlot?.slotName || '前一个场景'}吧~`,
+        icon: 'none',
+        duration: 2000,
+      })
+      return
+    }
+    else if (status === 'completed') {
+      const nextSlot = scenarioData.value?.slots?.find(
+        s => s.slotOrder === slot.slotOrder + 1,
+      )
+      const tipText = nextSlot
+        ? `${slot.slotName}已完成，前往${nextSlot.slotName}吧~`
+        : '本次测试已结束，请前往汇总报告查看结果'
+      uni.showToast({
+        title: tipText,
+        icon: 'success',
+        duration: 2000,
+      })
+      return
+    }
+  }
   selectSlot(slot.id)
   handleStartEvaluation()
 }

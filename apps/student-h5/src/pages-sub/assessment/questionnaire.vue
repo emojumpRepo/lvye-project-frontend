@@ -83,6 +83,13 @@ function generateIframeSrc() {
     return ''
   }
 
+  // 优先使用明确设置的 questionnaireId 和 questionnaireLink
+  if (questionnaireId.value && questionnaireLink.value) {
+    console.log('使用传入参数 - questionnaireId:', questionnaireId.value, 'questionnaireLink:', questionnaireLink.value)
+    // tenantId 需要以数组格式传递
+    return `${surveyBaseUrl}${decodeURIComponent(questionnaireLink.value)}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId.value}&tenantId[]=${schoolTenantId}`
+  }
+
   // 有场景模式：从 selectedSlot.questionnaires 获取问卷信息
   if (hasScenario.value && selectedSlot.value?.questionnaires?.length) {
     const target
@@ -91,14 +98,9 @@ function generateIframeSrc() {
     const link = target?.externalLink
     const id = target?.id
 
-    console.log('有场景模式 - link:', link, 'id:', id)
-    return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId=${schoolTenantId}`
-  }
-
-  // 无场景模式：从传入的参数获取问卷信息
-  if (questionnaireId.value && questionnaireLink.value) {
-    console.log('无场景模式 - questionnaireId:', questionnaireId.value, 'questionnaireLink:', questionnaireLink.value)
-    return `${surveyBaseUrl}${decodeURIComponent(questionnaireLink.value)}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId.value}&tenantId=${schoolTenantId}`
+    console.log('从场景获取问卷 - link:', link, 'id:', id)
+    // tenantId 需要以数组格式传递
+    return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId[]=${schoolTenantId}`
   }
 
   console.log('没有匹配的模式，返回空链接')
@@ -146,6 +148,40 @@ const guideStage = computed<'intro' | 'tips'>(() => {
   return showTips.value ? 'tips' : 'intro'
 })
 
+// 更新浏览器 URL（不刷新页面）
+function updateBrowserUrl() {
+  const params = new URLSearchParams()
+  if (questionnaireId.value)
+    params.set('questionnaireId', questionnaireId.value)
+  if (sceneId.value)
+    params.set('sceneId', sceneId.value)
+  if (assessmentTaskNo.value)
+    params.set('assessmentTaskNo', assessmentTaskNo.value)
+  if (questionnaireLink.value)
+    params.set('questionnaireLink', questionnaireLink.value)
+
+  // uni-app 使用 hash 路由，需要从 hash 中提取路径
+  const hash = window.location.hash
+  const hashPath = hash.split('?')[0] // 获取 # 后面的路径部分（不包含参数）
+
+  // 构造新的完整 URL（包含 hash）
+  const newHash = `${hashPath}?${params.toString()}`
+  const newUrl = `${window.location.pathname}${window.location.search}${newHash}`
+
+  // 使用 replaceState 更新 URL，不会触发页面重新加载
+  window.history.replaceState(null, '', newUrl)
+  console.log('URL 已更新:', window.location.href)
+}
+
+// 页面刷新/离开前拦截
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  // 如果问卷未完成，拦截离开
+  if (!isIframeCompleted.value) {
+    e.preventDefault()
+    return '测评尚未完成，确定要离开吗？'
+  }
+}
+
 // 返回
 function handleBack() {
   if (isIframeCompleted.value) {
@@ -189,11 +225,12 @@ async function handleContinue() {
     // 有测试场景的模式
     if (hasScenario.value) {
       // 若当前插槽内仍有未完成问卷，则继续当前插槽内的下一份问卷
-      const hasRemainingInCurrentSlot = (
-        selectedSlot.value?.questionnaires || []
-      ).some((q: any) => !q.completed)
+      const questionnaires = selectedSlot.value?.questionnaires || []
+      const hasRemainingInCurrentSlot = questionnaires.some((q: any) => !q.completed)
 
-      console.log('有场景模式 - 当前插槽是否有剩余问卷:', hasRemainingInCurrentSlot)
+      console.log('有场景模式 - 当前 sceneId:', sceneId.value, 'selectedSlot.id:', selectedSlot.value?.id)
+      console.log('当前插槽问卷列表:', questionnaires.map((q: any) => ({ id: q.id, completed: q.completed })))
+      console.log('当前插槽是否有剩余问卷:', hasRemainingInCurrentSlot)
 
       if (hasRemainingInCurrentSlot) {
         // 同一场景内的下一个问卷
@@ -207,6 +244,8 @@ async function handleContinue() {
           questionnaireLink.value = result.questionnaireLink || ''
           isIframeCompleted.value = false
           iframeSrc.value = generateIframeSrc()
+          // 更新浏览器 URL
+          updateBrowserUrl()
         }
         else {
           // 理论上不会走到这里，因为是同一场景内的问卷
@@ -241,9 +280,15 @@ async function handleContinue() {
         questionnaireLink.value = result.questionnaireLink || ''
         isIframeCompleted.value = false
 
+        // 更新问卷链接
+        iframeSrc.value = generateIframeSrc()
+
         // 显示新场景的指引动画
         showIntro.value = true
         showTips.value = false
+
+        // 更新浏览器 URL
+        updateBrowserUrl()
       }
     }
     else {
@@ -262,6 +307,8 @@ async function handleContinue() {
         questionnaireLink.value = result.questionnaireLink || ''
         isIframeCompleted.value = false
         iframeSrc.value = generateIframeSrc()
+        // 更新浏览器 URL
+        updateBrowserUrl()
       }
       else {
         // 所有问卷都已完成，跳转到测评详情页面
@@ -292,10 +339,11 @@ function handleComplete() {
   // 更新当前问卷的完成状态
   if (hasScenario.value && selectedSlot.value?.questionnaires?.length) {
     // 有场景模式：根据 questionnaireId 精确标记完成
+    // 注意：有场景模式下，问卷ID字段是 id，不是 questionnaireId
     const qid = Number(questionnaireId.value)
     if (qid) {
       const target = selectedSlot.value.questionnaires.find(
-        (q: any) => q.questionnaireId === qid,
+        (q: any) => q.id === qid,
       )
       if (target)
         target.completed = true
@@ -311,6 +359,7 @@ function handleComplete() {
   }
   else {
     // 无场景模式：更新当前问卷的完成状态
+    // 注意：无场景模式下，问卷ID字段是 questionnaireId
     if (questionnaireId.value && evaluationStore.taskDetailInfo?.questionnaires) {
       const currentQuestionnaire
         = evaluationStore.taskDetailInfo.questionnaires.find(
@@ -359,8 +408,6 @@ function handleMessage(e: MessageEvent) {
     processedMessageIds.add(data.id)
   }
 
-  console.log('处理消息数据:', data)
-
   switch (data.type) {
     case 'complete':
       // complete 消息只处理一次
@@ -372,7 +419,6 @@ function handleMessage(e: MessageEvent) {
       console.log('问卷页面已就绪')
       break
     default:
-      console.log('未知消息类型:', data.type)
       break
   }
 }
@@ -403,11 +449,16 @@ onLoad(async (options) => {
 
   // 监听 iframe 的 postMessage 消息
   window.addEventListener('message', handleMessage)
+
+  // 监听页面刷新/离开事件
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
 onUnload(() => {
   // 移除消息监听器
   window.removeEventListener('message', handleMessage)
+  // 移除页面刷新/离开监听器
+  window.removeEventListener('beforeunload', handleBeforeUnload)
   // 清理已处理的消息ID集合
   processedMessageIds.clear()
 })
@@ -438,11 +489,14 @@ onUnload(() => {
     <view v-else class="h-screen flex flex-col">
       <!-- 返回按钮 - 左上角 -->
       <view class="back-button" @click="handleBack">
-        <wd-icon name="arrow-left" size="20" />
+        <view class="back-button-icon">
+          <wd-icon name="arrow-left" size="16" color="var(--primary-color)" />
+        </view>
+        <text class="back-button-text">返回</text>
       </view>
 
       <!-- 问卷链接为空时的提示 -->
-      <view v-if="!iframeSrc" class="h-screen flex items-center justify-center">
+      <view v-if="!iframeSrc" class="flex flex-1 items-center justify-center">
         <view class="text-center">
           <text class="desc-text-heavy">问卷链接加载失败</text>
         </view>
@@ -452,9 +506,21 @@ onUnload(() => {
       <iframe v-else :src="iframeSrc" class="webview-content flex-1" />
 
       <!-- 继续/提交按钮 -->
-      <view v-if="isIframeCompleted" class="continue-button" @click="handleContinue">
-        <text>{{ continueButtonText }}</text>
-        <text class="ml-2">→</text>
+      <view
+        v-if="isIframeCompleted"
+        class="continue-button"
+        :class="{ loading: isContinueLoading }"
+        @tap.stop="handleContinue"
+        @click.stop="handleContinue"
+      >
+        <template v-if="isContinueLoading">
+          <wd-loading size="16px" color="#fff" />
+          <text class="loading-text">处理中...</text>
+        </template>
+        <template v-else>
+          <text>{{ continueButtonText }}</text>
+          <text class="ml-2">→</text>
+        </template>
       </view>
     </view>
 
@@ -472,6 +538,17 @@ onUnload(() => {
 </template>
 
 <style scoped lang="scss">
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
 .questionnaire-container {
   width: 100%;
   height: 100vh;
@@ -485,17 +562,48 @@ onUnload(() => {
 // 返回按钮
 .back-button {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 15px;
+  left: 15px;
   z-index: 1000;
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 20rpx;
-  color: var(--primary-color);
-  background: rgb(255 255 255 / 95%);
-  border-radius: 9999px;
-  box-shadow: 0 4px 15px rgb(0 0 0 / 10%);
+  padding: 8px 14px 8px 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgb(255 255 255 / 80%) 0%, rgb(255 255 255 / 70%) 100%);
+  backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active {
+    background: linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%);
+    box-shadow:
+      0 1px 4px rgb(0 0 0 / 6%),
+      0 0 0 1px rgb(255 255 255 / 50%) inset;
+    transform: scale(0.96);
+  }
+
+  .back-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, rgb(16 185 129 / 10%) 0%, rgb(16 185 129 / 5%) 100%);
+    border-radius: 50%;
+    transition: all 0.25s ease;
+  }
+
+  .back-button-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--primary-color);
+    letter-spacing: 0.3px;
+    transition: all 0.25s ease;
+  }
+
+  &:active .back-button-icon {
+    background: linear-gradient(135deg, rgb(16 185 129 / 15%) 0%, rgb(16 185 129 / 8%) 100%);
+  }
 }
 
 // 继续按钮
@@ -503,16 +611,48 @@ onUnload(() => {
   position: fixed;
   right: 30px;
   bottom: 30px;
-  z-index: 1000;
+  z-index: 9999; // 提高 z-index 确保不被遮挡
   display: flex;
+  gap: 8px;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px;
-  font-size: 14px;
+  min-width: 120px;
+  padding: 14px 28px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
-  background: var(--primary-color);
+  pointer-events: auto; // 确保可以接收点击事件
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #34d399 100%);
   border-radius: 9999px;
-  box-shadow: 0 4px 15px rgb(76 175 80 / 35%);
+  box-shadow: 0 6px 20px rgb(16 185 129 / 40%);
+  transition: all 0.3s ease;
+
+  // 使用伪元素扩大点击区域
+  &::before {
+    position: absolute;
+    inset: -10px; // 扩大 10px 的点击区域
+    pointer-events: auto;
+    content: '';
+  }
+
+  &:active:not(.loading) {
+    background: linear-gradient(135deg, #059669 0%, var(--primary-color) 100%);
+    box-shadow: 0 3px 12px rgb(16 185 129 / 45%);
+    transform: scale(0.97);
+  }
+
+  &.loading {
+    pointer-events: none;
+    opacity: 0.85;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .loading-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
 }
 </style>

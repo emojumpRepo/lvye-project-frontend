@@ -289,9 +289,13 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     try {
       await startAssessment(taskNo)
       const target = qs.find((q: any) => !q.completed) || qs[0]
-      const questionnaireId = (target && target.questionnaireId) || ''
-      const questionnaireLink = (target && target.externalLink) || ''
+      // 注意：有场景模式下，问卷ID字段是 id，不是 questionnaireId
+      // 使用 ?? 而不是 || 来处理 0 值
+      const questionnaireId = target?.id ?? ''
+      const questionnaireLink = target?.externalLink ?? ''
       const sceneId = selectedSlot.value.id
+
+      console.log('startEvaluation - target:', target, 'questionnaireId:', questionnaireId, 'sceneId:', sceneId, 'currentSceneId:', currentSceneId)
 
       // 判断是否是同一场景
       const isSameScene = currentSceneId !== undefined
