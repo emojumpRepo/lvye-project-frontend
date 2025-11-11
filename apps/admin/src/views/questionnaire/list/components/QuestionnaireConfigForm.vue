@@ -27,6 +27,7 @@ import {
   createQuestionnaireConfig,
   updateQuestionnaireConfig,
 } from '#/api/psychology/questionnaire/index';
+import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 
 import { parseFormulaToFormData } from '../utils/formula-parser';
 
@@ -702,10 +703,10 @@ defineExpose({ validate, resetFields });
           </Col>
           <Col :span="24">
             <Form.Item label="学生端评语" name="studentComment">
-              <Input.TextArea
-                v-model:value="formData.studentComment"
+              <RichTextEditor
+                v-model="formData.studentComment"
+                :height="150"
                 placeholder="请输入学生端评语"
-                :rows="3"
               />
             </Form.Item>
           </Col>

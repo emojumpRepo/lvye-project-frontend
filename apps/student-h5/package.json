@@ -153,6 +153,7 @@
     "@uni-ku/root": "1.4.1",
     "@unocss/eslint-plugin": "^66.2.3",
     "@unocss/preset-legacy-compat": "66.0.0",
+    "@vben/icons": "workspace:*",
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
     "@vue/runtime-core": "^3.4.21",

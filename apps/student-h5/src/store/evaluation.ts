@@ -6,7 +6,7 @@ import type {
   SlotMetadata,
 } from '@vben/types'
 
-import { QuestionnaireGenerationStatus } from '@vben/types'
+import { ResultGenerationStatus } from '@vben/types'
 
 import { defineStore } from 'pinia'
 
@@ -71,7 +71,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
       const questionnaires = (slot as any).questionnaires || []
       for (const q of questionnaires) {
         const status = (q as any)?.generationStatus
-        if (status && status === QuestionnaireGenerationStatus.GENERATING)
+        if (status && status === ResultGenerationStatus.GENERATING)
           return true
       }
     }

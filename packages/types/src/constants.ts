@@ -8,7 +8,7 @@ export enum GenderEnum {
 export enum RiskLevelEnum {
   LOW = 1, // 无/低风险
   MEDIUM = 3, // 中度风险
-  Mild = 2, // 轻度风险
+  MILD = 2, // 轻度风险
   NONE = 0, // 不参与风险评级
   SEVERE = 4, // 重度风险
 }
@@ -17,7 +17,7 @@ export enum RiskLevelEnum {
 export const riskLevelOptions = [
   { label: '不参与风险评级', value: RiskLevelEnum.NONE },
   { label: '无/低风险', value: RiskLevelEnum.LOW },
-  { label: '轻度风险', value: RiskLevelEnum.Mild },
+  { label: '轻度风险', value: RiskLevelEnum.MILD },
   { label: '中度风险', value: RiskLevelEnum.MEDIUM },
   { label: '重度风险', value: RiskLevelEnum.SEVERE },
 ];
@@ -28,3 +28,10 @@ export const specialLevel = [
   '存在自伤意念',
   '抑郁核心症状相关选项得分异常',
 ];
+
+export enum ResultGenerationStatus {
+  ERROR = 3,
+  GENERATED = 2,
+  GENERATING = 1,
+  WAITING = 0,
+}

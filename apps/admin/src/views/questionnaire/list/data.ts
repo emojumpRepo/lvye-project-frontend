@@ -249,6 +249,12 @@ export function useDimensionGridColumns() {
       showOverflow: true,
     },
     {
+      title: '口语化别称',
+      field: 'colloquialAlias',
+      width: 120,
+      showOverflow: true,
+    },
+    {
       title: '维度编码',
       field: 'dimensionCode',
       width: 120,
@@ -419,6 +425,14 @@ export function useDimensionFormSchema(): VbenFormSchema[] {
         placeholder: '请输入维度名称',
       },
       rules: 'required',
+    },
+    {
+      fieldName: 'colloquialAlias',
+      label: '口语化别称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入口语化别称（如：情感受虐）',
+      },
     },
     {
       fieldName: 'dimensionCode',

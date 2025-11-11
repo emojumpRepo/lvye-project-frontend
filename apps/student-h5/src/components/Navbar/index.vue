@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
   titleAlign: 'center',
   fixed: true,
   scrollTop: 0,
-  scrollThreshold: 20, // 默认滚动20rpx后改变背景色
+  scrollThreshold: 5, // 默认滚动20rpx后改变背景色
 })
 
 const emit = defineEmits<{
@@ -87,6 +87,23 @@ function handleBack() {
 </template>
 
 <style lang="scss" scoped>
+// PC 端 h5 样式适配
+@media (min-width: 481px) {
+  .navbar {
+    // 导航栏内容限制在 480px 宽度内并居中
+    > view {
+      width: 480px !important;
+      max-width: 480px !important;
+      margin: 0 auto;
+    }
+  }
+
+  .navbar-placeholder {
+    width: 480px;
+    margin: 0 auto;
+  }
+}
+
 .navbar {
   &--fixed {
     position: fixed;
@@ -94,6 +111,12 @@ function handleBack() {
     left: 0;
     z-index: 999;
     width: 100%;
+  }
+
+  // H5 端优化：确保触摸区域足够大
+  view[class*='w-40rpx'] {
+    min-width: 44px; // iOS 推荐的最小触摸区域
+    min-height: 44px;
   }
 }
 

@@ -9,6 +9,7 @@ type _LocationUrl =
   "/pages/auth/no-access" |
   "/pages/user/confirm" |
   "/pages-sub/assessment/list" |
+  "/pages-sub/assessment/module" |
   "/pages-sub/assessment/questionnaire" |
   "/pages-sub/assessment/result" |
   "/pages-sub/assessment/scene";

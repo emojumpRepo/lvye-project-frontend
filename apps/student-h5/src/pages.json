@@ -63,6 +63,14 @@
           }
         },
         {
+          "path": "assessment/module",
+          "type": "page",
+          "style": {
+            "navigationStyle": "custom",
+            "navigationBarTitleText": "模块评估报告"
+          }
+        },
+        {
           "path": "assessment/questionnaire",
           "type": "page",
           "layout": "empty",

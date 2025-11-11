@@ -25,6 +25,7 @@ import {
   updateModuleResultConfig,
 } from '#/api/psychology/module-result-config';
 import { getDimensionListByScenarioSlot } from '#/api/psychology/questionnaire/index';
+import StudentCommentEditor from '#/components/Common/StudentCommentEditor.vue';
 
 interface DialogData {
   scenario?: AssessmentScenario | null;
@@ -1162,10 +1163,9 @@ function handleCancel() {
             </Col>
             <Col :span="24">
               <Form.Item label="学生端评语（多条）">
-                <Select
-                  v-model:value="formModel.comments"
-                  mode="tags"
-                  placeholder="请输入学生端评语，支持多条"
+                <StudentCommentEditor
+                  v-model="formModel.comments"
+                  :min-height="150"
                 />
               </Form.Item>
             </Col>

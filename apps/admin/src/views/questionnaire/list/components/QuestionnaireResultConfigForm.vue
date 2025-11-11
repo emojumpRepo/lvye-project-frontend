@@ -35,6 +35,8 @@ import {
   createQuestionnaireResultConfig,
   updateQuestionnaireResultConfig,
 } from '#/api/psychology/questionnaire/index';
+import RichTextEditor from '#/components/Common/RichTextEditor.vue';
+import StudentCommentEditor from '#/components/Common/StudentCommentEditor.vue';
 
 import { formatQuestionIndex } from '../utils/question-index';
 
@@ -2684,9 +2686,10 @@ defineExpose({
                         </Col>
                         <Col :span="24">
                           <Form.Item label="学生端评语">
-                            <Input.TextArea
-                              v-model:value="r.studentComment"
-                              :rows="2"
+                            <RichTextEditor
+                              v-model="r.studentComment"
+                              :height="150"
+                              placeholder="请输入学生端评语"
                             />
                           </Form.Item>
                         </Col>
@@ -2816,9 +2819,10 @@ defineExpose({
                       </Col>
                       <Col :span="24">
                         <Form.Item label="学生端评语">
-                          <Input.TextArea
-                            v-model:value="b.studentComment"
-                            :rows="2"
+                          <RichTextEditor
+                            v-model="b.studentComment"
+                            :height="150"
+                            placeholder="请输入学生端评语"
                           />
                         </Form.Item>
                       </Col>
@@ -2945,11 +2949,9 @@ defineExpose({
             </Col>
             <Col :span="24">
               <Form.Item label="学生端评语">
-                <Select
-                  v-model:value="resultConfig.studentComments"
-                  mode="tags"
-                  placeholder="请输入学生端评语，支持多条"
-                  class="w-full"
+                <StudentCommentEditor
+                  v-model="resultConfig.studentComments"
+                  :min-height="150"
                 />
               </Form.Item>
             </Col>

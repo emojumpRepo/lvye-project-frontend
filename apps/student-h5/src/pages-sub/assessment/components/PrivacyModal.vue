@@ -28,6 +28,7 @@ function handleConfirm() {
 <template>
   <wd-popup
     v-model="visible" position="center" custom-style="border-radius: 32rpx; width: 70vw; padding: 30rpx;"
+    custom-class="dialog-popup-pc"
     modal-style="background-color: #00000066;"
   >
     <!-- 标题 -->

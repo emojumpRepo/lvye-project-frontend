@@ -36,3 +36,35 @@ page {
 .default-bg-color {
   background-color: var(--bg-color);
 }
+
+// 通用弹窗 PC 端样式
+.dialog-popup-pc {
+  @media (min-width: 481px) {
+    width: 400px !important;
+    max-width: 400px !important;
+  }
+}
+
+// 通用 PC 端 h5 全屏页面容器适配样式
+// 用于 position: fixed 的全屏页面在 PC 端显示为固定宽度的手机屏幕效果
+// 注意：使用 481px 与 App.vue 中的 480px 断点保持一致
+@media (min-width: 481px) {
+  // 全屏页面容器：提供灰色背景和居中布局（用于 position: fixed 的页面）
+  .h5-pc-fullscreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+  }
+
+  // 全屏页面内容容器：限制宽高，模拟手机屏幕
+  .h5-pc-fullscreen-content {
+    width: 480px !important;
+    max-width: 480px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgb(0 0 0 / 10%);
+  }
+}

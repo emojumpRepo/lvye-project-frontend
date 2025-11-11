@@ -70,6 +70,15 @@ export function http<T>(options: CustomRequestOptions) {
             catch (refreshErr) {
               console.error('刷新 token 失败:', refreshErr)
               refreshing = false
+              // 刷新失败，清空队列并拒绝所有请求
+              taskQueue.forEach((task) => {
+                try {
+                  task() // 执行任务，让它们自己处理错误
+                }
+                catch (err) {
+                  // 忽略错误
+                }
+              })
               taskQueue = []
               // 刷新 token 失败，跳转到登录页
               nextTick(() => {
@@ -89,7 +98,8 @@ export function http<T>(options: CustomRequestOptions) {
             }
           }
 
-          return reject(res)
+          // 不要立即 reject，让队列中的任务来决定 Promise 的最终状态
+          return
         }
 
         if (isSuccess) {

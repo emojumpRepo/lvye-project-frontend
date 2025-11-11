@@ -107,7 +107,8 @@ function handleStart() {
 
 <template>
   <view
-    class="guide-animation-page" :style="{
+    class="guide-animation-page h5-pc-fullscreen"
+    :style="{
       backgroundImage: `url(${bgUrl})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -115,7 +116,7 @@ function handleStart() {
     }"
   >
     <!-- 第一阶段：弹窗提示 -->
-    <view v-if="showIntroStage" class="intro-overlay">
+    <view v-if="showIntroStage" class="intro-overlay h5-pc-fullscreen-content">
       <view class="intro-dialog" :class="{ 'no-koala': !showKoalaInIntro }">
         <!-- 关闭按钮 -->
         <view class="intro-close" @click="handleClose">
@@ -158,7 +159,7 @@ function handleStart() {
     </view>
 
     <!-- 第二阶段：考拉教练对话气泡 -->
-    <view v-else-if="showTipsStage" class="intro-tips">
+    <view v-else-if="showTipsStage" class="intro-tips h5-pc-fullscreen-content">
       <view class="coach-wrap">
         <image :src="koalaUrl" mode="aspectFit" class="coach-figure" />
         <view class="coach-bubble">
@@ -370,6 +371,17 @@ $gray-900: #1f2937;
       0 1px 6px rgb(16 185 129 / 30%),
       0 0 0 3px rgb(16 185 129 / 8%);
     transform: scale(0.97);
+  }
+}
+
+// ============================================
+// PC 端样式适配（使用统一的公共样式）
+// ============================================
+@media (min-width: 481px) {
+  .guide-animation-page {
+    // 限制背景图大小为手机屏幕尺寸
+    background-position: center !important;
+    background-size: 480px 100vh !important;
   }
 }
 

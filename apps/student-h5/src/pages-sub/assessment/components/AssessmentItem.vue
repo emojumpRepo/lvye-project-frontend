@@ -62,6 +62,15 @@ function isButtonDisabled(task: AssessmentTask) {
  */
 async function handleClick() {
   const { assessment: task } = props
+  console.log('hasModuleResultConfig', task.hasModuleResultConfig)
+
+  if (task.hasModuleResultConfig) {
+    // 跳转到结果页面
+    uni.navigateTo({
+      url: `/pages-sub/assessment/scene?taskNo=${task.taskNo}`,
+    })
+    return
+  }
 
   // 结果生成中的提示
   if (

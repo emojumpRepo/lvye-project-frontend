@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { AssessmentScenarioSlot } from '@vben/types'
 import { onLoad, onUnload } from '@dcloudio/uni-app'
-import { AssessmentTaskParticipantStatus } from '@vben/types'
+import { AssessmentTaskParticipantStatus, ResultGenerationStatus } from '@vben/types'
 import { getBucketFileUrl } from '@vben/utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
@@ -77,7 +78,7 @@ async function handleStartEvaluation() {
   }
 }
 
-function handleSlotClick(slot: any) {
+function handleSlotClick(slot: AssessmentScenarioSlot) {
   // 检查场景是否可点击
   if (!isSlotClickable(slot.id)) {
     const status = getSlotStatus(slot.id)
@@ -93,22 +94,97 @@ function handleSlotClick(slot: any) {
       return
     }
     else if (status === 'completed') {
-      const nextSlot = scenarioData.value?.slots?.find(
-        s => s.slotOrder === slot.slotOrder + 1,
-      )
-      const tipText = nextSlot
-        ? `${slot.slotName}已完成，前往${nextSlot.slotName}吧~`
-        : '本次测试已结束，请前往汇总报告查看结果'
-      uni.showToast({
-        title: tipText,
-        icon: 'success',
-        duration: 2000,
-      })
+      // 已完成的场景，根据是否有模块结果配置决定提示内容
+      if (slot.hasModuleResultConfig) {
+        switch (slot.moduleResultGenerationStatus) {
+          case ResultGenerationStatus.GENERATED:
+            // 结果已生成，跳转到模块结果页
+            uni.navigateTo({
+              url: `/pages-sub/assessment/module?taskNo=${currentTaskNo.value}&slotId=${slot.id}`,
+            })
+            break
+          case ResultGenerationStatus.GENERATING:
+            // 结果生成中
+            uni.showToast({
+              title: '结果生成中，请稍后查看',
+              icon: 'none',
+              duration: 2000,
+            })
+            break
+          case ResultGenerationStatus.WAITING:
+            // 结果生成中
+            uni.showToast({
+              title: '该场景的问卷并没有完成哦，请继续完成',
+              icon: 'none',
+              duration: 2000,
+            })
+            break
+        }
+      }
+      else {
+        // 没有模块结果配置，显示默认提示
+        const nextSlot = scenarioData.value?.slots?.find(
+          s => s.slotOrder === slot.slotOrder + 1,
+        )
+        const tipText = nextSlot
+          ? `${slot.slotName}已完成，前往${nextSlot.slotName}吧~`
+          : '本次测试已结束，请前往汇总报告查看结果'
+        uni.showToast({
+          title: tipText,
+          icon: 'success',
+          duration: 2000,
+        })
+      }
       return
     }
   }
-  selectSlot(slot.id)
-  handleStartEvaluation()
+
+  // 插槽可点击，检查问卷完成状态
+  const questionnaires = (slot as any).questionnaires || []
+  const allQuestionnairesCompleted = questionnaires.length > 0 && questionnaires.every((q: any) => q.completed)
+
+  if (allQuestionnairesCompleted) {
+    // 所有问卷都已完成
+    if (slot.hasModuleResultConfig) {
+      switch (slot.moduleResultGenerationStatus) {
+        case ResultGenerationStatus.GENERATED:
+          // 结果已生成，跳转到模块结果页
+          uni.navigateTo({
+            url: `/pages-sub/assessment/module-result?taskNo=${currentTaskNo.value}&slotId=${slot.id}`,
+          })
+          break
+        case ResultGenerationStatus.GENERATING:
+          // 结果生成中
+          uni.showToast({
+            title: '结果生成中，请稍后查看',
+            icon: 'none',
+            duration: 2000,
+          })
+          break
+        default:
+          // 其他状态（WAITING 或 ERROR）
+          uni.showToast({
+            title: '问卷已完成，结果生成中',
+            icon: 'none',
+            duration: 2000,
+          })
+          break
+      }
+    }
+    else {
+      // 没有模块结果配置
+      uni.showToast({
+        title: `${slot.slotName}已完成`,
+        icon: 'success',
+        duration: 2000,
+      })
+    }
+  }
+  else {
+    // 有未完成的问卷，开始测评
+    selectSlot(slot.id)
+    handleStartEvaluation()
+  }
 }
 
 async function getParticipantStatus() {
@@ -201,13 +277,13 @@ onUnload(() => {
 </script>
 
 <template>
-  <view class="evaluation-map">
+  <view class="evaluation-map h5-pc-fullscreen">
     <view v-if="loading" class="h-screen flex items-center justify-center">
       <LyLoading />
     </view>
     <view v-else>
       <!-- 场景主体 -->
-      <view class="map-content">
+      <view class="map-content h5-pc-fullscreen-content">
         <!-- 场景背景 -->
         <view
           class="map-background"

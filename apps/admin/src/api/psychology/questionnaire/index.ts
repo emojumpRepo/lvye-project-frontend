@@ -52,6 +52,7 @@ export interface QuestionnaireDimensionVO {
   id?: number; // 主键
   questionnaireId: number; // 问卷ID
   dimensionName: string; // 维度名称
+  colloquialAlias?: string; // 口语化别称
   dimensionCode: string; // 维度编码
   description?: string; // 描述
   calculateType?: number; // 兼容旧类型，可为空

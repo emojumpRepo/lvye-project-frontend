@@ -75,7 +75,7 @@ const koalaUrl = computed(() => {
 // 生成问卷链接
 function generateIframeSrc() {
   const surveyBaseUrl = import.meta.env.VITE_SURVEY_URL || ''
-  const schoolTenantId = tenantStore.getTenantId || ''
+  const schoolTenantId = tenantStore.tenantId || ''
   const userId = userStore.userInfo?.id || ''
 
   if (!currentTaskNo.value) {
@@ -85,9 +85,9 @@ function generateIframeSrc() {
 
   // 优先使用明确设置的 questionnaireId 和 questionnaireLink
   if (questionnaireId.value && questionnaireLink.value) {
-    console.log('使用传入参数 - questionnaireId:', questionnaireId.value, 'questionnaireLink:', questionnaireLink.value)
+    console.log('使用传入参数 - questionnaireId:', questionnaireId.value, 'questionnaireLink:', questionnaireLink.value, 'tenantId:', schoolTenantId)
     // tenantId 需要以数组格式传递
-    return `${surveyBaseUrl}${decodeURIComponent(questionnaireLink.value)}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId.value}&tenantId[]=${schoolTenantId}`
+    return `${surveyBaseUrl}${decodeURIComponent(questionnaireLink.value)}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${questionnaireId.value}&tenantId=${schoolTenantId}`
   }
 
   // 有场景模式：从 selectedSlot.questionnaires 获取问卷信息
@@ -98,9 +98,9 @@ function generateIframeSrc() {
     const link = target?.externalLink
     const id = target?.id
 
-    console.log('从场景获取问卷 - link:', link, 'id:', id)
+    console.log('从场景获取问卷 - link:', link, 'id:', id, 'tenantId:', schoolTenantId)
     // tenantId 需要以数组格式传递
-    return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId[]=${schoolTenantId}`
+    return `${surveyBaseUrl}${link}?t=${Date.now()}&userId=${userId}&assessmentNo=${currentTaskNo.value}&questionId=${id}&tenantId=${schoolTenantId}`
   }
 
   console.log('没有匹配的模式，返回空链接')
@@ -475,9 +475,7 @@ onUnload(() => {
 </script>
 
 <template>
-  <view
-    class="questionnaire-container"
-  >
+  <view class="questionnaire-container h5-pc-fullscreen">
     <!-- 加载状态 -->
     <view v-if="loading" class="h-screen flex items-center justify-center">
       <LyLoading />
@@ -496,7 +494,7 @@ onUnload(() => {
     />
 
     <!-- 问卷内容 -->
-    <view v-else class="h-screen flex flex-col">
+    <view v-else class="questionnaire-content h5-pc-fullscreen-content h-screen flex flex-col">
       <!-- 返回按钮 - 左上角 -->
       <view class="back-button" @click="handleBack">
         <view class="back-button-icon">
@@ -562,6 +560,11 @@ onUnload(() => {
 .questionnaire-container {
   width: 100%;
   height: 100vh;
+  background-color: #fff;
+}
+
+.questionnaire-content {
+  position: relative; // 为按钮提供定位上下文
 }
 
 // web-view 内容区域（为返回按钮预留空间）
@@ -583,6 +586,11 @@ onUnload(() => {
   background: linear-gradient(135deg, rgb(255 255 255 / 80%) 0%, rgb(255 255 255 / 70%) 100%);
   backdrop-filter: blur(12px);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // PC 端：使用 absolute 定位，相对于 questionnaire-content
+  @media (min-width: 481px) {
+    position: absolute;
+  }
 
   &:active {
     background: linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%);
@@ -637,6 +645,11 @@ onUnload(() => {
   border-radius: 9999px;
   box-shadow: 0 6px 20px rgb(16 185 129 / 40%);
   transition: all 0.3s ease;
+
+  // PC 端：使用 absolute 定位，相对于 questionnaire-content
+  @media (min-width: 481px) {
+    position: absolute;
+  }
 
   // 使用伪元素扩大点击区域
   &::before {

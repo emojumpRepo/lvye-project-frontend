@@ -64,7 +64,8 @@ async function handleConfirm() {
   <wd-popup
     v-model="visible"
     position="center"
-    custom-style="border-radius: 32rpx; width: 560rpx;"
+    custom-style="border-radius: 32rpx; width: 560rpx; max-width: 90vw;"
+    custom-class="dialog-popup-pc"
     @close="handleClose"
   >
     <view class="logout-popup">

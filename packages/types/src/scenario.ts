@@ -1,3 +1,4 @@
+import type { ResultGenerationStatus } from './constants';
 import type { QuestionnaireVO } from './questionnaire';
 
 export interface AssessmentScenario {
@@ -31,6 +32,8 @@ export interface AssessmentScenarioSlot {
   metadata?: SlotMetadata; // 插槽扩展配置对象（前端解析获得）
   allowedQuestionnaireTypes?: string;
   frontendComponent?: string;
+  hasModuleResultConfig?: boolean;
+  moduleResultGenerationStatus?: ResultGenerationStatus;
 }
 
 export interface AssessmentScenarioSlotVO extends AssessmentScenarioSlot {

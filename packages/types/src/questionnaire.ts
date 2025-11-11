@@ -1,3 +1,5 @@
+import type { ResultGenerationStatus } from './constants';
+
 export interface QuestionnaireVO {
   id?: number;
   questionnaireId?: number;
@@ -20,7 +22,7 @@ export interface QuestionnaireVO {
   assessmentDimension?: string[];
   completed?: boolean;
   accessible?: boolean;
-  generationStatus?: QuestionnaireGenerationStatus;
+  generationStatus?: ResultGenerationStatus;
   assessmentDimensionLabels?: string[];
   validFrom?: number;
   validTo?: number;
@@ -94,11 +96,4 @@ export interface QuestionnaireAnswerItem {
   questionnaireName: string;
   questionnaireId: number | string;
   answers: Question[];
-}
-
-export enum QuestionnaireGenerationStatus {
-  ERROR = 3,
-  GENERATED = 2,
-  GENERATING = 1,
-  WAITING = 0,
 }

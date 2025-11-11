@@ -1,4 +1,4 @@
-import type { AssessmentTask, AssessmentTaskParticipantStatus } from '@vben/types'
+import type { AssessmentTask, AssessmentTaskParticipantStatus, Dimension } from '@vben/types'
 import { http } from '@/http/http'
 
 // 测评结果
@@ -18,6 +18,25 @@ export interface AssessmentResultItem {
   isAbnormal: number
   score: number
   studentComment: string
+}
+
+// 模块结果
+export interface ModuleResultVO {
+  id: number
+  assessmentTaskNo: string
+  userId: number
+  scenarioSlotId: number
+  slotKey: string
+  slotName: string
+  moduleScore: number
+  riskLevel: number
+  riskLevelDesc: string
+  studentComment: string
+  moduleDescription: string
+  resultData: string
+  resultDataParsed: any
+  createTime: string
+  dimensionResults: Dimension[]
 }
 
 /**
@@ -71,5 +90,14 @@ export function getAssessmentResult(taskNo: string) {
 export function getGeneratingTasks() {
   return http.get<AssessmentTask[]>(
     '/psychology/assessment-task/generating-tasks',
+  )
+}
+
+/**
+ * 获取模块结果（根据任务编号和插槽ID）
+ */
+export function getModuleResult(taskNo: string, scenarioSlotId: number) {
+  return http.get<ModuleResultVO>(
+    `/psychology/assessment-task/module-result?taskNo=${taskNo}&scenarioSlotId=${scenarioSlotId}`,
   )
 }

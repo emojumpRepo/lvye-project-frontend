@@ -31,6 +31,7 @@ export interface AssessmentTask {
   scenarioCode?: string; // 场景编码
   scenarioName?: string; // 场景名称
   scenarioDetail?: AssessmentScenarioDetailed;
+  hasModuleResultConfig?: boolean; // 是否有模块配置
   // 任务参与信息
   progress: number; // 任务参与进度
   participantStatus: AssessmentTaskParticipantStatus; // 任务参与状态
@@ -43,7 +44,7 @@ export interface AssessmentTask {
 /** 维度类型 */
 export interface Dimension {
   dimensionId: number;
-  name: string;
+  dimensionName: string;
   score: number;
   isAbnormal: number;
   riskLevel: number;
@@ -51,6 +52,7 @@ export interface Dimension {
   teacherComment: string;
   studentComment: string;
   description: string;
+  colloquialAlias?: string;
 }
 
 /** 测评问卷结果 */
