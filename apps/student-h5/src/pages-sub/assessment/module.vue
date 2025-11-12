@@ -19,6 +19,15 @@ defineOptions({
   name: 'AssessmentModule',
 })
 
+definePage({
+  layout: 'default',
+  style: {
+    navigationStyle: 'custom',
+    navigationBarTitleText: '模块评估报告',
+    disableScroll: true,
+  },
+})
+
 const taskNo = ref('')
 const slotId = ref<number>(0)
 const scrollTop = ref(0)

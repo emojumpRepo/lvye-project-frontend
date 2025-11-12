@@ -65,9 +65,11 @@
         {
           "path": "assessment/module",
           "type": "page",
+          "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "模块评估报告"
+            "navigationBarTitleText": "模块评估报告",
+            "disableScroll": true
           }
         },
         {

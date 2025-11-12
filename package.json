@@ -35,6 +35,8 @@
     "build:docker": "./scripts/deploy/build-local-docker-image.sh",
     "build:docs": "pnpm run build --filter=@mindtrip/docs",
     "build:play": "pnpm run build --filter=@mindtrip/playground",
+    "prebuild:h5": "node ./scripts/update-version.mjs",
+    "build:h5": "pnpm run build --filter=@mindtrip/student-h5",
     "changeset": "pnpm exec changeset",
     "check": "pnpm run check:circular && pnpm run check:dep && pnpm run check:type && pnpm check:cspell",
     "check:circular": "vsh check-circular",
