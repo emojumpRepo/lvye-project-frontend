@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Dimension } from '@vben/types'
+import type { groupConfig } from './data'
 import type { ModuleResultVO } from '@/api/assessment'
 import { onLoad, onPageScroll } from '@dcloudio/uni-app'
 import { IconifyIcon } from '@vben/icons'
@@ -8,8 +9,11 @@ import { ref } from 'vue'
 import { getModuleResult } from '@/api/assessment'
 import { getTagByCategory, MAP_MODULE_MAP, RISK_LEVEL_RESULT_ICON_MAP } from '@/api/types/constants'
 import LyLoading from '@/components/LyLoading/index.vue'
-import CommentItem from './components/CommentItem.vue'
-import DimensionGrid from './components/DimensionGrid.vue'
+import CommentItem from './components/result/CommentItem.vue'
+import DimensionGrid from './components/result/DimensionGrid.vue'
+import DimensionStep from './components/result/DimensionStep.vue'
+import DimensionTable from './components/result/DimensionTable.vue'
+import { COMMENTS_GROUP_TYPE, COMPONENTS_TYPE, RESULT_PAGE_CONFIG, SHOW_COMMENT_MODE } from './data'
 
 defineOptions({
   name: 'AssessmentModule',
@@ -21,6 +25,24 @@ const scrollTop = ref(0)
 const loading = ref(false)
 const moduleResult = ref<ModuleResultVO | null>(null)
 const activeDimension = ref<Dimension | null>(null)
+
+// 当前结果页配置
+const current_result_page_config = computed(() => {
+  return RESULT_PAGE_CONFIG[moduleResult.value.slotKey]
+})
+
+// 缓存分组内容，避免频繁计算
+const groupContents = computed(() => {
+  if (!moduleResult.value || !current_result_page_config.value?.groups) {
+    return new Map<string, string>()
+  }
+
+  const contents = new Map<string, string>()
+  for (const group of current_result_page_config.value.groups) {
+    contents.set(group.groupId, getGroupContent(group, moduleResult.value.dimensionResults))
+  }
+  return contents
+})
 
 // 页面滚动监听
 onPageScroll((e) => {
@@ -60,6 +82,30 @@ async function fetchModuleResult() {
   finally {
     loading.value = false
   }
+}
+
+// 获取一组的所有维度评论内容
+function getGroupContent(group: groupConfig, dimensionResults: Dimension[]): string {
+  const groupDimensions = dimensionResults.filter(dimension =>
+    group.dimensions.includes(dimension.dimensionCode),
+  )
+
+  if (group.type === COMMENTS_GROUP_TYPE.MERGE_MAX) {
+    // 按 riskLevel 降序排序，取第一个
+    const sortedDimensions = [...groupDimensions].sort((a, b) => (b.riskLevel || 0) - (a.riskLevel || 0))
+    return sortedDimensions[0]?.studentComment || ''
+  }
+
+  // 默认将所有维度的评论内容拼接起来
+  return groupDimensions
+    .map((dimension) => {
+      const comment = dimension.studentComment || ''
+      if (!comment)
+        return ''
+      return `<p>${comment}</p>`
+    })
+    .filter(content => content) // 过滤掉空内容
+    .join('')
 }
 </script>
 
@@ -109,23 +155,36 @@ async function fetchModuleResult() {
       <Divider />
 
       <!-- 总体情况 -->
-      <view v-if="moduleResult.slotKey">
+      <view v-if="current_result_page_config.components.length > 0">
         <view class="modult-result-title">
           总体情况
         </view>
-        <DimensionGrid v-model="activeDimension" :dimension-list="moduleResult.dimensionResults" />
+        <DimensionGrid v-if="current_result_page_config.components.includes(COMPONENTS_TYPE.GRID)" v-model="activeDimension" :dimension-list="moduleResult.dimensionResults" />
+        <DimensionTable v-if="current_result_page_config.components.includes(COMPONENTS_TYPE.TABLE)" :dimensions="moduleResult.dimensionResults" :columns="RESULT_PAGE_CONFIG[moduleResult.slotKey].columns || []" />
+        <DimensionStep v-if="current_result_page_config.components.includes(COMPONENTS_TYPE.STEP)" :steps="current_result_page_config.steps" :dimensions="moduleResult.dimensionResults" />
+        <Divider />
       </view>
 
-      <Divider />
-
       <!-- 主要结论 -->
-      <view v-if="activeDimension">
+      <view>
         <view class="modult-result-title">
           主要结论
         </view>
-        <view>
+        <template v-if="current_result_page_config.showCommentMode === SHOW_COMMENT_MODE.ONE">
           <CommentItem v-if="activeDimension.studentComment" :content="activeDimension.studentComment" />
-        </view>
+        </template>
+        <template v-else-if="current_result_page_config.showCommentMode === SHOW_COMMENT_MODE.ALL">
+          <view class="space-y-4">
+            <CommentItem v-for="dimension in moduleResult.dimensionResults" :key="dimension.dimensionId" :content="dimension.studentComment" />
+          </view>
+        </template>
+        <template v-else-if="current_result_page_config.showCommentMode === SHOW_COMMENT_MODE.GROUP">
+          <view class="space-y-4">
+            <view v-for="group in current_result_page_config.groups" :key="group.groupId">
+              <CommentItem :description="group.description" :content="groupContents.get(group.groupId) || ''" />
+            </view>
+          </view>
+        </template>
       </view>
     </view>
 

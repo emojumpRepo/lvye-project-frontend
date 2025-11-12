@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 interface Props {
   content: string
+  description?: string
 }
 
 defineOptions({
@@ -44,8 +45,10 @@ function cleanHtml(html: string): string {
 
 <template>
   <view class="comment-item">
-    <!-- Rich text content -->
     <view class="rounded-xl bg-#F7FBFAFF p-30rpx">
+      <view v-if="description" class="desc-text mb-20rpx text-sm">
+        {{ description }}
+      </view>
       <rich-text :nodes="cleanHtml(content)" />
     </view>
   </view>
@@ -55,14 +58,16 @@ function cleanHtml(html: string): string {
 .comment-item {
   :deep(uni-rich-text) {
     line-height: 44rpx;
+    color: var(--title-text-color);
     overflow-wrap: break-word;
 
     h4 {
       display: block;
       margin-bottom: 16rpx;
       font-size: 28rpx !important;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 50rpx;
+      color: var(--title-text-color);
       overflow-wrap: break-word;
 
       &:first-child {
@@ -77,7 +82,8 @@ function cleanHtml(html: string): string {
       }
     }
 
-    p {
+    p,
+    div {
       display: block;
       margin-bottom: 16rpx;
       font-size: 28rpx;

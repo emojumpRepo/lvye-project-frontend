@@ -17,7 +17,7 @@ const emit = defineEmits<{
 const RISK_LEVEL = {
   NONE: 0,
   LOW: 1,
-  MILD: 2,
+  Mild: 2,
   MEDIUM: 3,
   SEVERE: 4,
 } as const
@@ -36,7 +36,7 @@ function createDimensionColorMap() {
     activeStyle: 'bg-#EAF8F2FF text-[var(--primary-color)] border-[var(--primary-color)]',
   }
 
-  map[RISK_LEVEL.MILD] = {
+  map[RISK_LEVEL.Mild] = {
     basicStyle: 'bg-#F1CA5CFF border-#F1CA5CFF text-white',
     activeStyle: 'bg-#FDF6E8FF text-#F1CA5CFF border-#F1CA5CFF',
   }

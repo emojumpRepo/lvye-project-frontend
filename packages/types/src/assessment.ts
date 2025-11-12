@@ -45,6 +45,7 @@ export interface AssessmentTask {
 export interface Dimension {
   dimensionId: number;
   dimensionName: string;
+  dimensionCode: string;
   score: number;
   isAbnormal: number;
   riskLevel: number;
