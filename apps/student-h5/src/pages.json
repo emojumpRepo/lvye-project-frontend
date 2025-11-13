@@ -68,8 +68,7 @@
           "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "模块评估报告",
-            "disableScroll": true
+            "navigationBarTitleText": "模块评估报告"
           }
         },
         {
@@ -85,9 +84,10 @@
         {
           "path": "assessment/result",
           "type": "page",
+          "layout": "default",
           "style": {
             "navigationStyle": "custom",
-            "navigationBarTitleText": "测评结果"
+            "navigationBarTitleText": "最终测评结果"
           }
         },
         {

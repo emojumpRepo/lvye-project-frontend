@@ -54,15 +54,14 @@ onHide(() => {
 <style lang="scss">
 // 移动端样式限制：防止H5在PC端过度拉伸变形
 #app {
-  max-width: 480px; // 限制最大宽度
   min-height: 100vh; // 最小高度为视窗高度
   margin: 0 auto; // 居中显示
   background-color: #fff; // 背景色
   box-shadow: 0 0 20px rgb(0 0 0 / 10%); // 添加阴影效果
 
   // 在小屏设备上移除阴影和限制
-  @media (max-width: 480px) {
-    max-width: none;
+  @media (min-width: 900px) {
+    max-width: 480px; // 限制最大宽度
     box-shadow: none;
   }
 }

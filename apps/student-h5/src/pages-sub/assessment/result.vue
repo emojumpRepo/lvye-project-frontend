@@ -1,337 +1,186 @@
 <script setup lang="ts">
-import type { AssessmentResult } from '@/api/assessment'
-import { onLoad } from '@dcloudio/uni-app'
+import type { AppMyAssessmentResultVO } from '@/api/assessment'
+import { onLoad, onPageScroll } from '@dcloudio/uni-app'
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { getAssessmentResult } from '@/api/assessment'
+import { getTagByCategory } from '@/api/types/constants'
 import LyLoading from '@/components/LyLoading/index.vue'
+import { useEvaluationStore } from '@/store'
+import CommentItem from './components/result/CommentItem.vue'
+import ModuleResultGuide from './components/result/ModuleResultGuide.vue'
+import RiskLevelSector from './components/result/RiskLevelSector.vue'
+import { ASSESSMENT_RESULT_PAGE_CONFIG, COMPONENTS_TYPE } from './data'
 
 defineOptions({
   name: 'AssessmentResult',
 })
 
 definePage({
+  layout: 'default',
   style: {
     navigationStyle: 'custom',
-    navigationBarTitleText: '测评结果',
+    navigationBarTitleText: '最终测评结果',
   },
 })
 
-const positions: Record<string, string> = {
-  行为: 'top-[5%] left-[30%]',
-  智力与学校情况: 'top-[5%] left-[65%]',
-  合群: 'top-[50%] left-[10%]',
-  躯体外貌属性: 'top-[50%] right-[10%]',
-  幸福与满足: 'bottom-[5%] left-[30%]',
-  焦虑: 'bottom-[5%] left-[65%]',
-}
+const evaluationStore = useEvaluationStore()
+const {
+  loadTaskDetail,
+} = evaluationStore
+
+const {
+  loading: isLoadingTaskInfo,
+  taskDetailInfo,
+} = storeToRefs(evaluationStore)
 
 const taskNo = ref('')
-const mentalHealthStatus = ref<AssessmentResult | null>(null)
-const onlineGameUse = ref<AssessmentResult | null>(null)
-const sleepQuality = ref<AssessmentResult | null>(null)
-const loading = ref(true)
-const activeTooltip = ref<string>('')
+const scrollTop = ref(0)
+const loading = ref(false)
+const assessmentResult = ref<AppMyAssessmentResultVO | null>(null)
 
-// 格式化心理健康状况
-const formattedMentalHealthStatus = computed(() => {
-  return mentalHealthStatus.value?.resultDataParsed.map((item) => {
-    const cleanDimensionName = item.dimensionName.replace('自我评价', '')
-    return {
-      ...item,
-      dimensionName: cleanDimensionName,
-      position: positions[cleanDimensionName],
-    }
+// 当前页面配置
+const currentPageConfig = computed(() => {
+  if (!taskDetailInfo.value)
+    return null
+  // 使用场景code作为配置key
+  const scenarioCode = taskDetailInfo.value.scenarioDetail?.code
+  return ASSESSMENT_RESULT_PAGE_CONFIG[scenarioCode]?.[0] || null
+})
+
+// 获取part的内容值
+function getPartContent(prop: string) {
+  if (!assessmentResult.value?.resultDataParsed)
+    return ''
+  return assessmentResult.value.resultDataParsed[prop] || ''
+}
+
+const modulesList = computed(() => {
+  if (!taskDetailInfo.value)
+    return []
+  return taskDetailInfo.value.scenarioDetail.slots.filter((slot) => {
+    return slot.hasModuleResultConfig
   })
 })
 
-function handleBack() {
-  uni.reLaunch({
-    url: '/pages/home/index',
-  })
-}
+// 页面滚动监听
+onPageScroll((e) => {
+  scrollTop.value = e.scrollTop
+})
 
-// 切换提示框
-function toggleTooltip(dimensionName: string) {
-  if (activeTooltip.value === dimensionName) {
-    activeTooltip.value = ''
+// 页面加载
+onLoad(async (options) => {
+  if (options?.taskNo) {
+    taskNo.value = options.taskNo
   }
-  else {
-    activeTooltip.value = dimensionName
-  }
-}
 
-// 获取测评结果数据
-async function getAssessmentResultData() {
+  // 加载最终测评结果数据以及测评任务详情
+  if (taskNo.value) {
+    await fetchAssessmentResult()
+    await loadTaskDetail(taskNo.value, true)
+  }
+})
+
+// 获取模块结果
+async function fetchAssessmentResult() {
   try {
     loading.value = true
-    const res = await getAssessmentResult(taskNo.value)
-    res.forEach((item) => {
-      if (
-        item.resultDataParsed.some(
-          item => item.dimensionCode === 'behavior_self_evaluation',
-        )
-      ) {
-        mentalHealthStatus.value = item
-      }
-      if (
-        item.resultDataParsed.some(
-          item => item.dimensionCode === 'game_addiction_risk',
-        )
-      ) {
-        onlineGameUse.value = item
-      }
-      if (
-        item.resultDataParsed.some(
-          item => item.dimensionCode === 'sleep_quality',
-        )
-      ) {
-        sleepQuality.value = item
-      }
-    })
+    const result = await getAssessmentResult(taskNo.value, false)
+    assessmentResult.value = result
   }
   catch (error) {
-    console.error(error)
+    console.error('获取最终测评结果失败:', error)
     uni.showToast({
-      title: '加载结果失败',
+      title: '获取最终测评结果失败',
       icon: 'none',
+      duration: 2000,
     })
   }
   finally {
     loading.value = false
   }
 }
-
-onLoad(async (options) => {
-  taskNo.value = (options?.taskNo as string) || ''
-  if (taskNo.value) {
-    await getAssessmentResultData()
-  }
-})
 </script>
 
 <template>
-  <view class="result-page">
-    <!-- 主要内容卡片 -->
-    <view class="result-container">
-      <view class="result-content">
-        <!-- 标题区域 -->
-        <view class="mb-4 shrink-0 text-center">
-          <view class="section-title">
-            <text class="text-2xl text-gray-800 font-medium">总报告</text>
-            <view class="title-divider mx-auto h-1" />
-          </view>
-          <!-- 横幅图片 -->
-          <view class="result-header mt-6 h-32 w-full overflow-hidden rounded-xl bg-cover bg-center bg-no-repeat" />
-        </view>
+  <view class="min-h-screen flex flex-col overflow-y-auto">
+    <!-- 导航栏 -->
+    <Navbar title="最终测评结果" :show-back="true" :scroll-top="scrollTop" />
 
-        <!-- 加载状态 -->
-        <view v-if="loading" class="flex flex-1 items-center justify-center">
-          <view class="flex flex-col items-center space-y-4">
-            <LyLoading />
-            <text class="text-gray-500">正在加载测评结果...</text>
-          </view>
-        </view>
-
-        <!-- 主要内容区域 -->
-        <scroll-view
-          v-else
-          scroll-y
-          class="flex-1"
-        >
-          <view class="grid grid-cols-1 gap-8 pb-4">
-            <!-- 心理健康状况 -->
-            <view
-              v-if="formattedMentalHealthStatus"
-              class="flex flex-col"
-            >
-              <view class="section-title">
-                <text>心理健康状况</text>
-                <view class="title-divider h-0.5" />
-              </view>
-
-              <text class="section-content">
-                心理健康状况分为合群、行为、智力与学校情况、躯体外貌属性、焦虑、幸福与满足等6个维度进行自我评价。
-              </text>
-
-              <view class="mental-health-bg relative flex flex-1 items-center justify-center p-12">
-                <image src="/static/images/evaluation/result/report_logo.png" mode="aspectFit" class="h-50 w-40" />
-                <!-- 心理健康结果评语 -->
-                <view
-                  v-for="item in formattedMentalHealthStatus"
-                  :key="item.dimensionName"
-                  class="absolute z-10"
-                  :class="[item.position, activeTooltip === item.dimensionName ? 'text-emerald-500' : 'text-gray-700']"
-                  @click="toggleTooltip(item.dimensionName)"
-                >
-                  <view class="flex items-center space-x-2">
-                    <image
-                      :src="item.isAbnormal ? '/static/images/evaluation/result/report_upset_icon.svg' : '/static/images/evaluation/result/report_happy_icon.svg'"
-                      mode="aspectFit"
-                      class="h-9 w-9"
-                    />
-                    <text class="text-xs font-medium sm:text-sm">
-                      {{ item.dimensionName }}
-                    </text>
-                  </view>
-                  <!-- 提示框 -->
-                  <view
-                    v-if="activeTooltip === item.dimensionName"
-                    class="absolute left-0 top-full z-20 mt-2 w-80 rounded-xl bg-green-50 p-4 shadow-lg"
-                  >
-                    <text class="text-sm text-gray-600 leading-relaxed">
-                      {{ item.studentComment }}
-                    </text>
-                  </view>
-                </view>
-              </view>
-            </view>
-
-            <!-- 网络游戏使用 -->
-            <view v-if="onlineGameUse">
-              <view class="section-title">
-                <view class="flex items-center gap-3">
-                  <image
-                    :src="onlineGameUse?.resultDataParsed[0]?.isAbnormal
-                      ? '/static/images/evaluation/result/report_upset_icon.svg'
-                      : '/static/images/evaluation/result/report_happy_icon.svg'"
-                    mode="aspectFit"
-                    class="h-9 w-9"
-                  />
-                  <text>网络游戏使用</text>
-                </view>
-                <view class="title-divider h-0.5" />
-              </view>
-              <text class="section-content">
-                {{ onlineGameUse?.resultDataParsed[0]?.studentComment }}
-              </text>
-            </view>
-
-            <!-- 睡眠质量 -->
-            <view v-if="sleepQuality">
-              <view class="section-title">
-                <view class="flex items-center gap-3">
-                  <image
-                    :src="sleepQuality?.resultDataParsed[0]?.isAbnormal
-                      ? '/static/images/evaluation/result/report_upset_icon.svg'
-                      : '/static/images/evaluation/result/report_happy_icon.svg'"
-                    mode="aspectFit"
-                    class="h-9 w-9"
-                  />
-                  <text>睡眠质量 / 失眠症状严重程度</text>
-                </view>
-                <view class="title-divider h-0.5" />
-              </view>
-              <text class="section-content">
-                {{ sleepQuality?.resultDataParsed[0]?.studentComment }}
-              </text>
-            </view>
-          </view>
-        </scroll-view>
-
-        <!-- 底部区域 -->
-        <view class="mt-8 flex flex-col items-center pb-safe space-y-6">
-          <!-- 分割线 -->
-          <view class="w-full flex items-center justify-center">
-            <view class="flex items-center space-x-6">
-              <view class="h-px w-64 from-transparent to-gray-300 bg-gradient-to-r" />
-              <view class="flex items-center space-x-2">
-                <view class="h-1 w-1 rounded-full bg-emerald-400" />
-                <view class="h-1.5 w-1.5 rounded-full bg-green-400" />
-                <view class="h-1 w-1 rounded-full bg-emerald-400" />
-              </view>
-              <view class="h-px w-64 from-transparent to-gray-300 bg-gradient-to-r" />
-            </view>
-          </view>
-
-          <!-- 返回按钮 -->
-          <view
-            class="back-btn"
-            @click="handleBack"
-          >
-            <text class="text-sm text-white">返回</text>
-          </view>
-        </view>
+    <template v-if="loading || isLoadingTaskInfo">
+      <!-- 加载状态 -->
+      <view class="flex flex-1 items-center justify-center">
+        <LyLoading />
       </view>
+    </template>
+
+    <!-- 页面内容 -->
+    <view v-else-if="assessmentResult && currentPageConfig" class="mx-30rpx my-5 flex-1 rounded-2xl bg-#fff p-30rpx">
+      <!-- 动态渲染各个 part -->
+      <template v-for="(part, index) in currentPageConfig.parts" :key="index">
+        <!-- Part 标题 -->
+        <view
+          v-if="part.title"
+          class="result-title"
+          :class="{
+            'text-center': part.titleAlign === 'center',
+            'text-left': part.titleAlign === 'left',
+            'text-right': part.titleAlign === 'right',
+          }"
+        >
+          {{ part.title }}
+        </view>
+
+        <!-- 可视化组件 -->
+        <template v-if="part.components?.includes(COMPONENTS_TYPE.Sector)">
+          <view class="flex flex-col items-center justify-center">
+            <RiskLevelSector :current-level="assessmentResult.combinedRiskLevel" />
+
+            <view
+              v-if="part.showTotalLevel"
+              class="center text-lg font-medium"
+              :style="{ color: getTagByCategory('questionnaire_result_risk_level', assessmentResult.combinedRiskLevel).tagStyle.color }"
+            >
+              {{ assessmentResult.resultDataParsed.studentLevel }}
+            </view>
+          </view>
+        </template>
+
+        <!-- 评论内容 -->
+        <template v-if="part.showComment && part.prop">
+          <CommentItem :content="getPartContent(part.prop)" />
+        </template>
+
+        <!-- 模块导航 -->
+        <template v-if="part.showModuleGuide">
+          <CommentItem content="您可以持续关注在模块测试中反馈的身心健康问题。" />
+          <ModuleResultGuide :modules="modulesList" :current-task-no="taskDetailInfo?.taskNo" />
+        </template>
+
+        <!-- 分隔线 -->
+        <Divider v-if="index < currentPageConfig.parts.length - 1" />
+      </template>
+
+      <!-- footer -->
+      <template v-if="currentPageConfig.showFooter">
+        <Divider />
+        <view class="desc-text px-8 text-center text-xs">
+          您可前往口袋工具模块，了解更多心理健康知识，尝试进行正念练习哦！
+        </view>
+      </template>
+    </view>
+
+    <!-- 空状态 -->
+    <view v-else class="mx-30rpx my-5 flex flex-1 items-center justify-center rounded-2xl bg-#fff p-30rpx">
+      <text class="desc-text text-sm">暂无数据</text>
     </view>
   </view>
 </template>
 
-<style scoped lang="scss">
-.result-page {
-  min-height: 100vh;
-  background-color: #f9fafb;
-  background-image: url('/static/images/evaluation/result/result_bg.png');
-  background-position: center;
-  background-size: cover;
-}
+<style lang="scss" scoped>
+.result-title {
+  @apply mb-5 text-32rpx font-medium;
 
-.result-container {
-  display: flex;
-  height: 100vh;
-  padding: 16px 24px;
-}
-
-.result-content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  padding: 24px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgb(0 0 0 / 10%);
-}
-
-.section-title {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 20px;
-  font-weight: 500;
-  color: #1f2937;
-
-  .title-divider {
-    width: 64px;
-    background: linear-gradient(to right, #34d399, #10b981);
-    border-radius: 9999px;
-  }
-}
-
-.section-content {
-  display: block;
-  line-height: 1.75;
-  color: #4b5563;
-  text-indent: 2em;
-}
-
-.result-header {
-  background-image: url('/static/images/evaluation/result/result_header.png');
-}
-
-.mental-health-bg {
-  background-image: url('/static/images/evaluation/result/logo_bg.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-}
-
-.back-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 32px;
-  overflow: hidden;
-  font-weight: 500;
-  color: white;
-  background: linear-gradient(to right, #10b981, #059669);
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgb(16 185 129 / 30%);
-  transition: all 0.3s ease;
-
-  &:active {
-    transform: scale(0.95);
-  }
+  color: var(--title-text-color);
 }
 </style>

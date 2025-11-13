@@ -5,11 +5,11 @@ import { getDictObj } from '@/utils/dict'
 export const TAG_TYPE = {
   warning: {
     backgroundColor: '#FEAE3314',
-    color: '#FF9C05',
+    color: '#F6AD63FF',
   },
   success: {
     backgroundColor: '#14E77E14',
-    color: '#04DC70',
+    color: '#45C886FF',
   },
   processing: {
     backgroundColor: '#1966FF14',
@@ -61,19 +61,24 @@ export function getTagByCategory(dictType: string, value: number | string) {
 /** 地图模块icon映射 */
 export const MAP_MODULE_MAP = {
   gym: {
-    icon: 'hugeicons:champion',
+    icon: '/student_h5/icon/scene/gym.svg',
+    gray_icon: '/student_h5/icon/scene/gym_gray.svg',
   },
   hospital: {
-    icon: 'lucide:hospital',
+    icon: '/student_h5/icon/scene/hospital.svg',
+    gray_icon: '/student_h5/icon/scene/hospital_gray.svg',
   },
   library: {
-    icon: 'basil:book-open-outline',
+    icon: '/student_h5/icon/scene/library.svg',
+    gray_icon: '/student_h5/icon/scene/library_gray.svg',
   },
   dormitory: {
-    icon: 'hugeicons:building-03',
+    icon: '/student_h5/icon/scene/dormitory.svg',
+    gray_icon: '/student_h5/icon/scene/dormitory_gray.svg',
   },
   teaching: {
-    icon: 'streamline-ultimate:presentation-board-graph',
+    icon: '/student_h5/icon/scene/teaching.svg',
+    gray_icon: '/student_h5/icon/scene/teaching_gray.svg',
   },
 }
 

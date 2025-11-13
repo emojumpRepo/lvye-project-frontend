@@ -605,7 +605,9 @@ onUnload(() => {
       right: 30px;
       bottom: 30px;
       z-index: 1000;
-      border-radius: 9999px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       transition: all 0.3s ease;
 
       &.disabled {
@@ -613,18 +615,22 @@ onUnload(() => {
       }
 
       .report-icon {
-        position: absolute;
-        left: 52%;
-        z-index: -1;
-        transform: translate(-50%, -90%);
+        position: relative;
+        z-index: 0;
+        display: block;
+        width: 55px;
+        height: auto;
+        margin-bottom: -8px;
       }
 
       .report-text {
         position: relative;
+        z-index: 1;
         padding: 5px 10px;
         font-size: 14px;
         font-weight: 600;
         color: #fff;
+        white-space: nowrap;
         background: var(--primary-color);
         border: 1px solid rgb(255 255 255 / 80%);
         border-radius: 9999px;

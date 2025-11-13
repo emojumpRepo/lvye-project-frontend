@@ -41,7 +41,7 @@ function showCheck(dimension: Dimension, column: columnConfig): boolean {
           <view class="table-header-cell" />
         </template>
         <template #value="{ row }">
-          <view class="text-[#45c886ff]">
+          <view class="text-[var(--primary-color)]">
             {{ row.colloquialAlias }}
           </view>
         </template>
@@ -56,7 +56,7 @@ function showCheck(dimension: Dimension, column: columnConfig): boolean {
           </template>
           <template #value="{ row }">
             <view class="text-base">
-              <text v-if="showCheck(row, column)" class="text-[#45c886ff]">
+              <text v-if="showCheck(row, column)" class="text-[var(--primary-color)]">
                 ✓
               </text>
               <text v-else class="desc-text">
@@ -87,7 +87,7 @@ function showCheck(dimension: Dimension, column: columnConfig): boolean {
           font-size: 24rpx;
           color: white !important;
           text-align: center !important;
-          background-color: #45c886ff !important;
+          background-color: var(--primary-color) !important;
         }
       }
     }

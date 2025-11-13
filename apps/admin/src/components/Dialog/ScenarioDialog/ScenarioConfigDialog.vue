@@ -37,6 +37,7 @@ import {
   updateAssessmentResultConfig,
 } from '#/api/psychology/assessment-result-config';
 import { getAssessmentDimensionsByScenario } from '#/api/psychology/questionnaire/index';
+import RichTextEditor from '#/components/Common/RichTextEditor.vue';
 
 interface Emits {
   (e: 'success'): void;
@@ -1059,19 +1060,19 @@ const formRef = ref();
             </Col>
             <Col :span="24">
               <Form.Item label="建议文本">
-                <Input.TextArea
-                  v-model:value="resultConfig.suggestions"
+                <RichTextEditor
+                  v-model="resultConfig.suggestions"
+                  :height="150"
                   placeholder="给出相应的建议和指导"
-                  :rows="3"
                 />
               </Form.Item>
             </Col>
             <Col :span="24">
               <Form.Item label="评语文本">
-                <Input.TextArea
-                  v-model:value="resultConfig.comment"
+                <RichTextEditor
+                  v-model="resultConfig.comment"
+                  :height="180"
                   placeholder="针对该结果的评语"
-                  :rows="4"
                 />
               </Form.Item>
             </Col>

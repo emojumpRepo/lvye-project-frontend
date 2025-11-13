@@ -104,7 +104,7 @@ const pointerLeft = computed(() => {
   .step-title {
     margin-bottom: 20rpx;
     font-size: 28rpx;
-    color: #45c886ff;
+    color: var(--primary-color);
     text-align: center;
   }
 

@@ -1,14 +1,14 @@
 // 定义 CSS 变量在 :root 中
 :root,
 page {
-  --title-text-color: #2D3E50FF;
-  --desc-text-color-light: #2D3E500D;
-  --desc-text-color: #2D3E5066;
-  --desc-text-color-heavy: #2D3E5099;
-  --primary-color: #45C886FF;
-  --primary-color-light: #45C88666;
-  --primary-gradient: linear-gradient(to right, #45C887, #3EB87A);
-  --bg-color: #F4F9F9FF;
+  --title-text-color: #2d3e50ff;
+  --desc-text-color-light: #2d3e500d;
+  --desc-text-color: #2d3e5066;
+  --desc-text-color-heavy: #2d3e5099;
+  --primary-color: #45c886ff;
+  --primary-color-light: #45c88666;
+  --primary-gradient: linear-gradient(to right, #45c887, #3eb87a);
+  --bg-color: #f4f9f9ff;
 }
 
 // 定义可复用的类
@@ -47,8 +47,8 @@ page {
 
 // 通用 PC 端 h5 全屏页面容器适配样式
 // 用于 position: fixed 的全屏页面在 PC 端显示为固定宽度的手机屏幕效果
-// 注意：使用 481px 与 App.vue 中的 480px 断点保持一致
-@media (min-width: 481px) {
+// 注意：使用 900px 与 App.vue 中的 480px 断点保持一致
+@media (min-width: 900px) {
   // 全屏页面容器：提供灰色背景和居中布局（用于 position: fixed 的页面）
   .h5-pc-fullscreen {
     display: flex;
